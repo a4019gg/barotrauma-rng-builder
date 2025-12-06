@@ -100,7 +100,7 @@ function openDB() {
       </div>
     </div>`;
 
-  const modal = document.createElementById('div');
+  const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:10000';
   modal.innerHTML = `<div style="background:#252526;padding:25px;border-radius:10px;max-width:95%;max-height:95%;overflow:auto;color:#ddd;box-shadow:0 10px 30px rgba(0,0,0,0.5)">${html}</div>`;
   modal.onclick = e => e.target === modal && modal.remove();
