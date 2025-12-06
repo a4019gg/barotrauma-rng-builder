@@ -1,3 +1,4 @@
+// js/lang/ru.js
 const LANG_RU = {
   rootLabel: "Корневое событие",
   successLabel: "Успех",
@@ -17,5 +18,9 @@ const LANG_RU = {
   pickItem: "Выбрать предмет",
   settings: "Настройки",
   theme: "Тема",
-  language: "Язык"
+  language: "Язык",
+  dbVanilla: "Ваниль",
+  dbMods: "Моды",
+  dbSearch: "Поиск предметов...",
+  dbLoadMod: "Загрузить мод"
 };
