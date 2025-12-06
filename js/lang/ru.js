@@ -1,4 +1,5 @@
-// js/lang/ru.js
+// js/lang/ru.js — ПОЛНЫЙ
+
 const LANG_RU = {
   rootLabel: "Корневое событие",
   successLabel: "Успех",
@@ -15,12 +16,13 @@ const LANG_RU = {
   downloadXML: "Скачать XML",
   export: "Экспорт",
   import: "Импорт",
-  pickItem: "Выбрать предмет",
+  dataBase: "База данных",
   settings: "Настройки",
   theme: "Тема",
   language: "Язык",
   dbVanilla: "Ваниль",
   dbMods: "Моды",
   dbSearch: "Поиск предметов...",
-  dbLoadMod: "Загрузить мод"
+  dbLoadMod: "Загрузить мод",
+  clearAllConfirm: "Очистить всё?"
 };
