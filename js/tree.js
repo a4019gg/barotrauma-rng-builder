@@ -1,19 +1,15 @@
-// tree.js — горизонтальная визуализация дерева
+// tree.js — визуализация дерева
 
 let isTreeView = false;
 const svg = d3.select("#tree-svg");
-let width = window.innerWidth - 480;
-let height = window.innerHeight - 200;
-
 const g = svg.append("g");
-const zoom = d3.zoom()
-  .scaleExtent([0.1, 4])
-  .on("zoom", (e) => g.attr("transform", e.transform));
+const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", e => g.attr("transform", e.transform));
 svg.call(zoom);
 
 function toggleView() {
   isTreeView = !isTreeView;
-  document.getElementById('classic-view').classList.toggle('hidden', isTreeView);
+  const classic = document.getElementById('classic-view');
+  classic.classList.toggle('fullscreen', !isTreeView);
   document.getElementById('tree-container').classList.toggle('hidden', !isTreeView);
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
   if (isTreeView) renderTree();
@@ -26,11 +22,11 @@ function renderTree() {
 
   function build(node, parent) {
     if (node.classList.contains('spawn')) {
-      const item = node.querySelector('.item-field').value || "unknown";
+      const item = node.querySelector('.item-field').value.trim() || "unknown";
       parent.children.push({ name: `Spawn: ${item}` });
     } else if (node.classList.contains('rng')) {
       const chance = parseFloat(node.querySelector('.chance').value) || 0.5;
-      const rngNode = { name: `RNG ${(chance*100).toFixed(1)}%`, children: [] };
+      const rngNode = { name: `RNG ${(chance * 100).toFixed(1)}%`, children: [] };
 
       const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
       const failureCont = node.querySelector(`#c-${node.dataset.id}-f`);
@@ -44,6 +40,8 @@ function renderTree() {
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
+  const width = window.innerWidth - 500;
+  const height = window.innerHeight - 200;
   const treeLayout = d3.tree().size([height - 100, width - 200]);
   const root = d3.hierarchy(rootData);
   treeLayout(root);
@@ -53,9 +51,7 @@ function renderTree() {
     .data(root.links())
     .enter().append("path")
     .attr("class", "link")
-    .attr("d", d3.linkHorizontal()
-      .x(d => d.y)
-      .y(d => d.x));
+    .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
 
   // Узлы
   const nodes = g.selectAll(".node")
@@ -77,7 +73,7 @@ function renderTree() {
     .style("fill", "var(--text)")
     .text(d => d.data.name);
 
-  // Центрируем
+  // Центрирование
   const bounds = g.node().getBBox();
   const scale = Math.min((width - 100) / bounds.width, (height - 100) / bounds.height) * 0.9;
   const translate = [
@@ -95,7 +91,5 @@ window.renderTree = renderTree;
 
 // Адаптация под ресайз
 window.addEventListener('resize', () => {
-  width = window.innerWidth - 480;
-  height = window.innerHeight - 200;
   if (isTreeView) renderTree();
 });
