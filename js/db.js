@@ -1,28 +1,39 @@
-// js/db.js — база предметов + моды + красивый DB
+// js/db.js — ПОЛНЫЙ, РАБОЧИЙ, с https://barotrauma-db.vercel.app/items
 
 let itemsDB = { Vanilla: [], Mods: [] };
 
 function populateDatalist() {
-  const saved = localStorage.getItem('itemsDB_v0.7');
+  const saved = localStorage.getItem('itemsDB_v0.7.2');
   if (saved) {
-    itemsDB = JSON.parse(saved);
-    fillDatalist();
-    return;
+    try {
+      itemsDB = JSON.parse(saved);
+      fillDatalist();
+      return;
+    } catch (e) {
+      console.warn('Corrupted DB cache, reloading...');
+    }
   }
 
-  // Надёжный источник ванильных предметов (официальный)
-  fetch('https://barotrauma.game-vault.net/GameData/Items.json')
-    .then(r => r.json())
+  // Загружаем с твоего API
+  fetch('https://barotrauma-db.vercel.app/items')
+    .then(r => {
+      if (!r.ok) throw new Error('API offline');
+      return r.json();
+    })
     .then(data => {
       itemsDB.Vanilla = data
-        .map(i => i.identifier)
+        .map(item => item.identifier || item.id)
         .filter(Boolean)
-        .sort();
-      localStorage.setItem('itemsDB_v0.7', JSON.stringify(itemsDB));
+        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+      localStorage.setItem('itemsDB_v0.7.2', JSON.stringify(itemsDB));
       fillDatalist();
+      console.log(`Loaded ${itemsDB.Vanilla.length} vanilla items`);
     })
-    .catch(() => {
-      itemsDB.Vanilla = ['revolver', 'smg', 'rifle', 'shotgun', 'morphine', 'fentanyl', 'clownmask'];
+    .catch(err => {
+      console.error('Failed to load items from API:', err);
+      // Fallback на минимальный набор
+      itemsDB.Vanilla = ['revolver', 'smg', 'rifle', 'shotgun', 'harpoongun', 'coilgun', 'morphine', 'fentanyl', 'clownmask', 'toyhammer'];
       fillDatalist();
     });
 }
@@ -30,7 +41,7 @@ function populateDatalist() {
 function fillDatalist() {
   const dl = document.getElementById('item-datalist');
   dl.innerHTML = '';
-  [...itemsDB.Vanilla, ...itemsDB.Mods].sort().forEach(item => {
+  [...itemsDB.Vanilla, ...itemsDB.Mods].forEach(item => {
     const opt = document.createElement('option');
     opt.value = item;
     dl.appendChild(opt);
@@ -40,24 +51,31 @@ function fillDatalist() {
 function openDB() {
   let html = `
     <div style="max-height:80vh;overflow:auto;padding:10px">
+      <div style="margin-bottom:15px">
+        <input type="text" id="db-search" placeholder="Search items..." oninput="filterItems(this.value)" style="width:100%;padding:8px;background:#333;color:#fff;border:1px solid #555;border-radius:4px">
+      </div>
       <ul class="db-tabs">
         <li class="active" onclick="showTab('vanilla')">Vanilla (${itemsDB.Vanilla.length})</li>
         <li onclick="showTab('mods')">Mods (${itemsDB.Mods.length})</li>
       </ul>
       <div id="vanilla-tab">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
-  `;
+        <div class="db-items">`;
   itemsDB.Vanilla.forEach(item => {
-    html += `<button class="db-item" onclick="insertItem('${item}')">${item}</button>`;
+    html += `<button class="db-item" data-item="${item}" onclick="insertItem('${item}')">${item}</button>`;
   });
-  html += `</div></div><div id="mods-tab" class="hidden"><div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">`;
+  html += `</div></div>
+      <div id="mods-tab" class="hidden">
+        <div class="db-items">`;
   itemsDB.Mods.forEach(item => {
-    html += `<button class="db-item" onclick="insertItem('${item}')">${item}</button>`;
+    html += `<button class="db-item" data-item="${item}" onclick="insertItem('${item}')">${item}</button>`;
   });
   html += `</div>
-    <input type="file" id="mod-file" accept=".json">
-    <button onclick="loadMod()">Load Mod</button>
-  </div></div>`;
+        <div style="margin-top:15px">
+          <input type="file" id="mod-file" accept=".json">
+          <button onclick="loadMod()">Load Mod</button>
+        </div>
+      </div>
+    </div>`;
 
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:1000';
@@ -68,7 +86,15 @@ function openDB() {
 
 function showTab(tab) {
   document.querySelectorAll('#vanilla-tab, #mods-tab').forEach(t => t.classList.toggle('hidden', t.id !== tab + '-tab'));
-  document.querySelectorAll('.db-tabs li').forEach(li => li.classList.toggle('active', li.textContent.includes(tab.charAt(0).toUpperCase() + tab.slice(1))));
+  document.querySelectorAll('.db-tabs li').forEach(li => li.classList.toggle('active', li.onclick.toString().includes(tab)));
+}
+
+function filterItems(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.db-item').forEach(btn => {
+    const visible = btn.dataset.item.toLowerCase().includes(q);
+    btn.style.display = visible ? 'inline-block' : 'none';
+  });
 }
 
 function loadMod() {
@@ -80,27 +106,32 @@ function loadMod() {
     try {
       const mod = JSON.parse(e.target.result);
       if (Array.isArray(mod)) {
-        itemsDB.Mods = [...itemsDB.Mods, ...mod.filter(m => typeof m === 'string')];
-        localStorage.setItem('itemsDB_v0.7', JSON.stringify(itemsDB));
+        itemsDB.Mods = [...new Set([...itemsDB.Mods, ...mod.filter(i => typeof i === 'string')])];
+        localStorage.setItem('itemsDB_v0.7.2', JSON.stringify(itemsDB));
         fillDatalist();
-        openDB(); // обновляем окно
-        alert('Mod loaded!');
+        openDB();
+        alert(`Mod loaded! ${mod.length} items added.`);
+      } else {
+        alert('Invalid mod format — expected array of strings');
       }
-    } catch { alert('Invalid mod JSON'); }
+    } catch (err) {
+      alert('Invalid JSON: ' + err.message);
+    }
   };
   reader.readAsText(file);
 }
 
 function insertItem(id) {
-  const input = document.activeElement;
-  if (input && input.classList.contains('item-field')) {
-    input.value = id;
-    input.dispatchEvent(new Event('input'));
+  const active = document.activeElement;
+  if (active && active.classList.contains('item-field')) {
+    active.value = id;
+    active.dispatchEvent(new Event('input'));
     updateAll();
   }
-  document.querySelector('div[style*="z-index:1000"]').remove();
+  document.querySelector('div[style*="z-index:1000"]')?.remove();
 }
 
+// Экспорт функций
 window.populateDatalist = populateDatalist;
 window.openDB = openDB;
 window.insertItem = insertItem;
