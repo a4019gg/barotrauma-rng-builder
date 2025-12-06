@@ -1,7 +1,7 @@
-// js/utils.js — темы, локализация, импорт/экспорт, утилиты
+// js/utils.js — темы, локализация, импорт/экспорт
 
 let currentLang = 'en';
-const L = {}; // сюда загрузится активный язык
+const L = {}; // сюда будет активный язык
 
 function setTheme(theme) {
   document.body.dataset.theme = theme;
@@ -11,39 +11,24 @@ function setTheme(theme) {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
-
-  // Копируем нужный словарь
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Применяем переводы к интерфейсу
+  // Применяем переводы
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
-
-  // Кнопки
-  const btns = {
-    'auto-balance-btn': L.autoBalanceTitle,
-    'generate-xml-btn': L.generateXML,
-    'copy-xml-btn': L.copyXML,
-    'download-xml-btn': L.downloadXML,
-    'export-btn': L.export,
-    'import-btn': L.import,
-    'pick-item-btn': L.pickItem,
-    'settings-btn': L.settings
-  };
-  Object.entries(btns).forEach(([id, text]) => {
-    const el = document.getElementById(id) || document.querySelector(`[data-lang-id="${id}"]`);
-    if (el) el.textContent = text;
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    const key = el.dataset.lang;
+    if (L[key]) el.textContent = L[key];
   });
 
-  // Перерисовываем всё
   updateAll();
 }
 
 function exportJSON() {
   const data = {
-    version: "0.6.0",
+    version: "0.8.0",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -66,15 +51,21 @@ document.getElementById('file-input').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (data.events && Array.isArray(data.events)) {
+      if (data.version && data.events && Array.isArray(data.events)) {
         events.length = 0;
-        events.push(...data.events);
+        events.push(...data.events.map(e => ({ html: e.html || '', eventId: e.eventId || 'imported' })));
         document.getElementById('events-tabs').innerHTML = '';
-        events.forEach((ev, i) => {
+        events.forEach((_, i) => {
           const tab = document.createElement('button');
           tab.className = 'tab' + (i === 0 ? ' active' : '');
-          tab.textContent = `Event ${i + 1}`;
-          tab.onclick = () => switchEvent(i);
+          tab.innerHTML = `Event ${i + 1} <span class="delete-tab">×</span>`;
+          tab.onclick = ev => {
+            if (!ev.target.classList.contains('delete-tab')) switchEvent(i);
+          };
+          tab.querySelector('.delete-tab').onclick = ev => {
+            ev.stopPropagation();
+            deleteCurrentEvent();
+          };
           document.getElementById('events-tabs').appendChild(tab);
         });
         const addBtn = document.createElement('button');
@@ -83,6 +74,9 @@ document.getElementById('file-input').addEventListener('change', e => {
         addBtn.onclick = addEvent;
         document.getElementById('events-tabs').appendChild(addBtn);
         switchEvent(0);
+        alert('Импорт завершён!');
+      } else {
+        alert('Неверный формат файла');
       }
     } catch (err) {
       alert('Ошибка импорта: ' + err.message);
@@ -92,7 +86,7 @@ document.getElementById('file-input').addEventListener('change', e => {
 });
 
 function clearAll() {
-  if (confirm(L.deleteEventConfirm || 'Clear all?')) {
+  if (confirm('Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
@@ -103,10 +97,12 @@ function loadExample() {
   addRNG('');
   setTimeout(() => {
     const first = document.querySelector('#root-children > .node.rng');
-    first.querySelector('.chance').value = 0.6;
-    addRNG(first.dataset.id + '-s');
-    addSpawn(first.dataset.id + '-s.0-s');
-    updateAll();
+    if (first) {
+      first.querySelector('.chance').value = 0.6;
+      addRNG(first.dataset.id + '-s');
+      addSpawn(first.dataset.id + '-s.0-s');
+      updateAll();
+    }
   }, 100);
 }
 
