@@ -1,4 +1,4 @@
-// xml.js — генерация, копирование, скачивание
+// js/xml.js — генерация XML
 
 function generateXML() {
   let xml = `<ScriptedEvent identifier="${document.getElementById('event-id').value || 'custom_event'}" commonness="100">\n`;
@@ -33,13 +33,13 @@ function generateXML() {
 
 function copyXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) { alert('Сначала сгенерируйте XML!'); return; }
+  if (!text.trim()) return alert('Сгенерируйте XML сначала!');
   navigator.clipboard.writeText(text).then(() => alert('XML скопирован!'));
 }
 
 function downloadXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) { alert('Сначала сгенерируйте XML!'); return; }
+  if (!text.trim()) return alert('Сгенерируйте XML сначала!');
   const blob = new Blob([text], { type: 'text/xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
