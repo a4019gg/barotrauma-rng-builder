@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v5.6</title>
+  <title>Barotrauma RNG Builder v0.5.6</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v5.6</h1>
+  <h1>Barotrauma RNG Builder v0.5.6</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
@@ -19,15 +19,16 @@
   </div>
   <div class="right">
     <button onclick="exportJSON()" class="green">Export</button>
-    <button onclick="importFile()" class="blue">Import</button>
-    <button onclick="toggleView()" id="view-btn">Tree View</button>
+    <button onclick="importFile()" class="darkblue">Import</button>
     <button onclick="showDB()">DB</button>
     <div class="dropdown">
       <button>Settings</button>
-      <div class="dropdown-menu">
-        <div onclick="setTheme('dark')">Dark Theme</div>
-        <div onclick="setTheme('light')">Light Theme</div>
+      <div class="dropdown-menu settings">
+        <div><strong>Theme</strong></div>
+        <div onclick="setTheme('dark')">Dark</div>
+        <div onclick="setTheme('light')">Light</div>
         <hr>
+        <div><strong>Language</strong></div>
         <div onclick="setLang('en')">[EN] English</div>
         <div onclick="setLang('ru')">[RU] Русский</div>
       </div>
@@ -50,7 +51,7 @@
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
           <strong id="root-label">Root Event</strong>
-          <span class="prob">100.000%</span>
+          <span class="prob"><span class="global">100.000%</span><br><small class="local">100.0%</small></span>
         </div>
         <div class="children" id="root-children"></div>
       </div>
