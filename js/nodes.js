@@ -1,4 +1,4 @@
-// nodes.js — узлы, вероятности, Auto Balance
+// js/nodes.js — создание узлов, вероятности, Auto Balance
 
 let counter = 0;
 
@@ -59,42 +59,72 @@ function addSpawn(path) {
 }
 
 function updateProbabilities() {
-  // ... полный код расчёта из предыдущих версий, но с двойными вероятностями ...
-  // Для global — общий по событию, local — по ветке (используй рекурсию с аккумулятором)
-  function calc(node, globalProb = 1.0, localProb = 1.0) {
-    const el = node.querySelector('.prob');
-    const g = (globalProb * 100).toFixed(3) + '%';
-    const l = (localProb * 100).toFixed(1) + '%';
-    el.querySelector('.global').textContent = g;
-    el.querySelector('.local').textContent = l;
-    el.dataset.tip = `Global: ${g} | Local: ${l}`;
+  function calc(node, globalProb = 1.0, parentLocal = 1.0) {
+    if (!node) return;
+    const probEl = node.querySelector('.prob');
+    const globalEl = probEl.querySelector('.global');
+    const localEl = probEl.querySelector('.local');
+
+    if (node.classList.contains('spawn')) {
+      const g = (globalProb * 100).toFixed(3) + '%';
+      const l = (parentLocal * 100).toFixed(1) + '%';
+      globalEl.textContent = g;
+      localEl.textContent = l;
+      probEl.dataset.tip = `Global: ${g} | Local: ${l}`;
+      return;
+    }
 
     if (node.classList.contains('rng')) {
-      const c = parseFloat(node.querySelector('.chance').value) || 0.5;
-      const sGlobal = globalProb * c;
-      const fGlobal = globalProb * (1 - c);
-      const sLocal = c;
-      const fLocal = 1 - c;
+      const chance = parseFloat(node.querySelector('.chance').value) || 0.5;
+      const successGlobal = globalProb * chance;
+      const failureGlobal = globalProb * (1 - chance);
 
-      const sc = node.querySelector(`#c-${node.dataset.id}-s`);
-      const fc = node.querySelector(`#c-${node.dataset.id}-f`);
-      sc && sc.querySelectorAll(':scope > .node').forEach(n => calc(n, sGlobal, sLocal));
-      fc && fc.querySelectorAll(':scope > .node').forEach(n => calc(n, fGlobal, fLocal));
+      const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
+      const failureCont = node.querySelector(`#c-${node.dataset.id}-f`);
+
+      successCont && successCont.querySelectorAll(':scope > .node').forEach(n => calc(n, successGlobal, chance));
+      failureCont && failureCont.querySelectorAll(':scope > .node').forEach(n => calc(n, failureGlobal, 1 - chance));
+
+      // Для самого RNG показываем только глобальный процент
+      globalEl.textContent = (globalProb * 100).toFixed(3) + '%';
+      localEl.textContent = (chance * 100).toFixed(1) + '% → ' + ((1-chance)*100).toFixed(1) + '%';
     }
   }
+
   document.querySelectorAll('#root-children > .node').forEach(n => calc(n, 1.0, 1.0));
 }
 
 function autoBalance() {
-  const lang = localStorage.getItem('lang') || 'en';
-  const txt = lang === 'ru' ? 'Режим баланса:\n1 — Равномерно\n2 — По предметам' : 'Balance mode:\n1 — Even\n2 — By items';
-  const mode = prompt(txt, '2');
-  // ... полный код из предыдущего, но с локализацией ...
+  const mode = prompt(L.autoBalancePrompt || "1 — Even\n2 — By items", "2");
+  if (!mode || !['1','2'].includes(mode)) return;
+
+  document.querySelectorAll('.node.rng').forEach(rng => {
+    const input = rng.querySelector('.chance');
+    if (!input) return;
+
+    if (mode === '1') {
+      input.value = 0.5;
+    } else {
+      const successItems = rng.querySelector(`#c-${rng.dataset.id}-s`)?.querySelectorAll('.node.spawn').length || 0;
+      const failureItems = rng.querySelector(`#c-${rng.dataset.id}-f`)?.querySelectorAll('.node.spawn').length || 0;
+      const total = successItems + failureItems;
+      if (total === 0) {
+        input.value = 0.5;
+      } else {
+        input.value = (successItems / total).toFixed(6);
+      }
+    }
+  });
+
+  updateAll();
+  alert(L.autoBalanceApplied || "Balance applied!");
 }
 
 function updateAll() {
   updateProbabilities();
-  if (isTreeView) renderTree();
+  if (typeof renderTree === 'function' && !document.getElementById('tree-container').classList.contains('hidden')) {
+    renderTree();
+  }
 }
 
 window.addRNG = addRNG;
