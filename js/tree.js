@@ -1,4 +1,4 @@
-// tree.js — визуализация дерева
+// js/tree.js — D3-дерево
 
 let isTreeView = false;
 const svg = d3.select("#tree-svg");
@@ -89,7 +89,6 @@ function renderTree() {
 window.toggleView = toggleView;
 window.renderTree = renderTree;
 
-// Адаптация под ресайз
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
