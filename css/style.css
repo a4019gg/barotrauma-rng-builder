@@ -118,6 +118,7 @@ button.danger { background: #d16969; }
   flex: 1;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 #sidebar {
   width: 100%;
@@ -125,15 +126,19 @@ button.danger { background: #d16969; }
   overflow-y: auto;
   overflow-x: hidden;
   height: 100%;
+  transition: opacity 0.3s;
 }
 #tree-container {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: calc(100vh - 200px);
+  height: 100%;
   background: var(--bg);
+  z-index: 999;
 }
 #tree-container.hidden { display: none; }
-#classic-view.fullscreen #sidebar { width: 100%; }
-#classic-view.fullscreen #tree-container { display: none !important; }
+#classic-view.hidden { opacity: 0; pointer-events: none; }
 .bottom-bar {
   padding: 8px 20px;
   background: var(--panel);
@@ -239,3 +244,8 @@ textarea {
   line-height: 20px;
 }
 .delete-tab:hover { background: #ff4444; }
+#active-event-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0;
+}
