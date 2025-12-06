@@ -1,30 +1,24 @@
-// utils.js — темы, язык, импорт/экспорт, утилиты
+// utils.js — темы, язык, импорт/экспорт
 
-function setTheme(theme) {
-  if (theme === 'auto') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    theme = prefersDark ? 'dark' : 'light';
-  }
-  document.body.dataset.theme = theme;
-  localStorage.setItem('theme', theme);
+function setTheme(t) {
+  document.body.dataset.theme = t;
+  localStorage.setItem('theme', t);
 }
 
-function setLang(lang) {
-  localStorage.setItem('lang', lang);
-  document.getElementById('lang-btn').textContent = lang === 'ru' ? '[RU] Русский' : '[EN] English';
-  document.getElementById('root-label').textContent = lang === 'ru' ? 'Корневое событие' : 'Root Event';
-  // простая локализация Success/Failure
-  document.querySelectorAll('.success-label').forEach(el => el.textContent = lang === 'ru' ? 'Успех' : 'Success');
-  document.querySelectorAll('.failure-label').forEach(el => el.textContent = lang === 'ru' ? 'Провал' : 'Failure');
+function setLang(l) {
+  localStorage.setItem('lang', l);
+  document.getElementById('root-label').textContent = l === 'ru' ? 'Корневое событие' : 'Root Event';
+  document.querySelectorAll('.success-label').forEach(e => e.textContent = l === 'ru' ? 'Успех' : 'Success');
+  document.querySelectorAll('.failure-label').forEach(e => e.textContent = l === 'ru' ? 'Провал' : 'Failure');
 }
 
 function exportJSON() {
   const data = {
-    version: "5.3",
+    version: "5.6",
     eventId: document.getElementById('event-id').value,
     treeHTML: document.getElementById('root-children').innerHTML
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -43,13 +37,11 @@ document.getElementById('file-input').addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const data = JSON.parse(ev.target.result);
-      document.getElementById('event-id').value = data.eventId || 'imported';
-      document.getElementById('root-children').innerHTML = data.treeHTML || '';
+      const d = JSON.parse(ev.target.result);
+      document.getElementById('event-id').value = d.eventId || 'imported';
+      document.getElementById('root-children').innerHTML = d.treeHTML || '';
       updateAll();
-    } catch (err) {
-      alert('Ошибка импорта: неверный JSON');
-    }
+    } catch { alert('Ошибка импорта'); }
   };
   reader.readAsText(file);
 });
@@ -66,24 +58,16 @@ function loadExample() {
   addRNG('');
   setTimeout(() => {
     const first = document.querySelector('#root-children > .node.rng');
-    if (first) {
-      first.querySelector('.chance').value = 0.6;
-      addRNG(first.dataset.id + '-s');
-      addSpawn(first.dataset.id + '-s.0-s');
-      updateAll();
-    }
+    first.querySelector('.chance').value = 0.6;
+    addRNG(first.dataset.id + '-s');
+    addSpawn(first.dataset.id + '-s.0-s');
+    updateAll();
   }, 100);
 }
 
-function autoBalance() {
-  alert('Auto Balance — в разработке!\nСкоро будет равномерное и весовое распределение шансов.');
-}
-
-// Глобальные функции
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.exportJSON = exportJSON;
 window.importFile = importFile;
 window.clearAll = clearAll;
 window.loadExample = loadExample;
-window.autoBalance = autoBalance;
