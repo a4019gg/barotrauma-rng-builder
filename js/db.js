@@ -1,52 +1,28 @@
-// js/db.js — база предметов + моды + поиск
+// js/db.js — база предметов + моды + красивый DB
 
-let itemsDB = {};
-const PROXY = 'https://api.allorigins.win/raw?url=';
-const VANILLA_URL = 'https://raw.githubusercontent.com/Regalis11/Barotrauma/master/Content/Items/items.xml';
+let itemsDB = { Vanilla: [], Mods: [] };
 
 function populateDatalist() {
-  const saved = localStorage.getItem('itemsDB_v0.6');
+  const saved = localStorage.getItem('itemsDB_v0.7');
   if (saved) {
     itemsDB = JSON.parse(saved);
     fillDatalist();
     return;
   }
 
-  fetch(PROXY + encodeURIComponent(VANILLA_URL))
-    .then(r => r.text())
-    .then(xml => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(xml, 'text/xml');
-      const items = [...doc.querySelectorAll('item[identifier]')];
-      const db = {};
-
-      items.forEach(item => {
-        const id = item.getAttribute('identifier');
-        const tags = (item.getAttribute('tags') || '').toLowerCase();
-        let group = 'Misc';
-        if (tags.includes('weapon')) group = 'Weapons';
-        else if (tags.includes('medical')) group = 'Medical';
-        else if (tags.includes('tool')) group = 'Tools';
-        else if (tags.includes('ammo')) group = 'Ammo';
-        else if (tags.includes('diving')) group = 'Diving Gear';
-        else if (tags.includes('explosive')) group = 'Explosives';
-        if (!db[group]) db[group] = [];
-        db[group].push(id);
-      });
-
-      itemsDB = db;
-      localStorage.setItem('itemsDB_v0.6', JSON.stringify(itemsDB));
+  // Надёжный источник ванильных предметов (официальный)
+  fetch('https://barotrauma.game-vault.net/GameData/Items.json')
+    .then(r => r.json())
+    .then(data => {
+      itemsDB.Vanilla = data
+        .map(i => i.identifier)
+        .filter(Boolean)
+        .sort();
+      localStorage.setItem('itemsDB_v0.7', JSON.stringify(itemsDB));
       fillDatalist();
     })
     .catch(() => {
-      // fallback
-      itemsDB = {
-        Weapons: ['revolver', 'smg', 'rifle', 'shotgun'],
-        Medical: ['morphine', 'fentanyl', 'antibiotics'],
-        Tools: ['welder', 'screwdriver', 'wrench'],
-        Misc: ['clownmask', 'toyhammer', 'balloon']
-      };
-      localStorage.setItem('itemsDB_v0.6', JSON.stringify(itemsDB));
+      itemsDB.Vanilla = ['revolver', 'smg', 'rifle', 'shotgun', 'morphine', 'fentanyl', 'clownmask'];
       fillDatalist();
     });
 }
@@ -54,28 +30,65 @@ function populateDatalist() {
 function fillDatalist() {
   const dl = document.getElementById('item-datalist');
   dl.innerHTML = '';
-  Object.values(itemsDB).flat().sort().forEach(item => {
+  [...itemsDB.Vanilla, ...itemsDB.Mods].sort().forEach(item => {
     const opt = document.createElement('option');
     opt.value = item;
     dl.appendChild(opt);
   });
 }
 
-function openItemPicker() {
-  let html = '<div style="max-height:400px;overflow:auto"><h3>Выберите предмет</h3>';
-  for (const [group, items] of Object.entries(itemsDB)) {
-    html += `<h4>${group} (${items.length})</h4><div style="display:flex;flex-wrap:wrap;gap:8px">`;
-    items.forEach(item => {
-      html += `<button onclick="insertItem('${item}')" style="margin:2px;padding:4px 8px">${item}</button>`;
-    });
-    html += '</div>';
-  }
-  html += '</div>';
+function openDB() {
+  let html = `
+    <div style="max-height:80vh;overflow:auto;padding:10px">
+      <ul class="db-tabs">
+        <li class="active" onclick="showTab('vanilla')">Vanilla (${itemsDB.Vanilla.length})</li>
+        <li onclick="showTab('mods')">Mods (${itemsDB.Mods.length})</li>
+      </ul>
+      <div id="vanilla-tab">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
+  `;
+  itemsDB.Vanilla.forEach(item => {
+    html += `<button class="db-item" onclick="insertItem('${item}')">${item}</button>`;
+  });
+  html += `</div></div><div id="mods-tab" class="hidden"><div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">`;
+  itemsDB.Mods.forEach(item => {
+    html += `<button class="db-item" onclick="insertItem('${item}')">${item}</button>`;
+  });
+  html += `</div>
+    <input type="file" id="mod-file" accept=".json">
+    <button onclick="loadMod()">Load Mod</button>
+  </div></div>`;
+
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:1000';
   modal.innerHTML = `<div style="background:#252526;padding:20px;border-radius:8px;max-width:90%;max-height:90%;overflow:auto;color:#ddd">${html}</div>`;
   modal.onclick = e => e.target === modal && modal.remove();
   document.body.appendChild(modal);
+}
+
+function showTab(tab) {
+  document.querySelectorAll('#vanilla-tab, #mods-tab').forEach(t => t.classList.toggle('hidden', t.id !== tab + '-tab'));
+  document.querySelectorAll('.db-tabs li').forEach(li => li.classList.toggle('active', li.textContent.includes(tab.charAt(0).toUpperCase() + tab.slice(1))));
+}
+
+function loadMod() {
+  const input = document.getElementById('mod-file');
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const mod = JSON.parse(e.target.result);
+      if (Array.isArray(mod)) {
+        itemsDB.Mods = [...itemsDB.Mods, ...mod.filter(m => typeof m === 'string')];
+        localStorage.setItem('itemsDB_v0.7', JSON.stringify(itemsDB));
+        fillDatalist();
+        openDB(); // обновляем окно
+        alert('Mod loaded!');
+      }
+    } catch { alert('Invalid mod JSON'); }
+  };
+  reader.readAsText(file);
 }
 
 function insertItem(id) {
@@ -89,5 +102,5 @@ function insertItem(id) {
 }
 
 window.populateDatalist = populateDatalist;
-window.openItemPicker = openItemPicker;
+window.openDB = openDB;
 window.insertItem = insertItem;
