@@ -229,9 +229,14 @@ textarea {
   color: #fff;
   cursor: pointer;
   font-size: 12px;
+  position: relative;
 }
 .tab.active { background: var(--accent); }
 .delete-tab {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   background: #d16969;
   color: white;
   border: none;
@@ -242,7 +247,9 @@ textarea {
   cursor: pointer;
   padding: 0;
   line-height: 20px;
+  display: none;
 }
+.tab.active .delete-tab { display: block; }
 .delete-tab:hover { background: #ff4444; }
 #active-event-controls {
   display: flex;
