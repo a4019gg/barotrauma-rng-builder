@@ -1,3 +1,4 @@
+// js/lang/en.js
 const LANG_EN = {
   rootLabel: "Root Event",
   successLabel: "Success",
@@ -17,5 +18,9 @@ const LANG_EN = {
   pickItem: "Pick Item",
   settings: "Settings",
   theme: "Theme",
-  language: "Language"
+  language: "Language",
+  dbVanilla: "Vanilla",
+  dbMods: "Mods",
+  dbSearch: "Search items...",
+  dbLoadMod: "Load Mod"
 };
