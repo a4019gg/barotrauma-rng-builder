@@ -3,26 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v5.5</title>
+  <title>Barotrauma RNG Builder v5.6</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v5.5</h1>
+  <h1>Barotrauma RNG Builder v5.6</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
     <button onclick="clearAll()">Clear</button>
     <button onclick="loadExample()">Example</button>
-    <button onclick="autoBalance()" id="auto-balance-btn">Auto Balance</button>
   </div>
   <div class="right">
     <button onclick="exportJSON()" class="green">Export</button>
     <button onclick="importFile()" class="blue">Import</button>
+    <button onclick="toggleView()" id="view-btn">Tree View</button>
+    <button onclick="showDB()">DB</button>
     <div class="dropdown">
-      <button id="settings-btn">Settings</button>
+      <button>Settings</button>
       <div class="dropdown-menu">
         <div onclick="setTheme('dark')">Dark Theme</div>
         <div onclick="setTheme('light')">Light Theme</div>
@@ -43,8 +44,8 @@
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <button class="tab active" onclick="switchEvent(0)">Event 1</button>
-        <button class="tab" onclick="addEvent()">+ Add Event</button>
+        <button class="tab active" data-index="0">Event 1</button>
+        <button class="tab add" onclick="addEvent()">+ Add Event</button>
       </div>
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
@@ -69,7 +70,6 @@
 <textarea id="output" placeholder="XML will appear here..."></textarea>
 
 <input type="file" id="file-input" style="display:none">
-<input type="file" id="mod-input" style="display:none">
 <datalist id="item-datalist"></datalist>
 
 <script src="js/utils.js"></script>
