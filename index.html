@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.7.0</title>
+  <title>Barotrauma RNG Builder v0.7.1</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v0.7.0</h1>
+  <h1>Barotrauma RNG Builder v0.7.1</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
@@ -50,10 +50,10 @@
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <button class="tab active" data-index="0">
+        <div class="tab active" data-index="0">
           Event 1
-          <span class="delete-tab" onclick="deleteEvent(0)">×</span>
-        </button>
+          <button class="delete-tab" onclick="deleteEvent(0)">×</button>
+        </div>
         <button class="tab add" onclick="addEvent()">+ Add Event</button>
       </div>
       <div id="tree-root" class="node root">
@@ -79,7 +79,6 @@
 <textarea id="output" placeholder="XML will appear here..."></textarea>
 
 <input type="file" id="file-input" style="display:none">
-<input type="file" id="mod-input" style="display:none">
 <datalist id="item-datalist"></datalist>
 
 <script src="js/lang/en.js"></script>
