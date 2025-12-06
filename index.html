@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.7.1</title>
+  <title>Barotrauma RNG Builder v0.7.2</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v0.7.1</h1>
+  <h1>Barotrauma RNG Builder v0.7.2</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
@@ -50,11 +50,11 @@
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <div class="tab active" data-index="0">
-          Event 1
-          <button class="delete-tab" onclick="deleteEvent(0)">×</button>
-        </div>
+        <button class="tab active" data-index="0">Event 1</button>
         <button class="tab add" onclick="addEvent()">+ Add Event</button>
+      </div>
+      <div id="active-event-controls" style="margin:10px 0;display:none">
+        <button class="danger small" onclick="deleteCurrentEvent()">Delete Active Event</button>
       </div>
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
