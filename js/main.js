@@ -1,4 +1,4 @@
-// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.7.2
+// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.8.0
 
 let currentEvent = 0;
 const events = [{ html: '', eventId: 'lucky_box_event' }];
@@ -69,7 +69,7 @@ function toggleView() {
 
 function exportJSON() {
   const data = {
-    version: "0.7.2",
+    version: "0.8.0",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -88,18 +88,13 @@ function importFile() {
 document.getElementById('file-input').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
       if (data.events && Array.isArray(data.events)) {
-        data.events.forEach((ev, i) => {
-          const index = events.length + i;
-          events.push({
-            html: ev.html || '',
-            eventId: ev.eventId || `imported_${index + 1}`
-          });
+        data.events.forEach(ev => {
+          events.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
           addEvent();
         });
         switchEvent(events.length - 1);
@@ -137,20 +132,11 @@ function loadExample() {
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
-  // Загрузка базы предметов
   populateDatalist();
-
-  // Восстановление настроек
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  setTheme(savedTheme);
-
-  const savedLang = localStorage.getItem('lang') || 'en';
-  setLang(savedLang);
-
-  // Пример при старте
+  setTheme(localStorage.getItem('theme') || 'dark');
+  setLang(localStorage.getItem('lang') || 'en');
   loadExample();
 
-  // Подсказки для процентов
   document.addEventListener('mouseover', e => {
     if (e.target.classList.contains('prob') && e.target.dataset.tip) {
       let tooltip = document.getElementById('prob-tooltip');
@@ -173,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  console.log('%cBarotrauma RNG Builder v0.7.2 запущен!', 'color:#61afef;font-size:16px');
+  console.log('%cBarotrauma RNG Builder v0.8.0 запущен!', 'color:#61afef;font-size:16px');
 });
 
 // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
