@@ -245,3 +245,4 @@ textarea {
   line-height: 20px;
 }
 .delete-tab:hover { background: #ff4444; }
+#tree-svg { width: 100% !important; height: 100% !important; }
