@@ -223,3 +223,12 @@ textarea {
   font-size: 12px;
 }
 .tab.active { background: var(--accent); }
+.delete-tab {
+  margin-left: 8px;
+  color: #f44747;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+}
+.delete-tab:hover { color: #ff6666; }
+#tree-container { width: 100% !important; height: 100% !important; }
