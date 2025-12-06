@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.5.6</title>
+  <title>Barotrauma RNG Builder v0.6.0</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v0.5.6</h1>
+  <h1>Barotrauma RNG Builder v0.6.0</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
@@ -20,24 +20,29 @@
   <div class="right">
     <button onclick="exportJSON()" class="green">Export</button>
     <button onclick="importFile()" class="darkblue">Import</button>
-    <button onclick="showDB()">DB</button>
+    <button onclick="toggleView()" id="view-btn">Tree View</button>
+    <button onclick="openItemPicker()">Pick Item</button>
     <div class="dropdown">
       <button>Settings</button>
       <div class="dropdown-menu">
         <div><strong>Theme</strong></div>
-        <div onclick="setTheme('dark')">Dark</div>
-        <div onclick="setTheme('light')">Light</div>
+        <select onchange="setTheme(this.value)">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
         <hr>
         <div><strong>Language</strong></div>
-        <div onclick="setLang('en')">[EN] English</div>
-        <div onclick="setLang('ru')">[RU] Русский</div>
+        <select onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
       </div>
     </div>
   </div>
 </div>
 
 <div id="main">
-  <div id="classic-view" class="fullscreen">
+  <div id="classic-view">
     <div id="sidebar">
       <div class="input-group">
         <label>Event ID:</label>
@@ -45,13 +50,13 @@
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <button class="tab active" onclick="switchEvent(0)">Event 1</button>
-        <button class="tab" onclick="addEvent()">+ Add Event</button>
+        <button class="tab active" data-index="0">Event 1</button>
+        <button class="tab add" onclick="addEvent()">+ Add Event</button>
       </div>
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
           <strong id="root-label">Root Event</strong>
-          <span class="prob">100.000%</span>
+          <span class="prob"><span class="global">100.000%</span><br><small class="local">100.0%</small></span>
         </div>
         <div class="children" id="root-children"></div>
       </div>
@@ -71,11 +76,12 @@
 <textarea id="output" placeholder="XML will appear here..."></textarea>
 
 <input type="file" id="file-input" style="display:none">
-<input type="file" id="mod-input" style="display:none">
 <datalist id="item-datalist"></datalist>
 
-<script src="js/utils.js"></script>
+<script src="js/lang/en.js"></script>
+<script src="js/lang/ru.js"></script>
 <script src="js/db.js"></script>
+<script src="js/utils.js"></script>
 <script src="js/nodes.js"></script>
 <script src="js/tree.js"></script>
 <script src="js/xml.js"></script>
