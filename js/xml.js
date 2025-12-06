@@ -1,4 +1,4 @@
-// xml.js — генерация, копирование и скачивание XML
+// xml.js — генерация, копирование, скачивание
 
 function generateXML() {
   let xml = `<ScriptedEvent identifier="${document.getElementById('event-id').value || 'custom_event'}" commonness="100">\n`;
@@ -25,7 +25,6 @@ function generateXML() {
   }
 
   walk(document.getElementById('root-children'));
-
   xml += `</ScriptedEvent>`;
 
   const fullXML = `<Randomevents>\n  <EventPrefabs>\n    ${xml}\n  </EventPrefabs>\n</Randomevents>`;
@@ -34,21 +33,13 @@ function generateXML() {
 
 function copyXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) {
-    alert('Сначала сгенерируйте XML!');
-    return;
-  }
-  navigator.clipboard.writeText(text).then(() => {
-    alert('XML скопирован в буфер обмена!');
-  });
+  if (!text.trim()) { alert('Сначала сгенерируйте XML!'); return; }
+  navigator.clipboard.writeText(text).then(() => alert('XML скопирован!'));
 }
 
 function downloadXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) {
-    alert('Сначала сгенерируйте XML!');
-    return;
-  }
+  if (!text.trim()) { alert('Сначала сгенерируйте XML!'); return; }
   const blob = new Blob([text], { type: 'text/xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -58,7 +49,6 @@ function downloadXML() {
   URL.revokeObjectURL(url);
 }
 
-// Экспорт функций
 window.generateXML = generateXML;
 window.copyXML = copyXML;
 window.downloadXML = downloadXML;
