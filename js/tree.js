@@ -1,4 +1,4 @@
-// js/tree.js — D3-дерево
+// js/tree.js — D3-дерево, теперь на весь экран
 
 let isTreeView = false;
 const svg = d3.select("#tree-svg");
@@ -8,9 +8,10 @@ svg.call(zoom);
 
 function toggleView() {
   isTreeView = !isTreeView;
+  const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-  classic.classList.toggle('fullscreen', !isTreeView);
-  document.getElementById('tree-container').classList.toggle('hidden', !isTreeView);
+  tree.classList.toggle('hidden', !isTreeView);
+  classic.classList.toggle('hidden', isTreeView);
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
   if (isTreeView) renderTree();
 }
@@ -40,8 +41,8 @@ function renderTree() {
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  const width = window.innerWidth - 500;
-  const height = window.innerHeight - 200;
+  const width = window.innerWidth;
+  const height = window.innerHeight - 200; // учитываем header и bottom-bar
   const treeLayout = d3.tree().size([height - 100, width - 200]);
   const root = d3.hierarchy(rootData);
   treeLayout(root);
@@ -69,13 +70,13 @@ function renderTree() {
     .attr("dy", 4)
     .attr("x", d => d.children ? -25 : 25)
     .style("text-anchor", d => d.children ? "end" : "start")
-    .style("font", "12px Consolas")
+    .style("font", "13px Consolas")
     .style("fill", "var(--text)")
     .text(d => d.data.name);
 
-  // Центрирование
+  // Центрирование и масштабирование
   const bounds = g.node().getBBox();
-  const scale = Math.min((width - 100) / bounds.width, (height - 100) / bounds.height) * 0.9;
+  const scale = Math.min((width - 100) / bounds.width, (height - 100) / bounds.height) * 0.9 || 1;
   const translate = [
     width / 2 - (bounds.x + bounds.width / 2) * scale,
     height / 2 - (bounds.y + bounds.height / 2) * scale
@@ -89,6 +90,7 @@ function renderTree() {
 window.toggleView = toggleView;
 window.renderTree = renderTree;
 
+// Адаптация под изменение размера окна
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
