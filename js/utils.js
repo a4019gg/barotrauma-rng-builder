@@ -1,45 +1,71 @@
-// js/utils.js — темы, локализация, импорт/экспорт
+// js/utils.js — ПОЛНАЯ ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ
 
 let currentLang = 'en';
-const L = {}; // сюда будет активный язык
+const L = {}; // сюда загружается активный язык
 
+// === ТЕМЫ ===
 function setTheme(theme) {
   document.body.dataset.theme = theme;
   localStorage.setItem('theme', theme);
+
+  // Обновляем выбранный пункт в настройках
+  const select = document.querySelector('.dropdown-menu select[onchange*="setTheme"]');
+  if (select) select.value = theme;
 }
 
+// === ЛОКАЛИЗАЦИЯ ===
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
+
+  // Загружаем нужный словарь
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Применяем переводы
+  // Применяем перевод ко всем элементам
   document.getElementById('root-label').textContent = L.rootLabel;
+
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
-  document.querySelectorAll('[data-lang]').forEach(el => {
-    const key = el.dataset.lang;
-    if (L[key]) el.textContent = L[key];
-  });
 
+  // Кнопки в шапке
+  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
+  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
+  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
+  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
+  document.querySelector('[onclick="importFile()"]').textContent = L.import;
+  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
+
+  // Кнопка Tree View
+  const viewBtn = document.getElementById('view-btn');
+  if (viewBtn) {
+    viewBtn.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
+  }
+
+  // Обновляем пример и всё остальное
   updateAll();
 }
 
+// === ЭКСПОРТ ВСЕХ СОБЫТИЙ ===
 function exportJSON() {
   const data = {
-    version: "0.8.0",
-    events: events.map(e => ({ eventId: e.eventId, html: e.html }))
+    version: "0.9.0",
+    events: events.map(e => ({
+      eventId: e.eventId,
+      html: e.html
+    }))
   };
+
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'rng-events.json';
+  a.download = 'barotrauma-rng-events.json';
   a.click();
   URL.revokeObjectURL(url);
 }
 
+// === ИМПОРТ СОБЫТИЙ ===
 function importFile() {
   document.getElementById('file-input').click();
 }
@@ -47,51 +73,43 @@ function importFile() {
 document.getElementById('file-input').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (data.version && data.events && Array.isArray(data.events)) {
-        events.length = 0;
-        events.push(...data.events.map(e => ({ html: e.html || '', eventId: e.eventId || 'imported' })));
-        document.getElementById('events-tabs').innerHTML = '';
-        events.forEach((_, i) => {
-          const tab = document.createElement('button');
-          tab.className = 'tab' + (i === 0 ? ' active' : '');
-          tab.innerHTML = `Event ${i + 1} <span class="delete-tab">×</span>`;
-          tab.onclick = ev => {
-            if (!ev.target.classList.contains('delete-tab')) switchEvent(i);
-          };
-          tab.querySelector('.delete-tab').onclick = ev => {
-            ev.stopPropagation();
-            deleteCurrentEvent();
-          };
-          document.getElementById('events-tabs').appendChild(tab);
+
+      if (!data.events || !Array.isArray(data.events)) {
+        throw new Error('Неверный формат файла');
+      });
+
+      data.events.forEach(ev => {
+        events.push({
+          html: ev.html || '',
+          eventId: ev.eventId || 'imported_event'
         });
-        const addBtn = document.createElement('button');
-        addBtn.className = 'tab add';
-        addBtn.textContent = '+ Add Event';
-        addBtn.onclick = addEvent;
-        document.getElementById('events-tabs').appendChild(addBtn);
-        switchEvent(0);
-        alert('Импорт завершён!');
-      } else {
-        alert('Неверный формат файла');
-      }
+        addEvent(); // создаём вкладку
+      });
+
+      switchEvent(events.length - 1);
+      alert('Импорт завершён! Добавлено ' + data.events.length + ' событий.');
     } catch (err) {
       alert('Ошибка импорта: ' + err.message);
     }
   };
+
   reader.readAsText(file);
 });
 
+// === ОЧИСТКА ===
 function clearAll() {
-  if (confirm('Очистить всё?')) {
+  if (confirm(L.clearAllConfirm || 'Clear all?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
 }
 
+// === ПРИМЕР ПРИ ЗАПУСКЕ ===
 function loadExample() {
   clearAll();
   addRNG('');
@@ -106,7 +124,7 @@ function loadExample() {
   }, 100);
 }
 
-// Экспорт функций
+// Экспорт функций для других модулей
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.exportJSON = exportJSON;
