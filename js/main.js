@@ -1,53 +1,40 @@
-// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.6.0
+// js/main.js
 
 let currentEvent = 0;
 const events = [{ html: '', eventId: 'lucky_box_event' }];
 
 function switchEvent(index) {
-  // Сохраняем текущее событие
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id').value
   };
-
   currentEvent = index;
-
-  // Восстанавливаем выбранное событие
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
-
-  // Подсвечиваем активную вкладку
-  document.querySelectorAll('#events-tabs .tab').forEach((tab, i) => {
-    tab.classList.toggle('active', i === index);
-  });
-
+  document.querySelectorAll('#events-tabs .tab').forEach((t, i) => t.classList.toggle('active', i === index));
   updateAll();
+}
+
+function deleteEvent(index) {
+  if (events.length <= 1) return alert('Cannot delete the last event!');
+  if (confirm('Delete event?')) {
+    events.splice(index, 1);
+    document.querySelectorAll('#events-tabs .tab')[index].remove();
+    if (currentEvent >= events.length) currentEvent = events.length - 1;
+    switchEvent(currentEvent);
+  }
 }
 
 function addEvent() {
   const index = events.length;
   events.push({ html: '', eventId: `event_${index + 1}` });
-
   const tab = document.createElement('button');
   tab.className = 'tab';
-  tab.textContent = `Event ${index + 1}`;
-  tab.onclick = () => switchEvent(index);
-
-  tab.ondblclick = (e) => {
-    e.stopPropagation();
-    if (events.length <= 1) {
-      alert('Нельзя удалить последнее событие!');
-      return;
-    }
-    if (confirm('Удалить событие?')) {
-      events.splice(index, 1);
-      tab.remove();
-      if (currentEvent >= events.length) currentEvent = events.length - 1;
-      switchEvent(currentEvent);
-    }
+  tab.innerHTML = `Event ${index + 1} <span class="delete-tab" onclick="deleteEvent(${index})">×</span>`;
+  tab.onclick = (e) => {
+    if (!e.target.classList.contains('delete-tab')) switchEvent(index);
   };
-
-  document.querySelector('#events-tabs .tab:last-child').before(tab);
+  document.querySelector('#events-tabs .add').before(tab);
   switchEvent(index);
 }
 
@@ -59,22 +46,12 @@ function toggleView() {
   if (!isFullscreen) renderTree();
 }
 
-// === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
-  // Загрузка базы предметов
   populateDatalist();
-
-  // Восстановление настроек
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  setTheme(savedTheme);
-
-  const savedLang = localStorage.getItem('lang') || 'en';
-  setLang(savedLang);
-
-  // Пример при старте
+  setTheme(localStorage.getItem('theme') || 'dark');
+  setLang(localStorage.getItem('lang') || 'en');
   loadExample();
 
-  // Подсказки для процентов
   document.addEventListener('mouseover', e => {
     if (e.target.classList.contains('prob') && e.target.dataset.tip) {
       let tooltip = document.getElementById('prob-tooltip');
@@ -96,11 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tooltip) tooltip.remove();
     }
   });
-
-  console.log('%cBarotrauma RNG Builder v0.6.0 запущен!', 'color:#61afef;font-size:16px');
 });
 
-// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
 window.switchEvent = switchEvent;
+window.deleteEvent = deleteEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
