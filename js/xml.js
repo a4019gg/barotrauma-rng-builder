@@ -33,13 +33,13 @@ function generateXML() {
 
 function copyXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) return alert('Сгенерируйте XML сначала!');
+  if (!text.trim()) return alert('Сначала сгенерируйте XML!');
   navigator.clipboard.writeText(text).then(() => alert('XML скопирован!'));
 }
 
 function downloadXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) return alert('Сгенерируйте XML сначала!');
+  if (!text.trim()) return alert('Сначала сгенерируйте XML!');
   const blob = new Blob([text], { type: 'text/xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
