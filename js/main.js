@@ -1,4 +1,4 @@
-// js/main.js — ПОЛНЫЙ, 100% РАБОЧИЙ
+// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.6.0
 
 let currentEvent = 0;
 const events = [{ html: '', eventId: 'lucky_box_event' }];
@@ -12,7 +12,7 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем выбранное
+  // Восстанавливаем выбранное событие
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
 
@@ -31,12 +31,14 @@ function addEvent() {
   const tab = document.createElement('button');
   tab.className = 'tab';
   tab.textContent = `Event ${index + 1}`;
-  tab.dataset.index = index;
-
   tab.onclick = () => switchEvent(index);
+
   tab.ondblclick = (e) => {
     e.stopPropagation();
-    if (events.length <= 1) return alert('Нельзя удалить последнее событие!');
+    if (events.length <= 1) {
+      alert('Нельзя удалить последнее событие!');
+      return;
+    }
     if (confirm('Удалить событие?')) {
       events.splice(index, 1);
       tab.remove();
@@ -59,10 +61,10 @@ function toggleView() {
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
-  // Загружаем базу
+  // Загрузка базы предметов
   populateDatalist();
 
-  // Восстанавливаем настройки
+  // Восстановление настроек
   const savedTheme = localStorage.getItem('theme') || 'dark';
   setTheme(savedTheme);
 
@@ -95,10 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  console.log('%cBarotrauma RNG Builder v0.5.6 запущен!', 'color:#61afef;font-size:16px');
+  console.log('%cBarotrauma RNG Builder v0.6.0 запущен!', 'color:#61afef;font-size:16px');
 });
 
-// === Экспорт функций для других модулей ===
+// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
 window.switchEvent = switchEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
