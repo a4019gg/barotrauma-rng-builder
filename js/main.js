@@ -1,10 +1,11 @@
-// js/main.js — ПОЛНЫЙ, РАБОЧИЙ, ФИНАЛЬНЫЙ v0.8.2
+// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.0
 
 let currentEvent = 0;
 const events = [{ html: '', eventId: 'lucky_box_event' }];
 
+// Переключение между событиями
 function switchEvent(index) {
-  // Сохраняем текущее событие
+  // Сохраняем текущее
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id').value
@@ -12,7 +13,7 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем выбранное событие
+  // Восстанавливаем выбранное
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
 
@@ -21,30 +22,28 @@ function switchEvent(index) {
     tab.classList.toggle('active', i === index);
   });
 
-  // Показываем кнопку удаления только у активного события
-  document.querySelectorAll('.delete-tab').forEach(btn => btn.style.display = 'none');
-  const activeTab = document.querySelector(`#events-tabs .tab[data-index="${index}"]`);
-  if (activeTab) {
-    const deleteBtn = activeTab.querySelector('.delete-tab');
-    if (deleteBtn) deleteBtn.style.display = 'inline';
-  }
-
   updateAll();
 }
 
-function deleteCurrentEvent() {
+// Удаление события по индексу (кнопка × на вкладке)
+function deleteEvent(index, e) {
+  e.stopPropagation(); // Чтобы не сработал клик по вкладке
+
   if (events.length <= 1) {
-    alert('Нельзя удалить последнее событие!');
+    alert(L.lastEventWarning);
     return;
   }
-  if (confirm('Удалить текущее событие?')) {
-    events.splice(currentEvent, 1);
-    document.querySelectorAll('#events-tabs .tab')[currentEvent].remove();
+
+  if (confirm(L.deleteEventConfirm)) {
+    events.splice(index, 1);
+    document.querySelectorAll('#events-tabs .tab')[index].remove();
+
     if (currentEvent >= events.length) currentEvent = events.length - 1;
     switchEvent(currentEvent);
   }
 }
 
+// Добавление нового события
 function addEvent() {
   const index = events.length;
   events.push({ html: '', eventId: `event_${index + 1}` });
@@ -52,17 +51,23 @@ function addEvent() {
   const tab = document.createElement('button');
   tab.className = 'tab';
   tab.dataset.index = index;
-  tab.innerHTML = `Event ${index + 1} <span class="delete-tab" style="display:none">×</span>`;
+  tab.innerHTML = `Event ${index + 1} <span class="delete-tab">×</span>`;
+
+  // Клик по вкладке — переключаем
   tab.onclick = (e) => {
     if (!e.target.classList.contains('delete-tab')) {
       switchEvent(index);
     }
   };
 
+  // Клик по × — удаляем
+  tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
+
   document.querySelector('#events-tabs .add').before(tab);
   switchEvent(index);
 }
 
+// Переключение Tree / Classic
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
@@ -72,9 +77,10 @@ function toggleView() {
   if (!tree.classList.contains('hidden')) renderTree();
 }
 
+// Экспорт всех событий
 function exportJSON() {
   const data = {
-    version: "0.8.2",
+    version: "0.9.0",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -86,6 +92,7 @@ function exportJSON() {
   URL.revokeObjectURL(url);
 }
 
+// Импорт (добавляет события, не заменяет)
 function importFile() {
   document.getElementById('file-input').click();
 }
@@ -114,13 +121,15 @@ document.getElementById('file-input').addEventListener('change', e => {
   reader.readAsText(file);
 });
 
+// Очистка текущего события
 function clearAll() {
-  if (confirm('Очистить всё?')) {
+  if (confirm(L.clearAllConfirm || 'Clear all?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
 }
 
+// Пример при запуске
 function loadExample() {
   clearAll();
   addRNG('');
@@ -135,36 +144,12 @@ function loadExample() {
   }, 100);
 }
 
-// === ДОБАВЛЕНО: фикс для первой вкладки и кнопки удаления ===
-function initEventsTabs() {
-  document.querySelectorAll('#events-tabs .tab').forEach((tab, i) => {
-    tab.dataset.index = i;
-    tab.onclick = (e) => {
-      if (!e.target.classList.contains('delete-tab')) {
-        switchEvent(i);
-      }
-    };
-    const deleteBtn = tab.querySelector('.delete-tab');
-    if (deleteBtn) {
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        deleteCurrentEvent();
-      };
-    }
-  });
-  // Показываем × только у активного
-  switchEvent(0);
-}
-
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
   setTheme(localStorage.getItem('theme') || 'dark');
   setLang(localStorage.getItem('lang') || 'en');
   loadExample();
-
-  // Фикс для первой вкладки и кнопки удаления
-  initEventsTabs();
 
   // Подсказки для процентов
   document.addEventListener('mouseover', e => {
@@ -189,16 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  console.log('%cBarotrauma RNG Builder v0.8.2 запущен!', 'color:#61afef;font-size:16px');
+  console.log('%cBarotrauma RNG Builder v0.9.0 запущен!', 'color:#61afef;font-size:16px');
 });
 
 // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
 window.switchEvent = switchEvent;
-window.deleteCurrentEvent = deleteCurrentEvent;
+window.deleteEvent = deleteEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
 window.exportJSON = exportJSON;
 window.importFile = importFile;
 window.clearAll = clearAll;
 window.loadExample = loadExample;
-window.initEventsTabs = initEventsTabs;
