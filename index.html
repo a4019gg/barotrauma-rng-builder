@@ -23,7 +23,7 @@
     <button onclick="showDB()">DB</button>
     <div class="dropdown">
       <button>Settings</button>
-      <div class="dropdown-menu settings">
+      <div class="dropdown-menu">
         <div><strong>Theme</strong></div>
         <div onclick="setTheme('dark')">Dark</div>
         <div onclick="setTheme('light')">Light</div>
@@ -37,7 +37,7 @@
 </div>
 
 <div id="main">
-  <div id="classic-view">
+  <div id="classic-view" class="fullscreen">
     <div id="sidebar">
       <div class="input-group">
         <label>Event ID:</label>
@@ -45,13 +45,13 @@
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <button class="tab active" data-index="0">Event 1</button>
-        <button class="tab add" onclick="addEvent()">+ Add Event</button>
+        <button class="tab active" onclick="switchEvent(0)">Event 1</button>
+        <button class="tab" onclick="addEvent()">+ Add Event</button>
       </div>
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
           <strong id="root-label">Root Event</strong>
-          <span class="prob"><span class="global">100.000%</span><br><small class="local">100.0%</small></span>
+          <span class="prob">100.000%</span>
         </div>
         <div class="children" id="root-children"></div>
       </div>
@@ -71,6 +71,7 @@
 <textarea id="output" placeholder="XML will appear here..."></textarea>
 
 <input type="file" id="file-input" style="display:none">
+<input type="file" id="mod-input" style="display:none">
 <datalist id="item-datalist"></datalist>
 
 <script src="js/utils.js"></script>
