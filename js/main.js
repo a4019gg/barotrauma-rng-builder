@@ -21,14 +21,6 @@ function switchEvent(index) {
     tab.classList.toggle('active', i === index);
   });
 
-  // Показываем кнопку удаления только у активного события
-  document.querySelectorAll('.delete-tab').forEach(btn => btn.style.display = 'none');
-  const activeTab = document.querySelector(`#events-tabs .tab[data-index="${index}"]`);
-  if (activeTab) {
-    const deleteBtn = activeTab.querySelector('.delete-tab');
-    if (deleteBtn) deleteBtn.style.display = 'inline';
-  }
-
   updateAll();
 }
 
@@ -51,9 +43,16 @@ function addEvent() {
 
   const tab = document.createElement('button');
   tab.className = 'tab';
-  tab.dataset.index = index;
-  tab.innerHTML = `Event ${index + 1} <span class="delete-tab" style="display:none">×</span>`;
-  tab.onclick = () => switchEvent(index);
+  tab.innerHTML = `Event ${index + 1} <span class="delete-tab">×</span>`;
+  tab.onclick = (e) => {
+    if (!e.target.classList.contains('delete-tab')) {
+      switchEvent(index);
+    }
+  };
+  tab.querySelector('.delete-tab').onclick = (e) => {
+    e.stopPropagation();
+    deleteCurrentEvent();
+  };
 
   document.querySelector('#events-tabs .add').before(tab);
   switchEvent(index);
@@ -62,13 +61,26 @@ function addEvent() {
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-  const isTree = tree.classList.toggle('hidden');
-  classic.classList.toggle('hidden', !isTree);
-  document.getElementById('view-btn').textContent = isTree ? 'Tree View' : 'Classic View';
-  if (!isTree) renderTree();
+  tree.classList.toggle('hidden');
+  classic.classList.toggle('hidden');
+  document.getElementById('view-btn').textContent = tree.classList.contains('hidden') ? 'Tree View' : 'Classic View';
+  if (!tree.classList.contains('hidden')) renderTree();
 }
 
-// === ИМПОРТ ===
+function exportJSON() {
+  const data = {
+    version: "0.7.2",
+    events: events.map(e => ({ eventId: e.eventId, html: e.html }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rng-events.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function importFile() {
   document.getElementById('file-input').click();
 }
@@ -82,15 +94,16 @@ document.getElementById('file-input').addEventListener('change', e => {
     try {
       const data = JSON.parse(ev.target.result);
       if (data.events && Array.isArray(data.events)) {
-        data.events.forEach(ev => {
+        data.events.forEach((ev, i) => {
+          const index = events.length + i;
           events.push({
             html: ev.html || '',
-            eventId: ev.eventId || 'imported_event'
+            eventId: ev.eventId || `imported_${index + 1}`
           });
           addEvent();
         });
         switchEvent(events.length - 1);
-        alert('События импортированы!');
+        alert('Импорт завершён!');
       } else {
         alert('Неверный формат файла');
       }
@@ -100,6 +113,27 @@ document.getElementById('file-input').addEventListener('change', e => {
   };
   reader.readAsText(file);
 });
+
+function clearAll() {
+  if (confirm('Очистить всё?')) {
+    document.getElementById('root-children').innerHTML = '';
+    updateAll();
+  }
+}
+
+function loadExample() {
+  clearAll();
+  addRNG('');
+  setTimeout(() => {
+    const first = document.querySelector('#root-children > .node.rng');
+    if (first) {
+      first.querySelector('.chance').value = 0.6;
+      addRNG(first.dataset.id + '-s');
+      addSpawn(first.dataset.id + '-s.0-s');
+      updateAll();
+    }
+  }, 100);
+}
 
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -147,4 +181,7 @@ window.switchEvent = switchEvent;
 window.deleteCurrentEvent = deleteCurrentEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
+window.exportJSON = exportJSON;
 window.importFile = importFile;
+window.clearAll = clearAll;
+window.loadExample = loadExample;
