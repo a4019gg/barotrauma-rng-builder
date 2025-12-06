@@ -1,40 +1,86 @@
-// main.js — запуск приложения
+// main.js — инициализация и управление событиями
 
-// Ждём загрузки DOM
+let currentEvent = 0;
+const events = [{ html: '', eventId: 'lucky_box_event' }];
+
+function switchEvent(index) {
+  // Сохраняем текущий
+  events[currentEvent] = {
+    html: document.getElementById('root-children').innerHTML,
+    eventId: document.getElementById('event-id').value
+  };
+  currentEvent = index;
+
+  // Восстанавливаем
+  document.getElementById('root-children').innerHTML = events[index].html || '';
+  document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
+
+  // Активная вкладка
+  document.querySelectorAll('#events-tabs .tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+
+  updateAll();
+}
+
+function addEvent() {
+  const index = events.length;
+  events.push({ html: '', eventId: `event_${index + 1}` });
+
+  const tab = document.createElement('button');
+  tab.className = 'tab';
+  tab.textContent = `Event ${index + 1}`;
+  tab.dataset.index = index;
+  tab.onclick = () => switchEvent(index);
+
+  const addBtn = document.querySelector('#events-tabs .tab.add');
+  addBtn.before(tab);
+
+  switchEvent(index);
+}
+
+function toggleView() {
+  const classic = document.getElementById('classic-view');
+  const isFullscreen = classic.classList.toggle('fullscreen');
+  document.getElementById('tree-container').classList.toggle('hidden', isFullscreen);
+  document.getElementById('view-btn').textContent = isFullscreen ? 'Tree View' : 'Classic View';
+  if (!isFullscreen) renderTree();
+}
+
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-  // Загружаем базу предметов
+  // Загрузка базы предметов
   populateDatalist();
 
-  // Восстанавливаем тему и язык
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  setTheme(savedTheme);
-  const savedLang = localStorage.getItem('lang') || 'en';
-  setLang(savedLang);
+  // Восстановление настроек
+  const theme = localStorage.getItem('theme') || 'dark';
+  setTheme(theme);
+  const lang = localStorage.getItem('lang') || 'en';
+  setLang(lang);
 
-  // Загружаем пример при старте
+  // Пример при старте
   loadExample();
 
-  // Добавляем подсказки к шансам
+  // Подсказки для вероятностей
   document.addEventListener('mouseover', e => {
     if (e.target.classList.contains('prob') && e.target.dataset.tip) {
-      const tooltip = document.createElement('div');
-      tooltip.textContent = e.target.dataset.tip;
-      tooltip.style.cssText = `
-        position: absolute; background: #333; color: #fff; padding: 4px 8px;
-        border-radius: 4px; font-size: 11px; z-index: 1000; pointer-events: none;
-        left: ${e.pageX + 10}px; top: ${e.pageY + 10}px;
-      `;
-      tooltip.id = 'prob-tooltip';
-      document.body.appendChild(tooltip);
+      const tip = document.createElement('div');
+      tip.className = 'tooltip';
+      tip.textContent = e.target.dataset.tip;
+      tip.style.left = (e.pageX + 10) + 'px';
+      tip.style.top = (e.pageY + 10) + 'px';
+      document.body.appendChild(tip);
     }
   });
-
   document.addEventListener('mouseout', e => {
     if (e.target.classList.contains('prob')) {
-      const tooltip = document.getElementById('prob-tooltip');
-      if (tooltip) tooltip.remove();
+      const tip = document.querySelector('.tooltip');
+      if (tip) tip.remove();
     }
   });
-
-  console.log('%cBarotrauma RNG Builder v5.3 готов!', 'color: #61afef; font-size: 16px;');
 });
+
+// Экспорт глобальных функций
+window.switchEvent = switchEvent;
+window.addEvent = addEvent;
+window.toggleView = toggleView;
