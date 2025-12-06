@@ -85,9 +85,8 @@ function updateProbabilities() {
       successCont && successCont.querySelectorAll(':scope > .node').forEach(n => calc(n, successGlobal, chance));
       failureCont && failureCont.querySelectorAll(':scope > .node').forEach(n => calc(n, failureGlobal, 1 - chance));
 
-      // Для самого RNG показываем только глобальный процент
       globalEl.textContent = (globalProb * 100).toFixed(3) + '%';
-      localEl.textContent = (chance * 100).toFixed(1) + '% → ' + ((1-chance)*100).toFixed(1) + '%';
+      localEl.textContent = (chance * 100).toFixed(1) + '% → ' + ((1 - chance) * 100).toFixed(1) + '%';
     }
   }
 
@@ -95,8 +94,8 @@ function updateProbabilities() {
 }
 
 function autoBalance() {
-  const mode = prompt(L.autoBalancePrompt || "1 — Even\n2 — By items", "2");
-  if (!mode || !['1','2'].includes(mode)) return;
+  const mode = prompt('1 — Равномерно (50/50)\n2 — По количеству предметов', '2');
+  if (!mode || !['1', '2'].includes(mode)) return;
 
   document.querySelectorAll('.node.rng').forEach(rng => {
     const input = rng.querySelector('.chance');
@@ -117,7 +116,7 @@ function autoBalance() {
   });
 
   updateAll();
-  alert(L.autoBalanceApplied || "Balance applied!");
+  alert('Auto Balance применён!');
 }
 
 function updateAll() {
@@ -127,6 +126,7 @@ function updateAll() {
   }
 }
 
+// Экспорт функций
 window.addRNG = addRNG;
 window.addSpawn = addSpawn;
 window.updateAll = updateAll;
