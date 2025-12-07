@@ -1,11 +1,51 @@
-/* css/themes/light.css — v0.9.114 */
+/* css/themes/light.css — полная светлая тема */
 
 :root[data-theme="light"] {
-  --grid-color: rgba(0,0,0,0.1);
+  --bg: #f8f9fa;
+  --panel: #ffffff;
+  --text: #212529;
+  --accent: #0d6efd;
+  --green: #198754;
+  --red: #dc3545;
+  --border: #dee2e6;
+  --node-bg: #ffffff;
+  --grid-color: rgba(0,0,0,0.06);
+  --shadow-low: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --shadow-high: 0 10px 20px rgba(0,0,0,0.15), 0 6px 6px rgba(0,0,0,0.1);
 }
 
-#editor-area::before {
-  background-image: 
-    linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+/* Переопределяем сетку в светлой теме */
+body[data-theme="light"] #editor-area::before {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+}
+
+/* Улучшенный вид нод */
+body[data-theme="light"] .node {
+  border-left-color: var(--accent);
+  box-shadow: var(--shadow-low);
+}
+
+/* Чуть светлее фон у панелей */
+body[data-theme="light"] .top-bar,
+body[data-theme="light"] .action-bar,
+body[data-theme="light"] .event-id-bar {
+  background: #ffffff;
+  border-color: #dee2e6;
+}
+
+/* Текстареа в светлой теме */
+body[data-theme="light"] textarea#output {
+  background: #f8f9fa;
+  color: #212529;
+  border: 1px solid #ced4da;
+}
+
+/* Кнопки в светлом стиле */
+body[data-theme="light"] button {
+  filter: none;
+}
+body[data-theme="light"] button:hover {
+  opacity: 0.9;
 }
