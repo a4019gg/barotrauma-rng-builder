@@ -1,6 +1,6 @@
 // js/tree.js — v0.9.101 — ИДЕАЛЬНЫЙ Tree View
 
-const TREE_VERSION = "v0.9.102";
+const TREE_VERSION = "v0.9.103";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
@@ -19,20 +19,21 @@ const zoom = d3.zoom()
 
 svg.call(zoom);
 
+// js/tree.js — v0.9.103 — Tree View под нодами
+
 function toggleView() {
   isTreeView = !isTreeView;
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-  
+
   tree.classList.toggle('hidden', !isTreeView);
   classic.classList.toggle('hidden', isTreeView);
-  
-  // Переключаем z-index
+
+  // ПЕРЕКЛЮЧАЕМ Z-INDEX
   tree.style.zIndex = isTreeView ? 10 : 5;
   classic.style.zIndex = isTreeView ? 5 : 10;
-  
+
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
-  
   if (isTreeView) renderTree();
 }
 
