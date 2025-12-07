@@ -1,4 +1,5 @@
-// js/lang/en.js
+// js/lang/en.js — ПОЛНЫЙ v0.9.10
+
 const LANG_EN = {
   rootLabel: "Root Event",
   successLabel: "Success",
