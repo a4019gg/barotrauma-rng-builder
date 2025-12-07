@@ -11,7 +11,7 @@
 </head>
 <body data-theme="dark">
 
-<!-- 1. ТОП-БАР — режимы и файлы -->
+<!-- ТОП-БАР -->
 <div class="top-bar">
   <div class="top-left">
     <button onclick="toggleView()" id="view-btn">Tree View</button>
@@ -21,9 +21,11 @@
   <div class="top-right">
     <button onclick="importFile()">Import</button>
     <button onclick="exportJSON()">Export</button>
+
+    <!-- НАСТРОЙКИ — КНОПКА + ВЫПАДАШКА ПРИ НАВЕДЕНИИ -->
     <div class="dropdown">
-      <button>Settings</button>
-      <div class="dropdown-menu">
+      <button class="settings-btn">Settings</button>
+      <div class="dropdown-content">
         <strong>Theme</strong>
         <select id="theme-select" onchange="setTheme(this.value)">
           <option value="dark">Dark</option>
@@ -31,11 +33,13 @@
           <option value="flopstyle-dark">Flopstyle Dark</option>
           <option value="turbo-vision-dark">Turbo Vision Dark</option>
         </select>
+
         <strong>Language</strong>
         <select id="lang-select" onchange="setLang(this.value)">
           <option value="en">English</option>
           <option value="ru">Русский</option>
         </select>
+
         <hr>
         <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
       </div>
@@ -43,7 +47,7 @@
   </div>
 </div>
 
-<!-- 2. ЭКШН-БАР — создание и генерация -->
+<!-- ACTION BAR -->
 <div class="action-bar">
   <div class="action-left">
     <button onclick="addRNG('')">+ RNG</button>
@@ -51,14 +55,14 @@
     <button onclick="clearAll()">Clear</button>
     <button onclick="autoBalance()">Auto Balance</button>
   </div>
-  <div class="action">
+  <div class="action-right">
     <button class="green" onclick="generateXML()">Generate XML</button>
     <button onclick="copyXML()">Copy XML</button>
     <button onclick="downloadXML()">Download XML</button>
   </div>
 </div>
 
-<!-- 3. ОСНОВНОЙ КОНТНЕР -->
+<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
 <div id="main-container">
   <!-- Левая панель — события -->
   <div id="events-panel">
