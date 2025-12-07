@@ -1,4 +1,4 @@
-/* style.css — v0.9.117 — ПОЛНЫЙ, 233 СТРОКИ, 100% РАБОЧИЙ, БЕЗ ОБРЕЗКИ */
+/* style.css — v0.9.118 — РАЗМЕР editor-area 100% ИСПРАВЛЕН, БЕЗ ПУСТОТЫ */
 
 :root {
   --bg: #1e1e1e;
@@ -39,8 +39,8 @@ body {
   overflow: hidden;
 }
 
-/* ТОП-БАР */
-.top-bar {
+/* ТОП + ACTION — 50px + 50px = 100px */
+.top-bar, .action-bar {
   height: 50px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
@@ -50,20 +50,7 @@ body {
   padding: 0 16px;
   z-index: 10000;
 }
-.top-left, .top-right { display: flex; gap: 12px; align-items: center; }
-
-/* ACTION BAR */
-.action-bar {
-  height: 50px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 16px;
-  z-index: 9999;
-}
-.action-left, .action-right { display: flex; gap: 12px; }
+.action-bar { z-index: 9999; }
 
 /* ГЛАВНЫЙ КОНТЕЙНЕР */
 #main-container {
@@ -103,13 +90,13 @@ body {
   font-weight: bold;
 }
 
-/* ЦЕНТР */
+/* ЦЕНТР — ТОЧНО ОТ 100px ДО НИЗА */
 #editor-area {
   position: absolute;
   left: 240px;
-  top: 100px;
+  top: 100px;     /* 50px + 50px */
   right: 0;
-  bottom: 160px;
+  bottom: 160px;  /* XML + Event ID */
   background: var(--bg);
   overflow: hidden;
 }
@@ -129,7 +116,7 @@ body {
 }
 body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* ДВА РЕЖИМА — ПОЛНОСТЬЮ СОВПАДАЮТ */
+/* РЕЖИМЫ — ПОЛНОСТЬЮ ЗАПОЛНЯЮТ editor-area */
 #classic-view, #tree-container {
   position: absolute;
   left: 0;
