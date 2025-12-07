@@ -1,4 +1,7 @@
-// js/xml.js — генерация XML — v0.9.5
+// js/xml.js — генерация XML — v0.9.10
+
+const XML_VERSION = "v0.9.10";
+window.XML_VERSION = XML_VERSION;
 
 function generateXML() {
   const eventId = document.getElementById('event-id').value.trim() || 'custom_event';
@@ -38,18 +41,18 @@ function generateXML() {
 function copyXML() {
   const text = document.getElementById('output').value;
   if (!text.trim()) {
-    alert(L.generateFirst);
+    alert(L.generateFirst || 'Generate XML first!');
     return;
   }
   navigator.clipboard.writeText(text)
-    .then(() => alert(L.xmlCopied))
-    .catch(() => alert(L.xmlCopyFailed));
+    .then(() => alert(L.xmlCopied || 'XML copied!'))
+    .catch(() => alert(L.xmlCopyFailed || 'Copy failed'));
 }
 
 function downloadXML() {
   const text = document.getElementById('output').value;
   if (!text.trim()) {
-    alert(L.generateFirst);
+    alert(L.generateFirst || 'Generate XML first!');
     return;
   }
   const blob = new Blob([text], { type: 'text/xml' });
@@ -61,7 +64,6 @@ function downloadXML() {
   URL.revokeObjectURL(url);
 }
 
-// Экспорт функций
 window.generateXML = generateXML;
 window.copyXML = copyXML;
 window.downloadXML = downloadXML;
