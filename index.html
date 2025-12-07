@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v1.0</title>
+  <title>Barotrauma RNG Builder v0.9.1</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/themes/flopstyle-dark.css" id="theme-style">
 </head>
 <body data-theme="dark">
 
 <div class="header">
-  <h1>Barotrauma RNG Builder v1.0</h1>
+  <h1>Barotrauma RNG Builder v0.9.1</h1>
   <div class="toolbar">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
@@ -27,8 +28,9 @@
       <div class="dropdown-menu">
         <div><strong>Theme</strong></div>
         <select onchange="setTheme(this.value)">
-          <option value="dark">Dark</option>
+          <option value="dark">Dark (Default)</option>
           <option value="light">Light</option>
+          <option value="flopstyle-dark">Flopstyle Dark</option>
         </select>
         <hr>
         <div><strong>Language</strong></div>
@@ -46,14 +48,10 @@
     <div id="sidebar">
       <div class="input-group">
         <label>Event ID:</label>
-        <input id="event-id" value="lucky_box_event">
+        <input id="event-id" value="new_event" oninput="updateActiveTabName(this.value)">
         <button onclick="autoBalance()" class="small green">Auto Balance</button>
       </div>
       <div id="events-tabs">
-        <button class="tab active" data-index="0">
-          Event 1
-          <span class="delete-tab" onclick="deleteEvent(0, event)">×</span>
-        </button>
         <button class="tab add" onclick="addEvent()">+ Add Event</button>
       </div>
       <div id="tree-root" class="node root">
