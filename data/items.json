@@ -262,9 +262,7 @@
     "name": "Balloon",
     "category": "Fun",
     "tags": ["fun", "toy"]
-  }
-]
-[
+  },
   {
     "id": "plasmacutterammo",
     "name": "Plasma Cutter Ammo",
@@ -510,9 +508,7 @@
     "name": "Combat Diving Suit",
     "category": "Diving",
     "tags": ["diving", "armor"]
-  }
-]
-[
+  },
   {
     "id": "morphineitem",
     "name": "Morphine",
@@ -794,9 +790,7 @@
     "name": "Oxygen Bottle",
     "category": "Diving",
     "tags": ["diving", "tank"]
-  }
-]
-[
+  },
   {
     "id": "scubagearitem",
     "name": "Scuba Gear",
