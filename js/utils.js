@@ -1,4 +1,4 @@
-// js/utils.js — ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ — v0.9.2
+// js/utils.js — ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ — v0.9.8
 
 let currentLang = 'en';
 const L = {};
@@ -17,7 +17,7 @@ function setTheme(theme) {
     themeStyle.setAttribute('href', 'css/themes/flopstyle-dark.css');
   }
 
-  // Сохраняем выбор в селекте
+  // Сохраняем в селект
   const select = document.getElementById('theme-select');
   if (select) select.value = theme;
 }
@@ -30,7 +30,7 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Применяем переводы
+  // Применяем ко всем элементам
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
@@ -42,9 +42,14 @@ function setLang(lang) {
   document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
-  document.querySelector('#view-btn').textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
 
-  // Сохраняем выбор в селекте
+  // View кнопка
+  const viewBtn = document.getElementById('view-btn');
+  if (viewBtn) {
+    viewBtn.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
+  }
+
+  // Селект языка
   const select = document.getElementById('lang-select');
   if (select) select.value = lang;
 
@@ -54,7 +59,7 @@ function setLang(lang) {
 // === ЭКСПОРТ ===
 function exportJSON() {
   const data = {
-    version: "0.9.2",
+    version: "0.9.8",
     events: events.map(e => ({
       eventId: e.eventId,
       html: e.html
@@ -92,12 +97,12 @@ document.getElementById('file-input').addEventListener('change', e => {
           addEvent();
         });
         switchEvent(events.length - 1);
-        alert('Импорт завершён!');
+        alert(L.importSuccess || 'Импорт завершён!');
       } else {
-        alert('Неверный формат файла');
+        alert(L.importError || 'Неверный формат файла');
       }
     } catch (err) {
-      alert('Ошибка импорта: ' + err.message);
+      alert(L.importError + ': ' + err.message);
     }
   };
   reader.readAsText(file);
@@ -105,7 +110,7 @@ document.getElementById('file-input').addEventListener('change', e => {
 
 // === ОЧИСТКА ===
 function clearAll() {
-  if (confirm('Очистить всё?')) {
+  if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
