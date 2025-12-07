@@ -1,49 +1,53 @@
-// js/lang/en.js — ПОЛНЫЙ v0.9.10
+// js/lang/en.js — v0.9.109
 
 const LANG_EN = {
   rootLabel: "Root Event",
   successLabel: "Success",
   failureLabel: "Failure",
-  autoBalanceTitle: "Auto Balance",
-  autoBalanceEven: "Even (50/50)",
-  autoBalanceByCount: "By item count",
-  autoBalancePrompt: "Choose mode:\n1 — Even\n2 — By items",
-  autoBalanceApplied: "Auto Balance applied!",
-  deleteEventConfirm: "Delete event?",
-  lastEventWarning: "Cannot delete the last event!",
-  clearAllConfirm: "Clear all?",
+
+  // Кнопки
   generateXML: "Generate XML",
   copyXML: "Copy XML",
   downloadXML: "Download XML",
   export: "Export",
-  settingsTheme: "Theme",
-settingsLanguage: "Language",
-settingsUIScale: "UI Scale",
-settingsNodeDensity: "Node Density",
-settingsNodeStyle: "Node Style",
-settingsShadows: "Shadows",
-settingsGrid: "Background Grid",
-settingsSnap: "Snap to Grid",
-settingsXMLBehavior: "XML & Behavior",
-settingsValidateXML: "Validate XML",
-settingsCheckDuplicates: "Check Duplicate IDs",
   import: "Import",
   dataBase: "Data Base",
-  settings: "Settings",
-  theme: "Theme",
-  language: "Language",
+
+  // Настройки — заголовки и пункты
+  settingsTheme: "Theme",
+  settingsLanguage: "Language",
+  settingsUIScale: "UI Scale",
+  settingsNodeDensity: "Node Density",
+  settingsNodeStyle: "Node Style",
+  settingsShadows: "Shadows",
+  settingsGrid: "Background Grid",
+  settingsSnap: "Snap to Grid",
+  settingsXMLBehavior: "XML & Behavior",
+  settingsValidateXML: "Validate XML",
+  settingsCheckDuplicates: "Check Duplicate IDs",
+
+  // Режимы вида
+  treeView: "Tree View",
+  classicView: "Classic",
+
+  // Сообщения
+  autoBalanceApplied: "Auto Balance applied!",
+  clearAllConfirm: "Clear all?",
+  deleteEventConfirm: "Delete event?",
+  lastEventWarning: "Cannot delete the last event!",
   xmlCopied: "XML copied to clipboard!",
   xmlCopyFailed: "Failed to copy XML",
   generateFirst: "Generate XML first!",
   importSuccess: "Import completed!",
   importError: "Import error",
-  modLoaded: "Mod loaded!",
-  modError: "Invalid mod format",
-  searchPlaceholder: "Search by name, ID or tag...",
+
+  // Ошибки базы
   dbCacheCorrupted: "Items cache corrupted — reloading",
   dbFileNotFound: "items.json not found",
   dbLoadError: "Error loading data/items.json:",
   dbLoadFailed: "Failed to load items database. Check data/items.json",
   dbLoaded: "Database loaded",
-  dbItems: "items"
+  dbItems: "items",
+
+  searchPlaceholder: "Search by name, ID or tag..."
 };
