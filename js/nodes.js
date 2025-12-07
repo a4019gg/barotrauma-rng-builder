@@ -1,4 +1,4 @@
-// js/nodes.js — создание узлов, вероятности, Auto Balance — v0.9.5
+// js/nodes.js — создание узлов, вероятности, Auto Balance — v0.9.8
 
 let counter = 0;
 
@@ -99,7 +99,7 @@ function updateProbabilities() {
 }
 
 function autoBalance() {
-  const mode = prompt(L.autoBalancePrompt, '2');
+  const mode = prompt(L.autoBalancePrompt || '1 — Равномерно (50/50)\n2 — По количеству предметов', '2');
   if (!mode || !['1', '2'].includes(mode)) return;
 
   document.querySelectorAll('.node.rng').forEach(rng => {
@@ -117,7 +117,7 @@ function autoBalance() {
   });
 
   updateAll();
-  alert(L.autoBalanceApplied);
+  alert(L.autoBalanceApplied || 'Автобаланс применён!');
 }
 
 function updateAll() {
