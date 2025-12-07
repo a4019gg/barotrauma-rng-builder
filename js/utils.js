@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.111 — ПОЛНОСТЬЮ РАБОЧИЙ
+// js/utils.js — v0.9.114 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка, локализация
 
-const UTILS_VERSION = "v0.9.111";
+const UTILS_VERSION = "v0.9.114";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -41,13 +41,13 @@ function toggleShadows(on) {
   localStorage.setItem('nodeShadows', on);
 }
 
-// === GRID ===
+// === BACKGROUND GRID ===
 function toggleGrid(on) {
   document.body.dataset.bgGrid = on ? 'visible' : 'off';
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP TO GRID ===
+// === SNAP TO GRID (заглушка, можно расширить) ===
 function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
@@ -57,17 +57,17 @@ function setXMLFormat(val) {
   localStorage.setItem('xmlFormat', val);
 }
 
-// === VALIDATION ===
+// === VALIDATE XML ===
 function toggleValidation(on) {
   localStorage.setItem('validateXML', on);
 }
 
-// === DUPLICATE ID CHECK ===
+// === CHECK DUPLICATE IDs ===
 function toggleCheckDuplicateIDs(on) {
   localStorage.setItem('checkDuplicateIDs', on);
 }
 
-// === ЛОКАЛИЗАЦИЯ + ПРИМЕНЕНИЕ К data-l10n ===
+// === ЛОКАЛИЗАЦИЯ + data-l10n ===
 function applyLocalization() {
   document.querySelectorAll('[data-l10n]').forEach(el => {
     const key = el.dataset.l10n;
@@ -81,11 +81,11 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Основные надписи
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
+  // Кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
@@ -93,8 +93,9 @@ function setLang(lang) {
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
-  document.getElementById('view-btn').textContent = 
-    document.getElementById('tree-container').style.display === 'block' ? L.classicView : L.treeView;
+  // Кнопка переключения вида
+  const treeActive = document.getElementById('tree-container').style.display === 'block';
+  document.getElementById('view-btn').textContent = treeActive ? L.classicView : L.treeView;
 
   document.getElementById('lang-select').value = lang;
 
@@ -117,7 +118,7 @@ function showScriptVersions() {
   c.innerHTML = v.map(x=>`${x.n} → ${x.v}`).join('<br>');
 }
 
-// === ЗАПУСК ===
+// === ПРИ СТАРТЕ ===
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme')||'dark');
   setLang(localStorage.getItem('lang')||'en');
@@ -125,10 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
   setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
   toggleShadows(localStorage.getItem('nodeShadows')==='true');
   toggleGrid(localStorage.getItem('bgGrid')!=='false');
+
   applyLocalization();
   showScriptVersions();
 });
 
+// === ЭКСПОРТ ВСЕХ ФУНКЦИЙ ===
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
