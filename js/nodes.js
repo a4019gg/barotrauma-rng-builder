@@ -1,6 +1,6 @@
-// js/nodes.js — v0.9.10 — создание узлов, вероятности, Auto Balance
+// js/nodes.js — v0.9.99 — создание узлов с настройками плотности/теней
 
-const NODES_VERSION = "v0.9.10";
+const NODES_VERSION = "v0.9.99";
 window.NODES_VERSION = NODES_VERSION;
 
 let counter = 0;
@@ -50,23 +50,20 @@ function createSpawn() {
 }
 
 function addRNG(path) {
-  const container = path.includes('-') 
-    ? document.getElementById('c-' + path) 
-    : document.getElementById('root-children');
-  if (!container) return; // ← эта строчка спасает
+  const container = path.includes('-') ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (!container) return;
   container.appendChild(createRNG());
   updateAll();
 }
 
 function addSpawn(path) {
-  const container = path.includes('-') 
-    ? document.getElementById('c-' + path) 
-    : document.getElementById('root-children');
-  if (!container) return; // ← и эта
+  const container = path.includes('-') ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (!container) return;
   container.appendChild(createSpawn());
   updateAll();
 }
 
+// === ОБНОВЛЕНИЕ ВЕРОЯТНОСТЕЙ ===
 function updateProbabilities() {
   function calc(node, globalProb = 1.0, parentLocal = 1.0) {
     if (!node || !node.querySelector) return;
@@ -107,6 +104,7 @@ function updateProbabilities() {
   document.querySelectorAll('#root-children > .node').forEach(n => calc(n, 1.0, 1.0));
 }
 
+// === AUTO BALANCE ===
 function autoBalance() {
   const mode = prompt(L.autoBalancePrompt || '1 — Even (50/50)\n2 — By items', '2');
   if (!mode || !['1', '2'].includes(mode)) return;
@@ -129,6 +127,7 @@ function autoBalance() {
   alert(L.autoBalanceApplied || 'Auto Balance applied!');
 }
 
+// === ОБНОВЛЕНИЕ ВСЕГО ===
 function updateAll() {
   updateProbabilities();
   if (typeof renderTree === 'function' && !document.getElementById('tree-container').classList.contains('hidden')) {
@@ -136,7 +135,7 @@ function updateAll() {
   }
 }
 
-// Экспорт функций
+// Экспорт
 window.addRNG = addRNG;
 window.addSpawn = addSpawn;
 window.updateAll = updateAll;
