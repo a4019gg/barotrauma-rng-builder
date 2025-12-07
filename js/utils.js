@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.109 — ВСЁ РАБОТАЕТ
+// js/utils.js — v0.9.111 — ПОЛНОСТЬЮ РАБОЧИЙ
 
-const UTILS_VERSION = "v0.9.109";
+const UTILS_VERSION = "v0.9.111";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -13,8 +13,7 @@ function setTheme(theme) {
   const s = document.getElementById('theme-style');
   const m = {
     'dark': '',
-    '',
-    'light':     'css/themes/light.css',
+    'light': 'css/themes/light.css',
     'flopstyle-dark': 'css/themes/flopstyle-dark.css',
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
@@ -53,28 +52,40 @@ function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
 
+// === XML FORMAT ===
+function setXMLFormat(val) {
+  localStorage.setItem('xmlFormat', val);
+}
+
 // === VALIDATION ===
 function toggleValidation(on) {
   localStorage.setItem('validateXML', on);
 }
 
-// === CHECK DUPLICATE IDs ===
+// === DUPLICATE ID CHECK ===
 function toggleCheckDuplicateIDs(on) {
   localStorage.setItem('checkDuplicateIDs', on);
 }
 
-// === ЯЗЫК ===
+// === ЛОКАЛИЗАЦИЯ + ПРИМЕНЕНИЕ К data-l10n ===
+function applyLocalization() {
+  document.querySelectorAll('[data-l10n]').forEach(el => {
+    const key = el.dataset.l10n;
+    if (L[key]) el.textContent = L[key];
+  });
+}
+
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
+  // Основные надписи
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
-  // Переводим кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
@@ -86,10 +97,12 @@ function setLang(lang) {
     document.getElementById('tree-container').style.display === 'block' ? L.classicView : L.treeView;
 
   document.getElementById('lang-select').value = lang;
+
+  applyLocalization();
   updateAll();
 }
 
-// === ВЕРСИИ ===
+// === ВЕРСИИ СКРИПТОВ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -112,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
   toggleShadows(localStorage.getItem('nodeShadows')==='true');
   toggleGrid(localStorage.getItem('bgGrid')!=='false');
+  applyLocalization();
   showScriptVersions();
 });
 
@@ -122,5 +136,6 @@ window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
 window.toggleGrid = toggleGrid;
 window.toggleSnap = toggleSnap;
+window.setXMLFormat = setXMLFormat;
 window.toggleValidation = toggleValidation;
 window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
