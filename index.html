@@ -11,44 +11,39 @@
 </head>
 <body data-theme="dark">
 
-<!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+<!-- 1. ТОП-БАР — режимы и файлы -->
 <div class="top-bar">
   <div class="top-left">
     <button onclick="toggleView()" id="view-btn">Tree View</button>
     <button onclick="openDB()">Data Base</button>
     <button onclick="loadExample()">Example</button>
   </div>
-<div class="top-right">
-  <button onclick="importFile()">Import</button>
-  <button onclick="exportJSON()">Export</button>
-
-  <!-- ИСПРАВЛЕННЫЙ ДРОПДАУН -->
-  <div class="dropdown">
-    <button>Settings</button>
-    <div class="dropdown-menu" style="z-index:99999; right:0; display:none;">
-      <strong>Theme</strong>
-      <select id="theme-select" onchange="setTheme(this.value)">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-        <option value="flopstyle-dark">Flopstyle Dark</option>
-        <option value="turbo-vision-dark">Turbo Vision Dark</option>
-      </select>
-
-      <strong>Language</strong>
-      <select id="lang-select" onchange="setLang(this.value)">
-        <option value="en">English</option>
-        <option value="ru">Русский</option>
-      </select>
-
-      <hr>
-      <div id="script-versions" style="font-size:12px;color:#888;padding:8px">
-        Loading...
+  <div class="top-right">
+    <button onclick="importFile()">Import</button>
+    <button onclick="exportJSON()">Export</button>
+    <div class="dropdown">
+      <button>Settings</button>
+      <div class="dropdown-menu">
+        <strong>Theme</strong>
+        <select id="theme-select" onchange="setTheme(this.value)">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="flopstyle-dark">Flopstyle Dark</option>
+          <option value="turbo-vision-dark">Turbo Vision Dark</option>
+        </select>
+        <strong>Language</strong>
+        <select id="lang-select" onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
+        <hr>
+        <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ACTION BAR -->
+<!-- 2. ЭКШН-БАР — создание и генерация -->
 <div class="action-bar">
   <div class="action-left">
     <button onclick="addRNG('')">+ RNG</button>
@@ -56,16 +51,16 @@
     <button onclick="clearAll()">Clear</button>
     <button onclick="autoBalance()">Auto Balance</button>
   </div>
-  <div class="action-right">
+  <div class="action">
     <button class="green" onclick="generateXML()">Generate XML</button>
     <button onclick="copyXML()">Copy XML</button>
     <button onclick="downloadXML()">Download XML</button>
   </div>
 </div>
 
-<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
+<!-- 3. ОСНОВНОЙ КОНТНЕР -->
 <div id="main-container">
-  <!-- ЛЕВАЯ ПАНЕЛЬ — СОБЫТИЯ -->
+  <!-- Левая панель — события -->
   <div id="events-panel">
     <div class="panel-header">
       <button onclick="addEvent()">+ Add Event</button>
@@ -73,7 +68,7 @@
     <div id="events-list"></div>
   </div>
 
-  <!-- ЦЕНТРАЛЬНАЯ ОБЛАСТЬ -->
+  <!-- Центральная область -->
   <div id="editor-area">
     <div id="classic-view">
       <div id="tree-root" class="node root">
@@ -90,7 +85,7 @@
   </div>
 </div>
 
-<!-- ПОЛЕ ID СОБЫТИЯ -->
+<!-- Event ID -->
 <div class="event-id-bar">
   <label>Event ID:</label>
   <input id="event-id" value="new_event" oninput="updateActiveTabName()">
