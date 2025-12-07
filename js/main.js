@@ -27,7 +27,7 @@ function switchEvent(index) {
 
 // Удаление события по индексу (кнопка × на вкладке)
 function deleteEvent(index, e) {
-  e.stopPropagation(); // Чтобы не сработал клик по вкладке
+  if (e) e.stopPropagation(); // Чтобы не сработал клик по вкладке
 
   if (events.length <= 1) {
     alert(L.lastEventWarning);
