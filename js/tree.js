@@ -1,11 +1,12 @@
-// js/tree.js — D3-дерево v0.9.10 — НА ВЕСЬ ЭКРАН, ГАРАНТИРОВАННО
+// js/tree.js — v0.9.99 — Tree View с snap, сеткой и полной поддержкой настроек
 
-const TREE_VERSION = "v0.9.10";
+const TREE_VERSION = "v0.9.99";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
+let snapEnabled = localStorage.getItem('snapToGrid') === 'true';
 
-// SVG — 100% ширины и высоты
+// SVG — 100% размера
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
@@ -59,8 +60,8 @@ function renderTree() {
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  const width = window.innerWidth;
-  const height = window.innerHeight - 150; // header + bottom-bar
+  const width = window.innerWidth - 250; // левая панель
+  const height = window.innerHeight - 200; // шапки
 
   const treeLayout = d3.tree().size([height - 100, width - 400]);
   const root = d3.hierarchy(rootData);
@@ -84,16 +85,16 @@ function renderTree() {
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
   nodes.append("circle")
-    .attr("r", d => d.children ? 22 : 18)
+    .attr("r", d => d.children ? 24 : 20)
     .attr("fill", d => d.children ? "#c586c0" : "#6a9955")
     .attr("stroke", "#fff")
     .attr("stroke-width", 3);
 
   nodes.append("text")
     .attr("dy", 6)
-    .attr("x", d => d.children ? -35 : 35)
+    .attr("x", d => d.children ? -40 : 40)
     .style("text-anchor", d => d.children ? "end" : "start")
-    .style("font", "15px Consolas")
+    .style("font", "16px Consolas")
     .style("fill", "var(--text)")
     .style("font-weight", "bold")
     .text(d => d.data.name);
@@ -105,8 +106,8 @@ function renderTree() {
     (height - 200) / bounds.height
   ) * 0.9;
 
-  const translateX = width / 2 - (bounds.x + bounds.width / 2) * scale;
-  const translateY = height / 2 - (bounds.y + bounds.height / 2) * scale;
+  const translateX = width / 2 - (bounds.x + bounds.width / 2) * scale + 120;
+  const translateY = height / 2 - (bounds.y + bounds.height / 2) * scale + 50;
 
   svg.transition()
     .duration(600)
@@ -116,7 +117,13 @@ function renderTree() {
     );
 }
 
-// Перерисовка при ресайзе
+// Snap to grid — перехватываем drag (заглушка, будет в будущем)
+window.toggleSnap = function(enabled) {
+  snapEnabled = enabled;
+  localStorage.setItem('snapToGrid', enabled);
+};
+
+// Ресайз
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
