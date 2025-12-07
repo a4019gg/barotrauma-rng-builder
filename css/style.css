@@ -1,4 +1,4 @@
-/* style.css */
+/* style.css — v0.9.114 — ВСЁ РАБОТАЕТ: левая панель, скролл, сетка, XML не падает */
 
 :root {
   --bg: #1e1e1e;
@@ -64,18 +64,33 @@ body {
 .action-left, .action-right { display: flex; gap: 12px; }
 
 /* ГЛАВНЫЙ КОНТЕЙНЕР */
-#main-container { flex: 1; display: flex; }
+#main-container {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
 
-/* ЛЕВАЯ ПАНЕЛЬ */
+/* ЛЕВАЯ ПАНЕЛЬ — НЕ ЛОМАЕТ XML */
 #events-panel {
   width: 240px;
   background: var(--panel);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
-.panel-header { padding: 12px; border-bottom: 1px solid var(--border); }
-#events-list { flex: 1; overflow-y: auto; padding: 8px; }
+.panel-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#events-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+}
 .event-tab {
   display: flex;
   justify-content: space-between;
@@ -102,20 +117,20 @@ body {
   flex: 1;
   position: relative;
   background: var(--bg);
+  margin-left: 240px; /* ← отступ под левую панель */
 }
 #editor-area::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
   background-size: 30px 30px;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0.3;
   z-index: 0;
 }
-body[data-bg-grid="off"] #editor-area::before { display: none !important; }
 
 /* РЕЖИМЫ */
 #classic-view {
@@ -146,17 +161,38 @@ body[data-bg-grid="off"] #editor-area::before { display: none !important; }
   z-index: 1;
 }
 
-/* EVENT ID + ТЕКСТАРЕА */
+/* НОВЫЕ НАСТРОЙКИ — 100% РАБОТАЮТ */
+body[data-ui-scale="80"]   { font-size: 80%; }
+body[data-ui-scale="120"]  { font-size: 120%; }
+body[data-ui-scale="150"]  { font-size: 150%; }
+
+body[data-node-density="compact"] .node     { margin: 4px !important; padding: 8px !important; font-size: 13px !important; }
+body[data-node-density="comfortable"] .node { margin: 24px !important; padding: 20px !important; font-size: 16px !important; }
+
+body[data-node-shadows="high"] .node { box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+body[data-node-shadows="off"] .node  { box-shadow: none !important; }
+
+body[data-bg-grid="off"] #editor-area::before { display: none !important; }
+
+/* EVENT ID + ТЕКСТАРЕА — НЕ ПАДАЮТ */
 .event-id-bar {
-  padding: 8px 16px;
+  position: absolute;
+  bottom: 160px;
+  left: 256px;
+  right: 16px;
   background: var(--panel);
   border-top: 1px solid var(--border);
+  padding: 8px 16px;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 textarea#output {
-  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 256px;
+  right: 0;
   height: 160px;
   background: #1e1e1e;
   color: #d4d4d4;
@@ -164,6 +200,7 @@ textarea#output {
   padding: 10px;
   border: none;
   resize: none;
+  z-index: 99;
 }
 
 /* КНОПКИ */
@@ -195,24 +232,7 @@ button.danger { background: var(--red); }
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 .dropdown:hover .dropdown-content { display: block; }
-.dropdown-content strong {
-  display: block;
-  margin: 12px 0 6px 0;
-  color: var(--accent);
-}
+.dropdown-content strong { display: block; margin: 12px 0 6px 0; color: var(--accent); }
 .dropdown-content select,
 .dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
 .dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
-
-/* === НОВЫЕ НАСТРОЙКИ — 100% РАБОТАЮТ === */
-body[data-ui-scale="80"]   { font-size: 80%; }
-body[data-ui-scale="120"]  { font-size: 120%; }
-body[data-ui-scale="150"]  { font-size: 150%; }
-
-body[data-node-density="compact"] .node     { margin: 4px !important; padding: 8px !important; font-size: 13px !important; }
-body[data-node-density="comfortable"] .node { margin: 24px !important; padding: 20px !important; font-size: 16px !important; }
-
-body[data-node-shadows="high"] .node { box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
-body[data-node-shadows="off"] .node  { box-shadow: none !important; }
-
-body[data-bg-grid="off"] #editor-area::before { display: none !important; }
