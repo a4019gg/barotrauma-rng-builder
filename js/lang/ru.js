@@ -44,5 +44,12 @@ const LANG_RU = {
   dbLoaded: "База загружена",
   dbItems: "предметов",
 
+  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.113",
+validationTitle: "Валидация XML — найдены проблемы:",
+validationEmptyEvent: "Событие пустое — ничего не спавнится",
+validationZeroChance: "RNG с шансом 0% или 100% — бессмысленно",
+validationNoItems: "RNG без предметов в ветках",
+validationDuplicateId: "Дубликат identifier",
+
   searchPlaceholder: "Поиск по имени, ID или тегу..."
 };
