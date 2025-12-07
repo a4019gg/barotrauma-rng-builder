@@ -1,7 +1,7 @@
-// js/main.js — v0.9.10 — ФИНАЛЬНАЯ ВЕРСИЯ
+// js/main.js — v0.9.99 — ФИНАЛЬНАЯ ВЕРСИЯ
 
-const SCRIPT_VERSION = "v0.9.10";
-window.MAIN_VERSION = SCRIPT_VERSION;
+const MAIN_VERSION = "v0.9.99";
+window.MAIN_VERSION = MAIN_VERSION;
 
 let currentEvent = 0;
 const events = [];
@@ -22,14 +22,10 @@ function switchEvent(index) {
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId;
 
-  // Подсвечиваем активную вкладку
-  document.querySelectorAll('#events-tabs .tab').forEach((tab, i) => {
+  // Подсвечиваем вкладку
+  document.querySelectorAll('.event-tab').forEach((tab, i) => {
     tab.classList.toggle('active', i === index);
   });
-
-  // Обновляем имя на вкладке
-  const activeTab = document.querySelector('#events-tabs .tab.active .tab-name');
-  if (activeTab) activeTab.textContent = events[index].eventId;
 
   updateAll();
 }
@@ -45,7 +41,7 @@ function deleteEvent(index, e) {
 
   if (confirm('Удалить событие?')) {
     events.splice(index, 1);
-    document.querySelectorAll('#events-tabs .tab')[index].remove();
+    document.querySelectorAll('.event-tab')[index].remove();
 
     if (currentEvent >= events.length) currentEvent = events.length - 1;
     switchEvent(currentEvent);
@@ -58,8 +54,8 @@ function addEvent() {
   const newId = `event_${index + 1}`;
   events.push({ html: '', eventId: newId });
 
-  const tab = document.createElement('button');
-  tab.className = 'tab';
+  const tab = document.createElement('div');
+  tab.className = 'event-tab';
   tab.innerHTML = `
     <span class="tab-name">${newId}</span>
     <span class="delete-tab">×</span>
@@ -68,7 +64,7 @@ function addEvent() {
   tab.onclick = () => switchEvent(index);
   tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
 
-  document.querySelector('#events-tabs .add').before(tab);
+  document.getElementById('events-list').appendChild(tab);
   switchEvent(index);
 }
 
@@ -77,7 +73,7 @@ function updateActiveTabName() {
   const value = document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`;
   events[currentEvent].eventId = value;
 
-  const activeTab = document.querySelector('#events-tabs .tab.active .tab-name');
+  const activeTab = document.querySelector('.event-tab.active .tab-name');
   if (activeTab) activeTab.textContent = value;
 }
 
@@ -91,63 +87,6 @@ function toggleView() {
   if (!tree.classList.contains('hidden')) renderTree();
 }
 
-// === ИМПОРТ ===
-function importFile() {
-  document.getElementById('file-input').click();
-}
-
-document.getElementById('file-input').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (data.events && Array.isArray(data.events)) {
-        data.events.forEach(ev => {
-          events.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
-          addEvent();
-        });
-        switchEvent(events.length - 1);
-        alert('Импорт завершён!');
-      } else {
-        alert('Неверный формат файла');
-      }
-    } catch (err) {
-      alert('Ошибка импорта: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-});
-
-// === ОЧИСТКА ===
-function clearAll() {
-  if (confirm('Очистить всё?')) {
-    document.getElementById('root-children').innerHTML = '';
-    updateAll();
-  }
-}
-
-// === ПРИМЕР ===
-function loadExample() {
-  clearAll();
-  addRNG('');
-  setTimeout(() => {
-    const first = document.querySelector('#root-children > .node.rng');
-    if (!first) return;
-    first.querySelector('.chance').value = 0.6;
-    addRNG(first.dataset.id + '-s');
-    setTimeout(() => {
-      const successCont = document.querySelector(`#c-${first.dataset.id}-s`);
-      if (successCont) {
-        addSpawn(successCont.querySelector('.children').id.slice(2));
-      }
-    }, 50);
-    updateAll();
-  }, 100);
-}
-
 // === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
@@ -158,41 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
   addEvent();
   switchEvent(0);
 
-  // Показываем версии скриптов
   showScriptVersions();
-
-  // Подсказки для процентов
-  document.addEventListener('mouseover', e => {
-    if (e.target.classList.contains('prob') && e.target.dataset.tip) {
-      let tooltip = document.getElementById('prob-tooltip');
-      if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.id = 'prob-tooltip';
-        tooltip.style.cssText = 'position:absolute;background:#333;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;z-index:1000;pointer-events:none;';
-        document.body.appendChild(tooltip);
-      }
-      tooltip.textContent = e.target.dataset.tip;
-      tooltip.style.left = (e.pageX + 10) + 'px';
-      tooltip.style.top = (e.pageY + 10) + 'px';
-    }
-  });
-
-  document.addEventListener('mouseout', e => {
-    if (e.target.classList.contains('prob')) {
-      const tooltip = document.getElementById('prob-tooltip');
-      if (tooltip) tooltip.remove();
-    }
-  });
-
-  console.log('%cBarotrauma RNG Builder v0.9.10 запущен!', 'color:#61afef;font-size:16px');
 });
 
-// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
 window.switchEvent = switchEvent;
 window.deleteEvent = deleteEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
 window.updateActiveTabName = updateActiveTabName;
-window.importFile = importFile;
-window.clearAll = clearAll;
-window.loadExample = loadExample;
