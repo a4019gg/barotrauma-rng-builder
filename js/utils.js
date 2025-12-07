@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.114 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка, локализация
+// js/utils.js — v0.9.115 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка, локализация
 
-const UTILS_VERSION = "v0.9.114";
+const UTILS_VERSION = "v0.9.115";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -18,21 +18,24 @@ function setTheme(theme) {
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
   s.href = m[theme] || '';
-  document.getElementById('theme-select').value = theme;
+  const sel = document.getElementById('theme-select');
+  if (sel) sel.value = theme;
 }
 
 // === UI SCALE ===
 function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
-  document.getElementById('scale-select').value = val;
+  const sel = document.getElementById('scale-select');
+  if (sel) sel.value = val;
 }
 
 // === NODE DENSITY ===
 function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
-  document.getElementById('density-select').value = val;
+  const sel = document.getElementById('density-select');
+  if (sel) sel.value = val;
 }
 
 // === SHADOWS ===
@@ -47,7 +50,7 @@ function toggleGrid(on) {
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP TO GRID (заглушка, можно расширить) ===
+// === SNAP TO GRID (заглушка, можно расширить)
 function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
@@ -81,23 +84,31 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
+  // Основные надписи
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
   // Кнопки
-  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
-  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
-  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
-  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
-  document.querySelector('[onclick="importFile()"]').textContent = L.import;
-  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
+  const btns = {
+    generateXML: '[onclick="generateXML()"]',
+    copyXML: '[onclick="copyXML()"]',
+    downloadXML: '[onclick="downloadXML()"]',
+    exportJSON: '[onclick="exportJSON()"]',
+    importFile: '[onclick="importFile()"]',
+    openDB: '[onclick="openDB()"]'
+  };
+  Object.entries(btns).forEach(([key, sel]) => {
+    const el = document.querySelector(sel);
+    if (el && L[key]) el.textContent = L[key];
+  });
 
   // Кнопка переключения вида
-  const treeActive = document.getElementById('tree-container').style.display === 'block';
-  document.getElementById('view-btn').textContent = treeActive ? L.classicView : L.treeView;
+  const isTree = document.getElementById('tree-container').style.display === 'block';
+  document.getElementById('view-btn').textContent = isTree ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
 
-  document.getElementById('lang-select').value = lang;
+  const langSel = document.getElementById('lang-select');
+  if (langSel) langSel.value = lang;
 
   applyLocalization();
   updateAll();
@@ -125,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setUIScale(localStorage.getItem('uiScale')||'100');
   setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
   toggleShadows(localStorage.getItem('nodeShadows')==='true');
+  ');
   toggleGrid(localStorage.getItem('bgGrid')!=='false');
 
   applyLocalization();
