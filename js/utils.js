@@ -1,4 +1,4 @@
-// js/utils.js — ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ — v0.9.8
+// js/utils.js — ПОЛНЫЙ, РАБОЧИЙ, ТЕМЫ + ЛОКАЛИЗАЦИЯ — v0.9.9
 
 let currentLang = 'en';
 const L = {};
@@ -9,21 +9,24 @@ function setTheme(theme) {
   localStorage.setItem('theme', theme);
 
   const themeStyle = document.getElementById('theme-style');
-  if (theme === 'dark') {
-    themeStyle.setAttribute('href', '');
-  } else if (theme === 'light') {
-    themeStyle.setAttribute('href', 'css/themes/light.css');
-  } else if (theme === 'flopstyle-dark') {
-    themeStyle.setAttribute('href', 'css/themes/flopstyle-dark.css');
-  } else if (theme === 'turbo-vision-dark') {
-    themeStyle.setAttribute('href', 'css/themes/turbo-vision-dark.css');
+
+  // Переключаем CSS-файл темы
+  switch (theme) {
+    case 'dark':
+      themeStyle.setAttribute('href', '');
+      break;
+    case 'light':
+      themeStyle.setAttribute('href', 'css/themes/light.css');
+      break;
+    case 'flopstyle-dark':
+      themeStyle.setAttribute('href', 'css/themes/flopstyle-dark.css');
+      break;
+    case 'turbo-vision-dark':
+      themeStyle.setAttribute('href', 'css/themes/turbo-vision-dark.css');
+      break;
   }
 
-  const select = document.getElementById('theme-select');
-  if (select) select.value = theme;
-}
-
-  // Сохраняем в селект
+  // Сохраняем выбор в селекте
   const select = document.getElementById('theme-select');
   if (select) select.value = theme;
 }
@@ -36,7 +39,7 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Применяем ко всем элементам
+  // Применяем переводы ко всем элементам
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
@@ -49,29 +52,25 @@ function setLang(lang) {
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
-  // View кнопка
+  // Кнопка Tree View
   const viewBtn = document.getElementById('view-btn');
   if (viewBtn) {
     viewBtn.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
   }
 
-  // Селект языка
+  // Сохраняем в селекте
   const select = document.getElementById('lang-select');
   if (select) select.value = lang;
 
   updateAll();
 }
 
-// === ЭКСПОРТ ===
+// === ЭКСПОРТ, ИМПОРТ, ОЧИСТКА, ПРИМЕР ===
 function exportJSON() {
   const data = {
-    version: "0.9.8",
-    events: events.map(e => ({
-      eventId: e.eventId,
-      html: e.html
-    }))
+    version: "0.9.9",
+    events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
-
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -81,7 +80,6 @@ function exportJSON() {
   URL.revokeObjectURL(url);
 }
 
-// === ИМПОРТ ===
 function importFile() {
   document.getElementById('file-input').click();
 }
@@ -96,33 +94,28 @@ document.getElementById('file-input').addEventListener('change', e => {
       const data = JSON.parse(ev.target.result);
       if (data.events && Array.isArray(data.events)) {
         data.events.forEach(ev => {
-          events.push({
-            html: ev.html || '',
-            eventId: ev.eventId || 'imported_event'
-          });
+          events.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
           addEvent();
         });
         switchEvent(events.length - 1);
-        alert(L.importSuccess || 'Импорт завершён!');
+        alert('Импорт завершён!');
       } else {
-        alert(L.importError || 'Неверный формат файла');
+        alert('Неверный формат файла');
       }
     } catch (err) {
-      alert(L.importError + ': ' + err.message);
+      alert('Ошибка импорта: ' + err.message);
     }
   };
   reader.readAsText(file);
 });
 
-// === ОЧИСТКА ===
 function clearAll() {
-  if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
+  if (confirm('Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
 }
 
-// === ПРИМЕР ===
 function loadExample() {
   clearAll();
   addRNG('');
