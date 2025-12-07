@@ -1,0 +1,36 @@
+/* Turbo Vision Dark — SCP Wiki Theme */
+:root, [data-theme="turbo-vision-dark"] {
+  --bg: #000000;
+  --panel: #0a0a0a;
+  --text: #00ff00;
+  --accent: #00aa00;
+  --green: #00ff00;
+  --red: #ff0000;
+  --border: #008000;
+  --link: #00aa00;
+  --node-bg: #0a0a0a;
+  --input-bg: #1a1a1a;
+}
+body[data-theme="turbo-vision-dark"] {
+  background: #000000;
+  color: #00ff00;
+}
+.header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #008000;
+}
+button {
+  background: #00aa00;
+  color: #000000;
+  border: 1px solid #008000;
+}
+button:hover { background: #00ff00; }
+.dropdown button { background: #1a1a1a; color: #00ff00; }
+.dropdown-menu { background: #0a0a0a; border: 1px solid #008000; color: #00ff00; }
+.node { background: #0a0a0a; border-left-color: #00aa00; color: #00ff00; }
+.item-field { background: #1a1a1a; color: #00ff00; border: 1px solid #008000; }
+.prob { background: rgba(0,175,0,0.2); color: #00ff00; }
+.link { stroke: #00aa00; }
+.tab { background: #1a1a1a; color: #00ff00; border: 1px solid #008000; }
+.tab.active { background: #00aa00; color: #000000; }
+.delete-tab { background: #ff0000; color: #ffffff; }
