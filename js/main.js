@@ -1,4 +1,4 @@
-// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.5
+// js/main.js — ФИНАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.9
 
 let currentEvent = 0;
 const events = [];
@@ -36,11 +36,11 @@ function deleteEvent(index, e) {
   e.stopPropagation();
 
   if (events.length <= 1) {
-    alert(L.lastEventWarning);
+    alert(L.lastEventWarning || 'Нельзя удалить последнее событие!');
     return;
   }
 
-  if (confirm(L.deleteEventConfirm)) {
+  if (confirm(L.deleteEventConfirm || 'Удалить событие?')) {
     events.splice(index, 1);
     document.querySelectorAll('#events-tabs .tab')[index].remove();
 
@@ -108,13 +108,16 @@ document.getElementById('file-input').addEventListener('change', e => {
       const data = JSON.parse(ev.target.result);
       if (data.events && Array.isArray(data.events)) {
         data.events.forEach(ev => {
-          events447.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
+          events.push({
+            html: ev.html || '',
+            eventId: ev.eventId || 'imported_event'
+          });
           addEvent();
         });
         switchEvent(events.length - 1);
-        alert(L.importSuccess);
+        alert(L.importSuccess || 'Импорт завершён!');
       } else {
-        alert(L.importError);
+        alert(L.importError || 'Неверный формат файла');
       }
     } catch (err) {
       alert(L.importError + ': ' + err.message);
@@ -125,7 +128,7 @@ document.getElementById('file-input').addEventListener('change', e => {
 
 // === ОЧИСТКА ===
 function clearAll() {
-  if (confirm(L.clearAllConfirm)) {
+  if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
@@ -152,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'dark');
   setLang(localStorage.getItem('lang') || 'en');
 
-  // Старт с нуля событий
+  // Старт с одного события
   addEvent();
   switchEvent(0);
 
@@ -179,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  console.log('%cBarotrauma RNG Builder v0.9.5 запущен!', 'color:#61afef;font-size:16px');
+  console.log('%cBarotrauma RNG Builder v0.9.9 запущен!', 'color:#61afef;font-size:16px');
 });
 
 // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
