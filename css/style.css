@@ -250,3 +250,24 @@ textarea {
   line-height: 20px;
 }
 .delete-tab:hover { background: #ff4444; }
+/* Меню настроек — ВСЕГДА ПОВЕРХ ВСЕГО */
+.dropdown-menu {
+  z-index: 10000 !important;
+}
+
+/* Модал базы данных — тоже сверху */
+div[style*="z-index:1000"],
+div[style*="z-index: 1000"] {
+  z-index: 10001 !important;
+}
+
+/* SVG дерева — не перекрывает модалы */
+#tree-svg {
+  pointer-events: none;
+}
+#tree-container {
+  pointer-events: none;
+}
+#tree-container * {
+  pointer-events: auto;
+}
