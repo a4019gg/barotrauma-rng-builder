@@ -4,7 +4,7 @@ const LANG_RU = {
   rootLabel: "Корневое событие",
   successLabel: "Успех",
   failureLabel: "Провал",
-
+validationHint: "Эти проверки можно отключить в Settings → XML & Behavior",
   generateXML: "Сгенерировать XML",
   copyXML: "Копировать XML",
   downloadXML: "Скачать XML",
