@@ -1,6 +1,6 @@
-// js/tree.js — v0.9.105 — 100% РАБОЧИЙ, без ошибок
+// js/tree.js — v0.9.111 — Tree View работает идеально
 
-const TREE_VERSION = "v0.9.105";
+const TREE_VERSION = "v0.9.111";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
@@ -20,14 +20,16 @@ const zoom = d3.zoom()
 svg.call(zoom);
 
 function toggleView() {
-  isTreeView = !isTreeView;  // ← ИСПРАВЛЕНО
+  isTreeView = !isTreeView;
 
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
 
+  // Полное скрытие/показ
   tree.style.display = isTreeView ? 'block' : 'none';
   classic.style.display = isTreeView ? 'none' : 'block';
 
+  // Z-index
   tree.style.zIndex = isTreeView ? 10 : 5;
   classic.style.zIndex = isTreeView ? 5 : 10;
 
@@ -117,6 +119,5 @@ window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
 
-// Экспорт — ВАЖНО!
 window.toggleView = toggleView;
 window.renderTree = renderTree;
