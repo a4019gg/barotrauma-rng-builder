@@ -1,4 +1,4 @@
-// js/tree.js — D3-дерево v0.8.1 — ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ
+// js/tree.js — D3-дерево v0.9.2 — НА ВЕСЬ ЭКРАН, БЕЗ 300x150
 
 let isTreeView = false;
 
@@ -6,7 +6,6 @@ let isTreeView = false;
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
-  .attr("viewBox", null) // Убираем фиксированный viewBox, чтобы растягивался
   .style("display", "block");
 
 const g = svg.append("g");
@@ -58,9 +57,9 @@ function renderTree() {
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  // Размеры окна
+  // Получаем размеры окна
   const width = window.innerWidth;
-  const height = window.innerHeight - 200; // учитываем header + bottom-bar
+  const height = window.innerHeight - 150; // учитываем header + bottom-bar
 
   const treeLayout = d3.tree().size([height - 100, width - 400]);
   const root = d3.hierarchy(rootData);
@@ -84,16 +83,16 @@ function renderTree() {
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
   nodes.append("circle")
-    .attr("r", d => d.children ? 20 : 16)
+    .attr("r", d => d.children ? 22 : 18)
     .attr("fill", d => d.children ? "#c586c0" : "#6a9955")
     .attr("stroke", "#fff")
     .attr("stroke-width", 3);
 
   nodes.append("text")
-    .attr("dy", 5)
-    .attr("x", d => d.children ? -30 : 30)
+    .attr("dy", 6)
+    .attr("x", d => d.children ? -35 : 35)
     .style("text-anchor", d => d.children ? "end" : "start")
-    .style("font", "14px Consolas")
+    .style("font", "15px Consolas")
     .style("fill", "var(--text)")
     .style("font-weight", "bold")
     .text(d => d.data.name);
@@ -119,7 +118,7 @@ function renderTree() {
     );
 }
 
-// Перерисовка при изменении размера окна
+// Перерисовка при изменении размера
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
