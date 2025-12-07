@@ -15,7 +15,13 @@ function setTheme(theme) {
     themeStyle.setAttribute('href', 'css/themes/light.css');
   } else if (theme === 'flopstyle-dark') {
     themeStyle.setAttribute('href', 'css/themes/flopstyle-dark.css');
+  } else if (theme === 'turbo-vision-dark') {
+    themeStyle.setAttribute('href', 'css/themes/turbo-vision-dark.css');
   }
+
+  const select = document.getElementById('theme-select');
+  if (select) select.value = theme;
+}
 
   // Сохраняем в селект
   const select = document.getElementById('theme-select');
