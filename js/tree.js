@@ -1,8 +1,11 @@
-// js/tree.js — D3-дерево v0.9.8 — НА ВЕСЬ ЭКРАН, БЕЗ 300x150
+// js/tree.js — D3-дерево v0.9.10 — НА ВЕСЬ ЭКРАН, ГАРАНТИРОВАННО
+
+const TREE_VERSION = "v0.9.10";
+window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
 
-// Настраиваем SVG на весь контейнер
+// SVG — 100% ширины и высоты
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
@@ -28,9 +31,7 @@ function toggleView() {
   
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
   
-  if (isTreeView) {
-    renderTree();
-  }
+  if (isTreeView) renderTree();
 }
 
 function renderTree() {
@@ -58,7 +59,6 @@ function renderTree() {
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  // Получаем размеры окна
   const width = window.innerWidth;
   const height = window.innerHeight - 150; // header + bottom-bar
 
@@ -98,18 +98,15 @@ function renderTree() {
     .style("font-weight", "bold")
     .text(d => d.data.name);
 
-  // Центрирование и масштабирование
+  // Центрирование
   const bounds = g.node().getBBox();
-  const fullWidth = bounds.width;
-  const fullHeight = bounds.height;
-
   const scale = Math.min(
-    (width - 200) / fullWidth,
-    (height - 200) / fullHeight
+    (width - 200) / bounds.width,
+    (height - 200) / bounds.height
   ) * 0.9;
 
-  const translateX = width / 2 - (bounds.x + fullWidth / 2) * scale;
-  const translateY = height / 2 - (bounds.y + fullHeight / 2) * scale;
+  const translateX = width / 2 - (bounds.x + bounds.width / 2) * scale;
+  const translateY = height / 2 - (bounds.y + bounds.height / 2) * scale;
 
   svg.transition()
     .duration(600)
@@ -119,11 +116,10 @@ function renderTree() {
     );
 }
 
-// Перерисовка при изменении размера
+// Перерисовка при ресайзе
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
 
-// Экспорт
 window.toggleView = toggleView;
 window.renderTree = renderTree;
