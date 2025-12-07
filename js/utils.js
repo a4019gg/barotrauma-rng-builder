@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.116 — ПОЛНЫЙ, БЕЗ СИНТАКСИЧЕСКИХ ОШИБОК
+// js/utils.js — v0.9.119 — светлая тема только из css/themes/light.css
 
-const UTILS_VERSION = "v0.9.116";
+const UTILS_VERSION = "v0.9.119";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -9,15 +9,19 @@ const L = {};
 // === ТЕМЫ ===
 function setTheme(theme) {
   document.body.dataset.theme = theme;
-  localStorage.setItem('theme', theme);
-  const s = document.getElementById('theme-style');
-  const m = {
-    'dark': '',
-    'light': 'css/themes/light.css',
-    'flopstyle-dark': 'css/themes/flopstyle-dark.css',
-    'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
+
+  const themeStyle = document.getElementById('theme-style');
+  const themes = {
+    'dark'              : '',
+    'light'             : 'css/themes/light.css',
+    'flopstyle-dark'    : 'css/themes/flopstyle-dark.css',
+    'turbo-vision-dark' : 'css/themes/turbo-vision-dark.css'
+    // добавляй сюда новые темы — просто путь к файлу
   };
-  s.href = m[theme] || '';
+
+  themeStyle.href = themes[theme] || '';
+  localStorage.setItem('theme', theme);
+
   const sel = document.getElementById('theme-select');
   if (sel) sel.value = theme;
 }
@@ -88,6 +92,7 @@ function setLang(lang) {
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
+  // кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
@@ -98,14 +103,14 @@ function setLang(lang) {
   const isTree = document.getElementById('tree-container').style.display === 'block';
   document.getElementById('view-btn').textContent = isTree ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
 
-  const langSel = document.getElementById('lang-select');
-  if (langSel) langSel.value = lang;
+  const sel = document.getElementById('lang-select');
+  if (sel) sel.value = lang;
 
   applyLocalization();
   updateAll();
 }
 
-// === ВЕРСИИ СКРИПТОВ ===
+// === ВЕРСИИ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -120,7 +125,7 @@ function showScriptVersions() {
   c.innerHTML = v.map(x=>`${x.n} → ${x.v}`).join('<br>');
 }
 
-// === ЗАПУСК ===
+// === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'dark');
   setLang(localStorage.getItem('lang') || 'en');
@@ -133,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// === ЭКСПОРТ ВСЕХ ФУНКЦИЙ ===
+// === ЭКСПОРТ ===
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
