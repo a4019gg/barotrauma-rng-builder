@@ -1,15 +1,19 @@
-// js/xml.js — генерация XML
+// js/xml.js — генерация XML — v0.9.5
 
 function generateXML() {
-  let xml = `<ScriptedEvent identifier="${document.getElementById('event-id').value || 'custom_event'}" commonness="100">\n`;
+  const eventId = document.getElementById('event-id').value.trim() || 'custom_event';
+
+  let xml = `<ScriptedEvent identifier="${eventId}" commonness="100">\n`;
 
   function walk(container, indent = "  ") {
     container.querySelectorAll(':scope > .node').forEach(node => {
       if (node.classList.contains('spawn')) {
-        const item = node.querySelector('.item-field').value.trim() || 'revolver';
+        const itemInput = node.querySelector('.item-field');
+        const item = itemInput?.value.trim() || 'revolver';
         xml += `${indent}  <SpawnAction itemidentifier="${item}" targetinventory="player" />\n`;
       } else if (node.classList.contains('rng')) {
-        const chance = node.querySelector('.chance').value || '0.5';
+        const chanceInput = node.querySelector('.chance');
+        const chance = chanceInput?.value.trim() || '0.5';
         xml += `${indent}  <RNGAction chance="${chance}">\n`;
         xml += `${indent}    <Success>\n`;
         const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
@@ -33,22 +37,31 @@ function generateXML() {
 
 function copyXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) return alert('Сначала сгенерируйте XML!');
-  navigator.clipboard.writeText(text).then(() => alert('XML скопирован!'));
+  if (!text.trim()) {
+    alert(L.generateFirst);
+    return;
+  }
+  navigator.clipboard.writeText(text)
+    .then(() => alert(L.xmlCopied))
+    .catch(() => alert(L.xmlCopyFailed));
 }
 
 function downloadXML() {
   const text = document.getElementById('output').value;
-  if (!text.trim()) return alert('Сначала сгенерируйте XML!');
+  if (!text.trim()) {
+    alert(L.generateFirst);
+    return;
+  }
   const blob = new Blob([text], { type: 'text/xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${document.getElementById('event-id').value || 'event'}.xml`;
+  a.download = `${document.getElementById('event-id').value.trim() || 'event'}.xml`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
+// Экспорт функций
 window.generateXML = generateXML;
 window.copyXML = copyXML;
 window.downloadXML = downloadXML;
