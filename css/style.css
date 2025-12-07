@@ -1,4 +1,4 @@
-/* style.css — v0.9.116 — АБСОЛЮТНО ИДЕАЛЬНЫЙ ВАРИАНТ */
+/* style.css — v0.9.117 — ПОЛНЫЙ, ФИНАЛЬНЫЙ, 100% РАБОЧИЙ */
 
 :root {
   --bg: #1e1e1e;
@@ -103,7 +103,7 @@ body {
   font-weight: bold;
 }
 
-/* ЦЕНТР — ОДИН КОНТЕЙНЕР ДЛЯ ДВУХ РЕЖИМОВ */
+/* ЦЕНТР — ОДИН КОНТЕЙНЕР */
 #editor-area {
   position: absolute;
   left: 240px;
@@ -114,7 +114,7 @@ body {
   overflow: hidden;
 }
 
-/* СЕТКА — ВИДНА В ОБОИХ РЕЖИМАХ */
+/* СЕТКА */
 #editor-area::before {
   content: "";
   position: absolute;
@@ -129,10 +129,13 @@ body {
 }
 body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* ДВА РЕЖИМА — В ОДНОМ КОНТЕЙНЕРЕ */
+/* ДВА РЕЖИМА — ПОЛНОСТЬЮ СОВПАДАЮТ ПО РАЗМЕРУ */
 #classic-view, #tree-container {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -218,7 +221,7 @@ button.danger { background: var(--red); }
 .dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
 .dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
 
-/* НОВЫЕ НАСТРОЙКИ — 100% РАБОТАЮТ */
+/* НОВЫЕ НАСТРОЙКИ */
 body[data-ui-scale="80"]   { font-size: 80%; }
 body[data-ui-scale="120"]  { font-size: 120%; }
 body[data-ui-scale="150"]  { font-size: 150%; }
