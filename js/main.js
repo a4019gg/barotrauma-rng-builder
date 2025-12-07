@@ -1,6 +1,6 @@
-// js/main.js — v0.9.108 — ПОЛНЫЙ И ФИНАЛЬНЫЙ
+// js/main.js — v0.9.111 — ПОЛНЫЙ И ФИНАЛЬНЫЙ
 
-const MAIN_VERSION = "v0.9.108";
+const MAIN_VERSION = "v0.9.111";
 window.MAIN_VERSION = MAIN_VERSION;
 
 let currentEvent = 0;
@@ -10,7 +10,6 @@ const events = [];
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
-  // Сохраняем текущее
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id')?.value.trim() || `event_${currentEvent + 1}`
@@ -18,12 +17,10 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
   const eventIdInput = document.getElementById('event-id');
   if (eventIdInput) eventIdInput.value = events[index].eventId;
 
-  // Подсвечиваем вкладку
   document.querySelectorAll('.event-tab').forEach((tab, i) => {
     tab.classList.toggle('active', i === index);
   });
@@ -35,10 +32,10 @@ function switchEvent(index) {
 function deleteEvent(index, e) {
   e.stopPropagation();
   if (events.length <= 1) {
-    alert('Нельзя удалить последнее событие!');
+    alert(L.lastEventWarning || 'Нельзя удалить последнее событие!');
     return;
   }
-  if (confirm('Удалить событие?')) {
+  if (confirm(L.deleteEventConfirm || 'Удалить событие?')) {
     events.splice(index, 1);
     document.querySelectorAll('.event-tab')[index].remove();
     if (currentEvent >= events.length) currentEvent = events.length - 1;
@@ -97,7 +94,7 @@ function importFile() {
 
 function exportJSON() {
   const data = {
-    version: "0.9.108",
+    version: "0.9.111",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -111,7 +108,7 @@ function exportJSON() {
 
 // === ОЧИСТКА И ПРИМЕР ===
 function clearAll() {
-  if (confirm('Очистить всё?')) {
+  if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
@@ -143,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// Экспорт функций
 window.importFile = importFile;
 window.exportJSON = exportJSON;
 window.clearAll = clearAll;
