@@ -1,0 +1,222 @@
+[
+  {
+    "id": "revolver",
+    "name": "Revolver",
+    "category": "Weapons"
+  },
+  {
+    "id": "smg",
+    "name": "SMG",
+    "category": "Weapons"
+  },
+  {
+    "id": "rifle",
+    "name": "Rifle",
+    "category": "Weapons"
+  },
+  {
+    "id": "shotgun",
+    "name": "Shotgun",
+    "category": "Weapons"
+  },
+  {
+    "id": "harpoongun",
+    "name": "Harpoon Gun",
+    "category": "Weapons"
+  },
+  {
+    "id": "coilgun",
+    "name": "Coilgun",
+    "category": "Weapons"
+  },
+  {
+    "id": "railgun",
+    "name": "Railgun",
+    "category": "Weapons"
+  },
+  {
+    "id": "chaingun",
+    "name": "Chaingun",
+    "category": "Weapons"
+  },
+  {
+    "id": "flamer",
+    "name": "Flamethrower",
+    "category": "Weapons"
+  },
+  {
+    "id": "crowbar",
+    "name": "Crowbar",
+    "category": "Weapons"
+  },
+  {
+    "id": "wrench",
+    "name": "Wrench",
+    "category": "Weapons"
+  },
+  {
+    "id": "divingknife",
+    "name": "Diving Knife",
+    "category": "Weapons"
+  },
+  {
+    "id": "morphine",
+    "name": "Morphine",
+    "category": "Medical"
+  },
+  {
+    "id": "fentanyl",
+    "name": "Fentanyl",
+    "category": "Medical"
+  },
+  {
+    "id": "antibiotics",
+    "name": "Antibiotics",
+    "category": "Medical"
+  },
+  {
+    "id": "bandage",
+    "name": "Bandage",
+    "category": "Medical"
+  },
+  {
+    "id": "plastiseal",
+    "name": "Plastiseal",
+    "category": "Medical"
+  },
+  {
+    "id": "antirad",
+    "name": "Antiradiation",
+    "category": "Medical"
+  },
+  {
+    "id": "bloodpack",
+    "name": "Blood Pack",
+    "category": "Medical"
+  },
+  {
+    "id": "saline",
+    "name": "Saline",
+    "category": "Medical"
+  },
+  {
+    "id": "welder",
+    "name": "Welder",
+    "category": "Tools"
+  },
+  {
+    "id": "screwdriver",
+    "name": "Screwdriver",
+    "category": "Tools"
+  },
+  {
+    "id": "plasmacutter",
+    "name": "Plasma Cutter",
+    "category": "Tools"
+  },
+  {
+    "id": "ducttape",
+    "name": "Duct Tape",
+    "category": "Tools"
+  },
+  {
+    "id": "oxygenite",
+    "name": "Oxygenite",
+    "category": "Materials"
+  },
+  {
+    "id": "fuelrod",
+    "name": "Fuel Rod",
+    "category": "Materials"
+  },
+  {
+    "id": "revolverround",
+    "name": "Revolver Rounds",
+    "category": "Ammo"
+  },
+  {
+    "id": "smgmagazine",
+    "name": "SMG Magazine",
+    "category": "Ammo"
+  },
+  {
+    "id": "riflemagazine",
+    "name": "Rifle Magazine",
+    "category": "Ammo"
+  },
+  {
+    "id": "shotgunshell",
+    "name": "Shotgun Shells",
+    "category": "Ammo"
+  },
+  {
+    "id": "harpoon",
+    "name": "Harpoon",
+    "category": "Ammo"
+  },
+  {
+    "id": "coilgunammo",
+    "name": "Coilgun Ammo",
+    "category": "Ammo"
+  },
+  {
+    "id": "divingsuit",
+    "name": "Diving Suit",
+    "category": "Diving"
+  },
+  {
+    "id": "combatdivingsuit",
+    "name": "Combat Diving Suit",
+    "category": "Diving"
+  },
+  {
+    "id": "oxygentank",
+    "name": "Oxygen Tank",
+    "category": "Diving"
+  },
+  {
+    "id": "scubatank",
+    "name": "Scuba Tank",
+    "category": "Diving"
+  },
+  {
+    "id": "c4",
+    "name": "C4",
+    "category": "Explosives"
+  },
+  {
+    "id": "c4block",
+    "name": "C4 Block",
+    "category": "Explosives"
+  },
+  {
+    "id": "detonator",
+    "name": "Detonator",
+    "category": "Explosives"
+  },
+  {
+    "id": "clownmask",
+    "name": "Clown Mask",
+    "category": "Fun"
+  },
+  {
+    "id": "clowncostume",
+    "name": "Clown Costume",
+    "category": "Fun"
+  },
+  {
+    "id": "toyhammer",
+    "name": "Toy Hammer",
+    "category": "Fun"
+  },
+  {
+    "id": "bikehorn",
+    "name": "Bike Horn",
+    "category": "Fun"
+  },
+  {
+    "id": "balloon",
+    "name": "Balloon",
+    "category": "Fun"
+  }
+]
