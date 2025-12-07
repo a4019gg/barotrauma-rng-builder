@@ -28,5 +28,11 @@ const LANG_RU = {
   importError: "Ошибка импорта",
   modLoaded: "Мод загружен!",
   modError: "Неверный формат мода",
-  searchPlaceholder: "Поиск по имени, ID или тегу..."
+  searchPlaceholder: "Поиск по имени, ID или тегу...",
+  dbCacheCorrupted: "Кэш базы повреждён — перезагружаем",
+  dbFileNotFound: "items.json не найден",
+  dbLoadError: "Ошибка загрузки data/items.json:",
+  dbLoadFailed: "Не удалось загрузить базу предметов. Проверьте файл data/items.json",
+  dbLoaded: "База загружена",
+  dbItems: "предметов"
 };
