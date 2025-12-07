@@ -1,9 +1,9 @@
-// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.2
+// js/main.js — ПОЛНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.5
 
 let currentEvent = 0;
 const events = [];
 
-// Переключение события
+// === ПЕРЕКЛЮЧЕНИЕ СОБЫТИЯ ===
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
@@ -15,40 +15,41 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем выбранное
+  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId;
 
-  // Обновляем вкладки
+  // Подсвечиваем вкладку
   document.querySelectorAll('#events-tabs .tab').forEach((tab, i) => {
     tab.classList.toggle('active', i === index);
   });
 
-  // Обновляем имя на вкладке
-  const activeTab = document.querySelector('#events-tabs .tab.active');
-  if (activeTab) {
-    const nameSpan = activeTab.querySelector('.tab-name') || activeTab;
-    nameSpan.textContent = events[index].eventId;
-  }
+  // Синхронизация имени вкладки
+  const activeTab = document.querySelector('#events-tabs .tab.active .tab-name');
+  if (activeTab) activeTab.textContent = events[index].eventId;
 
   updateAll();
 }
 
-// Удаление события
-function deleteEvent(index) {
+// === УДАЛЕНИЕ СОБЫТИЯ ===
+function deleteEvent(index, e) {
+  e.stopPropagation();
+
   if (events.length <= 1) {
-    alert('Нельзя удалить последнее событие!');
+    alert(L.lastEventWarning);
     return;
   }
-  if (confirm('Удалить событие?')) {
+
+  if (confirm(L.deleteEventConfirm)) {
     events.splice(index, 1);
     document.querySelectorAll('#events-tabs .tab')[index].remove();
+
     if (currentEvent >= events.length) currentEvent = events.length - 1;
     switchEvent(currentEvent);
   }
 }
 
-// Добавление события
+// === ДОБАВЛЕНИЕ СОБЫТИЯ ===
 function addEvent() {
   const index = events.length;
   const newId = `event_${index + 1}`;
@@ -56,25 +57,24 @@ function addEvent() {
 
   const tab = document.createElement('button');
   tab.className = 'tab';
+  tab.dataset.index = index;
   tab.innerHTML = `
     <span class="tab-name">${newId}</span>
     <span class="delete-tab">×</span>
   `;
+
   tab.onclick = (e) => {
     if (!e.target.classList.contains('delete-tab')) {
       switchEvent(index);
     }
   };
-  tab.querySelector('.delete-tab').onclick = (e) => {
-    e.stopPropagation();
-    deleteEvent(index);
-  };
+  tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
 
   document.querySelector('#events-tabs .add').before(tab);
   switchEvent(index);
 }
 
-// Обновление имени вкладки при изменении Event ID
+// === ОБНОВЛЕНИЕ ИМЕНИ ВКЛАДКИ ===
 function updateActiveTabName() {
   const value = document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`;
   events[currentEvent].eventId = value;
@@ -83,7 +83,7 @@ function updateActiveTabName() {
   if (activeTab) activeTab.textContent = value;
 }
 
-// Tree View
+// === ПЕРЕКЛЮЧЕНИЕ TREE / CLASSIC ===
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
@@ -93,19 +93,68 @@ function toggleView() {
   if (!tree.classList.contains('hidden')) renderTree();
 }
 
-// Инициализация при старте — 0 событий
-function initEmpty() {
-  document.getElementById('root-children').innerHTML = '';
-  document.getElementById('event-id').value = 'new_event';
-  updateAll();
+// === ИМПОРТ ===
+function importFile() {
+  document.getElementById('file-input').click();
 }
 
-// === DOM LOADED ===
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.events && Array.isArray(data.events)) {
+        data.events.forEach(ev => {
+          events447.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
+          addEvent();
+        });
+        switchEvent(events.length - 1);
+        alert(L.importSuccess);
+      } else {
+        alert(L.importError);
+      }
+    } catch (err) {
+      alert(L.importError + ': ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// === ОЧИСТКА ===
+function clearAll() {
+  if (confirm(L.clearAllConfirm)) {
+    document.getElementById('root-children').innerHTML = '';
+    updateAll();
+  }
+}
+
+// === ПРИМЕР ===
+function loadExample() {
+  clearAll();
+  addRNG('');
+  setTimeout(() => {
+    const first = document.querySelector('#root-children > .node.rng');
+    if (first) {
+      first.querySelector('.chance').value = 0.6;
+      addRNG(first.dataset.id + '-s');
+      addSpawn(first.dataset.id + '-s.0-s');
+      updateAll();
+    }
+  }, 100);
+}
+
+// === ИНИЦИАЛИЗАЦИЯ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
   setTheme(localStorage.getItem('theme') || 'dark');
   setLang(localStorage.getItem('lang') || 'en');
-  initEmpty(); // ← старт с нуля событий
+
+  // Старт с нуля событий
+  addEvent();
+  switchEvent(0);
 
   // Подсказки
   document.addEventListener('mouseover', e => {
@@ -129,11 +178,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tooltip) tooltip.remove();
     }
   });
+
+  console.log('%cBarotrauma RNG Builder v0.9.5 запущен!', 'color:#61afef;font-size:16px');
 });
 
-// Глобальные функции
+// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
 window.switchEvent = switchEvent;
 window.deleteEvent = deleteEvent;
 window.addEvent = addEvent;
 window.toggleView = toggleView;
 window.updateActiveTabName = updateActiveTabName;
+window.importFile = importFile;
+window.clearAll = clearAll;
+window.loadExample = loadExample;
