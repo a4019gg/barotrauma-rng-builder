@@ -1,4 +1,4 @@
-/* style.css — v0.9.102 — ИДЕАЛЬНЫЙ ВАРИАНТ */
+/* style.css — v0.9.111 — ПОЛНОСТЬЮ РАБОЧИЙ И КРАСИВЫЙ */
 
 :root {
   --bg: #1e1e1e;
@@ -9,6 +9,7 @@
   --red: #f44747;
   --border: #444;
   --node-bg: #2d2d30;
+  ;
   --input-bg: #333;
   --grid-color: rgba(100,100,100,0.1);
   --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
@@ -35,10 +36,9 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: all 0.3s;
 }
 
-/* === ТОП-БАР === */
+/* ТОП-БАР */
 .top-bar {
   height: 50px;
   background: var(--panel);
@@ -55,7 +55,7 @@ body {
   align-items: center;
 }
 
-/* === ACTION BAR === */
+/* ACTION BAR */
 .action-bar {
   height: 50px;
   background: var(--panel);
@@ -69,32 +69,27 @@ body {
 .action-left, .action-right {
   display: flex;
   gap: 12px;
-  align-items: center;
 }
 
-/* === ГЛАВНЫЙ КОНТЕЙНЕР === */
+/* ГЛАВНЫЙ КОНТЕЙНЕР */
 #main-container {
   flex: 1;
   display: flex;
-  overflow: hidden;
 }
 
-/* === ЛЕВАЯ ПАНЕЛЬ — СОБЫТИЯ === */
+/* ЛЕВАЯ ПАНЕЛЬ */
 #events-panel {
   width: 240px;
   background: var(--panel);
   border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
 }
 .panel-header {
   padding: 12px;
   border-bottom: 1px solid var(--border);
 }
 #events-list {
-  flex: 1;
-  overflow-y: auto;
   padding: 8px;
+  overflow-y: auto;
 }
 .event-tab {
   display: flex;
@@ -105,9 +100,7 @@ body {
   border-radius: 6px;
   margin-bottom: 6px;
   cursor: pointer;
-  transition: all 0.2s;
 }
-.event-tab:hover { background: #3a3a3a; }
 .event-tab.active {
   background: var(--accent);
   color: white;
@@ -120,18 +113,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
 }
 
-/* === ЦЕНТРАЛЬНАЯ ОБЛАСТЬ === */
+/* ЦЕНТР */
 #editor-area {
   flex: 1;
   position: relative;
   background: var(--bg);
-  overflow: hidden;
 }
-
-/* СЕТКА ФОНА */
 #editor-area::before {
   content: "";
   position: absolute;
@@ -145,7 +134,7 @@ body {
   z-index: 0;
 }
 
-/* КЛАССИЧЕСКИЙ РЕЖИМ — СКРОЛЛ И ПОВЕРХ TREE */
+/* РЕЖИМЫ */
 #classic-view {
   position: absolute;
   inset: 0;
@@ -155,8 +144,6 @@ body {
   padding: 20px;
   box-sizing: border-box;
 }
-
-/* TREE VIEW — ПОД НОДАМИ */
 #tree-container {
   position: absolute;
   inset: 0;
@@ -180,11 +167,14 @@ body {
   z-index: 1;
 }
 
-/* EVENT ID И ТЕКСТАРЕА — ВСЕГДА СВЕРХУ */
-.event-id-bar, textarea#output {
-  position: relative;
-  z-index: 100;
+/* EVENT ID */
+.event-id-bar {
+  padding: 8px 16px;
   background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* КНОПКИ */
@@ -195,13 +185,12 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
 }
 button:hover { filter: brightness(1.2); }
 button.green { background: #218c21; }
 button.danger { background: var(--red); }
 
-/* ДРОПДАУН НАСТРОЕК — КРАСИВО И ВСЕГДА СВЕРХУ */
+/* ДРОПДАУН НАСТРОЕК */
 .dropdown {
   position: relative;
   display: inline-block;
@@ -212,7 +201,7 @@ button.danger { background: var(--red); }
   right: 0;
   top: 100%;
   background: var(--panel);
-  min-width: 260px;
+  min-width: 280px;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
@@ -226,6 +215,7 @@ button.danger { background: var(--red); }
   display: block;
   margin: 12px 0 6px 0;
   color: var(--accent);
+  font-size: 14px;
 }
 .dropdown-content select,
 .dropdown-content label {
@@ -243,7 +233,7 @@ button.danger { background: var(--red); }
 textarea#output {
   width: 100%;
   height: 160px;
-  background:RGBA(30,30,30,0.95);
+  background: #1e1e1e;
   color: #d4d4d4;
   font-family: Consolas, monospace;
   padding: 10px;
