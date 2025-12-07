@@ -1,6 +1,6 @@
-// js/nodes.js — v0.9.106 — ПОЛНЫЙ И РАБОЧИЙ
+// js/nodes.js — v0.9.111
 
-const NODES_VERSION = "v0.9.106";
+const NODES_VERSION = "v0.9.111";
 window.NODES_VERSION = NODES_VERSION;
 
 let counter = 0;
@@ -74,38 +74,34 @@ function updateProbabilities() {
     const localEl = probEl.querySelector('.local');
 
     if (node.classList.contains('spawn')) {
-      const g = (globalProb * 100).toFixed(3) + '%';
-      const l = (parentLocal * 100).toFixed(1) + '%';
-      globalEl.textContent = g;
-      localEl.textContent = l;
-      probEl.dataset.tip = `Global: ${g} | Local: ${l}`;
+      globalEl.textContent = (globalProb * 100).toFixed(3) + '%';
+      localEl.textContent = (parentLocal * 100).toFixed(1) + '%';
+      probEl.dataset.tip = `Global: ${(globalProb*100).toFixed(3)}% | Local: ${(parentLocal*100).toFixed(1)}%`;
       return;
     }
 
     if (node.classList.contains('rng')) {
-      const chanceInput = node.querySelector('.chance');
-      const chance = chanceInput ? parseFloat(chanceInput.value) || 0.5 : 0.5;
+      const chance = parseFloat(node.querySelector('.chance')?.value) || 0.5;
+      const sGlobal = globalProb * chance;
+      const fGlobal = globalProb * (1 - chance);
 
-      const successGlobal = globalProb * chance;
-      const failureGlobal = globalProb * (1 - chance);
+      const sCont = node.querySelector(`#c-${node.dataset.id}-s`);
+      const fCont = node.querySelector(`#c-${node.dataset.id}-f`);
 
-      const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
-      const failureCont = node.querySelector(`#c-${node.dataset.id}-f`);
-
-      if (successCont) successCont.querySelectorAll(':scope > .node').forEach(n => calc(n, successGlobal, chance));
-      if (failureCont) failureCont.querySelectorAll(':scope > .node').forEach(n => calc(n, failureGlobal, 1 - chance));
+      if (sCont) sCont.querySelectorAll(':scope > .node').forEach(n => calc(n, sGlobal, chance));
+      if (fCont) fCont.querySelectorAll(':scope > .node').forEach(n => calc(n, fGlobal, 1 - chance));
 
       globalEl.textContent = (globalProb * 100).toFixed(3) + '%';
       localEl.textContent = (chance * 100).toFixed(1) + '% → ' + ((1 - chance) * 100).toFixed(1) + '%';
     }
   }
 
-  document.querySelectorAll('#root-children > .node').forEach(n => calc(n, 1.0, 1.0));
+  document.querySelectorAll('#root-children > .node').forEach(n => calc(n));
 }
 
 function autoBalance() {
   const mode = prompt('1 — 50/50\n2 — По предметам', '2');
-  if (!mode || !['1', '2'].includes(mode)) return;
+  if (!mode || !['1','2'].includes(mode)) return;
 
   document.querySelectorAll('.node.rng').forEach(rng => {
     const input = rng.querySelector('.chance');
@@ -114,24 +110,22 @@ function autoBalance() {
     if (mode === '1') {
       input.value = 0.5;
     } else {
-      const successItems = rng.querySelector(`#c-${rng.dataset.id}-s`)?.querySelectorAll('.node.spawn').length || 0;
-      const failureItems = rng.querySelector(`#c-${rng.dataset.id}-f`)?.querySelectorAll('.node.spawn').length || 0;
-      const total = successItems + failureItems;
-      input.value = total === 0 ? 0.5 : (successItems / total).toFixed(6);
+      const s = rng.querySelector(`#c-${rng.dataset.id}-s`)?.querySelectorAll('.node.spawn').length || 0;
+      const f = rng.querySelector(`#c-${rng.dataset.id}-f`)?.querySelectorAll('.node.spawn').length || 0;
+      const total = s + f;
+      input.value = total === 0 ? 0.5 : (s / total).toFixed(6);
     }
   });
-
   updateAll();
 }
 
 function updateAll() {
   updateProbabilities();
-  if (typeof renderTree === 'function' && !document.getElementById('tree-container').classList.contains('hidden')) {
+  if (typeof renderTree === 'function' && document.getElementById('tree-container').style.display === 'block') {
     renderTree();
   }
 }
 
-// Экспорт функций
 window.addRNG = addRNG;
 window.addSpawn = addSpawn;
 window.updateAll = updateAll;
