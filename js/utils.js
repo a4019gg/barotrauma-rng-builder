@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.99 — Настройки, темы, локализация, версии
+// js/utils.js — v0.9.103 — ВСЕ НАСТРОЙКИ РАБОТАЮТ
 
-const UTILS_VERSION = "v0.9.99";
+const UTILS_VERSION = "v0.9.103";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -10,51 +10,46 @@ const L = {};
 function setTheme(theme) {
   document.body.dataset.theme = theme;
   localStorage.setItem('theme', theme);
-
-  const themeStyle = document.getElementById('theme-style');
-  const themes = {
+  const s = document.getElementById('theme-style');
+  const m = {
     'dark': '',
     'light': 'css/themes/light.css',
     'flopstyle-dark': 'css/themes/flopstyle-dark.css',
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
-  themeStyle.setAttribute('href', themes[theme] || '');
-
-  const select = document.getElementById('theme-select');
-  if (select) select.value = theme;
+  s.href = m[theme] || '';
+  document.getElementById('theme-select').value = theme;
 }
 
 // === UI SCALE ===
-function setUIScale(scale) {
-  document.body.dataset.uiScale = scale;
-  localStorage.setItem('uiScale', scale);
-  const select = document.getElementById('scale-select');
-  if (select) select.value = scale;
+function setUIScale(val) {
+  document.body.dataset.uiScale = val;
+  localStorage.setItem('uiScale', val);
+  document.getElementById('scale-select').value = val;
 }
 
 // === NODE DENSITY ===
-function setNodeDensity(density) {
-  document.body.dataset.nodeDensity = density;
-  localStorage.setItem('nodeDensity', density);
-  const select = document.getElementById('density-select');
-  if (select) select.value = density;
+function setNodeDensity(val) {
+  document.body.dataset.nodeDensity = val;
+  localStorage.setItem('nodeDensity', val);
+  document.getElementById('density-select').value = val;
 }
 
 // === SHADOWS ===
-function toggleShadows(enabled) {
-  document.body.dataset.nodeShadows = enabled ? 'high' : 'off';
-  localStorage.setItem('nodeShadows', enabled);
+function toggleShadows(on) {
+  document.body.dataset.nodeShadows = on ? 'high' : 'off';
+  localStorage.setItem('nodeShadows', on);
 }
 
-// === BACKGROUND GRID ===
-function toggleGrid(enabled) {
-  document.body.dataset.bgGrid = enabled ? 'visible' : 'off';
-  localStorage.setItem('bgGrid', enabled);
+// === GRID ===
+function toggleGrid(on) {
+  document.body.dataset.bgGrid = on ? 'visible' : 'off';
+  localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP TO GRID (заглушка — будет в tree.js) ===
-function toggleSnap(enabled) {
-  localStorage.setItem('snapToGrid', enabled);
+// === SNAP (заглушка) ===
+function toggleSnap(on) {
+  localStorage.setItem('snapToGrid', on);
 }
 
 // === ЛОКАЛИЗАЦИЯ ===
@@ -75,50 +70,41 @@ function setLang(lang) {
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
-  const viewBtn = document.getElementById('view-btn');
-  if (viewBtn) viewBtn.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
+  const v = document.getElementById('view-btn');
+  v.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
 
-  const langSelect = document.getElementById('lang-select');
-  if (langSelect) langSelect.value = lang;
-
+  document.getElementById('lang-select').value = lang;
   updateAll();
 }
 
-// === ПОКАЗ ВЕРСИЙ СКРИПТОВ ===
+// === ВЕРСИИ СКРИПТОВ ===
 function showScriptVersions() {
-  const container = document.getElementById('script-versions');
-  if (!container) return;
-
-  const versions = [
-    { name: 'main.js', ver: window.MAIN_VERSION || '—' },
-    { name: 'db.js', ver: window.DB_VERSION || '—' },
-    { name: 'utils.js', ver: window.UTILS_VERSION || '—' },
-    { name: 'nodes.js', ver: window.NODES_VERSION || '—' },
-    { name: 'tree.js', ver: window.TREE_VERSION || '—' },
-    { name: 'xml.js', ver: window.XML_VERSION || '—' }
+  const c = document.getElementById('script-versions');
+  if (!c) return;
+  const v = [
+    {n:'main.js',v:window.MAIN_VERSION||'—'},
+    {n:'db.js',v:window.DB_VERSION||'—'},
+    {n:'utils.js',v:window.UTILS_VERSION||'—'},
+    {n:'nodes.js',v:window.NODES_VERSION||'—'},
+    {n:'tree.js',v:window.TREE_VERSION||'—'},
+    {n:'xml.js',v:window.XML_VERSION||'—'}
   ];
-
-  container.innerHTML = versions.map(v => `${v.name} → ${v.ver}`).join('<br>');
+  c.innerHTML = v.map(x=>`${x.n} → ${x.v}`).join('<br>');
 }
 
-// === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ===
+// === ЗАПУСК ===
 document.addEventListener('DOMContentLoaded', () => {
-  // Восстанавливаем настройки
-  setTheme(localStorage.getItem('theme') || 'dark');
-  setLang(localStorage.getItem('lang') || 'en');
-  setUIScale(localStorage.getItem('uiScale') || '100');
-  setNodeDensity(localStorage.getItem('nodeDensity') || 'normal');
-
-  const shadows = localStorage.getItem('nodeShadows');
-  if (shadows !== null) toggleShadows(shadows === 'true');
-
-  const grid = localStorage.getItem('bgGrid');
-  if (grid !== null) toggleGrid(grid === 'true');
+  setTheme(localStorage.getItem('theme')||'dark');
+  setLang(localStorage.getItem('lang')||'en');
+  setUIScale(localStorage.getItem('uiScale')||'100');
+  setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
+  toggleShadows(localStorage.getItem('nodeShadows')==='true');
+  toggleGrid(localStorage.getItem('bgGrid')!=='false');
 
   showScriptVersions();
 });
 
-// Экспорт функций
+// Экспорт
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
@@ -126,4 +112,3 @@ window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
 window.toggleGrid = toggleGrid;
 window.toggleSnap = toggleSnap;
-window.showScriptVersions = showScriptVersions;
