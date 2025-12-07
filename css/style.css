@@ -1,4 +1,4 @@
-/* style.css — v0.9.115 — ВСЁ ИДЕАЛЬНО: без зазоров, сетка сразу, XML на месте */
+/* style.css — v0.9.116 — ФИНАЛЬНЫЙ, БЕЗ ЗАЗОРОВ, СЕТКА В ОБОИХ РЕЖИМАХ */
 
 :root {
   --bg: #1e1e1e;
@@ -30,7 +30,6 @@
 
 body {
   margin: 0;
-  padding: 0;
   font-family: "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -40,8 +39,8 @@ body {
   overflow: hidden;
 }
 
-/* ТОП-БАР */
-.top-bar {
+/* ТОП + ACTION */
+.top-bar, .action-bar {
   height: 50px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
@@ -51,20 +50,7 @@ body {
   padding: 0 16px;
   z-index: 10000;
 }
-.top-left, .top-right { display: flex; gap: 12px; align-items: center; }
-
-/* ACTION BAR */
-.action-bar {
-  height: 50px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 16px;
-  z-index: 9999;
-}
-.action-left, .action-right { display: flex; gap: 12px; }
+.action-bar { z-index: 9999; }
 
 /* ГЛАВНЫЙ КОНТЕЙНЕР */
 #main-container {
@@ -73,7 +59,7 @@ body {
   position: relative;
 }
 
-/* ЛЕВАЯ ПАНЕЛЬ — ТОЧНО 240px, без зазоров */
+/* ЛЕВАЯ ПАНЕЛЬ */
 #events-panel {
   width: 240px;
   background: var(--panel);
@@ -83,38 +69,19 @@ body {
 }
 .panel-header { padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 #events-list { flex: 1; overflow-y: auto; padding: 8px; }
-.event-tab {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--node-bg);
-  border-radius: 6px;
-  margin-bottom: 6px;
-  cursor: pointer;
-}
-.event-tab.active { background: var(--accent); color: white; }
-.delete-tab {
-  background: var(--red);
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
 
-/* ЦЕНТР — НАЧИНАЕТСЯ СРАЗУ ПОСЛЕ ЛЕВОЙ ПАНЕЛИ */
+/* ЦЕНТР — ОДИН КОНТЕЙНЕР, ДВА РЕЖИМА */
 #editor-area {
   position: absolute;
   left: 240px;
-  top: 100px;     /* топ-бар + экшн-бар */
+  top: 100px;
   right: 0;
-  bottom: 160px;  /* место под XML */
+  bottom: 160px;
   background: var(--bg);
+  overflow: hidden;
 }
 
-/* СЕТКА — ВИДНА СРАЗУ */
+/* СЕТКА — ВИДНА В ОБОИХ РЕЖИМАХ */
 #editor-area::before {
   content: "";
   position: absolute;
@@ -129,14 +96,15 @@ body {
 }
 body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* РЕЖИМЫ */
+/* КЛАССИЧЕСКИЙ И ДРЕВОВИДНЫЙ — В ОДНОМ КОНТЕЙНЕРЕ */
 #classic-view, #tree-container {
   position: absolute;
   inset: 0;
   padding: 20px;
+  overflow-y: auto;
 }
-#classic-view  { z-index: 10; overflow-y: auto; overflow-x: hidden; }
-#tree-container { z-index: 5; }
+#classic-view  { z-index: 10; }
+#tree-container { z-index: 5; display: none; }
 #tree-svg { width: 100%; height: 100%; display: block; }
 
 /* НОДЫ */
@@ -151,7 +119,7 @@ body[data-bg-grid="off"] #editor-area::before { display: none; }
   z-index: 1;
 }
 
-/* НИЖНИЕ ПАНЕЛИ — ФИКСИРОВАННЫЕ, НЕ ПАДАЮТ */
+/* НИЖНИЕ ПАНЕЛИ */
 .event-id-bar {
   position: absolute;
   left: 240px;
@@ -195,7 +163,7 @@ button:hover { filter: brightness(1.2); }
 button.green { background: #218c21; }
 button.danger { background: var(--red); }
 
-/* ДРОПДАУН НАСТРОЕК */
+/* ДРОПДАУН */
 .dropdown { position: relative; display: inline-block; }
 .dropdown-content {
   display: none;
@@ -211,10 +179,6 @@ button.danger { background: var(--red); }
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 .dropdown:hover .dropdown-content { display: block; }
-.dropdown-content strong { display: block; margin: 12px 0 6px 0; color: var(--accent); }
-.dropdown-content select,
-.dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
-.dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
 
 /* НОВЫЕ НАСТРОЙКИ — 100% РАБОТАЮТ */
 body[data-ui-scale="80"]   { font-size: 80%; }
