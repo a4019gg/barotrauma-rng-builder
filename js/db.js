@@ -1,12 +1,12 @@
-// js/db.js — v0.9.108 — ВСЁ ЧЕРЕЗ L., НИ ОДНОГО ХАРДКОДА
+// js/db.js — v0.9.111 — ПОЛНЫЙ И ЛОКАЛИЗОВАННЫЙ
 
-const DB_VERSION = "v0.9.108";
+const DB_VERSION = "v0.9.111";
 window.DB_VERSION = DB_VERSION;
 
 let itemsDB = { Vanilla: [], Mods: [] };
 
 function populateDatalist() {
-  const saved = localStorage.getItem('itemsDB_v0.9.108');
+  const saved = localStorage.getItem('itemsDB_v0.9.111');
   if (saved) {
     try {
       itemsDB = JSON.parse(saved);
@@ -24,15 +24,14 @@ function populateDatalist() {
     })
     .then(data => {
       itemsDB.Vanilla = data;
-      localStorage.setItem('itemsDB_v0.9.108', JSON.stringify(itemsDB));
+      localStorage.setItem('itemsDB_v0.9.111', JSON.stringify(itemsDB));
       fillDatalist();
       console.log(`${L.dbLoaded || 'База загружена'}: ${data.length} ${L.dbItems || 'предметов'}`);
     })
     .catch(err => {
-      console.error(`${L.dbLoadError || 'Ошибка загрузки data/items.json:'}`, err);
+      console.error(L.dbLoadError || 'Ошибка загрузки data/items.json:', err);
       alert(L.dbLoadFailed || 'Не удалось загрузить базу предметов. Проверьте файл data/items.json');
 
-      // Минимальный fallback
       itemsDB.Vanilla = [
         { id: "revolver", name: "Revolver", category: "Weapons", tags: ["weapon", "gun"] },
         { id: "smg", name: "SMG", category: "Weapons", tags: ["weapon", "gun"] },
