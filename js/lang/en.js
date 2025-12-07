@@ -1,5 +1,4 @@
-// js/lang/en.js — ПОЛНЫЙ
-
+// js/lang/en.js
 const LANG_EN = {
   rootLabel: "Root Event",
   successLabel: "Success",
@@ -8,9 +7,10 @@ const LANG_EN = {
   autoBalanceEven: "Even (50/50)",
   autoBalanceByCount: "By item count",
   autoBalancePrompt: "Choose mode:\n1 — Even\n2 — By items",
-  autoBalanceApplied: "Balance applied!",
+  autoBalanceApplied: "Auto Balance applied!",
   deleteEventConfirm: "Delete event?",
   lastEventWarning: "Cannot delete the last event!",
+  clearAllConfirm: "Clear all?",
   generateXML: "Generate XML",
   copyXML: "Copy XML",
   downloadXML: "Download XML",
@@ -20,9 +20,12 @@ const LANG_EN = {
   settings: "Settings",
   theme: "Theme",
   language: "Language",
-  dbVanilla: "Vanilla",
-  dbMods: "Mods",
-  dbSearch: "Search items...",
-  dbLoadMod: "Load Mod",
-  clearAllConfirm: "Clear all?"
+  xmlCopied: "XML copied to clipboard!",
+  xmlCopyFailed: "Failed to copy XML",
+  generateFirst: "Generate XML first!",
+  importSuccess: "Import completed!",
+  importError: "Import error",
+  modLoaded: "Mod loaded!",
+  modError: "Invalid mod format",
+  searchPlaceholder: "Search by name, ID or tag..."
 };
