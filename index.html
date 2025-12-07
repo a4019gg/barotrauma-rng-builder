@@ -27,7 +27,7 @@
       <button>Settings</button>
       <div class="dropdown-menu">
         <div><strong>Theme</strong></div>
-        <select onchange="setTheme(this.value)">
+        <select id="theme-select" onchange="setTheme(this.value)">
           <option value="dark">Dark (Default)</option>
           <option value="light">Light</option>
           <option value="flopstyle-dark">Flopstyle Dark</option>
@@ -35,7 +35,7 @@
         </select>
         <hr>
         <div><strong>Language</strong></div>
-        <select onchange="setLang(this.value)">
+        <select id="lang-select" onchange="setLang(this.value)">
           <option value="en">English</option>
           <option value="ru">Русский</option>
         </select>
@@ -44,6 +44,7 @@
   </div>
 </div>
 
+<!-- Остальное без изменений -->
 <div id="main">
   <div id="classic-view">
     <div id="sidebar">
