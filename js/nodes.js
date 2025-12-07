@@ -50,13 +50,19 @@ function createSpawn() {
 }
 
 function addRNG(path) {
-  const container = path.includes('-') ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  const container = path.includes('-') 
+    ? document.getElementById('c-' + path) 
+    : document.getElementById('root-children');
+  if (!container) return; // ← эта строчка спасает
   container.appendChild(createRNG());
   updateAll();
 }
 
 function addSpawn(path) {
-  const container = path.includes('-') ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  const container = path.includes('-') 
+    ? document.getElementById('c-' + path) 
+    : document.getElementById('root-children');
+  if (!container) return; // ← и эта
   container.appendChild(createSpawn());
   updateAll();
 }
