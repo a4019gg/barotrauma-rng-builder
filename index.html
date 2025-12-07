@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"width=device-width, initial-scale=1.0">
   <title>Barotrauma RNG Builder v0.9.100</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
@@ -22,9 +22,8 @@
     <button onclick="importFile()">Import</button>
     <button onclick="exportJSON()">Export</button>
 
-    <!-- НАСТРОЙКИ — КНОПКА + ВЫПАДАШКА ПРИ НАВЕДЕНИИ -->
     <div class="dropdown">
-      <button class="settings-btn">Settings</button>
+      <button>Settings</button>
       <div class="dropdown-content">
         <strong>Theme</strong>
         <select id="theme-select" onchange="setTheme(this.value)">
@@ -41,6 +40,39 @@
         </select>
 
         <hr>
+
+        <strong>UI Scale</strong>
+        <select id="scale-select" onchange="setUIScale(this.value)">
+          <option value="80">80%</option>
+          <option value="100">100%</option>
+          <option value="120">120%</option>
+          <option value="150">150%</option>
+        </select>
+
+        <strong>Node Density</strong>
+        <select id="density-select" onchange="setNodeDensity(this.value)">
+          <option value="compact">Compact</option>
+          <option value="normal">Normal</option>
+          <option value="comfortable">Comfortable</option>
+        </select>
+
+        <strong>Node Style</strong>
+        <label><input type="checkbox" onchange="toggleShadows(this.checked)"> Shadows</label>
+        <label><input type="checkbox" onchange="toggleGrid(this.checked)" checked> Background Grid</label>
+        <label><input type="checkbox" onchange="toggleSnap(this.checked)"> Snap to Grid</label>
+
+        <hr>
+
+        <strong>XML & Behavior</strong>
+        <select onchange="setXMLFormat(this.value)">
+          <option value="pretty">Pretty</option>
+          <option value="minified">Minified</option>
+          <option value="comments">With Comments</option>
+        </select>
+        <label><input type="checkbox" onchange="toggleValidation(this.checked)" checked> Validate XML</label>
+
+        <hr>
+
         <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
       </div>
     </div>
