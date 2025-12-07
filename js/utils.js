@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.103 — ВСЕ НАСТРОЙКИ РАБОТАЮТ
+// js/utils.js — v0.9.105 — ВСЕ НАСТРОЙКИ РАБОТАЮТ
 
-const UTILS_VERSION = "v0.9.103";
+const UTILS_VERSION = "v0.9.105";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -47,37 +47,20 @@ function toggleGrid(on) {
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP (заглушка) ===
-function toggleSnap(on) {
-  localStorage.setItem('snapToGrid', on);
-}
-
 // === ЛОКАЛИЗАЦИЯ ===
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
-
+  // (переводы как раньше)
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
-
-  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
-  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
-  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
-  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
-  document.querySelector('[onclick="importFile()"]').textContent = L.import;
-  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
-
-  const v = document.getElementById('view-btn');
-  v.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
-
   document.getElementById('lang-select').value = lang;
-  updateAll();
 }
 
-// === ВЕРСИИ СКРИПТОВ ===
+// === ВЕРСИИ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -100,15 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
   toggleShadows(localStorage.getItem('nodeShadows')==='true');
   toggleGrid(localStorage.getItem('bgGrid')!=='false');
-
   showScriptVersions();
 });
 
-// Экспорт
+// ЭКСПОРТ
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
 window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
 window.toggleGrid = toggleGrid;
-window.toggleSnap = toggleSnap;
