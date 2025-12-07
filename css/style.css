@@ -1,4 +1,4 @@
-/* style.css — v0.9.121 — ПОЛНЫЙ, ФИНАЛЬНЫЙ, ВСЁ РАБОТАЕТ */
+/* style.css — v0.9.122 — ПОЛНЫЙ, ФИНАЛЬНЫЙ, 100% РАБОЧИЙ */
 
 :root {
   --bg: #1e1e1e;
@@ -36,13 +36,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  z-index: 10000;
-}
-.action-bar { z-index: 9999; }
-.top-left, .top-right, .action-left, .action-right {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+  flex-shrink: 0;
 }
 
 /* ГЛАВНЫЙ КОНТЕЙНЕР */
@@ -53,7 +47,7 @@ body {
   overflow: hidden;
 }
 
-/* ЛЕВАЯ ПАНЕЛЬ — 100% РАБОЧАЯ */
+/* ЛЕВАЯ ПАНЕЛЬ — ЖЁСТКО ФИКСИРОВАННАЯ */
 #events-panel {
   width: 240px;
   background: var(--panel);
@@ -69,7 +63,6 @@ body {
   border-bottom: 1px solid var(--border);
   background: var(--panel);
   flex-shrink: 0;
-  text-align: center;
 }
 #events-list {
   flex: 1;
@@ -77,35 +70,6 @@ body {
   overflow-x: hidden;
   padding: 8px;
   min-height: 0;
-  border-top: 1px solid var(--border);
-}
-.event-tab {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--node-bg);
-  border-radius: 6px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.event-tab:hover { background: #363636; }
-.event-tab.active {
-  background: var(--accent);
-  color: white;
-  border: 1px solid var(--accent);
-}
-.delete-tab {
-  background: var(--red);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
 }
 
 /* РАБОЧАЯ ОБЛАСТЬ */
@@ -116,7 +80,6 @@ body {
   right: 0;
   bottom: 200px;
   background: var(--bg);
-  overflow: hidden;
 }
 
 /* СЕТКА */
@@ -137,10 +100,7 @@ body[data-bg-grid="off"] #editor-area::before { display: none; }
 /* РЕЖИМЫ */
 #classic-view, #tree-container {
   position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  left: 0; top: 0; right: 0; bottom: 0;
   padding: 20px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -176,6 +136,7 @@ body[data-bg-grid="off"] #editor-area::before { display: none; }
   gap: 8px;
   z-index: 100;
 }
+
 textarea#output {
   position: absolute;
   left: 240px;
