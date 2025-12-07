@@ -1,4 +1,4 @@
-/* Flopstyle Dark — обновлено по твоим цветам */
+/* Flopstyle Dark — v0.9.11 — кнопки не розовые */
 :root, [data-theme="flopstyle-dark"] {
   --bg: #121212;
   --panel: #1e1e1e;
@@ -15,19 +15,21 @@ body[data-theme="flopstyle-dark"] {
   color: #e0e0e0;
 }
 .header { background: #1e1e1e; border-bottom: 1px solid #333; }
+
+/* Базовые кнопки — фиолетовые, как и должно быть */
 button {
   background: #bb86fc;
   color: #000;
 }
 button:hover { filter: brightness(1.2); }
 
-/* ТВОИ ЦВЕТА */
-button[onclick="exportJSON()"] { background: #EB47A7 !important; }          /* Export — ярко-розовый */
+/* ТВОИ ЦВЕТА — только конкретные кнопки */
+button[onclick="exportJSON()"] { background: #EB47A7 !important; color: #fff !important; }
 button[onclick="importFile()"], 
-button[onclick="generateXML()"] { background: #289F6B !important; }        /* Import и Generate XML — зелёный */
-button[onclick="clearAll()"] { background: #e53935 !important; }           /* Clear — глубокий красный (материал) */
+button[onclick="generateXML()"] { background: #289F6B !important; color: #fff !important; }
+button[onclick="clearAll()"] { background: #e53935 !important; color: #fff !important; }
 
-.dropdown button { background: #333; }
+.dropdown button { background: #333; color: #e0e0e0; }
 .dropdown-menu { background: #1e1e1e; border: 1px solid #444; }
 .node { background: #252526; border-left-color: #bb86fc; }
 .item-field { background: #333; border: 1px solid #444; }
