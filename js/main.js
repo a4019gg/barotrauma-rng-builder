@@ -1,6 +1,6 @@
-// js/main.js — v0.9.100 — ПОЛНОСТЬЮ РАБОЧИЙ
+// js/main.js — v0.9.108 — ПОЛНЫЙ И ФИНАЛЬНЫЙ
 
-const MAIN_VERSION = "v0.9.100";
+const MAIN_VERSION = "v0.9.108";
 window.MAIN_VERSION = MAIN_VERSION;
 
 let currentEvent = 0;
@@ -76,10 +76,18 @@ function updateActiveTabName() {
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-  tree.classList.toggle('hidden');
-  classic.classList.toggle('hidden');
-  document.getElementById('view-btn').textContent = tree.classList.contains('hidden') ? 'Tree View' : 'Classic View';
-  if (!tree.classList.contains('hidden')) renderTree();
+
+  const isTree = tree.style.display !== 'block';
+
+  tree.style.display = isTree ? 'block' : 'none';
+  classic.style.display = isTree ? 'none' : 'block';
+
+  tree.style.zIndex = isTree ? 10 : 5;
+  classic.style.zIndex = isTree ? 5 : 10;
+
+  document.getElementById('view-btn').textContent = isTree ? 'Classic' : 'Tree View';
+
+  if (isTree) renderTree();
 }
 
 // === ИМПОРТ / ЭКСПОРТ ===
@@ -89,7 +97,7 @@ function importFile() {
 
 function exportJSON() {
   const data = {
-    version: "0.9.100",
+    version: "0.9.108",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -135,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// === ЭКСПОРТ В WINDOW (ЧТОБЫ КНОПКИ РАБОТАЛИ) ===
+// Экспорт функций
 window.importFile = importFile;
 window.exportJSON = exportJSON;
 window.clearAll = clearAll;
