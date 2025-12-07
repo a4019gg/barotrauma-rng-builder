@@ -143,7 +143,7 @@ function loadExample() {
       if (successCont) {
         addSpawn(successCont.querySelector('.children').id.slice(2));
       }
-    },  }, 50);
+    }, 50);
     updateAll();
   }, 100);
 }
