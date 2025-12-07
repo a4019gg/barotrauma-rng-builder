@@ -1,10 +1,11 @@
-// js/tree.js — v0.9.101 — ИДЕАЛЬНЫЙ Tree View
+// js/tree.js — v0.9.104 — Tree View работает идеально: под нодами, прямые линии, центрирование
 
-const TREE_VERSION = "v0.9.103";
+const TREE_VERSION = "v0.9.104";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
 
+// SVG
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
@@ -13,32 +14,35 @@ const svg = d3.select("#tree-svg")
 
 const g = svg.append("g");
 
+// Зум и панорамирование
 const zoom = d3.zoom()
   .scaleExtent([0.1, 5])
-  .on("zoom", (event) => g.attr("transform", event.transform));
+  .on("zoom", event => g.attr("transform", event.transform));
 
 svg.call(zoom);
 
-// js/tree.js — v0.9.103 — Tree View под нодами
-
 function toggleView() {
-  isTreeView = !isTreeView;
-  const tree = document.getElementById('tree-container');
-  const classic = document.getElementById('classic-view');
+  isTreeView = !isTreeView = !isTreeView;
 
-  tree.classList.toggle('hidden', !isTreeView);
-  classic.classList.toggle('hidden', isTreeView);
+  const treeContainer = document.getElementById('tree-container');
+  const classicView = document.getElementById('classic-view');
 
-  // ПЕРЕКЛЮЧАЕМ Z-INDEX
-  tree.style.zIndex = isTreeView ? 10 : 5;
-  classic.style.zIndex = isTreeView ? 5 : 10;
+  // Полностью скрываем/показываем
+  treeContainer.style.display = isTreeView ? 'block' : 'none';
+  classicView.style.display = isTreeView ? 'none' : 'block';
+
+  // Переключаем z-index
+  treeContainer.style.zIndex = isTreeView ? 10 : 5;
+  classicView.style.zIndex = isTreeView ? 5 : 10;
 
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
+
   if (isTreeView) renderTree();
 }
 
 function renderTree() {
-  g.selectAll("*").remove(); // ← полная очистка
+  // Полная очистка
+  g.selectAll("*").remove();
 
   const rootData = { name: "Root Event", children: [] };
 
@@ -50,20 +54,20 @@ function renderTree() {
       const chance = parseFloat(node.querySelector('.chance')?.value) || 0.5;
       const rngNode = { name: `RNG ${(chance * 100).toFixed(1)}%`, children: [] };
 
-      const s = node.querySelector(`#c-${node.dataset.id}-s`);
-      const f = node.querySelector(`#c-${node.dataset.id}-f`);
+      const success = node.querySelector(`#c-${node.dataset.id}-s`);
+      const failure = node.querySelector(`#c-${node.dataset.id}-f`);
 
-      if (s) s.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
-      if (f) f.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
+      if (success) success.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
+      if (failure) failure.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
 
-      if (rngNode.children.length) parent.children.push(rngNode);
+      if (rngNode.children.length > 0) parent.children.push(rngNode);
     }
   }
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  const width = window.innerWidth - 260;
-  const height = window.innerHeight - 200;
+  const width = window.innerWidth - 260;  // левая панель
+  const height = window.innerHeight - 200; // шапки
 
   const tree = d3.tree().size([height, width - 200]);
   const root = d3.hierarchy(rootData);
@@ -112,13 +116,16 @@ function renderTree() {
   const tx = width / 2 - scale * (bounds.x + bounds.width / 2) + 120;
   const ty = height / 2 - scale * (bounds.y + bounds.height / 2);
 
-  svg.transition().duration(500)
+  svg.transition()
+    .duration(500)
     .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
 }
 
+// Ресайз
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
 
+// Экспорт
 window.toggleView = toggleView;
 window.renderTree = renderTree;
