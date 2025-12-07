@@ -1,4 +1,7 @@
-// js/nodes.js — создание узлов, вероятности, Auto Balance — v0.9.8
+// js/nodes.js — v0.9.10 — создание узлов, вероятности, Auto Balance
+
+const NODES_VERSION = "v0.9.10";
+window.NODES_VERSION = NODES_VERSION;
 
 let counter = 0;
 
@@ -15,7 +18,7 @@ function createRNG(chance = 0.5) {
       <span class="prob"><span class="global">0.000%</span><br><small class="local">0.0%</small></span>
     </div>
     <div class="children">
-      <div class="success-label" style="color:var(--green);font-weight:bold;">${L.successLabel}</div>
+      <div class="success-label" style="color:var(--green);font-weight:bold;">${L.successLabel || 'Success'}</div>
       <div style="margin:6px 0;display:flex;gap:6px;">
         <button class="small" onclick="addRNG('${id}-s')">+ RNG</button>
         <button class="small" onclick="addSpawn('${id}-s')">+ Item</button>
@@ -23,7 +26,7 @@ function createRNG(chance = 0.5) {
       <div id="c-${id}-s"></div>
     </div>
     <div class="children">
-      <div class="failure-label" style="color:var(--red);font-weight:bold;">${L.failureLabel}</div>
+      <div class="failure-label" style="color:var(--red);font-weight:bold;">${L.failureLabel || 'Failure'}</div>
       <div style="margin:6px 0;display:flex;gap:6px;">
         <button class="small" onclick="addRNG('${id}-f')">+ RNG</button>
         <button class="small" onclick="addSpawn('${id}-f')">+ Item</button>
@@ -99,7 +102,7 @@ function updateProbabilities() {
 }
 
 function autoBalance() {
-  const mode = prompt(L.autoBalancePrompt || '1 — Равномерно (50/50)\n2 — По количеству предметов', '2');
+  const mode = prompt(L.autoBalancePrompt || '1 — Even (50/50)\n2 — By items', '2');
   if (!mode || !['1', '2'].includes(mode)) return;
 
   document.querySelectorAll('.node.rng').forEach(rng => {
@@ -117,7 +120,7 @@ function autoBalance() {
   });
 
   updateAll();
-  alert(L.autoBalanceApplied || 'Автобаланс применён!');
+  alert(L.autoBalanceApplied || 'Auto Balance applied!');
 }
 
 function updateAll() {
