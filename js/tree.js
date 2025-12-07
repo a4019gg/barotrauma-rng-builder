@@ -1,6 +1,6 @@
 // js/tree.js — v0.9.101 — ИДЕАЛЬНЫЙ Tree View
 
-const TREE_VERSION = "v0.9.101";
+const TREE_VERSION = "v0.9.102";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
