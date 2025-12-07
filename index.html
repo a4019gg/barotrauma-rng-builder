@@ -18,31 +18,31 @@
     <button onclick="openDB()">Data Base</button>
     <button onclick="loadExample()">Example</button>
   </div>
-  <div class="top-right">
-    <button onclick="importFile()">Import</button>
-    <button onclick="exportJSON()">Export</button>
+<div class="top-right">
+  <button onclick="importFile()">Import</button>
+  <button onclick="exportJSON()">Export</button>
 
-    <div class="dropdown">
-      <button>Settings</button>
-      <div class="dropdown-menu" style="z-index:99999; right:0;">
-        <strong>Theme</strong>
-        <select id="theme-select" onchange="setTheme(this.value)">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-          <option value="flopstyle-dark">Flopstyle Dark</option>
-          <option value="turbo-vision-dark">Turbo Vision Dark</option>
-        </select>
+  <!-- ИСПРАВЛЕННЫЙ ДРОПДАУН -->
+  <div class="dropdown">
+    <button>Settings</button>
+    <div class="dropdown-menu" style="z-index:99999; right:0; display:none;">
+      <strong>Theme</strong>
+      <select id="theme-select" onchange="setTheme(this.value)">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="flopstyle-dark">Flopstyle Dark</option>
+        <option value="turbo-vision-dark">Turbo Vision Dark</option>
+      </select>
 
-        <strong>Language</strong>
-        <select id="lang-select" onchange="setLang(this.value)">
-          <option value="en">English</option>
-          <option value="ru">Русский</option>
-        </select>
+      <strong>Language</strong>
+      <select id="lang-select" onchange="setLang(this.value)">
+        <option value="en">English</option>
+        <option value="ru">Русский</option>
+      </select>
 
-        <hr>
-        <div id="script-versions" style="font-size:12px;color:#888;padding:8px">
-          Loading...
-        </div>
+      <hr>
+      <div id="script-versions" style="font-size:12px;color:#888;padding:8px">
+        Loading...
       </div>
     </div>
   </div>
