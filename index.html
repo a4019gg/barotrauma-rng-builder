@@ -3,63 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.10</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <title>Barotrauma RNG Builder v0.9.99</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
-<body data-theme="dark">
+<body data-theme="dark" data-ui-scale="100" data-node-density="normal">
 
-<div class="header" style="position:relative;z-index:10000">
-  <h1>Barotrauma RNG Builder v0.9.10</h1>
-  <div class="toolbar">
-    <button onclick="addRNG('')">+ RNG</button>
-    <button onclick="addSpawn('')">+ Item</button>
-    <button onclick="clearAll()">Clear</button>
-    <button onclick="loadExample()">Example</button>
-  </div>
-  <div class="right">
-    <button onclick="exportJSON()" class="green">Export</button>
-    <button onclick="importFile()" class="darkblue">Import</button>
+<!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+<div class="top-bar">
+  <div class="top-left">
     <button onclick="toggleView()" id="view-btn">Tree View</button>
     <button onclick="openDB()">Data Base</button>
+    <button onclick="loadExample()">Example</button>
+  </div>
+  <div class="top-right">
+    <button onclick="importFile()" class="icon-btn">Import</button>
+    <button onclick="exportJSON()" class="icon-btn">Export</button>
     <div class="dropdown">
-      <button>Settings</button>
-      <div class="dropdown-menu" style="z-index:10001">
-        <div><strong>Theme</strong></div>
-        <select id="theme-select" onchange="setTheme(this.value)">
-          <option value="dark">Dark (Default)</option>
-          <option value="light">Light</option>
-          <option value="flopstyle-dark">Flopstyle Dark</option>
-          <option value="turbo-vision-dark">Turbo Vision Dark</option>
-        </select>
+      <button id="settings-btn">Settings</button>
+      <div class="dropdown-menu" id="settings-menu">
+        <div class="settings-section">
+          <strong>Interface</strong>
+          <select id="theme-select" onchange="setTheme(this.value)">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="flopstyle-dark">Flopstyle Dark</option>
+            <option value="turbo-vision-dark">Turbo Vision Dark</option>
+          </select>
+          <select id="scale-select" onchange="setUIScale(this.value)">
+            <option value="80">80%</option>
+            <option value="100" selected>100%</option>
+            <option value="120">120%</option>
+            <option value="150">150%</option>
+          </select>
+          <select id="density-select" onchange="setNodeDensity(this.value)">
+            <option value="compact">Compact</option>
+            <option value="normal" selected>Normal</option>
+            <option value="comfortable">Comfortable</option>
+          </select>
+        </div>
         <hr>
-        <div><strong>Language</strong></div>
-        <select id="lang-select" onchange="setLang(this.value)">
-          <option value="en">English</option>
-          <option value="ru">Русский</option>
-        </select>
+        <div class="settings-section">
+          <strong>Node Style</strong>
+          <label><input type="checkbox" onchange="toggleShadows(this.checked)"> Shadows</label>
+          <label><input type="checkbox" onchange="toggleGrid(this.checked)" checked> Background Grid</label>
+          <label><input type="checkbox" onchange="toggleSnap(this.checked)"> Snap to Grid</label>
+        </div>
         <hr>
-        <div><strong>Script versions</strong></div>
+        <div class="settings-section">
+          <strong>XML & Behavior</strong>
+          <select onchange="setXMLFormat(this.value)">
+            <option value="pretty">Pretty</option>
+            <option value="minified">Minified</option>
+            <option value="comments">With Comments</option>
+          </select>
+          <label><input type="checkbox" onchange="toggleValidation(this.checked)" checked> Validate XML</label>
+        </div>
+        <hr>
         <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
       </div>
     </div>
   </div>
 </div>
 
-<div id="main">
-  <div id="classic-view">
-    <div id="sidebar">
-      <div class="input-group">
-        <label>Event ID:</label>
-        <input id="event-id" value="new_event" oninput="updateActiveTabName()">
-        <button onclick="autoBalance()" class="small green">Auto Balance</button>
-      </div>
-      <div id="events-tabs">
-        <button class="tab add" onclick="addEvent()">+ Add Event</button>
-      </div>
+<!-- ACTION BAR -->
+<div class="action-bar">
+  <div class="action-left">
+    <button onclick="addRNG('')">+ RNG</button>
+    <button onclick="addSpawn('')">+ Item</button>
+    <button onclick="clearAll()">Clear</button>
+    <button onclick="autoBalance()">Auto Balance</button>
+  </div>
+  <div class="action-right">
+    <button class="green" onclick="generateXML()">Generate XML</button>
+    <button onclick="copyXML()">Copy XML</button>
+    <button onclick="downloadXML()">Download XML</button>
+  </div>
+</div>
+
+<div id="main-container">
+  <!-- ЛЕВАЯ ПАНЕЛЬ — СОБЫТИЯ -->
+  <div id="events-panel">
+    <div class="panel-header">
+      <button class="add-event-btn" onclick="addEvent()">+ Add Event</button>
+    </div>
+    <div id="events-list"></div>
+  </div>
+
+  <!-- ЦЕНТРАЛЬНАЯ ОБЛАСТЬ -->
+  <div id="editor-area">
+    <div id="classic-view">
       <div id="tree-root" class="node root">
         <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
           <strong id="root-label">Root Event</strong>
@@ -68,16 +103,10 @@
         <div class="children" id="root-children"></div>
       </div>
     </div>
+    <div id="tree-container" class="hidden">
+      <svg id="tree-svg"></svg>
+    </div>
   </div>
-  <div id="tree-container" class="hidden">
-    <svg id="tree-svg"></svg>
-  </div>
-</div>
-
-<div class="bottom-bar" style="z-index:10000">
-  <button class="green" onclick="generateXML()">Generate XML</button>
-  <button class="gray" onclick="copyXML()">Copy XML</button>
-  <button class="gray" onclick="downloadXML()">Download XML</button>
 </div>
 
 <textarea id="output" placeholder="XML will appear here..."></textarea>
