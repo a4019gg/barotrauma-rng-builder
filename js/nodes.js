@@ -1,4 +1,4 @@
-// js/nodes.js — создание узлов, вероятности, Auto Balance
+// js/nodes.js — создание узлов, вероятности, Auto Balance — v0.9.2
 
 let counter = 0;
 
@@ -60,8 +60,11 @@ function addSpawn(path) {
 
 function updateProbabilities() {
   function calc(node, globalProb = 1.0, parentLocal = 1.0) {
-    if (!node) return;
+    if (!node || !node.querySelector) return;
+
     const probEl = node.querySelector('.prob');
+    if (!probEl) return;
+
     const globalEl = probEl.querySelector('.global');
     const localEl = probEl.querySelector('.local');
 
@@ -75,15 +78,17 @@ function updateProbabilities() {
     }
 
     if (node.classList.contains('rng')) {
-      const chance = parseFloat(node.querySelector('.chance').value) || 0.5;
+      const chanceInput = node.querySelector('.chance');
+      const chance = chanceInput ? parseFloat(chanceInput.value) || 0.5 : 0.5;
+
       const successGlobal = globalProb * chance;
       const failureGlobal = globalProb * (1 - chance);
 
       const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
       const failureCont = node.querySelector(`#c-${node.dataset.id}-f`);
 
-      successCont && successCont.querySelectorAll(':scope > .node').forEach(n => calc(n, successGlobal, chance));
-      failureCont && failureCont.querySelectorAll(':scope > .node').forEach(n => calc(n, failureGlobal, 1 - chance));
+      if (successCont) successCont.querySelectorAll(':scope > .node').forEach(n => calc(n, successGlobal, chance));
+      if (failureCont) failureCont.querySelectorAll(':scope > .node').forEach(n => calc(n, failureGlobal, 1 - chance));
 
       globalEl.textContent = (globalProb * 100).toFixed(3) + '%';
       localEl.textContent = (chance * 100).toFixed(1) + '% → ' + ((1 - chance) * 100).toFixed(1) + '%';
@@ -107,11 +112,7 @@ function autoBalance() {
       const successItems = rng.querySelector(`#c-${rng.dataset.id}-s`)?.querySelectorAll('.node.spawn').length || 0;
       const failureItems = rng.querySelector(`#c-${rng.dataset.id}-f`)?.querySelectorAll('.node.spawn').length || 0;
       const total = successItems + failureItems;
-      if (total === 0) {
-        input.value = 0.5;
-      } else {
-        input.value = (successItems / total).toFixed(6);
-      }
+      input.value = total === 0 ? 0.5 : (successItems / total).toFixed(6);
     }
   });
 
