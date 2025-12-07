@@ -28,5 +28,11 @@ const LANG_EN = {
   importError: "Import error",
   modLoaded: "Mod loaded!",
   modError: "Invalid mod format",
-  searchPlaceholder: "Search by name, ID or tag..."
+  searchPlaceholder: "Search by name, ID or tag...",
+  dbCacheCorrupted: "Items cache corrupted — reloading",
+  dbFileNotFound: "items.json not found",
+  dbLoadError: "Error loading data/items.json:",
+  dbLoadFailed: "Failed to load items database. Check data/items.json",
+  dbLoaded: "Database loaded",
+  dbItems: "items"
 };
