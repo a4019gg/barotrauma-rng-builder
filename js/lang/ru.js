@@ -1,4 +1,5 @@
-// js/lang/ru.js
+// js/lang/ru.js — ПОЛНЫЙ v0.9.10
+
 const LANG_RU = {
   rootLabel: "Корневое событие",
   successLabel: "Успех",
