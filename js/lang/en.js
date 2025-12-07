@@ -4,7 +4,7 @@ const LANG_EN = {
   rootLabel: "Root Event",
   successLabel: "Success",
   failureLabel: "Failure",
-
+validationHint: "These checks can be disabled in Settings → XML & Behavior",
   // Кнопки
   generateXML: "Generate XML",
   copyXML: "Copy XML",
