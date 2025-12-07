@@ -1,15 +1,24 @@
-// js/utils.js — ПОЛНАЯ ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ
+// js/utils.js — ЛОКАЛИЗАЦИЯ, ТЕМЫ, ИМПОРТ/ЭКСПОРТ — v0.9.2
 
 let currentLang = 'en';
-const L = {}; // сюда загружается активный язык
+const L = {};
 
 // === ТЕМЫ ===
 function setTheme(theme) {
   document.body.dataset.theme = theme;
   localStorage.setItem('theme', theme);
 
-  // Обновляем выбранный пункт в настройках
-  const select = document.querySelector('.dropdown-menu select[onchange*="setTheme"]');
+  const themeStyle = document.getElementById('theme-style');
+  if (theme === 'dark') {
+    themeStyle.setAttribute('href', '');
+  } else if (theme === 'light') {
+    themeStyle.setAttribute('href', 'css/themes/light.css');
+  } else if (theme === 'flopstyle-dark') {
+    themeStyle.setAttribute('href', 'css/themes/flopstyle-dark.css');
+  }
+
+  // Сохраняем выбор в селекте
+  const select = document.getElementById('theme-select');
   if (select) select.value = theme;
 }
 
@@ -18,38 +27,34 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
 
-  // Загружаем нужный словарь
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Применяем перевод ко всем элементам
+  // Применяем переводы
   document.getElementById('root-label').textContent = L.rootLabel;
-
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
-  // Кнопки в шапке
+  // Кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
   document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
+  document.querySelector('#view-btn').textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
 
-  // Кнопка Tree View
-  const viewBtn = document.getElementById('view-btn');
-  if (viewBtn) {
-    viewBtn.textContent = document.getElementById('tree-container').classList.contains('hidden') ? 'Tree View' : 'Classic View';
-  }
+  // Сохраняем выбор в селекте
+  const select = document.getElementById('lang-select');
+  if (select) select.value = lang;
 
-  // Обновляем пример и всё остальное
   updateAll();
 }
 
-// === ЭКСПОРТ ВСЕХ СОБЫТИЙ ===
+// === ЭКСПОРТ ===
 function exportJSON() {
   const data = {
-    version: "0.9.0",
+    version: "0.9.2",
     events: events.map(e => ({
       eventId: e.eventId,
       html: e.html
@@ -60,12 +65,12 @@ function exportJSON() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'barotrauma-rng-events.json';
+  a.download = 'rng-events.json';
   a.click();
   URL.revokeObjectURL(url);
 }
 
-// === ИМПОРТ СОБЫТИЙ ===
+// === ИМПОРТ ===
 function importFile() {
   document.getElementById('file-input').click();
 }
@@ -78,38 +83,35 @@ document.getElementById('file-input').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-
-      if (!data.events || !Array.isArray(data.events)) {
-        throw new Error('Неверный формат файла');
-      });
-
-      data.events.forEach(ev => {
-        events.push({
-          html: ev.html || '',
-          eventId: ev.eventId || 'imported_event'
+      if (data.events && Array.isArray(data.events)) {
+        data.events.forEach(ev => {
+          events.push({
+            html: ev.html || '',
+            eventId: ev.eventId || 'imported_event'
+          });
+          addEvent();
         });
-        addEvent(); // создаём вкладку
-      });
-
-      switchEvent(events.length - 1);
-      alert('Импорт завершён! Добавлено ' + data.events.length + ' событий.');
+        switchEvent(events.length - 1);
+        alert('Импорт завершён!');
+      } else {
+        alert('Неверный формат файла');
+      }
     } catch (err) {
       alert('Ошибка импорта: ' + err.message);
     }
   };
-
   reader.readAsText(file);
 });
 
 // === ОЧИСТКА ===
 function clearAll() {
-  if (confirm(L.clearAllConfirm || 'Clear all?')) {
+  if (confirm('Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
 }
 
-// === ПРИМЕР ПРИ ЗАПУСКЕ ===
+// === ПРИМЕР ===
 function loadExample() {
   clearAll();
   addRNG('');
@@ -124,7 +126,7 @@ function loadExample() {
   }, 100);
 }
 
-// Экспорт функций для других модулей
+// Экспорт функций
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.exportJSON = exportJSON;
