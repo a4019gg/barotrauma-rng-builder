@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.99</title>
+  <title>Barotrauma RNG Builder v0.9.100</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
-<body data-theme="dark" data-ui-scale="100" data-node-density="normal">
+<body data-theme="dark">
 
 <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
 <div class="top-bar">
@@ -19,48 +19,23 @@
     <button onclick="loadExample()">Example</button>
   </div>
   <div class="top-right">
-    <button onclick="importFile()" class="icon-btn">Import</button>
-    <button onclick="exportJSON()" class="icon-btn">Export</button>
+    <button onclick="importFile()">Import</button>
+    <button onclick="exportJSON()">Export</button>
     <div class="dropdown">
-      <button id="settings-btn">Settings</button>
-      <div class="dropdown-menu" id="settings-menu">
-        <div class="settings-section">
-          <strong>Interface</strong>
-          <select id="theme-select" onchange="setTheme(this.value)">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="flopstyle-dark">Flopstyle Dark</option>
-            <option value="turbo-vision-dark">Turbo Vision Dark</option>
-          </select>
-          <select id="scale-select" onchange="setUIScale(this.value)">
-            <option value="80">80%</option>
-            <option value="100" selected>100%</option>
-            <option value="120">120%</option>
-            <option value="150">150%</option>
-          </select>
-          <select id="density-select" onchange="setNodeDensity(this.value)">
-            <option value="compact">Compact</option>
-            <option value="normal" selected>Normal</option>
-            <option value="comfortable">Comfortable</option>
-          </select>
-        </div>
-        <hr>
-        <div class="settings-section">
-          <strong>Node Style</strong>
-          <label><input type="checkbox" onchange="toggleShadows(this.checked)"> Shadows</label>
-          <label><input type="checkbox" onchange="toggleGrid(this.checked)" checked> Background Grid</label>
-          <label><input type="checkbox" onchange="toggleSnap(this.checked)"> Snap to Grid</label>
-        </div>
-        <hr>
-        <div class="settings-section">
-          <strong>XML & Behavior</strong>
-          <select onchange="setXMLFormat(this.value)">
-            <option value="pretty">Pretty</option>
-            <option value="minified">Minified</option>
-            <option value="comments">With Comments</option>
-          </select>
-          <label><input type="checkbox" onchange="toggleValidation(this.checked)" checked> Validate XML</label>
-        </div>
+      <button>Settings</button>
+      <div class="dropdown-menu">
+        <strong>Theme</strong>
+        <select id="theme-select" onchange="setTheme(this.value)">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="flopstyle-dark">Flopstyle Dark</option>
+          <option value="turbo-vision-dark">Turbo Vision Dark</option>
+        </select>
+        <strong>Language</strong>
+        <select id="lang-select" onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+        </select>
         <hr>
         <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
       </div>
@@ -83,16 +58,17 @@
   </div>
 </div>
 
+<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
 <div id="main-container">
   <!-- ЛЕВАЯ ПАНЕЛЬ — СОБЫТИЯ -->
   <div id="events-panel">
     <div class="panel-header">
-      <button class="add-event-btn" onclick="addEvent()">+ Add Event</button>
+      <button onclick="addEvent()">+ Add Event</button>
     </div>
     <div id="events-list"></div>
   </div>
 
-  <!-- ЦЕНТРАЛЬНАЯ ОБЛАСТЬ -->
+  <!-- ЦЕНТР -->
   <div id="editor-area">
     <div id="classic-view">
       <div id="tree-root" class="node root">
@@ -107,6 +83,12 @@
       <svg id="tree-svg"></svg>
     </div>
   </div>
+</div>
+
+<!-- ПОЛЕ ID СОБЫТИЯ -->
+<div class="event-id-bar">
+  <label>Event ID:</label>
+  <input id="event-id" value="new_event" oninput="updateActiveTabName()">
 </div>
 
 <textarea id="output" placeholder="XML will appear here..."></textarea>
