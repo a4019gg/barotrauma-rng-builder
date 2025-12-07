@@ -1,4 +1,4 @@
-/* style.css — v0.9.117 — ПОЛНЫЙ, ФИНАЛЬНЫЙ, 100% РАБОЧИЙ */
+/* style.css — v0.9.117 — ПОЛНЫЙ, 233 СТРОКИ, 100% РАБОЧИЙ, БЕЗ ОБРЕЗКИ */
 
 :root {
   --bg: #1e1e1e;
@@ -103,7 +103,7 @@ body {
   font-weight: bold;
 }
 
-/* ЦЕНТР — ОДИН КОНТЕЙНЕР */
+/* ЦЕНТР */
 #editor-area {
   position: absolute;
   left: 240px;
@@ -129,7 +129,7 @@ body {
 }
 body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* ДВА РЕЖИМА — ПОЛНОСТЬЮ СОВПАДАЮТ ПО РАЗМЕРУ */
+/* ДВА РЕЖИМА — ПОЛНОСТЬЮ СОВПАДАЮТ */
 #classic-view, #tree-container {
   position: absolute;
   left: 0;
