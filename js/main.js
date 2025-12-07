@@ -1,4 +1,7 @@
-// js/main.js — ФИНАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ v0.9.9
+// js/main.js — v0.9.10 — ФИНАЛЬНАЯ ВЕРСИЯ
+
+const SCRIPT_VERSION = "v0.9.10";
+window.MAIN_VERSION = SCRIPT_VERSION;
 
 let currentEvent = 0;
 const events = [];
@@ -19,12 +22,12 @@ function switchEvent(index) {
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId;
 
-  // Подсвечиваем вкладку
+  // Подсвечиваем активную вкладку
   document.querySelectorAll('#events-tabs .tab').forEach((tab, i) => {
     tab.classList.toggle('active', i === index);
   });
 
-  // Синхронизация имени вкладки
+  // Обновляем имя на вкладке
   const activeTab = document.querySelector('#events-tabs .tab.active .tab-name');
   if (activeTab) activeTab.textContent = events[index].eventId;
 
@@ -36,11 +39,11 @@ function deleteEvent(index, e) {
   e.stopPropagation();
 
   if (events.length <= 1) {
-    alert(L.lastEventWarning || 'Нельзя удалить последнее событие!');
+    alert('Нельзя удалить последнее событие!');
     return;
   }
 
-  if (confirm(L.deleteEventConfirm || 'Удалить событие?')) {
+  if (confirm('Удалить событие?')) {
     events.splice(index, 1);
     document.querySelectorAll('#events-tabs .tab')[index].remove();
 
@@ -57,17 +60,12 @@ function addEvent() {
 
   const tab = document.createElement('button');
   tab.className = 'tab';
-  tab.dataset.index = index;
   tab.innerHTML = `
     <span class="tab-name">${newId}</span>
     <span class="delete-tab">×</span>
   `;
 
-  tab.onclick = (e) => {
-    if (!e.target.classList.contains('delete-tab')) {
-      switchEvent(index);
-    }
-  };
+  tab.onclick = () => switchEvent(index);
   tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
 
   document.querySelector('#events-tabs .add').before(tab);
@@ -108,19 +106,16 @@ document.getElementById('file-input').addEventListener('change', e => {
       const data = JSON.parse(ev.target.result);
       if (data.events && Array.isArray(data.events)) {
         data.events.forEach(ev => {
-          events.push({
-            html: ev.html || '',
-            eventId: ev.eventId || 'imported_event'
-          });
+          events.push({ html: ev.html || '', eventId: ev.eventId || 'imported' });
           addEvent();
         });
         switchEvent(events.length - 1);
-        alert(L.importSuccess || 'Импорт завершён!');
+        alert('Импорт завершён!');
       } else {
-        alert(L.importError || 'Неверный формат файла');
+        alert('Неверный формат файла');
       }
     } catch (err) {
-      alert(L.importError + ': ' + err.message);
+      alert('Ошибка импорта: ' + err.message);
     }
   };
   reader.readAsText(file);
@@ -128,7 +123,7 @@ document.getElementById('file-input').addEventListener('change', e => {
 
 // === ОЧИСТКА ===
 function clearAll() {
-  if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
+  if (confirm('Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
     updateAll();
   }
@@ -159,7 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
   addEvent();
   switchEvent(0);
 
-  // Подсказки
+  // Показываем версии скриптов
+  showScriptVersions();
+
+  // Подсказки для процентов
   document.addEventListener('mouseover', e => {
     if (e.target.classList.contains('prob') && e.target.dataset.tip) {
       let tooltip = document.getElementById('prob-tooltip');
@@ -182,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  console.log('%cBarotrauma RNG Builder v0.9.9 запущен!', 'color:#61afef;font-size:16px');
+  console.log('%cBarotrauma RNG Builder v0.9.10 запущен!', 'color:#61afef;font-size:16px');
 });
 
 // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
