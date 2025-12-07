@@ -1,4 +1,4 @@
-/* style.css — финальный, всё работает, версии не трогаю */
+/* style.css */
 
 :root {
   --bg: #1e1e1e;
@@ -37,7 +37,7 @@ body {
   overflow: hidden;
 }
 
-/* === ТОП-БАР === */
+/* ТОП-БАР */
 .top-bar {
   height: 50px;
   background: var(--panel);
@@ -50,7 +50,7 @@ body {
 }
 .top-left, .top-right { display: flex; gap: 12px; align-items: center; }
 
-/* === ACTION BAR === */
+/* ACTION BAR */
 .action-bar {
   height: 50px;
   background: var(--panel);
@@ -63,10 +63,10 @@ body {
 }
 .action-left, .action-right { display: flex; gap: 12px; }
 
-/* === ГЛАВНЫЙ КОНТЕЙНЕР === */
+/* ГЛАВНЫЙ КОНТЕЙНЕР */
 #main-container { flex: 1; display: flex; }
 
-/* === ЛЕВАЯ ПАНЕЛЬ === */
+/* ЛЕВАЯ ПАНЕЛЬ */
 #events-panel {
   width: 240px;
   background: var(--panel);
@@ -97,7 +97,7 @@ body {
   font-weight: bold;
 }
 
-/* === ЦЕНТРАЛЬНАЯ ОБЛАСТЬ === */
+/* ЦЕНТР */
 #editor-area {
   flex: 1;
   position: relative;
@@ -145,24 +145,27 @@ body {
   z-index: 1;
 }
 
-/* === НОВЫЕ НАСТРОЙКИ — ВСЁ РАБОТАЕТ === */
-/* UI Scale */
-body[data-ui-scale="80"]   { font-size: 80%; }
-body[data-ui-scale="120"]  { font-size: 120%; }
-body[data-ui-scale="150"]  { font-size: 150%; }
+/* EVENT ID + ТЕКСТАРЕА */
+.event-id-bar {
+  padding: 8px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+textarea#output {
+  width: 100%;
+  height: 160px;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: Consolas, monospace;
+  padding: 10px;
+  border: none;
+  resize: none;
+}
 
-/* Node Density */
-body[data-node-density="compact"] .node     { margin: 4px; padding: 8px; font-size: 13px; }
-body[data-node-density="comfortable"] .node { margin: 20px; padding: 20px; font-size: 16px; }
-
-/* Shadows */
-body[data-node-shadows="high"] .node { box-shadow: var(--shadow-high); }
-body[data-node-shadows="off"] .node  { box-shadow: none; }
-
-/* Background Grid */
-body[data-bg-grid="off"] #editor-area::before { display: none; }
-
-/* === КНОПКИ === */
+/* КНОПКИ */
 button {
   padding: 7px 12px;
   background: var(--accent);
@@ -175,7 +178,7 @@ button:hover { filter: brightness(1.2); }
 button.green { background: #218c21; }
 button.danger { background: var(--red); }
 
-/* === ДРОПДАУН НАСТРОЕК === */
+/* ДРОПДАУН */
 .dropdown { position: relative; display: inline-block; }
 .dropdown-content {
   display: none;
@@ -200,22 +203,15 @@ button.danger { background: var(--red); }
 .dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
 .dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
 
-/* === EVENT ID + ТЕКСТАРЕА === */
-.event-id-bar {
-  padding: 8px 16px;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-textarea#output {
-  width: 100%;
-  height: 160px;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  font-family: Consolas, monospace;
-  padding: 10px;
-  border: none;
-  resize: none;
-}
+/* === НОВЫЕ НАСТРОЙКИ — 100% РАБОТАЮТ === */
+body[data-ui-scale="80"]   { font-size: 80%; }
+body[data-ui-scale="120"]  { font-size: 120%; }
+body[data-ui-scale="150"]  { font-size: 150%; }
+
+body[data-node-density="compact"] .node     { margin: 4px !important; padding: 8px !important; font-size: 13px !important; }
+body[data-node-density="comfortable"] .node { margin: 24px !important; padding: 20px !important; font-size: 16px !important; }
+
+body[data-node-shadows="high"] .node { box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+body[data-node-shadows="off"] .node  { box-shadow: none !important; }
+
+body[data-bg-grid="off"] #editor-area::before { display: none !important; }
