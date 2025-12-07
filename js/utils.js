@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.108 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка
+// js/utils.js — v0.9.109 — ВСЁ РАБОТАЕТ
 
-const UTILS_VERSION = "v0.9.108";
+const UTILS_VERSION = "v0.9.109";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -13,29 +13,27 @@ function setTheme(theme) {
   const s = document.getElementById('theme-style');
   const m = {
     'dark': '',
-    'light': 'css/themes/light.css',
+    '',
+    'light':     'css/themes/light.css',
     'flopstyle-dark': 'css/themes/flopstyle-dark.css',
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
   s.href = m[theme] || '';
-  const sel = document.getElementById('theme-select');
-  if (sel) sel.value = theme;
+  document.getElementById('theme-select').value = theme;
 }
 
 // === UI SCALE ===
 function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
-  const sel = document.getElementById('scale-select');
-  if (sel) sel.value = val;
+  document.getElementById('scale-select').value = val;
 }
 
 // === NODE DENSITY ===
 function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
-  const sel = document.getElementById('density-select');
-  if (sel) sel.value = val;
+  document.getElementById('density-select').value = val;
 }
 
 // === SHADOWS ===
@@ -50,6 +48,21 @@ function toggleGrid(on) {
   localStorage.setItem('bgGrid', on);
 }
 
+// === SNAP TO GRID ===
+function toggleSnap(on) {
+  localStorage.setItem('snapToGrid', on);
+}
+
+// === VALIDATION ===
+function toggleValidation(on) {
+  localStorage.setItem('validateXML', on);
+}
+
+// === CHECK DUPLICATE IDs ===
+function toggleCheckDuplicateIDs(on) {
+  localStorage.setItem('checkDuplicateIDs', on);
+}
+
 // === ЯЗЫК ===
 function setLang(lang) {
   currentLang = lang;
@@ -61,6 +74,7 @@ function setLang(lang) {
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
+  // Переводим кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
@@ -68,16 +82,14 @@ function setLang(lang) {
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
-  const v = document.getElementById('view-btn');
-  v.textContent = document.getElementById('tree-container').style.display === 'block' ? 'Classic' : 'Tree View';
+  document.getElementById('view-btn').textContent = 
+    document.getElementById('tree-container').style.display === 'block' ? L.classicView : L.treeView;
 
-  const sel = document.getElementById('lang-select');
-  if (sel) sel.value = lang;
-
+  document.getElementById('lang-select').value = lang;
   updateAll();
 }
 
-// === ВЕРСИИ СКРИПТОВ ===
+// === ВЕРСИИ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -109,3 +121,6 @@ window.setUIScale = setUIScale;
 window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
 window.toggleGrid = toggleGrid;
+window.toggleSnap = toggleSnap;
+window.toggleValidation = toggleValidation;
+window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
