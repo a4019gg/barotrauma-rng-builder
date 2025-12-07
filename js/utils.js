@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.115 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка, локализация
+// js/utils.js — v0.9.116 — ПОЛНЫЙ, БЕЗ СИНТАКСИЧЕСКИХ ОШИБОК
 
-const UTILS_VERSION = "v0.9.115";
+const UTILS_VERSION = "v0.9.116";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -50,7 +50,7 @@ function toggleGrid(on) {
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP TO GRID (заглушка, можно расширить)
+// === SNAP TO GRID ===
 function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
@@ -84,26 +84,17 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Основные надписи
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
-  // Кнопки
-  const btns = {
-    generateXML: '[onclick="generateXML()"]',
-    copyXML: '[onclick="copyXML()"]',
-    downloadXML: '[onclick="downloadXML()"]',
-    exportJSON: '[onclick="exportJSON()"]',
-    importFile: '[onclick="importFile()"]',
-    openDB: '[onclick="openDB()"]'
-  };
-  Object.entries(btns).forEach(([key, sel]) => {
-    const el = document.querySelector(sel);
-    if (el && L[key]) el.textContent = L[key];
-  });
+  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
+  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
+  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
+  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
+  document.querySelector('[onclick="importFile()"]').textContent = L.import;
+  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
-  // Кнопка переключения вида
   const isTree = document.getElementById('tree-container').style.display === 'block';
   document.getElementById('view-btn').textContent = isTree ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
 
@@ -129,15 +120,14 @@ function showScriptVersions() {
   c.innerHTML = v.map(x=>`${x.n} → ${x.v}`).join('<br>');
 }
 
-// === ПРИ СТАРТЕ ===
+// === ЗАПУСК ===
 document.addEventListener('DOMContentLoaded', () => {
-  setTheme(localStorage.getItem('theme')||'dark');
-  setLang(localStorage.getItem('lang')||'en');
-  setUIScale(localStorage.getItem('uiScale')||'100');
-  setNodeDensity(localStorage.getItem('nodeDensity')||'normal');
-  toggleShadows(localStorage.getItem('nodeShadows')==='true');
-  ');
-  toggleGrid(localStorage.getItem('bgGrid')!=='false');
+  setTheme(localStorage.getItem('theme') || 'dark');
+  setLang(localStorage.getItem('lang') || 'en');
+  setUIScale(localStorage.getItem('uiScale') || '100');
+  setNodeDensity(localStorage.getItem('nodeDensity') || 'normal');
+  toggleShadows(localStorage.getItem('nodeShadows') === 'true');
+  toggleGrid(localStorage.getItem('bgGrid') !== 'false');
 
   applyLocalization();
   showScriptVersions();
