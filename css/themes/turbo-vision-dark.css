@@ -1,65 +1,100 @@
-/* Turbo Vision Dark — v0.9.12 — ЖИРНЫЙ и ЧИТАЕМЫЙ */
+/* Turbo Vision Dark — v0.9.99 — финальная версия */
+
 :root, [data-theme="turbo-vision-dark"] {
-  --bg: #000000;
-  --panel: #0a0a0a;
-  --text: #ffffff;
-  --accent: #00aa00;
-  --green: #00ff00;
-  --red: #ff0000;
-  --border: #008000;
-  --link: #00aa00;
-  --node-bg: #0a0a0a;
+  --bg: #0a0a0a;
+  --panel: #0f0f0f;
+  --text: #b8ffce;           /* мягкий лаймовый */
+  --accent: #00cc33;         /* яркий зелёный */
+  --hover: #00ff6f;          /* ховер */
+  --red: #ff3333;            /* красный */
+  --border: #004d00;
+  --glow: #00ff41;           /* свечение */
+  --node-bg: #0f0f0f;
   --input-bg: #1a1a1a;
 }
 
 body[data-theme="turbo-vision-dark"] {
-  background: #000000;
-  color: #ffffff;
+  background: var(--bg);
+  color: var(--text);
   font-family: "Lucida Console", "Courier New", monospace;
-  font-weight: 700;                 /* жирный */
+  font-weight: 700;
   letter-spacing: 0.8px;
-  text-shadow: 0 0 3px #00ff00;     /* лёгкое свечение — читается на 100% */
 }
 
-.header {
-  background: #0a0a0a;
-  border-bottom: 2px solid #008000;
-  text-shadow: 0 0 4px #00ff00;
+/* Заголовок — с сильным свечением */
+.header h1 {
+  color: #ffffff;
+  text-shadow: 
+    0 0 8px var(--glow),
+    0 0 16px var(--glow);
+  font-weight: 900;
+}
+
+/* Панели и кнопки — жирные, но без свечения */
+.header, .action-bar, .top-bar {
+  background: var(--panel);
+  border-bottom: 2px solid var(--border);
 }
 
 button {
-  background: #00aa00;
+  background: var(--accent);
   color: #ffffff !important;
-  border: 2px solid #008000;
-  font-family: "Lucida Console", "Courier New", monospace;
+  border: 2px solid var(--border);
   font-weight: 800;
-  text-shadow: 0 0 4px #000000;
   padding: 10px 16px;
   font-size: 14px;
   letter-spacing: 1px;
 }
-button:hover { 
-  background: #00ff00; 
-  box-shadow: 0 0 10px #00ff00;
-  transform: scale(1.02);
+button:hover {
+  background: var(--hover);
+  box-shadow: 0 0 12px var(--glow);
 }
 
-/* ТВОИ ЦВЕТА — остаются */
+/* ТВОИ ЦВЕТА — только для конкретных кнопок */
 button[onclick="clearAll()"] { background: #A80000 !important; }
 button[onclick="exportJSON()"], 
 button[onclick="generateXML()"] { background: #0B9D85 !important; }
 button[onclick="importFile()"] { background: #243356 !important; }
 
-.dropdown button { background: #1a1a1a; color: #ffffff; }
-.dropdown-menu { background: #0a0a0a; border: 2px solid #008000; color: #ffffff; }
-.node { background: #0a0a0a; border-left-color: #00aa00; color: #ffffff; }
-.item-field { 
-  background: #1a1a1a; 
-  color: #ffffff; 
-  border: 2px solid #008000; 
+/* Настройки — заголовки со свечением */
+#settings-menu strong {
+  color: #ffffff;
+  text-shadow: 0 0 6px var(--glow);
+  font-weight: 900;
+}
+
+.dropdown-menu {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  color: var(--text);
+}
+
+.node {
+  background: var(--node-bg);
+  border-left-color: var(--accent);
+  color: var(--text);
+}
+
+.item-field {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 2px solid var(--border);
   font-weight: 700;
 }
-.prob { background: rgba(0,255,0,0.15); color: #ffffff; }
-.tab { background: #1a1a1a; color: #ffffff; border: 2px solid #008000; }
-.tab.active { background: #00aa00; color: #000000; }
-.delete-tab { background: #ff0000; color: #ffffff; }
+
+.prob { background: rgba(0,255,0,0.15); color: var(--text); }
+
+.tab, .event-tab {
+  background: #1a1a1a;
+  color: var(--text);
+  border: 2px solid var(--border);
+}
+.tab.active, .event-tab.active {
+  background: var(--accent);
+  color: #000000;
+}
+
+.delete-tab {
+  background: var(--red);
+  color: #ffffff;
+}
