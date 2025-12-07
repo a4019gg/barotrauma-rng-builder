@@ -1,8 +1,8 @@
-/* Turbo Vision Dark — обновлено по твоим цветам */
+/* Turbo Vision Dark — v0.9.11 — белый текст + ретро-шрифт */
 :root, [data-theme="turbo-vision-dark"] {
   --bg: #000000;
   --panel: #0a0a0a;
-  --text: #00ff00;
+  --text: #ffffff;        /* белый текст */
   --accent: #00aa00;
   --green: #00ff00;
   --red: #ff0000;
@@ -13,7 +13,9 @@
 }
 body[data-theme="turbo-vision-dark"] {
   background: #000000;
-  color: #00ff00;
+  color: #ffffff;
+  font-family: "Courier New", monospace;   /* ретро-терминал */
+  letter-spacing: 0.5px;
 }
 .header {
   background: #0a0a0a;
@@ -21,23 +23,24 @@ body[data-theme="turbo-vision-dark"] {
 }
 button {
   background: #00aa00;
-  color: #000000;
+  color: #ffffff !important;   /* белый текст везде */
   border: 1px solid #008000;
+  font-family: "Courier New", monospace;
 }
 button:hover { background: #00ff00; }
 
 /* ТВОИ ЦВЕТА */
-button[onclick="clearAll()"] { background: #A80000 !important; }           /* Clear — ярко-красный */
+button[onclick="clearAll()"] { background: #A80000 !important; }
 button[onclick="exportJSON()"], 
-button[onclick="generateXML()"] { background: #0B9D85 !important; }        /* Export и Generate XML — бирюзовый */
-button[onclick="importFile()"] { background: #243356 !important; }         /* Import — тёмно-синий */
+button[onclick="generateXML()"] { background: #0B9D85 !important; }
+button[onclick="importFile()"] { background: #243356 !important; }
 
-.dropdown button { background: #1a1a1a; color: #00ff00; }
-.dropdown-menu { background: #0a0a0a; border: 1px solid #008000; color: #00ff00; }
-.node { background: #0a0a0a; border-left-color: #00aa00; color: #00ff00; }
-.item-field { background: #1a1a1a; color: #00ff00; border: 1px solid #008000; }
-.prob { background: rgba(0,175,0,0.2); color: #00ff00; }
+.dropdown button { background: #1a1a1a; color: #ffffff; }
+.dropdown-menu { background: #0a0a0a; border: 1px solid #008000; color: #ffffff; }
+.node { background: #0a0a0a; border-left-color: #00aa00; color: #ffffff; }
+.item-field { background: #1a1a1a; color: #ffffff; border: 1px solid #008000; }
+.prob { background: rgba(0,175,0,0.2); color: #ffffff; }
 .link { stroke: #00aa00; }
-.tab { background: #1a1a1a; color: #00ff00; border: 1px solid #008000; }
+.tab { background: #1a1a1a; color: #ffffff; border: 1px solid #008000; }
 .tab.active { background: #00aa00; color: #000000; }
 .delete-tab { background: #ff0000; color: #ffffff; }
