@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.111</title>
+  <title>Barotrauma RNG Builder v0.9.115</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
@@ -11,6 +11,7 @@
 </head>
 <body data-theme="dark" data-ui-scale="100" data-node-density="normal" data-node-shadows="high" data-bg-grid="visible">
 
+<!-- ТОП-БАР -->
 <div class="top-bar">
   <div class="top-left">
     <button onclick="toggleView()" id="view-btn">Tree View</button>
@@ -79,6 +80,7 @@
   </div>
 </div>
 
+<!-- ACTION BAR -->
 <div class="action-bar">
   <div class="action-left">
     <button onclick="addRNG('')">+ RNG</button>
@@ -93,7 +95,9 @@
   </div>
 </div>
 
+<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
 <div id="main-container">
+  <!-- Левая панель — события -->
   <div id="events-panel">
     <div class="panel-header">
       <button onclick="addEvent()">+ Add Event</button>
@@ -101,6 +105,7 @@
     <div id="events-list"></div>
   </div>
 
+  <!-- Центральная область -->
   <div id="editor-area">
     <div id="classic-view">
       <div id="tree-root" class="node root">
@@ -117,6 +122,7 @@
   </div>
 </div>
 
+<!-- Event ID -->
 <div class="event-id-bar">
   <label>Event ID:</label>
   <input id="event-id" value="new_event" oninput="updateActiveTabName()">
