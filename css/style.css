@@ -199,3 +199,6 @@ textarea#output {
   border: none;
   resize: none;
 }
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
