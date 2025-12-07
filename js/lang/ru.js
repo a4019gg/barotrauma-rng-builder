@@ -1,5 +1,4 @@
-// js/lang/ru.js — ПОЛНЫЙ
-
+// js/lang/ru.js
 const LANG_RU = {
   rootLabel: "Корневое событие",
   successLabel: "Успех",
@@ -8,9 +7,10 @@ const LANG_RU = {
   autoBalanceEven: "Равномерно (50/50)",
   autoBalanceByCount: "По количеству предметов",
   autoBalancePrompt: "Выберите режим:\n1 — Равномерно\n2 — По предметам",
-  autoBalanceApplied: "Баланс применён!",
+  autoBalanceApplied: "Автобаланс применён!",
   deleteEventConfirm: "Удалить событие?",
   lastEventWarning: "Нельзя удалить последнее событие!",
+  clearAllConfirm: "Очистить всё?",
   generateXML: "Сгенерировать XML",
   copyXML: "Копировать XML",
   downloadXML: "Скачать XML",
@@ -20,9 +20,12 @@ const LANG_RU = {
   settings: "Настройки",
   theme: "Тема",
   language: "Язык",
-  dbVanilla: "Ваниль",
-  dbMods: "Моды",
-  dbSearch: "Поиск предметов...",
-  dbLoadMod: "Загрузить мод",
-  clearAllConfirm: "Очистить всё?"
+  xmlCopied: "XML скопирован в буфер обмена!",
+  xmlCopyFailed: "Не удалось скопировать XML",
+  generateFirst: "Сначала сгенерируйте XML!",
+  importSuccess: "Импорт завершён!",
+  importError: "Ошибка импорта",
+  modLoaded: "Мод загружен!",
+  modError: "Неверный формат мода",
+  searchPlaceholder: "Поиск по имени, ID или тегу..."
 };
