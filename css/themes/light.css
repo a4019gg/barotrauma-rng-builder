@@ -1,1 +1,11 @@
+/* css/themes/light.css — v0.9.114 */
 
+:root[data-theme="light"] {
+  --grid-color: rgba(0,0,0,0.1);
+}
+
+#editor-area::before {
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+}
