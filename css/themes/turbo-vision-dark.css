@@ -1,4 +1,4 @@
-/* Turbo Vision Dark — SCP Wiki Theme */
+/* Turbo Vision Dark — обновлено по твоим цветам */
 :root, [data-theme="turbo-vision-dark"] {
   --bg: #000000;
   --panel: #0a0a0a;
@@ -25,6 +25,13 @@ button {
   border: 1px solid #008000;
 }
 button:hover { background: #00ff00; }
+
+/* ТВОИ ЦВЕТА */
+button[onclick="clearAll()"] { background: #A80000 !important; }           /* Clear — ярко-красный */
+button[onclick="exportJSON()"], 
+button[onclick="generateXML()"] { background: #0B9D85 !important; }        /* Export и Generate XML — бирюзовый */
+button[onclick="importFile()"] { background: #243356 !important; }         /* Import — тёмно-синий */
+
 .dropdown button { background: #1a1a1a; color: #00ff00; }
 .dropdown-menu { background: #0a0a0a; border: 1px solid #008000; color: #00ff00; }
 .node { background: #0a0a0a; border-left-color: #00aa00; color: #00ff00; }
