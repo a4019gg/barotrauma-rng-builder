@@ -1,12 +1,10 @@
-// js/tree.js — v0.9.99 — Tree View с snap, сеткой и полной поддержкой настроек
+// js/tree.js — v0.9.101 — ИДЕАЛЬНЫЙ Tree View
 
-const TREE_VERSION = "v0.9.99";
+const TREE_VERSION = "v0.9.101";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
-let snapEnabled = localStorage.getItem('snapToGrid') === 'true';
 
-// SVG — 100% размера
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
@@ -15,7 +13,6 @@ const svg = d3.select("#tree-svg")
 
 const g = svg.append("g");
 
-// Зум и панорамирование
 const zoom = d3.zoom()
   .scaleExtent([0.1, 5])
   .on("zoom", (event) => g.attr("transform", event.transform));
@@ -24,19 +21,16 @@ svg.call(zoom);
 
 function toggleView() {
   isTreeView = !isTreeView;
-  const treeContainer = document.getElementById('tree-container');
-  const classicView = document.getElementById('classic-view');
-  
-  treeContainer.classList.toggle('hidden', !isTreeView);
-  classicView.classList.toggle('hidden', isTreeView);
-  
+  const tree = document.getElementById('tree-container');
+  const classic = document.getElementById('classic-view');
+  tree.classList.toggle('hidden', !isTreeView);
+  classic.classList.toggle('hidden', isTreeView);
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
-  
   if (isTreeView) renderTree();
 }
 
 function renderTree() {
-  g.selectAll("*").remove();
+  g.selectAll("*").remove(); // ← полная очистка
 
   const rootData = { name: "Root Event", children: [] };
 
@@ -48,51 +42,56 @@ function renderTree() {
       const chance = parseFloat(node.querySelector('.chance')?.value) || 0.5;
       const rngNode = { name: `RNG ${(chance * 100).toFixed(1)}%`, children: [] };
 
-      const successCont = node.querySelector(`#c-${node.dataset.id}-s`);
-      const failureCont = node.querySelector(`#c-${node.dataset.id}-f`);
+      const s = node.querySelector(`#c-${node.dataset.id}-s`);
+      const f = node.querySelector(`#c-${node.dataset.id}-f`);
 
-      if (successCont) successCont.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
-      if (failureCont) failureCont.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
+      if (s) s.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
+      if (f) f.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
 
-      if (rngNode.children.length > 0) parent.children.push(rngNode);
+      if (rngNode.children.length) parent.children.push(rngNode);
     }
   }
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
-  const width = window.innerWidth - 250; // левая панель
-  const height = window.innerHeight - 200; // шапки
+  const width = window.innerWidth - 260;
+  const height = window.innerHeight - 200;
 
-  const treeLayout = d3.tree().size([height - 100, width - 400]);
+  const tree = d3.tree().size([height, width - 200]);
   const root = d3.hierarchy(rootData);
-  treeLayout(root);
+  tree(root);
 
-  // Связи
+  // ПРЯМЫЕ КРАСИВЫЕ ЛИНИИ
+  const link = d3.linkHorizontal()
+    .x(d => d.y)
+    .y(d => d.x);
+
   g.selectAll(".link")
     .data(root.links())
     .enter()
     .append("path")
     .attr("class", "link")
-    .attr("d", d3.linkHorizontal()
-      .x(d => d.y)
-      .y(d => d.x));
+    .attr("fill", "none")
+    .attr("stroke", "var(--text)")
+    .attr("stroke-opacity", 0.5)
+    .attr("stroke-width", 2)
+    .attr("d", link);
 
-  // Узлы
-  const nodes = g.selectAll(".node")
+  const node = g.selectAll(".node")
     .data(root.descendants())
     .enter()
     .append("g")
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
-  nodes.append("circle")
-    .attr("r", d => d.children ? 24 : 20)
-    .attr("fill", d => d.children ? "#c586c0" : "#6a9955")
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 3);
+  node.append("circle")
+    .attr("r", d => d.children ? 26 : 20)
+    .attr("fill", d => d.children ? "#bb86fc" : "#03dac6")
+    .attr("stroke", "var(--text)")
+    .attr("stroke-width", 2);
 
-  nodes.append("text")
-    .attr("dy", 6)
-    .attr("x", d => d.children ? -40 : 40)
+  node.append("text")
+    .attr("dy", 4)
+    .attr("x", d => d.children ? -35 : 35)
     .style("text-anchor", d => d.children ? "end" : "start")
     .style("font", "16px Consolas")
     .style("fill", "var(--text)")
@@ -101,29 +100,14 @@ function renderTree() {
 
   // Центрирование
   const bounds = g.node().getBBox();
-  const scale = Math.min(
-    (width - 200) / bounds.width,
-    (height - 200) / bounds.height
-  ) * 0.9;
+  const scale = 0.9 * Math.min(width / bounds.width, height / bounds.height);
+  const tx = width / 2 - scale * (bounds.x + bounds.width / 2) + 120;
+  const ty = height / 2 - scale * (bounds.y + bounds.height / 2);
 
-  const translateX = width / 2 - (bounds.x + bounds.width / 2) * scale + 120;
-  const translateY = height / 2 - (bounds.y + bounds.height / 2) * scale + 50;
-
-  svg.transition()
-    .duration(600)
-    .call(
-      zoom.transform,
-      d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-    );
+  svg.transition().duration(500)
+    .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
 }
 
-// Snap to grid — перехватываем drag (заглушка, будет в будущем)
-window.toggleSnap = function(enabled) {
-  snapEnabled = enabled;
-  localStorage.setItem('snapToGrid', enabled);
-};
-
-// Ресайз
 window.addEventListener('resize', () => {
   if (isTreeView) renderTree();
 });
