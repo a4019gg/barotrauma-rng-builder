@@ -1,4 +1,4 @@
-// js/tree.js — D3-дерево v0.9.2 — НА ВЕСЬ ЭКРАН, БЕЗ 300x150
+// js/tree.js — D3-дерево v0.9.5 — НА ВЕСЬ ЭКРАН, БЕЗ 300x150
 
 let isTreeView = false;
 
@@ -6,7 +6,8 @@ let isTreeView = false;
 const svg = d3.select("#tree-svg")
   .attr("width", "100%")
   .attr("height", "100%")
-  .style("display", "block");
+  .style("display", "block")
+  .style("background", "var(--bg)");
 
 const g = svg.append("g");
 
@@ -59,7 +60,7 @@ function renderTree() {
 
   // Получаем размеры окна
   const width = window.innerWidth;
-  const height = window.innerHeight - 150; // учитываем header + bottom-bar
+  const height = window.innerHeight - 150; // header + bottom-bar
 
   const treeLayout = d3.tree().size([height - 100, width - 400]);
   const root = d3.hierarchy(rootData);
