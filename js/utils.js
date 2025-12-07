@@ -34,7 +34,6 @@ function setLang(lang) {
   Object.assign(L, dict);
 
   // Применяем переводы
- 100%
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
