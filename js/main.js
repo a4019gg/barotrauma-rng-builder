@@ -135,12 +135,16 @@ function loadExample() {
   addRNG('');
   setTimeout(() => {
     const first = document.querySelector('#root-children > .node.rng');
-    if (first) {
-      first.querySelector('.chance').value = 0.6;
-      addRNG(first.dataset.id + '-s');
-      addSpawn(first.dataset.id + '-s.0-s');
-      updateAll();
-    }
+    if (!first) return;
+    first.querySelector('.chance').value = 0.6;
+    addRNG(first.dataset.id + '-s');
+    setTimeout(() => {
+      const successCont = document.querySelector(`#c-${first.dataset.id}-s`);
+      if (successCont) {
+        addSpawn(successCont.querySelector('.children').id.slice(2));
+      }
+    },  }, 50);
+    updateAll();
   }, 100);
 }
 
