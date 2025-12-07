@@ -23,9 +23,16 @@ function toggleView() {
   isTreeView = !isTreeView;
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
+  
   tree.classList.toggle('hidden', !isTreeView);
   classic.classList.toggle('hidden', isTreeView);
+  
+  // Переключаем z-index
+  tree.style.zIndex = isTreeView ? 10 : 5;
+  classic.style.zIndex = isTreeView ? 5 : 10;
+  
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
+  
   if (isTreeView) renderTree();
 }
 
