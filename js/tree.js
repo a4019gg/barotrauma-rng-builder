@@ -1,6 +1,6 @@
-// js/tree.js — v0.9.111 — Tree View работает идеально
+// js/tree.js — v0.9.116 — Tree View идеально работает, без перекрытий и багов
 
-const TREE_VERSION = "v0.9.111";
+const TREE_VERSION = "v0.9.116";
 window.TREE_VERSION = TREE_VERSION;
 
 let isTreeView = false;
@@ -22,20 +22,17 @@ svg.call(zoom);
 function toggleView() {
   isTreeView = !isTreeView;
 
-  const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
+  const tree = document.getElementById('tree-container');
 
-  // Полное скрытие/показ
-  tree.style.display = isTreeView ? 'block' : 'none';
   classic.style.display = isTreeView ? 'none' : 'block';
-
-  // Z-index
-  tree.style.zIndex = isTreeView ? 10 : 5;
-  classic.style.zIndex = isTreeView ? 5 : 10;
+  tree.style.display = isTreeView ? 'block' : 'none';
 
   document.getElementById('view-btn').textContent = isTreeView ? 'Classic' : 'Tree View';
 
-  if (isTreeView) renderTree();
+  if (isTreeView) {
+    renderTree();
+  }
 }
 
 function renderTree() {
@@ -57,18 +54,18 @@ function renderTree() {
       if (s) s.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
       if (f) f.querySelectorAll(':scope > .node').forEach(n => build(n, rngNode));
 
-      if (rngNode.children.length) parent.children.push(rngNode);
+      if (rngNode.children.length > 0) parent.children.push(rngNode);
     }
   }
 
   document.querySelectorAll('#root-children > .node').forEach(n => build(n, rootData));
 
   const width = window.innerWidth - 260;
-  const height = window.innerHeight - 200;
+  const height = window.innerHeight - 260;
 
-  const tree = d3.tree().size([height, width - 200]);
+  const treeLayout = d3.tree().size([height, width - 200]);
   const root = d3.hierarchy(rootData);
-  tree(root);
+  treeLayout(root);
 
   const link = d3.linkHorizontal()
     .x(d => d.y)
@@ -85,19 +82,19 @@ function renderTree() {
     .attr("stroke-width", 2)
     .attr("d", link);
 
-  const node = g.selectAll(".node")
+  const nodeGroup = g.selectAll(".node")
     .data(root.descendants())
     .enter()
     .append("g")
     .attr("transform", d => `translate(${d.y},${d.x})`);
 
-  node.append("circle")
+  nodeGroup.append("circle")
     .attr("r", d => d.children ? 26 : 20)
     .attr("fill", d => d.children ? "#bb86fc" : "#03dac6")
     .attr("stroke", "var(--text)")
     .attr("stroke-width", 2);
 
-  node.append("text")
+  nodeGroup.append("text")
     .attr("dy", 4)
     .attr("x", d => d.children ? -35 : 35)
     .style("text-anchor", d => d.children ? "end" : "start")
@@ -106,12 +103,14 @@ function renderTree() {
     .style("font-weight", "bold")
     .text(d => d.data.name);
 
+  // Центрирование
   const bounds = g.node().getBBox();
   const scale = 0.9 * Math.min(width / bounds.width, height / bounds.height);
   const tx = width / 2 - scale * (bounds.x + bounds.width / 2) + 120;
   const ty = height / 2 - scale * (bounds.y + bounds.height / 2);
 
-  svg.transition().duration(500)
+  svg.transition()
+    .duration(500)
     .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
 }
 
