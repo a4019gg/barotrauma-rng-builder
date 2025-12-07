@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.105 — ВСЕ НАСТРОЙКИ РАБОТАЮТ
+// js/utils.js — v0.9.108 — ВСЁ РАБОТАЕТ: темы, масштаб, плотность, тени, сетка
 
-const UTILS_VERSION = "v0.9.105";
+const UTILS_VERSION = "v0.9.108";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -18,21 +18,24 @@ function setTheme(theme) {
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
   s.href = m[theme] || '';
-  document.getElementById('theme-select').value = theme;
+  const sel = document.getElementById('theme-select');
+  if (sel) sel.value = theme;
 }
 
 // === UI SCALE ===
 function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
-  document.getElementById('scale-select').value = val;
+  const sel = document.getElementById('scale-select');
+  if (sel) sel.value = val;
 }
 
 // === NODE DENSITY ===
 function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
-  document.getElementById('density-select').value = val;
+  const sel = document.getElementById('density-select');
+  if (sel) sel.value = val;
 }
 
 // === SHADOWS ===
@@ -47,20 +50,34 @@ function toggleGrid(on) {
   localStorage.setItem('bgGrid', on);
 }
 
-// === ЛОКАЛИЗАЦИЯ ===
+// === ЯЗЫК ===
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
-  // (переводы как раньше)
+
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
-  document.getElementById('lang-select').value = lang;
+
+  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
+  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
+  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
+  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
+  document.querySelector('[onclick="importFile()"]').textContent = L.import;
+  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
+
+  const v = document.getElementById('view-btn');
+  v.textContent = document.getElementById('tree-container').style.display === 'block' ? 'Classic' : 'Tree View';
+
+  const sel = document.getElementById('lang-select');
+  if (sel) sel.value = lang;
+
+  updateAll();
 }
 
-// === ВЕРСИИ ===
+// === ВЕРСИИ СКРИПТОВ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -86,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// ЭКСПОРТ
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
