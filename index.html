@@ -11,6 +11,7 @@
 </head>
 <body data-theme="dark" data-ui-scale="100" data-node-density="normal" data-node-shadows="high" data-bg-grid="visible">
 
+<!-- ТОП-БАР -->
 <div class="top-bar">
   <div class="top-left">
     <button onclick="toggleView()" id="view-btn">Tree View</button>
@@ -21,10 +22,10 @@
     <button onclick="importFile()">Import</button>
     <button onclick="exportJSON()">Export</button>
 
+    <!-- НАСТРОЙКИ -->
     <div class="dropdown">
       <button>Settings</button>
       <div class="dropdown-content">
-        <!-- всё как раньше, локализация через data-l10n -->
         <strong data-l10n="settingsTheme">Theme</strong>
         <select id="theme-select" onchange="setTheme(this.value)">
           <option value="dark">Dark</option>
@@ -80,6 +81,7 @@
   </div>
 </div>
 
+<!-- ACTION BAR -->
 <div class="action-bar">
   <div class="action-left">
     <button onclick="addRNG('')">+ RNG</button>
@@ -94,6 +96,7 @@
   </div>
 </div>
 
+<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
 <div id="main-container">
   <div id="events-panel">
     <div class="panel-header">
@@ -118,6 +121,7 @@
   </div>
 </div>
 
+<!-- Event ID -->
 <div class="event-id-bar">
   <label>Event ID:</label>
   <input id="event-id" value="new_event" oninput="updateActiveTabName()">
