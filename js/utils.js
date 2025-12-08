@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.119 — светлая тема только из css/themes/light.css
+// js/utils.js — v0.9.120 — ПОЛНЫЙ, ЛОКАЛИЗАЦИЯ, ВСЁ РАБОТАЕТ
 
-const UTILS_VERSION = "v0.9.119";
+const UTILS_VERSION = "v0.9.120";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -9,19 +9,15 @@ const L = {};
 // === ТЕМЫ ===
 function setTheme(theme) {
   document.body.dataset.theme = theme;
-
-  const themeStyle = document.getElementById('theme-style');
-  const themes = {
-    'dark'              : '',
-    'light'             : 'css/themes/light.css',
-    'flopstyle-dark'    : 'css/themes/flopstyle-dark.css',
-    'turbo-vision-dark' : 'css/themes/turbo-vision-dark.css'
-    // добавляй сюда новые темы — просто путь к файлу
-  };
-
-  themeStyle.href = themes[theme] || '';
   localStorage.setItem('theme', theme);
-
+  const s = document.getElementById('theme-style');
+  const themes = {
+    'dark': '',
+    'light': 'css/themes/light.css',
+    'flopstyle-dark': 'css/themes/flopstyle-dark.css',
+    'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
+  };
+  s.href = themes[theme] || '';
   const sel = document.getElementById('theme-select');
   if (sel) sel.value = theme;
 }
@@ -30,16 +26,14 @@ function setTheme(theme) {
 function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
-  const sel = document.getElementById('scale-select');
-  if (sel) sel.value = val;
+  document.getElementById('scale-select').value = val;
 }
 
 // === NODE DENSITY ===
 function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
-  const sel = document.getElementById('density-select');
-  if (sel) sel.value = val;
+  document.getElementById('density-select').value = val;
 }
 
 // === SHADOWS ===
@@ -48,13 +42,13 @@ function toggleShadows(on) {
   localStorage.setItem('nodeShadows', on);
 }
 
-// === BACKGROUND GRID ===
+// === GRID ===
 function toggleGrid(on) {
   document.body.dataset.bgGrid = on ? 'visible' : 'off';
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP TO GRID ===
+// === SNAP ===
 function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
@@ -64,17 +58,17 @@ function setXMLFormat(val) {
   localStorage.setItem('xmlFormat', val);
 }
 
-// === VALIDATE XML ===
+// === VALIDATION ===
 function toggleValidation(on) {
   localStorage.setItem('validateXML', on);
 }
 
-// === CHECK DUPLICATE IDs ===
+// === DUPLICATE IDs CHECK ===
 function toggleCheckDuplicateIDs(on) {
   localStorage.setItem('checkDuplicateIDs', on);
 }
 
-// === ЛОКАЛИЗАЦИЯ + data-l10n ===
+// === ЛОКАЛИЗАЦИЯ ===
 function applyLocalization() {
   document.querySelectorAll('[data-l10n]').forEach(el => {
     const key = el.dataset.l10n;
@@ -88,11 +82,12 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
+  // Основные надписи
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
 
-  // кнопки
+  // Кнопки
   document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
   document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
   document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
@@ -100,17 +95,17 @@ function setLang(lang) {
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
 
+  // Переключение вида
   const isTree = document.getElementById('tree-container').style.display === 'block';
   document.getElementById('view-btn').textContent = isTree ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
 
-  const sel = document.getElementById('lang-select');
-  if (sel) sel.value = lang;
+  document.getElementById('lang-select').value = lang;
 
   applyLocalization();
   updateAll();
 }
 
-// === ВЕРСИИ ===
+// === ВЕРСИИ СКРИПТОВ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
