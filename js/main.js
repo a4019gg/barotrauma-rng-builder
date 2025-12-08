@@ -6,11 +6,10 @@ window.MAIN_VERSION = MAIN_VERSION;
 let currentEvent = 0;
 const events = [];
 
-// === ПЕРЕКЛЮЧЕНИЕ ИВЕНТА ===
+// === ПЕРЕКЛЮЧЕНИЕ ===
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
-  // Сохраняем текущий
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`
@@ -18,44 +17,37 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId;
 
-  // Подсвечиваем таб
-  document.querySelectorAll('.event-tab').forEach((tab, i) => {
-    tab.classList.toggle('active', i === index);
-  });
+  document.querySelectorAll('.event-tab').forEach((t, i) => t.classList.toggle('active', i === index));
 
   updateAll();
 }
 
-// === УДАЛЕНИЕ ИВЕНТА + ПЕРЕИМЕНОВАНИЕ ОСТАЛЬНЫХ ===
+// === УДАЛЕНИЕ + ПЕРЕИМЕНОВАНИЕ ОСТАЛЬНЫХ ===
 function deleteEvent(index, e) {
   e.stopPropagation();
   if (events.length <= 1) {
     alert(L.lastEventWarning || 'Нельзя удалить последний ивент!');
     return;
   }
-  if (confirm(L.deleteEventConfirm || 'Удалить ивент?')) {
-    events.splice(index, 1);
-    document.querySelectorAll('.event-tab')[index].remove();
+  if (!confirm(L.deleteEventConfirm || 'Удалить ивент?')) return;
 
-    // Переименовываем оставшиеся ивенты
-    document.querySelectorAll('.event-tab').forEach((tab, i) => {
-      const nameSpan = tab.querySelector('.tab-name');
-      if (nameSpan && events[i]) {
-        const newName = events[i].eventId || `event_${i + 1}`;
-        nameSpan.textContent = newName;
-      }
-    });
+  events.splice(index, 1);
+  document.querySelectorAll('.event-tab')[index].remove();
 
-    if (currentEvent >= events.length) currentEvent = events.length - 1;
-    switchEvent(currentEvent);
-  }
+  // Переименовываем оставшиеся табы
+  document.querySelectorAll('.event-tab').forEach((tab, i) => {
+    const nameSpan = tab.querySelector('.tab-name');
+    if (nameSpan) nameSpan.textContent = events[i]?.eventId || `event_${i + 1}`;
+  });
+
+  if (currentEvent >= events.length) currentEvent = events.length - 1;
+  switchEvent(currentEvent);
 }
 
-// === ДОБАВЛЕНИЕ ИВЕНТА ===
+// === ДОБАВЛЕНИЕ ===
 function addEvent() {
   const index = events.length;
   const newName = `event_${index + 1}`;
@@ -65,52 +57,43 @@ function addEvent() {
   tab.className = 'event-tab';
   tab.innerHTML = `<span class="tab-name">${newName}</span><span class="delete-tab">×</span>`;
   tab.onclick = () => switchEvent(index);
-  tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
+  tab.querySelector('.delete-tab').onclick = e => deleteEvent(index, e);
 
   document.getElementById('events-list').appendChild(tab);
   switchEvent(index);
 }
 
-// === ОБНОВЛЕНИЕ ИМЕНИ АКТИВНОГО ТАБА ===
+// === ОБНОВЛЕНИЕ ИМЕНИ ===
 function updateActiveTabName() {
-  const input = document.getElementById('event-id');
-  if (!input) return;
-  const value = input.value.trim() || `event_${currentEvent + 1}`;
+  const value = document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`;
   events[currentEvent].eventId = value;
-  const activeTab = document.querySelector('.event-tab.active .tab-name');
-  if (activeTab) activeTab.textContent = value;
+  const nameSpan = document.querySelector('.event-tab.active .tab-name');
+  if (nameSpan) nameSpan.textContent = value;
 }
 
 // === ПЕРЕКЛЮЧЕНИЕ ВИДА ===
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-  const isTree = tree.style.display !== 'block';
+  const isTree = tree.style.display === 'block';
 
-  tree.style.display = isTree ? 'block' : 'none';
-  classic.style.display = isTree ? 'none' : 'block';
+  tree.style.display = isTree ? 'none' : 'block';
+  classic.style.display = isTree ? 'block' : 'none';
 
-  document.getElementById('view-btn').textContent = isTree ? 'Classic' : 'Tree View';
+  document.getElementById('view-btn').textContent = isTree ? 'Tree View' : 'Classic';
 
-  if (isTree) renderTree();
+  if (!isTree) renderTree();
 }
 
 // === ИМПОРТ/ЭКСПОРТ ===
-function importFile() {
-  document.getElementById('file-input').click();
-}
+function importFile() { document.getElementById('file-input').click(); }
 
 function exportJSON() {
-  const data = {
-    version: "0.9.120",
-    events: events.map(e => ({ eventId: e.eventId, html: e.html }))
-  };
+  const data = { version: "0.9.120", events };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rng-builder-events.json';
-  a.click();
+  a.href = url; a.download = 'rng-builder.json'; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -139,12 +122,11 @@ function loadExample() {
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
-  addEvent(); // первый ивент
+  addEvent();
   switchEvent(0);
   showScriptVersions();
 });
 
-// Экспорт
 window.importFile = importFile;
 window.exportJSON = exportJSON;
 window.clearAll = clearAll;
