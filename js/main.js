@@ -1,26 +1,28 @@
-// js/main.js — v0.9.111 — ПОЛНЫЙ И ФИНАЛЬНЫЙ
+// js/main.js — v0.9.120 — ДУБЛИ ИМЁН ИВЕНТОВ ИСПРАВЛЕНЫ
 
-const MAIN_VERSION = "v0.9.111";
+const MAIN_VERSION = "v0.9.120";
 window.MAIN_VERSION = MAIN_VERSION;
 
 let currentEvent = 0;
 const events = [];
 
-// === ПЕРЕКЛЮЧЕНИЕ СОБЫТИЯ ===
+// === ПЕРЕКЛЮЧЕНИЕ ИВЕНТА ===
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
+  // Сохраняем текущий
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
-    eventId: document.getElementById('event-id')?.value.trim() || `event_${currentEvent + 1}`
+    eventId: document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`
   };
 
   currentEvent = index;
 
+  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
-  const eventIdInput = document.getElementById('event-id');
-  if (eventIdInput) eventIdInput.value = events[index].eventId;
+  document.getElementById('event-id').value = events[index].eventId;
 
+  // Подсвечиваем таб
   document.querySelectorAll('.event-tab').forEach((tab, i) => {
     tab.classList.toggle('active', i === index);
   });
@@ -28,30 +30,40 @@ function switchEvent(index) {
   updateAll();
 }
 
-// === УДАЛЕНИЕ СОБЫТИЯ ===
+// === УДАЛЕНИЕ ИВЕНТА + ПЕРЕИМЕНОВАНИЕ ОСТАЛЬНЫХ ===
 function deleteEvent(index, e) {
   e.stopPropagation();
   if (events.length <= 1) {
-    alert(L.lastEventWarning || 'Нельзя удалить последнее событие!');
+    alert(L.lastEventWarning || 'Нельзя удалить последний ивент!');
     return;
   }
-  if (confirm(L.deleteEventConfirm || 'Удалить событие?')) {
+  if (confirm(L.deleteEventConfirm || 'Удалить ивент?')) {
     events.splice(index, 1);
     document.querySelectorAll('.event-tab')[index].remove();
+
+    // Переименовываем оставшиеся ивенты
+    document.querySelectorAll('.event-tab').forEach((tab, i) => {
+      const nameSpan = tab.querySelector('.tab-name');
+      if (nameSpan && events[i]) {
+        const newName = events[i].eventId || `event_${i + 1}`;
+        nameSpan.textContent = newName;
+      }
+    });
+
     if (currentEvent >= events.length) currentEvent = events.length - 1;
     switchEvent(currentEvent);
   }
 }
 
-// === ДОБАВЛЕНИЕ СОБЫТИЯ ===
+// === ДОБАВЛЕНИЕ ИВЕНТА ===
 function addEvent() {
   const index = events.length;
-  const newId = `event_${index + 1}`;
-  events.push({ html: '', eventId: newId });
+  const newName = `event_${index + 1}`;
+  events.push({ html: '', eventId: newName });
 
   const tab = document.createElement('div');
   tab.className = 'event-tab';
-  tab.innerHTML = `<span class="tab-name">${newId}</span><span class="delete-tab">×</span>`;
+  tab.innerHTML = `<span class="tab-name">${newName}</span><span class="delete-tab">×</span>`;
   tab.onclick = () => switchEvent(index);
   tab.querySelector('.delete-tab').onclick = (e) => deleteEvent(index, e);
 
@@ -59,7 +71,7 @@ function addEvent() {
   switchEvent(index);
 }
 
-// === ОБНОВЛЕНИЕ ИМЕНИ ===
+// === ОБНОВЛЕНИЕ ИМЕНИ АКТИВНОГО ТАБА ===
 function updateActiveTabName() {
   const input = document.getElementById('event-id');
   if (!input) return;
@@ -73,40 +85,36 @@ function updateActiveTabName() {
 function toggleView() {
   const tree = document.getElementById('tree-container');
   const classic = document.getElementById('classic-view');
-
   const isTree = tree.style.display !== 'block';
 
   tree.style.display = isTree ? 'block' : 'none';
   classic.style.display = isTree ? 'none' : 'block';
-
-  tree.style.zIndex = isTree ? 10 : 5;
-  classic.style.zIndex = isTree ? 5 : 10;
 
   document.getElementById('view-btn').textContent = isTree ? 'Classic' : 'Tree View';
 
   if (isTree) renderTree();
 }
 
-// === ИМПОРТ / ЭКСПОРТ ===
+// === ИМПОРТ/ЭКСПОРТ ===
 function importFile() {
   document.getElementById('file-input').click();
 }
 
 function exportJSON() {
   const data = {
-    version: "0.9.111",
+    version: "0.9.120",
     events: events.map(e => ({ eventId: e.eventId, html: e.html }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'rng-events.json';
+  a.download = 'rng-builder-events.json';
   a.click();
   URL.revokeObjectURL(url);
 }
 
-// === ОЧИСТКА И ПРИМЕР ===
+// === ОЧИСТКА + ПРИМЕР ===
 function clearAll() {
   if (confirm(L.clearAllConfirm || 'Очистить всё?')) {
     document.getElementById('root-children').innerHTML = '';
@@ -122,24 +130,21 @@ function loadExample() {
     if (first) {
       first.querySelector('.chance').value = 0.6;
       addRNG(first.dataset.id + '-s');
-      addSpawn(first.dataset.id + '-s.0-s');
+      addSpawn(first.dataset.id + '-s');
       updateAll();
     }
   }, 100);
 }
 
-// === ЗАПУСК ===
+// === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
-  setTheme(localStorage.getItem('theme') || 'dark');
-  setLang(localStorage.getItem('lang') || 'en');
-
-  addEvent();
+  addEvent(); // первый ивент
   switchEvent(0);
-
   showScriptVersions();
 });
 
+// Экспорт
 window.importFile = importFile;
 window.exportJSON = exportJSON;
 window.clearAll = clearAll;
