@@ -20,7 +20,7 @@ function toggleView() {
   document.getElementById('classic-view').style.display = isTreeView ? 'none' : 'block';
   document.getElementById('tree-container').style.display = isTreeView ? 'block' : 'none';
 
-  document.getElementById('view-btn').textContent = isTreeView ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
+  document.getElementById('view-btn').textContent = isTreeView ? (L.classicView || 'Классический') : (L.treeView || 'Режим древа');
 
   if (isTreeView) renderTree();
 }
@@ -35,7 +35,7 @@ function buildTreeData(node = document.getElementById('root-children')) {
 
     if (n.dataset.type === 'rng') {
       chance = parseFloat(n.querySelector('.chance')?.value) || 0.5;
-      name = `${L.rngAction || 'RNG'} ${(chance * 100).toFixed(1)}%`;
+      name = `${L.rngAction || 'ГСЧ-событие'} ${(chance * 100).toFixed(1)}%`;
       const s = n.querySelector(`#c-${n.dataset.id}-s`);
       const f = n.querySelector(`#c-${n.dataset.id}-f`);
       const sChildren = s ? buildTreeData(s) : [];
@@ -43,18 +43,18 @@ function buildTreeData(node = document.getElementById('root-children')) {
       children.push({ name, children: [...sChildren, ...fChildren] });
     } else if (n.dataset.type === 'spawn') {
       const item = n.querySelector('.item-field')?.value || 'unknown';
-      name = `${L.spawnItem || 'Item'}: ${item}`;
-      children.push({ name });
+      name = `${L.spawnItem || 'Спавн предмета'}: ${item}`;
+      children.push({ name, chance: chance });
     } else if (n.dataset.type === 'creature') {
       const creature = n.querySelector('.creature-field')?.value || 'crawler';
       const count = n.querySelector('.count-field')?.value || '1';
-      name = `${L.spawnCreature || 'Creature'}: ${creature} x${count}`;
-      children.push({ name });
+      name = `${L.spawnCreature || 'Спавн существа'}: ${creature} x${count}`;
+      children.push({ name, chance: chance });
     } else if (n.dataset.type === 'affliction') {
       const aff = n.querySelector('.aff-field')?.value || 'bleeding';
       const strength = n.querySelector('.strength-field')?.value || '15';
-      name = `${L.applyAffliction || 'Affliction'}: ${aff} (${strength})`;
-      children.push({ name });
+      name = `${L.applyAffliction || 'Применить аффикшен'}: ${aff} (${strength})`;
+      children.push({ name, chance: chance });
     }
   });
 
@@ -64,7 +64,7 @@ function buildTreeData(node = document.getElementById('root-children')) {
 function renderTree() {
   g.selectAll("*").remove();
 
-  const rootData = { name: L.rootLabel || "Root Event", children: buildTreeData() };
+  const rootData = { name: L.rootLabel || "Корневое событие", children: buildTreeData() };
 
   const width = document.getElementById('editor-area').clientWidth - 40;
   const height = document.getElementById('editor-area').clientHeight - 40;
