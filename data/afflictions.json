@@ -1,0 +1,10 @@
+[
+  {"id": "bleeding", "name": "Bleeding", "category": "Damage"},
+  {"id": "internaldamage", "name": "Internal Damage", "category": "Damage"},
+  {"id": "oxygenlow", "name": "Low Oxygen", "category": "Environmental"},
+  {"id": "radiation", "name": "Radiation Sickness", "category": "Environmental"},
+  {"id": "huskinfection", "name": "Husk Infection", "category": "Infection"},
+  {"id": "stun", "name": "Stun", "category": "Status"},
+  {"id": "burn", "name": "Burn", "category": "Damage"},
+  {"id": "poison", "name": "Poison", "category": "Damage"}
+]
