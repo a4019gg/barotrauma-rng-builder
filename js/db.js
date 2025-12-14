@@ -1,6 +1,7 @@
-// js/db.js — v0.9.201 — РЕФАКТОРИНГ: КЛАСС, БЕЗОПАСНЫЙ DOM, CSS-КЛАССЫ
+// js/db.js — v0.9.300 — ПРЕСЕТЫ В МОДЕЛЬ, КЛАСС, БЕЗОПАСНЫЙ DOM
 
-const DB_VERSION = "v0.9.201";
+const DB_VERSION = "v0.9.300";
+window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
   constructor() {
@@ -93,7 +94,7 @@ class DatabaseManager {
     const searchInput = modal.querySelector('#db-search');
     const presetSelect = modal.querySelector('#db-presets');
 
-    this.setupTabs(modal);
+    this.setupTabs(modal, filtered, grid, empty);
     this.setupSearch(searchInput, filtered, grid, empty);
     this.setupPresets(presetSelect, modal);
     this.renderGrid(grid, empty, filtered);
@@ -113,22 +114,36 @@ class DatabaseManager {
 
     const tabs = document.createElement('div');
     tabs.className = 'db-tabs';
-    tabs.innerHTML = `
-      <button class="db-tab-btn active" data-tab="items">${loc('tabItems', 'Items')}</button>
-      <button class="db-tab-btn" data-tab="creatures">${loc('tabCreatures', 'Creatures')}</button>
-      <button class="db-tab-btn" data-tab="afflictions">${loc('tabAfflictions', 'Afflictions')}</button>
-    `;
+
+    const itemTab = document.createElement('button');
+    itemTab.className = 'db-tab-btn active';
+    itemTab.dataset.tab = 'items';
+    itemTab.textContent = loc('tabItems', 'Предметы');
+
+    const creatureTab = document.createElement('button');
+    creatureTab.className = 'db-tab-btn';
+    creatureTab.dataset.tab = 'creatures';
+    creatureTab.textContent = loc('tabCreatures', 'Существа');
+
+    const afflictionTab = document.createElement('button');
+    afflictionTab.className = 'db-tab-btn';
+    afflictionTab.dataset.tab = 'afflictions';
+    afflictionTab.textContent = loc('tabAfflictions', 'Аффикшены');
+
+    tabs.appendChild(itemTab);
+    tabs.appendChild(creatureTab);
+    tabs.appendChild(afflictionTab);
 
     const search = document.createElement('input');
     search.type = 'text';
     search.id = 'db-search';
-    search.placeholder = loc('searchPlaceholder', 'Search...');
+    search.placeholder = loc('searchPlaceholder', 'Поиск...');
     search.className = 'db-search-input';
 
     const presetsSelect = document.createElement('select');
     presetsSelect.id = 'db-presets';
     presetsSelect.className = 'db-presets-select';
-    let options = `<option value="">${loc('presets', 'Presets & Examples')}</option>`;
+    let options = `<option value="">${loc('presets', 'Пресеты и примеры')}</option>`;
     this.presets.forEach(p => {
       options += `<option value="${p.file}">${p.name}</option>`;
     });
@@ -145,7 +160,7 @@ class DatabaseManager {
     const empty = document.createElement('div');
     empty.id = 'db-empty';
     empty.className = 'db-empty';
-    empty.textContent = loc('nothingFound', 'Nothing found');
+    empty.textContent = loc('nothingFound', 'Ничего не найдено');
 
     content.appendChild(header);
     content.appendChild(grid);
@@ -155,15 +170,15 @@ class DatabaseManager {
     return modal;
   }
 
-  setupTabs(modal) {
+  setupTabs(modal, filtered, grid, empty) {
     modal.querySelectorAll('.db-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.currentTab = btn.dataset.tab;
         const currentData = this.databases[this.currentTab];
-        let filtered = currentData.slice();
+        filtered = currentData.slice();
 
         modal.querySelectorAll('.db-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
-        this.renderGrid(modal.querySelector('#db-grid'), modal.querySelector('#db-empty'), filtered);
+        this.renderGrid(grid, empty, filtered);
         modal.querySelector('#db-search').value = '';
       });
     });
@@ -189,12 +204,19 @@ class DatabaseManager {
       fetch(file)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
-          document.getElementById('root-children').innerHTML = data.html || '';
-          updateAll();
+          if (data.model) {
+            // Новый формат — модель
+            window.editorState.events[window.editorState.currentEventIndex].model = data.model;
+          } else if (data.html) {
+            // Старый формат — fallback (для совместимости)
+            document.getElementById('root-children').innerHTML = data.html;
+            // TODO: парсить HTML в модель (для будущего)
+          }
+          window.editorState.renderCurrentEvent();
           modal.remove();
-          alert(loc('presetLoaded', 'Preset loaded'));
+          alert(loc('presetLoaded', 'Пресет загружен'));
         })
-        .catch(() => alert(loc('presetError', 'Preset loading error')))
+        .catch(() => alert(loc('presetError', 'Ошибка загрузки пресета')))
         .finally(() => select.value = '');
     });
   }
