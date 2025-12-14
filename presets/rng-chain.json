@@ -1,0 +1,58 @@
+{
+  "key": "rngChain",
+  "author": "Editor Defaults",
+  "version": "1.0",
+  "model": [
+    {
+      "id": 1,
+      "type": "rng",
+      "params": { "chance": 0.4 },
+      "children": {
+        "success": [
+          {
+            "id": 2,
+            "type": "spawn",
+            "params": { "item": "plasmacutter" }
+          },
+          {
+            "id": 3,
+            "type": "rng",
+            "params": { "chance": 0.5 },
+            "children": {
+              "success": [
+                {
+                  "id": 4,
+                  "type": "affliction",
+                  "params": {
+                    "affliction": "radiationsickness",
+                    "strength": 50,
+                    "target": "allcrew"
+                  }
+                }
+              ],
+              "failure": [
+                {
+                  "id": 5,
+                  "type": "spawn",
+                  "params": { "item": "fulcrum" }
+                }
+              ]
+            }
+          }
+        ],
+        "failure": [
+          {
+            "id": 6,
+            "type": "creature",
+            "params": {
+              "creature": "mudraptor",
+              "count": 2,
+              "randomize": true,
+              "inside": true
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
