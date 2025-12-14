@@ -75,7 +75,7 @@ body {
 #editor-area {
   position: absolute;
   left: 240px;
-  top: 100px; /* 50px top-bar + 50px action-bar */
+  top: 0; /* 50px top-bar + 50px action-bar */
   right: 0;
   bottom: 200px; /* 40px event-id-bar + 160px output */
   background: var(--bg);
