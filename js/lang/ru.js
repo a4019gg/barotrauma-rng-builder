@@ -1,4 +1,4 @@
-// js/lang/ru.js — v0.9.200 — ПОЛНАЯ ЛОКАЛИЗАЦИЯ
+// js/lang/ru.js — v0.9.301
 
 const LANG_RU = {
   rootLabel: "Корневое событие",
@@ -41,6 +41,9 @@ const LANG_RU = {
   tabCreatures: "Существа",
   tabAfflictions: "Аффикшены",
 
+  // Поиск
+  searchPlaceholder: "Поиск...",
+
   // Настройки
   settingsTheme: "Тема",
   settingsLanguage: "Язык",
@@ -70,11 +73,12 @@ const LANG_RU = {
   clearAllConfirm: "Очистить всё?",
   deleteEventConfirm: "Удалить ивент?",
   lastEventWarning: "Нельзя удалить последний ивент!",
-  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.200",
+  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.301",
   importXML: "Импорт из XML",
   nothingFound: "Ничего не найдено",
   finalChance: "Итоговый шанс",
   presetLoaded: "Пресет загружен",
   presetError: "Ошибка загрузки пресета",
-  dbError: "База данных не загружена (проверьте файлы data/*.json)"
+  dbError: "База данных не загружена (проверьте файлы data/*.json)",
+  autoBalanceDone: "Автобаланс завершён"
 };
