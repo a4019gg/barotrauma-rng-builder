@@ -1,233 +1,133 @@
-// js/main.js — v0.9.201 — РЕФАКТОРИНГ: КЛАСС, БЕЗОПАСНЫЙ DOM, HOTKEYS, AUTOBALANCE
+// js/main.js — v0.9.300 — МОДЕЛЬ ДАННЫХ, РЕНДЕРЕР, UNDO/REDO НА МОДЕЛИ
 
-const MAIN_VERSION = "v0.9.201";
+const MAIN_VERSION = "v0.9.300";
 window.MAIN_VERSION = MAIN_VERSION;
 
-class EditorStateManager {
-  constructor() {
-    this.currentEventIndex = 0;
-    this.events = [{ html: '', eventId: 'event_1' }];
-    this.undoStack = [];
-    this.redoStack = [];
-    this.maxHistory = 50;
-  }
+let currentEventIndex = 0;
+let events = [{ model: [] }]; // массив событий, каждое — { model: nodeModel[] }
+let undoStack = [];
+let redoStack = [];
+const maxHistory = 50;
 
-  saveState() {
-    const currentHtml = document.getElementById('root-children').innerHTML;
-    this.events[this.currentEventIndex].html = currentHtml;
+// Сохранение состояния
+function saveState() {
+  const state = JSON.stringify({
+    events: events.map(e => ({ model: JSON.parse(JSON.stringify(e.model)) })), // глубокая копия
+    currentEventIndex
+  });
 
-    const state = JSON.stringify({
-      events: this.events.map(e => ({ ...e })),
-      currentEventIndex: this.currentEventIndex
-    });
-
-    this.undoStack.push(state);
-    if (this.undoStack.length > this.maxHistory) this.undoStack.shift();
-    this.redoStack = [];
-  }
-
-  undo() {
-    if (this.undoStack.length === 0) return false;
-    const currentState = JSON.stringify({
-      events: this.events.map(e => ({ ...e })),
-      currentEventIndex: this.currentEventIndex
-    });
-    this.redoStack.push(currentState);
-
-    const prevState = JSON.parse(this.undoStack.pop());
-    this.events = prevState.events;
-    this.currentEventIndex = prevState.currentEventIndex;
-
-    this.renderCurrentEvent();
-    this.rebuildTabs();
-    return true;
-  }
-
-  redo() {
-    if (this.redoStack.length === 0) return false;
-    const currentState = JSON.stringify({
-      events: this.events.map(e => ({ ...e })),
-      currentEventIndex: this.currentEventIndex
-    });
-    this.undoStack.push(currentState);
-
-    const nextState = JSON.parse(this.redoStack.pop());
-    this.events = nextState.events;
-    this.currentEventIndex = nextState.currentEventIndex;
-
-    this.renderCurrentEvent();
-    this.rebuildTabs();
-    return true;
-  }
-
-  addEvent() {
-    this.saveState();
-    const newIndex = this.events.length;
-    const newName = `event_${newIndex + 1}`;
-    this.events.push({ html: '', eventId: newName });
-    this.switchToEvent(newIndex);
-  }
-
-  deleteEvent(index) {
-    if (this.events.length <= 1) {
-      alert(L.lastEventWarning || 'Нельзя удалить последний ивент!');
-      return false;
-    }
-    if (!confirm(L.deleteEventConfirm || 'Удалить ивент?')) return false;
-
-    this.saveState();
-    this.events.splice(index, 1);
-    if (this.currentEventIndex >= this.events.length) {
-      this.currentEventIndex = this.events.length - 1;
-    }
-    this.switchToEvent(this.currentEventIndex);
-    return true;
-  }
-
-  switchToEvent(index) {
-    if (index < 0 || index >= this.events.length) return;
-
-    // Сохраняем текущий
-    this.events[this.currentEventIndex].html = document.getElementById('root-children').innerHTML;
-
-    this.currentEventIndex = index;
-
-    // Восстанавливаем
-    document.getElementById('root-children').innerHTML = this.events[index].html || '';
-    document.getElementById('event-id').value = this.events[index].eventId || `event_${index + 1}`;
-
-    this.rebuildTabs();
-    updateAll();
-  }
-
-  updateCurrentEventId(newId) {
-    const safeId = newId.trim() || `event_${this.currentEventIndex + 1}`;
-    this.events[this.currentEventIndex].eventId = safeId;
-    document.getElementById('event-id').value = safeId;
-    this.rebuildTabs();
-  }
-
-  rebuildTabs() {
-    const list = document.getElementById('events-list');
-    list.innerHTML = '';
-
-    this.events.forEach((ev, i) => {
-      const tab = document.createElement('div');
-      tab.className = 'event-tab';
-      if (i === this.currentEventIndex) tab.classList.add('active');
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'tab-name';
-      nameSpan.textContent = ev.eventId;
-
-      const deleteBtn = document.createElement('span');
-      deleteBtn.className = 'delete-tab';
-      deleteBtn.textContent = '×';
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        this.deleteEvent(i);
-      };
-
-      tab.appendChild(nameSpan);
-      tab.appendChild(deleteBtn);
-      tab.onclick = () => this.switchToEvent(i);
-
-      list.appendChild(tab);
-    });
-  }
-
-  renderCurrentEvent() {
-    document.getElementById('root-children').innerHTML = this.events[this.currentEventIndex].html || '';
-    document.getElementById('event-id').value = this.events[this.currentEventIndex].eventId || `event_${this.currentEventIndex + 1}`;
-  }
-
-  autoBalance() {
-    this.saveState();
-
-    function balance(node) {
-      if (node.dataset.type === 'rng') {
-        const s = node.querySelector(`#c-${node.dataset.id}-s`);
-        const f = node.querySelector(`#c-${node.dataset.id}-f`);
-
-        const sCount = s ? s.querySelectorAll('.node.spawn, .node.creature, .node.affliction').length : 0;
-        const fCount = f ? f.querySelectorAll('.node.spawn, .node.creature, .node.affliction').length : 0;
-
-        const total = sCount + fCount;
-        if (total > 0) {
-          const ideal = sCount / total;
-          node.querySelector('.chance').value = ideal.toFixed(3);
-        }
-
-        // Рекурсия
-        node.querySelectorAll('.node.rng').forEach(balance);
-      }
-    }
-
-    document.querySelectorAll('.node.rng').forEach(balance);
-    updateAll();
-  }
-
-  clearAll() {
-    this.saveState();
-    document.getElementById('root-children').innerHTML = '';
-    updateAll();
-  }
-
-  exportData() {
-    this.saveState();
-    return {
-      version: "0.9.201",
-      events: this.events
-    };
-  }
-
-  importData(data) {
-    if (!data.events || !Array.isArray(data.events)) return false;
-    this.events = data.events.map(e => ({ html: e.html || '', eventId: e.eventId || 'imported_event' }));
-    this.currentEventIndex = 0;
-    this.rebuildTabs();
-    this.renderCurrentEvent();
-    updateAll();
-    return true;
-  }
+  undoStack.push(state);
+  if (undoStack.length > maxHistory) undoStack.shift();
+  redoStack = [];
 }
 
-// Глобальный менеджер
-const editorState = new EditorStateManager();
+// Undo
+function undo() {
+  if (undoStack.length === 0) return;
+  redoStack.push(JSON.stringify({ events, currentEventIndex }));
+  const prev = JSON.parse(undoStack.pop());
+  events = prev.events;
+  currentEventIndex = prev.currentEventIndex;
+  renderCurrentEvent();
+  rebuildTabs();
+}
 
-// === HOTKEYS ===
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+// Redo
+function redo() {
+  if (redoStack.length === 0) return;
+  undoStack.push(JSON.stringify({ events, currentEventIndex }));
+  const next = JSON.parse(redoStack.pop());
+  events = next.events;
+  currentEventIndex = next.currentEventIndex;
+  renderCurrentEvent();
+  rebuildTabs();
+}
 
-  if (e.key === 'Delete') {
-    e.preventDefault();
-    const selected = document.querySelector('.node.selected');
-    if (selected) {
-      editorState.saveState();
-      selected.remove();
-      updateAll();
-    }
+// Рендер текущего события
+function renderCurrentEvent() {
+  const container = document.getElementById('root-children');
+  container.innerHTML = '';
+  renderModelToDOM(events[currentEventIndex].model, container);
+  updateAll();
+}
+
+// === РЕНДЕРЕР МОДЕЛИ В DOM ===
+function renderModelToDOM(model, container) {
+  model.forEach(nodeData => {
+    const node = nodeFactory.createFromModel(nodeData);
+    container.appendChild(node);
+  });
+}
+
+// === ПЕРЕКЛЮЧЕНИЕ ===
+function switchToEvent(index) {
+  if (index < 0 || index >= events.length) return;
+
+  saveState(); // сохраняем перед переключением
+
+  currentEventIndex = index;
+  renderCurrentEvent();
+  rebuildTabs();
+}
+
+// === ДОБАВЛЕНИЕ/УДАЛЕНИЕ ИВЕНТА ===
+function addEvent() {
+  saveState();
+  events.push({ model: [] });
+  switchToEvent(events.length - 1);
+}
+
+function deleteEvent(index) {
+  if (events.length <= 1) {
+    alert(loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
+    return;
   }
+  if (!confirm(loc('deleteEventConfirm', 'Удалить ивент?'))) return;
 
-  if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'z' && !e.shiftKey) {
-      e.preventDefault();
-      editorState.undo();
-    } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
-      e.preventDefault();
-      editorState.redo();
-    }
-  }
-});
+  saveState();
+  events.splice(index, 1);
+  if (currentEventIndex >= events.length) currentEventIndex = events.length - 1;
+  switchToEvent(currentEventIndex);
+}
+
+// === ТАБЫ ===
+function rebuildTabs() {
+  const list = document.getElementById('events-list');
+  list.innerHTML = '';
+
+  events.forEach((ev, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'event-tab' + (i === currentEventIndex ? ' active' : '');
+
+    const name = document.createElement('span');
+    name.className = 'tab-name';
+    name.textContent = `event_${i + 1}`;
+
+    const del = document.createElement('span');
+    del.className = 'delete-tab';
+    del.textContent = '×';
+    del.onclick = e => {
+      e.stopPropagation();
+      deleteEvent(i);
+    };
+
+    tab.appendChild(name);
+    tab.appendChild(del);
+    tab.onclick = () => switchToEvent(i);
+
+    list.appendChild(tab);
+  });
+}
 
 // === ЭКСПОРТ/ИМПОРТ ===
 function exportJSON() {
-  const data = editorState.exportData();
+  saveState();
+  const data = { version: "v0.9.300", events: events.map(e => ({ model: e.model })) };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'rng-builder.json';
+  a.download = 'rng-builder-v0.9.300.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -240,13 +140,15 @@ function importFile() {
     reader.onload = ev => {
       try {
         const data = JSON.parse(ev.target.result);
-        if (editorState.importData(data)) {
+        if (data.events) {
+          events = data.events.map(e => ({ model: e.model || [] }));
+          currentEventIndex = 0;
+          renderCurrentEvent();
+          rebuildTabs();
           alert('Импорт завершён');
-        } else {
-          alert('Ошибка формата файла');
         }
       } catch (err) {
-        alert('Ошибка чтения файла');
+        alert('Ошибка импорта');
       }
     };
     reader.readAsText(file);
@@ -254,18 +156,25 @@ function importFile() {
   document.getElementById('file-input').click();
 }
 
-// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
-window.addEvent = () => editorState.addEvent();
-window.clearAll = () => editorState.clearAll();
-window.autoBalance = () => editorState.autoBalance();
-window.updateActiveTabName = () => editorState.updateCurrentEventId(document.getElementById('event-id').value);
-window.importFile = importFile;
-window.exportJSON = exportJSON;
-
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
-  populateDatalist();
-  editorState.rebuildTabs();
-  editorState.renderCurrentEvent();
+  renderCurrentEvent();
+  rebuildTabs();
   showScriptVersions();
 });
+
+// Глобальные
+window.addEvent = addEvent;
+window.clearAll = () => {
+  saveState();
+  events[currentEventIndex].model = [];
+  renderCurrentEvent();
+};
+window.autoBalance = () => {
+  // пока заглушка — будет работать с моделью
+  alert('Автобаланс — в разработке (v0.9.300)');
+};
+window.updateActiveTabName = () => {}; // пока не нужно — ID фиксированные
+window.importFile = importFile;
+window.exportJSON = exportJSON;
+window.saveState = saveState;
