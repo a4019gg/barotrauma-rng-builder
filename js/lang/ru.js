@@ -1,4 +1,4 @@
-// js/lang/ru.js — v0.9.301
+// js/lang/ru.js — v0.9.301 — ПОЛНАЯ РУССКАЯ ЛОКАЛИЗАЦИЯ
 
 const LANG_RU = {
   rootLabel: "Корневое событие",
@@ -19,6 +19,7 @@ const LANG_RU = {
   clearAll: "Очистить",
   autoBalance: "Автобаланс",
   presets: "Пресеты и примеры",
+  addEvent: "+ Добавить ивент",
 
   // Ноды
   rngAction: "ГСЧ-событие",
@@ -32,9 +33,9 @@ const LANG_RU = {
   randomizePosition: "Случайная позиция",
   insideSub: "Внутри подлодки",
   outsideSub: "Снаружи подлодки",
-  targetCharacter: "Цель: Персонаж",
-  targetRandomCrew: "Цель: Случайный член экипажа",
-  targetAllCrew: "Цель: Весь экипаж",
+  targetCharacter: "Персонаж",
+  targetRandomCrew: "Случайный член экипажа",
+  targetAllCrew: "Весь экипаж",
 
   // Вкладки базы
   tabItems: "Предметы",
@@ -45,6 +46,7 @@ const LANG_RU = {
   searchPlaceholder: "Поиск...",
 
   // Настройки
+  settings: "Настройки",
   settingsTheme: "Тема",
   settingsLanguage: "Язык",
   settingsUIScale: "Масштаб интерфейса",
@@ -64,10 +66,10 @@ const LANG_RU = {
   // Валидация
   validationTitle: "Валидация XML — найдены проблемы:",
   validationEmptyEvent: "Событие пустое — ничего не спавнится",
-  validationZeroChance: "Найдены ГСЧ с шансом 0% или 100% — бессмысленно",
+  validationZeroChance: "ГСЧ с шансом 0% или 100% — бессмысленно",
   validationNoItems: "ГСЧ без действий в ветках",
   validationDuplicateId: "Дубликат identifier",
-  validationHint: "Эти проверки можно отключить в Settings → XML & Behavior",
+  validationHint: "Эти проверки можно отключить в Настройки → XML и поведение",
 
   // Сообщения
   clearAllConfirm: "Очистить всё?",
@@ -80,5 +82,9 @@ const LANG_RU = {
   presetLoaded: "Пресет загружен",
   presetError: "Ошибка загрузки пресета",
   dbError: "База данных не загружена (проверьте файлы data/*.json)",
-  autoBalanceDone: "Автобаланс завершён"
+  autoBalanceDone: "Автобаланс завершён",
+  copyXML: "XML скопирован в буфер обмена",
+
+  // Event ID
+  eventIdLabel: "Event ID:"
 };
