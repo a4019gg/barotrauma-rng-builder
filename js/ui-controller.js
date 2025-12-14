@@ -24,7 +24,7 @@ class UIController {
           break;
 
         case 'loadExample':
-          dbManager.openDB(); // пресеты внутри DB
+          dbManager.openDB(); // временно, пока пресеты в DB
           break;
 
         case 'importFile':
@@ -129,8 +129,7 @@ class UIController {
     const eventIdInput = document.getElementById('event-id');
     if (eventIdInput) {
       eventIdInput.addEventListener('input', () => {
-        // Пока просто сохраняем в модели (можно добавить поле identifier в модель в будущем)
-        // window.editorState.updateCurrentEventId(eventIdInput.value);
+        // В будущем — добавить identifier в модель
       });
     }
   }
@@ -139,13 +138,13 @@ class UIController {
     const output = document.getElementById('output');
     if (!output) return;
     output.select();
-    output.setSelectionRange(0, 99999); // для мобильных
+    output.setSelectionRange(0, 99999);
     document.execCommand('copy');
     alert(loc('copyXML', 'XML скопирован в буфер обмена'));
   }
 
   downloadXML() {
-    generateXML(); // генерируем актуальный
+    generateXML();
     const output = document.getElementById('output').value;
     const blob = new Blob([output], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
