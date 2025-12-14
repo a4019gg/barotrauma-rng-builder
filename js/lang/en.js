@@ -93,5 +93,7 @@ presetAfflictionTest: "Affliction Test",
 presetAfflictionTestDesc: "Test various afflictions on the crew",
 
 presetRngChain: "RNG Chain Example",
-presetRngChainDesc: "Complex chain of RNG with different outcomes"
+presetRngChainDesc: "Complex chain of RNG with different outcomes",
+
+importXMLHint: "Paste XML into the field below and click Import from XML"
 };
