@@ -1,4 +1,4 @@
-// js/main.js — v0.9.300 — КЛАСС EditorState, МОДЕЛЬ ДАННЫХ, FIND/REMOVE NODE
+// js/main.js — v0.9.300 — МОДЕЛЬ ДАННЫХ, АВТОБАЛАНС НА МОДЕЛИ, UI DELEGATION
 
 const MAIN_VERSION = "v0.9.300";
 window.MAIN_VERSION = MAIN_VERSION;
@@ -156,10 +156,31 @@ class EditorState {
     return false;
   }
 
+  // АВТОБАЛАНС НА МОДЕЛИ
   autoBalance() {
     this.saveState();
-    // Пока заглушка — будет работать с моделью
-    alert('Автобаланс — в разработке (v0.9.300)');
+
+    function balance(nodes) {
+      nodes.forEach(node => {
+        if (node.type === 'rng') {
+          const successCount = node.children?.success ? node.children.success.filter(n => n.type !== 'rng').length : 0;
+          const failureCount = node.children?.failure ? node.children.failure.filter(n => n.type !== 'rng').length : 0;
+          const total = successCount + failureCount;
+
+          if (total > 0) {
+            node.params.chance = parseFloat((successCount / total).toFixed(3));
+          }
+
+          // Рекурсия по дочерним RNG
+          if (node.children?.success) balance(node.children.success);
+          if (node.children?.failure) balance(node.children.failure);
+        }
+      });
+    }
+
+    balance(this.events[this.currentEventIndex].model);
+    this.renderCurrentEvent();
+    alert(loc('autoBalanceDone', 'Автобаланс завершён'));
   }
 
   clearAll() {
@@ -190,77 +211,13 @@ class EditorState {
 // Глобальный экземпляр
 window.editorState = new EditorState();
 
-// Рендерер (вынесен из main.js для чистоты)
+// Рендерер
 function renderModelToDOM(model, container) {
   model.forEach(nodeModel => {
     const nodeElement = nodeFactory.createFromModel(nodeModel);
     container.appendChild(nodeElement);
   });
 }
-
-// === HOTKEYS ===
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-  if (e.key === 'Delete') {
-    e.preventDefault();
-    const selected = document.querySelector('.node.selected');
-    if (selected && selected.dataset.id) {
-      window.editorState.removeNodeById(parseInt(selected.dataset.id));
-    }
-  }
-
-  if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'z' && !e.shiftKey) {
-      e.preventDefault();
-      window.editorState.undo();
-    } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
-      e.preventDefault();
-      window.editorState.redo();
-    }
-  }
-});
-
-// === ЭКСПОРТ/ИМПОРТ ===
-function exportJSON() {
-  const data = window.editorState.exportData();
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rng-builder-v0.9.300.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importFile() {
-  document.getElementById('file-input').onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (window.editorState.importData(data)) {
-          alert('Импорт завершён');
-        } else {
-          alert('Ошибка формата файла');
-        }
-      } catch (err) {
-        alert('Ошибка чтения файла');
-      }
-    };
-    reader.readAsText(file);
-  };
-  document.getElementById('file-input').click();
-}
-
-// === ГЛОБАЛЬНЫЕ ФУНКЦИИ ===
-window.addEvent = () => window.editorState.addEvent();
-window.clearAll = () => window.editorState.clearAll();
-window.autoBalance = () => window.editorState.autoBalance();
-window.importFile = importFile;
-window.exportJSON = exportJSON;
 
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -269,3 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.editorState.rebuildTabs();
   showScriptVersions();
 });
+
+// Глобальные для совместимости (будут удалены в v1.0)
+window.addEvent = () => window.editorState.addEvent();
+window.clearAll = () => window.editorState.clearAll();
+window.autoBalance = () => window.editorState.autoBalance();
+window.importFile = importFile;
+window.exportJSON = exportJSON;
