@@ -1,18 +1,4 @@
-/* style.css — v0.9.300 — ПОЛНЫЙ, АКТУАЛЬНЫЙ */
-
-:root {
-  --bg: #1e1e1e;
-  --panel: #252526;
-  --text: #ddd;
-  --accent: #007acc;
-  --green: #6a9955;
-  --red: #f44747;
-  --border: #444;
-  --node-bg: #2d2d30;
-  --grid-color: rgba(100,100,100,0.12);
-  --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
-  --shadow-high: 0 8px 24px rgba(0,0,0,0.4);
-}
+/* style.css — v0.9.301 — БАЗОВЫЕ СТИЛИ БЕЗ ПЕРЕМЕННЫХ (ПОДКЛЮЧАЕТСЯ ВСЕГДА) */
 
 * { box-sizing: border-box; }
 
@@ -47,7 +33,7 @@ body {
   overflow: hidden;
 }
 
-/* Левая панель событий */
+/* Левая панель */
 #events-panel {
   width: 240px;
   background: var(--panel);
@@ -71,17 +57,17 @@ body {
 .event-tab.active { background: var(--accent); color: white; }
 .delete-tab { background: var(--red); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
 
-/* Рабочая область редактора */
+/* Рабочая область */
 #editor-area {
   position: absolute;
   left: 240px;
-  top: 0; /* 50px top-bar + 50px action-bar */
+  top: 0; /* Фикс пространства */
   right: 0;
-  bottom: 200px; /* 40px event-id-bar + 160px output */
+  bottom: 200px;
   background: var(--bg);
 }
 
-/* Фоновая сетка */
+/* Сетка */
 #editor-area::before {
   content: "";
   position: absolute;
@@ -96,18 +82,28 @@ body {
 }
 body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* Режимы вида */
+/* Режимы */
 #classic-view, #tree-container {
   position: absolute;
   inset: 0;
-  padding: 20px;
   overflow-y: auto;
 }
 #classic-view   { z-index: 10; }
 #tree-container { z-index: 5; display: none; }
-#tree-svg { width: 100%; height: 100%; display: block; }
 
-/* Узлы (ноды) */
+/* Отступ для содержимого */
+#classic-view > #tree-root {
+  padding: 20px;
+}
+#tree-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Узлы */
 .node {
   margin: 12px;
   padding: 14px;
@@ -170,7 +166,7 @@ button.green { background: #218c21; }
 button.danger { background: var(--red); }
 button.small { padding: 4px 8px; font-size: 12px; }
 
-/* Дропдаун настроек */
+/* Дропдаун */
 .dropdown { position: relative; display: inline-block; }
 .dropdown-content {
   display: none;
@@ -183,7 +179,7 @@ button.small { padding: 4px 8px; font-size: 12px; }
   border-radius: 8px;
   padding: 16px;
   z-index: 99999;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-high);
 }
 .dropdown:hover .dropdown-content { display: block; }
 .dropdown-content strong { display: block; margin: 12px 0 6px 0; color: var(--accent); }
@@ -191,16 +187,16 @@ button.small { padding: 4px 8px; font-size: 12px; }
 .dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
 .dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
 
-/* Настройки через data-атрибуты */
+/* Настройки */
 body[data-ui-scale="80"]   { font-size: 80%; }
 body[data-ui-scale="120"]  { font-size: 120%; }
 body[data-ui-scale="150"]  { font-size: 150%; }
-body[data-node-density="compact"] .node     { margin: 4px !important; padding: 8px !important; font-size: 13px !important; }
-body[data-node-density="comfortable"] .node { margin: 24px !important; padding: 20px !important; font-size: 16px !important; }
-body[data-node-shadows="high"] .node { box-shadow: var(--shadow-high) !important; }
-body[data-node-shadows="off"] .node  { box-shadow: none !important; }
+body[data-node-density="compact"] .node     { margin: 4px; padding: 8px; font-size: 13px; }
+body[data-node-density="comfortable"] .node { margin: 24px; padding: 20px; font-size: 16px; }
+body[data-node-shadows="high"] .node { box-shadow: var(--shadow-high); }
+body[data-node-shadows="off"] .node  { box-shadow: none; }
 
-/* Модальное окно базы данных */
+/* DB модалка */
 .db-modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.9);
   display: flex; align-items: center; justify-content: center; z-index: 10001;
