@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.200</title>
+  <title>Barotrauma RNG Builder v0.9.300</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
@@ -14,19 +14,19 @@
 <!-- ТОП-БАР -->
 <div class="top-bar">
   <div class="top-left">
-    <button onclick="toggleView()" id="view-btn">Tree View</button>
-    <button onclick="openDB()">Data Base</button>
-    <button onclick="loadExample()">Presets & Examples</button>
+    <button data-action="toggleView" id="view-btn">Tree View</button>
+    <button data-action="openDB">Data Base</button>
+    <button data-action="loadExample">Presets & Examples</button>
   </div>
   <div class="top-right">
-    <button onclick="importFile()">Import</button>
-    <button onclick="exportJSON()">Export</button>
+    <button data-action="importFile">Import</button>
+    <button data-action="exportJSON">Export</button>
 
     <div class="dropdown">
       <button>Settings</button>
       <div class="dropdown-content">
         <strong data-l10n="settingsTheme">Theme</strong>
-        <select id="theme-select" onchange="setTheme(this.value)">
+        <select id="theme-select" data-action="setTheme">
           <option value="dark">Dark</option>
           <option value="light">Light</option>
           <option value="flopstyle-dark">Flopstyle Dark</option>
@@ -34,7 +34,7 @@
         </select>
 
         <strong data-l10n="settingsLanguage">Language</strong>
-        <select id="lang-select" onchange="setLang(this.value)">
+        <select id="lang-select" data-action="setLang">
           <option value="en">English</option>
           <option value="ru">Русский</option>
         </select>
@@ -42,7 +42,7 @@
         <hr>
 
         <strong data-l10n="settingsUIScale">UI Scale</strong>
-        <select id="scale-select" onchange="setUIScale(this.value)">
+        <select id="scale-select" data-action="setUIScale">
           <option value="80">80%</option>
           <option value="100" selected>100%</option>
           <option value="120">120%</option>
@@ -50,27 +50,27 @@
         </select>
 
         <strong data-l10n="settingsNodeDensity">Node Density</strong>
-        <select id="density-select" onchange="setNodeDensity(this.value)">
+        <select id="density-select" data-action="setNodeDensity">
           <option value="compact">Compact</option>
           <option value="normal" selected>Normal</option>
           <option value="comfortable">Comfortable</option>
         </select>
 
         <strong data-l10n="settingsNodeStyle">Node Style</strong>
-        <label><input type="checkbox" onchange="toggleShadows(this.checked)" checked> <span data-l10n="settingsShadows">Shadows</span></label>
-        <label><input type="checkbox" onchange="toggleGrid(this.checked)" checked> <span data-l10n="settingsGrid">Background Grid</span></label>
-        <label><input type="checkbox" onchange="toggleSnap(this.checked)"> <span data-l10n="settingsSnap">Snap to Grid</span></label>
+        <label><input type="checkbox" data-action="toggleShadows" checked> <span data-l10n="settingsShadows">Shadows</span></label>
+        <label><input type="checkbox" data-action="toggleGrid" checked> <span data-l10n="settingsGrid">Background Grid</span></label>
+        <label><input type="checkbox" data-action="toggleSnap" checked> <span data-l10n="settingsSnap">Snap to Grid</span></label>
 
         <hr>
 
         <strong data-l10n="settingsXMLBehavior">XML & Behavior</strong>
-        <select onchange="setXMLFormat(this.value)">
+        <select data-action="setXMLFormat">
           <option value="pretty" selected>Pretty</option>
           <option value="minified">Minified</option>
           <option value="comments">With Comments</option>
         </select>
-        <label><input type="checkbox" onchange="toggleValidation(this.checked)" checked> <span data-l10n="settingsValidateXML">Validate XML</span></label>
-        <label><input type="checkbox" onchange="toggleCheckDuplicateIDs(this.checked)" checked> <span data-l10n="settingsCheckDuplicates">Check Duplicate IDs</span></label>
+        <label><input type="checkbox" data-action="toggleValidation" checked> <span data-l10n="settingsValidateXML">Validate XML</span></label>
+        <label><input type="checkbox" data-action="toggleCheckDuplicateIDs" checked> <span data-l10n="settingsCheckDuplicates">Check Duplicate IDs</span></label>
 
         <hr>
 
@@ -83,18 +83,18 @@
 <!-- ACTION BAR -->
 <div class="action-bar">
   <div class="action-left">
-    <button onclick="addRNG('')">+ ГСЧ</button>
-    <button onclick="addSpawn('')">+ Предмет</button>
-    <button onclick="addCreature('')">+ Существо</button>
-    <button onclick="addAffliction('')">+ Аффикшен</button>
-    <button onclick="clearAll()">Очистить</button>
-    <button onclick="autoBalance()">Автобаланс</button>
+    <button data-action="addNode" data-type="rng">+ ГСЧ</button>
+    <button data-action="addNode" data-type="spawn">+ Предмет</button>
+    <button data-action="addNode" data-type="creature">+ Существо</button>
+    <button data-action="addNode" data-type="affliction">+ Аффикшен</button>
+    <button data-action="clearAll">Очистить</button>
+    <button data-action="autoBalance">Автобаланс</button>
   </div>
   <div class="action-right">
-    <button class="green" onclick="generateXML()">Сгенерировать XML</button>
-    <button onclick="copyXML()">Копировать XML</button>
-    <button onclick="downloadXML()">Скачать XML</button>
-    <button onclick="importFromXML()">Импорт из XML</button>
+    <button class="green" data-action="generateXML">Сгенерировать XML</button>
+    <button data-action="copyXML">Копировать XML</button>
+    <button data-action="downloadXML">Скачать XML</button>
+    <button data-action="importFromXML">Импорт из XML</button>
   </div>
 </div>
 
@@ -102,7 +102,7 @@
 <div id="main-container">
   <div id="events-panel">
     <div class="panel-header">
-      <button onclick="addEvent()">+ Add Event</button>
+      <button data-action="addEvent">+ Add Event</button>
     </div>
     <div id="events-list"></div>
   </div>
@@ -110,14 +110,14 @@
   <div id="editor-area">
     <div id="classic-view">
       <div id="tree-root" class="node root">
-        <div class="header-node" ondblclick="this.parentNode.classList.toggle('collapsed')">
+        <div class="header-node">
           <strong id="root-label">Root Event</strong>
           <span class="prob"><span class="global">100.000%</span><br><small class="local">100.0%</small></span>
         </div>
         <div class="children" id="root-children"></div>
       </div>
     </div>
-    <div id="tree-container" class="hidden">
+    <div id="tree-container" style="display:none;">
       <svg id="tree-svg"></svg>
     </div>
   </div>
@@ -126,7 +126,7 @@
 <!-- Event ID -->
 <div class="event-id-bar">
   <label>Event ID:</label>
-  <input id="event-id" value="new_event" oninput="updateActiveTabName()">
+  <input id="event-id" value="new_event" data-action="updateEventId">
 </div>
 
 <textarea id="output" placeholder="XML will appear here..."></textarea>
@@ -142,5 +142,6 @@
 <script src="js/tree.js"></script>
 <script src="js/xml.js"></script>
 <script src="js/main.js"></script>
+<script src="js/ui-controller.js"></script> 
 </body>
 </html>
