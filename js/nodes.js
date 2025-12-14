@@ -1,4 +1,4 @@
-// js/nodes.js — v0.9.301 — ИСПРАВЛЕН СИНТАКСИС, ПОДДЕРЖКА МОДЕЛИ ДАННЫХ
+// js/nodes.js — v0.9.301 — ПОДДЕРЖКА МОДЕЛИ ДАННЫХ, ИСПРАВЛЕН СИНТАКСИС
 
 const NODES_VERSION = "v0.9.301";
 window.NODES_VERSION = NODES_VERSION;
