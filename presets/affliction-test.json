@@ -1,0 +1,43 @@
+{
+  "key": "afflictionTest",
+  "author": "Editor Defaults",
+  "version": "1.0",
+  "model": [
+    {
+      "id": 1,
+      "type": "affliction",
+      "params": {
+        "affliction": "bleeding",
+        "strength": 40,
+        "target": "allcrew"
+      }
+    },
+    {
+      "id": 2,
+      "type": "affliction",
+      "params": {
+        "affliction": "oxygenlow",
+        "strength": 70,
+        "target": "randomcrew"
+      }
+    },
+    {
+      "id": 3,
+      "type": "affliction",
+      "params": {
+        "affliction": "burn",
+        "strength": 30,
+        "target": "character"
+      }
+    },
+    {
+      "id": 4,
+      "type": "affliction",
+      "params": {
+        "affliction": "huskinfection",
+        "strength": 20,
+        "target": "randomcrew"
+      }
+    }
+  ]
+}
