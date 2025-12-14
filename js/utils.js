@@ -1,4 +1,4 @@
-// js/utils.js — v0.9.301 — ИСПРАВЛЕНО root-label, ПОЛНАЯ ЛОКАЛИЗАЦИЯ
+// js/utils.js — v0.9.301 — ЛОКАЛИЗАЦИЯ, НАСТРОЙКИ, БЕЗ root-label
 
 const UTILS_VERSION = "v0.9.301";
 window.UTILS_VERSION = UTILS_VERSION;
@@ -19,12 +19,12 @@ function setTheme(theme) {
   localStorage.setItem('theme', theme);
   const s = document.getElementById('theme-style');
   const themes = {
-    'dark': '',
+    'dark': 'css/themes/dark.css',
     'light': 'css/themes/light.css',
     'flopstyle-dark': 'css/themes/flopstyle-dark.css',
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
-  s.href = themes[theme] || '';
+  s.href = themes[theme] || 'css/themes/dark.css';
   const sel = document.getElementById('theme-select');
   if (sel) sel.value = theme;
 }
@@ -93,10 +93,9 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Обновляем только элементы с data-l10n
   applyLocalization();
 
-  // Обновляем текст кнопки переключения вида (Tree View / Режим древа)
+  // Обновляем текст кнопки переключения вида
   const viewBtn = document.getElementById('view-btn');
   if (viewBtn) {
     const isTree = document.getElementById('tree-container').style.display === 'block';
