@@ -1,4 +1,4 @@
-// js/ui-controller.js — v0.9.300 — ЦЕНТРАЛИЗОВАННОЕ ДЕЛЕГИРОВАНИЕ СОБЫТИЙ
+// js/ui-controller.js — v0.9.301 — ДЕЛЕГИРОВАНИЕ click/change, copy/download
 
 class UIController {
   constructor() {
@@ -24,8 +24,7 @@ class UIController {
           break;
 
         case 'loadExample':
-          // Пока заглушка — можно открыть пресеты из db
-          dbManager.openDB();
+          dbManager.openDB(); // пресеты внутри DB
           break;
 
         case 'importFile':
@@ -42,13 +41,14 @@ class UIController {
 
         case 'addNode':
           if (type) {
-            const addFunc = {
-              rng: () => window.addRNG(''),
-              spawn: () => window.addSpawn(''),
-              creature: () => window.addCreature(''),
-              affliction: () => window.addAffliction('')
-            }[type];
-            if (addFunc) addFunc();
+            const addMap = {
+              rng: window.addRNG,
+              spawn: window.addSpawn,
+              creature: window.addCreature,
+              affliction: window.addAffliction
+            };
+            const func = addMap[type];
+            if (typeof func === 'function') func();
           }
           break;
 
@@ -84,62 +84,52 @@ class UIController {
     // Делегирование change для настроек
     document.addEventListener('change', e => {
       const target = e.target;
-      if (!target.dataset || !target.dataset.action) return;
+      if (!target.dataset?.action) return;
 
       const action = target.dataset.action;
-      const value = target.value || target.checked;
+      const value = target.type === 'checkbox' ? target.checked : target.value;
 
       switch (action) {
         case 'setTheme':
           setTheme(value);
           break;
-
         case 'setLang':
           setLang(value);
           break;
-
         case 'setUIScale':
           setUIScale(value);
           break;
-
         case 'setNodeDensity':
           setNodeDensity(value);
           break;
-
         case 'toggleShadows':
           toggleShadows(value);
           break;
-
         case 'toggleGrid':
           toggleGrid(value);
           break;
-
         case 'toggleSnap':
           toggleSnap(value);
           break;
-
         case 'setXMLFormat':
           setXMLFormat(value);
           break;
-
         case 'toggleValidation':
           toggleValidation(value);
           break;
-
         case 'toggleCheckDuplicateIDs':
           toggleCheckDuplicateIDs(value);
           break;
-
         default:
           console.warn(`Unknown change data-action: ${action}`);
       }
     });
 
-    // Обновление Event ID
+    // Обновление Event ID (input)
     const eventIdInput = document.getElementById('event-id');
     if (eventIdInput) {
       eventIdInput.addEventListener('input', () => {
-        // Пока просто сохраняем в модели (можно добавить в будущем)
+        // Пока просто сохраняем в модели (можно добавить поле identifier в модель в будущем)
         // window.editorState.updateCurrentEventId(eventIdInput.value);
       });
     }
@@ -147,27 +137,27 @@ class UIController {
 
   copyOutputToClipboard() {
     const output = document.getElementById('output');
-    if (output) {
-      output.select();
-      document.execCommand('copy');
-      alert('XML скопирован в буфер обмена');
-    }
+    if (!output) return;
+    output.select();
+    output.setSelectionRange(0, 99999); // для мобильных
+    document.execCommand('copy');
+    alert(loc('copyXML', 'XML скопирован в буфер обмена'));
   }
 
   downloadXML() {
-    generateXML(); // сначала генерируем актуальный
+    generateXML(); // генерируем актуальный
     const output = document.getElementById('output').value;
     const blob = new Blob([output], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'event.xml';
+    a.download = 'barotrauma-event.xml';
     a.click();
     URL.revokeObjectURL(url);
   }
 }
 
-// Инициализация UI-контроллера
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
   new UIController();
 });
