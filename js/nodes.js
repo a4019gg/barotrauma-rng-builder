@@ -1,6 +1,6 @@
-// js/nodes.js — v0.9.300 — ПОДДЕРЖКА МОДЕЛИ ДАННЫХ, CREATEFROMMODEL, DRAG&DROP
+// js/nodes.js — v0.9.301 — ИСПРАВЛЕН СИНТАКСИС, ПОДДЕРЖКА МОДЕЛИ ДАННЫХ
 
-const NODES_VERSION = "v0.9.300";
+const NODES_VERSION = "v0.9.301";
 window.NODES_VERSION = NODES_VERSION;
 
 const GRID_SIZE = 30;
@@ -67,7 +67,7 @@ class NodeFactory {
 
     header.appendChild(title);
 
-    // Параметры в зависимости от типа
+    // Параметры
     this.appendParams(header, model);
 
     // Кнопка удаления
@@ -76,7 +76,6 @@ class NodeFactory {
     deleteBtn.textContent = '×';
     deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      // Удаление через EditorState (глобально)
       window.editorState.removeNodeById(model.id);
     });
     header.appendChild(deleteBtn);
@@ -100,7 +99,6 @@ class NodeFactory {
       const successSection = this.createBranch(model.id, '-s', 'success-label', loc('successLabel', 'Успех'));
       const failureSection = this.createBranch(model.id, '-f', 'failure-label', 'Провал'));
 
-      // Рендер дочерних узлов
       const successContainer = successSection.querySelector(`#c-${model.id}-s`);
       const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
 
@@ -286,7 +284,7 @@ class NodeFactory {
       const btn = document.createElement('button');
       btn.className = 'small';
       btn.textContent = a.text;
-      btn.dataset.branch = suffix; // -s или -f
+      btn.dataset.branch = suffix;
       btn.dataset.parentId = id;
       btn.dataset.nodeType = a.type;
       btn.addEventListener('click', (e) => {
@@ -294,7 +292,7 @@ class NodeFactory {
         const parentModel = window.editorState.findNodeById(id);
         if (parentModel && parentModel.type === 'rng') {
           const branch = suffix === '-s' ? 'success' : 'failure';
-          const newModel = this['createModel' + a.type.charAt(0).toUpperCase() + a.type.slice(1)]();
+          const newModel = nodeFactory['createModel' + a.type.charAt(0).toUpperCase() + a.type.slice(1)]();
           parentModel.children[branch].push(newModel);
           window.editorState.renderCurrentEvent();
         }
