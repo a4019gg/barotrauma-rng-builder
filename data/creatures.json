@@ -1,0 +1,9 @@
+[
+  {"id": "crawler", "name": "Crawler", "category": "Monsters"},
+  {"id": "husk", "name": "Husk", "category": "Monsters"},
+  {"id": "mudraptor", "name": "Mudraptor", "category": "Monsters"},
+  {"id": "hammerhead", "name": "Hammerhead", "category": "Monsters"},
+  {"id": "tigerthresher", "name": "Tiger Thresher", "category": "Monsters"},
+  {"id": "spineling", "name": "Spineling", "category": "Monsters"},
+  {"id": "legacyhusk", "name": "Legacy Husk", "category": "Monsters"}
+]
