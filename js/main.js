@@ -1,4 +1,4 @@
-// js/main.js — v0.9.200 — ЭКСПОРТ/ИМПОРТ РАБОТАЕТ, ДУБЛИ ИМЁН — НЕТ, HOTKEYS
+// js/main.js — v0.9.200 — ЭКСПОРТ/ИМПОРТ, HOTKEYS, UNDO, ДУБЛИ ИМЁН
 
 const MAIN_VERSION = "v0.9.200";
 window.MAIN_VERSION = MAIN_VERSION;
@@ -10,7 +10,7 @@ let redoStack = [];
 
 // Сохраняем состояние для undo
 function saveState() {
-  undoStack.push(JSON.stringify(events));
+  undoStack.push(JSON.stringify(events.map(e => ({ ...e })))); // глубокая копия
   redoStack = [];
 }
 
@@ -18,6 +18,7 @@ function saveState() {
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
+  // Сохраняем текущий
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`
@@ -25,6 +26,7 @@ function switchEvent(index) {
 
   currentEvent = index;
 
+  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
 
@@ -46,7 +48,6 @@ function deleteEvent(index, e) {
   events.splice(index, 1);
   document.querySelectorAll('.event-tab')[index].remove();
 
-  // Переименовываем табы
   document.querySelectorAll('.event-tab').forEach((tab, i) => {
     const nameSpan = tab.querySelector('.tab-name');
     if (nameSpan) nameSpan.textContent = events[i]?.eventId || `event_${i + 1}`;
@@ -81,8 +82,10 @@ function updateActiveTabName() {
   if (nameSpan) nameSpan.textContent = value;
 }
 
-// === HOTKEYS ===
+// === HOTKEYS + UNDO/REDO ===
 document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
   if (e.ctrlKey || e.metaKey) {
     if (e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
@@ -95,15 +98,16 @@ document.addEventListener('keydown', e => {
       duplicateSelectedNode();
     }
   } else if (e.key === 'Delete') {
+    e.preventDefault();
     deleteSelectedNode();
   }
 });
 
-// Undo / Redo
 function undo() {
   if (undoStack.length === 0) return;
   redoStack.push(JSON.stringify(events));
   events = JSON.parse(undoStack.pop());
+  rebuildTabs();
   switchEvent(currentEvent);
 }
 
@@ -111,7 +115,21 @@ function redo() {
   if (redoStack.length === 0) return;
   undoStack.push(JSON.stringify(events));
   events = JSON.parse(redoStack.pop());
+  rebuildTabs();
   switchEvent(currentEvent);
+}
+
+// Восстанавливаем табы после undo/redo
+function rebuildTabs() {
+  document.getElementById('events-list').innerHTML = '';
+  events.forEach((ev, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'event-tab';
+    tab.innerHTML = `<span class="tab-name">${ev.eventId}</span><span class="delete-tab">×</span>`;
+    tab.onclick = () => switchEvent(i);
+    tab.querySelector('.delete-tab').onclick = e => deleteEvent(i, e);
+    document.getElementById('events-list').appendChild(tab);
+  });
 }
 
 // === ЭКСПОРТ/ИМПОРТ ===
@@ -153,10 +171,10 @@ function importFile() {
             document.getElementById('events-list').appendChild(tab);
           });
           switchEvent(0);
-          alert('Импорт завершён');
+          alert(L.importSuccess || 'Импорт завершён');
         }
       } catch (err) {
-        alert('Ошибка импорта');
+        alert(L.importError || 'Ошибка импорта');
       }
     };
     reader.readAsText(file);
