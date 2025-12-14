@@ -1,0 +1,48 @@
+{
+  "key": "monsterEncounter",
+  "author": "Editor Defaults",
+  "version": "1.0",
+  "model": [
+    {
+      "id": 1,
+      "type": "rng",
+      "params": { "chance": 0.6 },
+      "children": {
+        "success": [
+          {
+            "id": 2,
+            "type": "creature",
+            "params": {
+              "creature": "crawler",
+              "count": 3,
+              "randomize": true,
+              "inside": false
+            }
+          }
+        ],
+        "failure": [
+          {
+            "id": 3,
+            "type": "creature",
+            "params": {
+              "creature": "husk",
+              "count": 2,
+              "randomize": true,
+              "inside": false
+            }
+          },
+          {
+            "id": 4,
+            "type": "creature",
+            "params": {
+              "creature": "hammerhead",
+              "count": 1,
+              "randomize": true,
+              "inside": false
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
