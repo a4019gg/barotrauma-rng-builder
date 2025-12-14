@@ -1,6 +1,6 @@
-// js/utils.js — v0.9.120 — ПОЛНЫЙ, ЛОКАЛИЗАЦИЯ, ВСЁ РАБОТАЕТ
+// js/utils.js — v0.9.200 — ПОЛНЫЙ, ЛОКАЛИЗАЦИЯ, ТЕМЫ, НАСТРОЙКИ
 
-const UTILS_VERSION = "v0.9.120";
+const UTILS_VERSION = "v0.9.200";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
@@ -22,48 +22,50 @@ function setTheme(theme) {
   if (sel) sel.value = theme;
 }
 
-// === UI SCALE ===
+// === МАСШТАБ ===
 function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
-  document.getElementById('scale-select').value = val;
+  const sel = document.getElementById('scale-select');
+  if (sel) sel.value = val;
 }
 
-// === NODE DENSITY ===
+// === ПЛОТНОСТЬ НОД ===
 function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
-  document.getElementById('density-select').value = val;
+  const sel = document.getElementById('density-select');
+  if (sel) sel.value = val;
 }
 
-// === SHADOWS ===
+// === ТЕНИ ===
 function toggleShadows(on) {
   document.body.dataset.nodeShadows = on ? 'high' : 'off';
   localStorage.setItem('nodeShadows', on);
 }
 
-// === GRID ===
+// === СЕТКА ===
 function toggleGrid(on) {
   document.body.dataset.bgGrid = on ? 'visible' : 'off';
   localStorage.setItem('bgGrid', on);
 }
 
-// === SNAP ===
+// === ПРИВЯЗКА К СЕТКЕ ===
 function toggleSnap(on) {
   localStorage.setItem('snapToGrid', on);
 }
 
-// === XML FORMAT ===
+// === ФОРМАТ XML ===
 function setXMLFormat(val) {
   localStorage.setItem('xmlFormat', val);
 }
 
-// === VALIDATION ===
+// === ВАЛИДАЦИЯ XML ===
 function toggleValidation(on) {
   localStorage.setItem('validateXML', on);
 }
 
-// === DUPLICATE IDs CHECK ===
+// === ПРОВЕРКА ДУБЛИКАТОВ ID ===
 function toggleCheckDuplicateIDs(on) {
   localStorage.setItem('checkDuplicateIDs', on);
 }
@@ -82,7 +84,7 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Основные надписи
+  // Обновляем ключевые элементы
   document.getElementById('root-label').textContent = L.rootLabel;
   document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
   document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
@@ -94,18 +96,26 @@ function setLang(lang) {
   document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
   document.querySelector('[onclick="importFile()"]').textContent = L.import;
   document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
+  document.querySelector('[onclick="importFromXML()"]').textContent = L.importXML;
+
+  // Кнопки действий
+  document.querySelectorAll('button[onclick^="addRNG"]').forEach(btn => btn.textContent = L.addRNG);
+  document.querySelectorAll('button[onclick^="addSpawn"]').forEach(btn => btn.textContent = L.addItem);
+  document.querySelectorAll('button[onclick^="addCreature"]').forEach(btn => btn.textContent = L.addCreature);
+  document.querySelectorAll('button[onclick^="addAffliction"]').forEach(btn => btn.textContent = L.addAffliction);
 
   // Переключение вида
   const isTree = document.getElementById('tree-container').style.display === 'block';
-  document.getElementById('view-btn').textContent = isTree ? (L.classicView || 'Classic') : (L.treeView || 'Tree View');
+  document.getElementById('view-btn').textContent = isTree ? L.classicView : L.treeView;
 
-  document.getElementById('lang-select').value = lang;
+  const sel = document.getElementById('lang-select');
+  if (sel) sel.value = lang;
 
   applyLocalization();
   updateAll();
 }
 
-// === ВЕРСИИ СКРИПТОВ ===
+// === ВЕРСИИ ===
 function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
@@ -128,12 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setNodeDensity(localStorage.getItem('nodeDensity') || 'normal');
   toggleShadows(localStorage.getItem('nodeShadows') === 'true');
   toggleGrid(localStorage.getItem('bgGrid') !== 'false');
+  toggleSnap(localStorage.getItem('snapToGrid') === 'true');
 
   applyLocalization();
   showScriptVersions();
 });
 
-// === ЭКСПОРТ ===
+// Экспорт функций
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
