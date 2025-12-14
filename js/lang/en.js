@@ -80,5 +80,18 @@ const LANG_EN = {
   presetLoaded: "Preset loaded",
   presetError: "Preset loading error",
   dbError: "Database not loaded (check data/*.json files)",
-  autoBalanceDone: "Auto balance completed"
+  autoBalanceDone: "Auto balance completed",
+
+  // Пример для en.js
+presetBasicLoot: "Basic Loot",
+presetBasicLootDesc: "Simple set of weapons and tools",
+
+presetMonsterEncounter: "Monster Encounter",
+presetMonsterEncounterDesc: "Random encounter with monsters outside the submarine",
+
+presetAfflictionTest: "Affliction Test",
+presetAfflictionTestDesc: "Test various afflictions on the crew",
+
+presetRngChain: "RNG Chain Example",
+presetRngChainDesc: "Complex chain of RNG with different outcomes"
 };
