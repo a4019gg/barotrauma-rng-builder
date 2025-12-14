@@ -1,10 +1,707 @@
 [
-  {"id": "bleeding", "name": "Bleeding", "category": "Damage"},
-  {"id": "internaldamage", "name": "Internal Damage", "category": "Damage"},
-  {"id": "oxygenlow", "name": "Low Oxygen", "category": "Environmental"},
-  {"id": "radiation", "name": "Radiation Sickness", "category": "Environmental"},
-  {"id": "huskinfection", "name": "Husk Infection", "category": "Infection"},
-  {"id": "stun", "name": "Stun", "category": "Status"},
-  {"id": "burn", "name": "Burn", "category": "Damage"},
-  {"id": "poison", "name": "Poison", "category": "Damage"}
+  {
+    "identifier": "bleeding",
+    "name": "Bleeding",
+    "description": "The patient is losing blood. If left untreated, this will eventually lead to death.",
+    "type": "bleeding",
+    "maxstrength": "100",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,768,128,128",
+      "color_theme_key": "icon_damage_red",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "burn",
+    "name": "Burn",
+    "description": "The area is blistered and red, and skin is already beginning to peel away in sheets. The patient is in a great deal of pain.",
+    "type": "burn",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "896,0,128,128",
+      "color_theme_key": "icon_damage_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "electricshock",
+    "name": "Zapped",
+    "description": "",
+    "type": "stun",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "512,768,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "explosiondamage",
+    "name": "Deep tissue injury",
+    "description": "",
+    "type": "damage",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "896,0,128,128",
+      "color_theme_key": "icon_damage_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "nausea",
+    "name": "Nausea",
+    "description": "The skin is clammy and the patient is vomiting periodically.",
+    "type": "nausea",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "128,384,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "stun",
+    "name": "Stun",
+    "description": "",
+    "type": "stun",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "blunttrauma",
+    "name": "Blunt trauma",
+    "description": "",
+    "type": "damage",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "768,896,128,128",
+      "color_theme_key": "icon_damage_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "lacerations",
+    "name": "Lacerations",
+    "description": "",
+    "type": "damage",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "768,896,128,128",
+      "color_theme_key": "icon_damage_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "bloodloss",
+    "name": "Blood loss",
+    "description": "",
+    "type": "damage",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "384,768,128,128",
+      "color_theme_key": "icon_status_brown",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "morbusinepoisoning",
+    "name": "Morbusine Poisoning",
+    "description": "Patient is hallucinating and exhibits paranoia.",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "cyanidepoisoning",
+    "name": "Cyanide poisoning",
+    "description": "",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "sufforinpoisoning",
+    "name": "Sufforin Poisoning",
+    "description": "Sneaky, slowly progressing poisoning that eventually leads to death.",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "deliriuminepoisoning",
+    "name": "Deliriumine Poisoning",
+    "description": "Patient is hallucinating and exhibits paranoia.",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "hallucinating_mindsunraveled",
+    "name": "Hallucinating (Mind's Unraveled)",
+    "description": "",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "radiationsickness",
+    "name": "Radiation sickness",
+    "description": "Burns and sores can be seen on patient's skin. They seem to be spreading.",
+    "type": "radiationsickness",
+    "maxstrength": "200",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "384,768,128,128",
+      "color_theme_key": "icon_status_yellow",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "jovianradiation",
+    "name": "Jovian Radiation",
+    "description": "",
+    "type": "radiationsickness",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "0,640,128,128",
+      "color_theme_key": "icon_debuff_blue",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "acidburn",
+    "name": "Acid Burn",
+    "description": "",
+    "type": "burn",
+    "maxstrength": "200",
+    "limbspecific": "true",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/CommandUIBackground.png",
+      "sourcerect": "640,768,128,128",
+      "color_theme_key": "icon_buff_lightgreen",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "infection",
+    "name": "Infection",
+    "description": "",
+    "type": "infection",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/TalentsIcons4.png",
+      "sourcerect": "0,384,128,128",
+      "color_theme_key": "icon_buff_lightgreen",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "drunkweakness",
+    "name": "Drunk Vulnerability",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/TalentsIcons4.png",
+      "sourcerect": "128,384,128,128",
+      "color_theme_key": "icon_buff_lightgreen",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "huskroulette",
+    "name": "Husk Roulette Participation",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/TalentsIcons4.png",
+      "sourcerect": "768,256,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "mindsense",
+    "name": "Mind Sense",
+    "description": "",
+    "type": "visionbuff",
+    "maxstrength": "600",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "huskinfectionresistance",
+    "name": "Husk Infection Resistance",
+    "description": "Husk be gone.",
+    "type": "resistance",
+    "maxstrength": "600",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "384,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "psychosisresistance",
+    "name": "Psychosis Resistance",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": "600",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "strengthen",
+    "name": "Vigor",
+    "description": "Damage be gone.",
+    "type": "strengthbuff",
+    "maxstrength": "600",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "512,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "huskdisguise",
+    "name": "Husk Disguise",
+    "description": "",
+    "type": "disguiseashusk",
+    "maxstrength": "1",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/CommandUIAtlas.png",
+      "sourcerect": "896,768,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "invertcontrols",
+    "name": "Disoriented",
+    "description": "",
+    "type": "invertcontrols",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "0,384,128,128",
+      "color_theme_key": "icon_status_tan",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "spaceherpes",
+    "name": "Space herpes",
+    "description": "",
+    "type": "spaceherpes",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "0,384,128,128",
+      "color_theme_key": "icon_status_tan",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "paralysis",
+    "name": "Paralysis",
+    "description": "",
+    "type": "paralysis",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_gray",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "incrementalstun",
+    "name": "IncrementalStun",
+    "description": "",
+    "type": "stun",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "drag",
+    "name": "Drag",
+    "description": "",
+    "type": "drag",
+    "maxstrength": "1",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
+      "color_theme_key": "icon_debuff_purple",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "acidreaction",
+    "name": "Acid Reaction",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": "120",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "0,768,128,128",
+      "color_theme_key": "icon_debuff_violet",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "drunk",
+    "name": "Drunk",
+    "description": "",
+    "type": "buff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "progressivestun",
+    "name": "Zapped",
+    "description": "",
+    "type": "stun",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "stabilozine",
+    "name": "Stabilozine Effects",
+    "description": "",
+    "type": "buff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/TalentsIcons4.png",
+      "sourcerect": "768,256,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "concussion",
+    "name": "Concussion",
+    "description": "",
+    "type": "concussion",
+    "maxstrength": "10",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "hallucinating",
+    "name": "Hallucinating",
+    "description": "",
+    "type": "poison",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "color_theme_key": "icon_poison_darkred",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "blind_hard",
+    "name": "Blinded",
+    "description": "",
+    "type": "none",
+    "maxstrength": "10",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "huskinfection",
+    "name": "Husk Infection",
+    "description": "",
+    "type": "huskinfection",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "896,640,128,128",
+      "color_theme_key": "icon_debuff_red_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "psychosis",
+    "name": "Psychosis",
+    "description": "",
+    "type": "psychosis",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "watchersgaze",
+    "name": "Watcher's Gaze",
+    "description": "",
+    "type": "gaze",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/CommandUIAtlas.png",
+      "sourcerect": "896,896,128,128",
+      "color_theme_key": "icon_damage_red",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "drunknodebuffs",
+    "name": "Drunk (No Debuffs)",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "384,640,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "mantiscamouflage",
+    "name": "",
+    "description": "",
+    "type": "disguise",
+    "maxstrength": "10",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "128,768,128,128",
+      "color_theme_key": "icon_status_orange",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "concealed",
+    "name": "Concealed",
+    "description": "",
+    "type": "concealed",
+    "maxstrength": "1",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "paralysisresistance",
+    "name": "Paralysis Resistance",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": "800",
+    "limbspecific": "false",
+    "isbuff": true,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
+      "color_theme_key": "icon_buff_green",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "chemwithdrawal",
+    "name": "Chem Withdrawal",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,768,128,128",
+      "color_theme_key": "icon_status_gray",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "opiatewithdrawal",
+    "name": "Opiate Withdrawal",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "640,768,128,128",
+      "color_theme_key": "icon_status_gray",
+      "origin": "0,0"
+    }
+  },
+  {
+    "identifier": "AfflictionSpaceHerpes",
+    "name": "Space Herpes",
+    "description": "",
+    "type": "spaceherpes",
+    "maxstrength": "100",
+    "limbspecific": "false",
+    "isbuff": false,
+    "icon": {
+      "texture": "Content/UI/MainIconsAtlas.png",
+      "sourcerect": "0,384,128,128",
+      "color_theme_key": "icon_status_tan",
+      "origin": "0,0"
+    }
+  }
 ]
