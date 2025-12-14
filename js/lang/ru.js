@@ -1,4 +1,4 @@
-// js/lang/ru.js — v0.9.120 — ПОЛНАЯ ЛОКАЛИЗАЦИЯ
+// js/lang/ru.js — v0.9.200 — ПОЛНАЯ ЛОКАЛИЗАЦИЯ
 
 const LANG_RU = {
   rootLabel: "Корневое событие",
@@ -13,17 +13,28 @@ const LANG_RU = {
   import: "Импорт",
   dataBase: "База данных",
   addRNG: "+ ГСЧ",
-  addSpawn: "+ Предмет",
+  addItem: "+ Предмет",
   addCreature: "+ Существо",
   addAffliction: "+ Аффикшен",
   clearAll: "Очистить",
   autoBalance: "Автобаланс",
+  presets: "Пресеты и примеры",
 
   // Ноды
   rngAction: "ГСЧ-событие",
   spawnItem: "Спавн предмета",
   spawnCreature: "Спавн существа",
   applyAffliction: "Применить аффикшен",
+
+  // Параметры
+  chance: "Шанс",
+  count: "Количество",
+  randomizePosition: "Случайная позиция",
+  insideSub: "Внутри подлодки",
+  outsideSub: "Снаружи подлодки",
+  targetCharacter: "Цель: Персонаж",
+  targetRandomCrew: "Цель: Случайный член экипажа",
+  targetAllCrew: "Цель: Весь экипаж",
 
   // Настройки
   settingsTheme: "Тема",
@@ -46,7 +57,7 @@ const LANG_RU = {
   validationTitle: "Валидация XML — найдены проблемы:",
   validationEmptyEvent: "Событие пустое — ничего не спавнится",
   validationZeroChance: "Найдены ГСЧ с шансом 0% или 100% — бессмысленно",
-  validationNoItems: "ГСЧ без предметов в ветках",
+  validationNoItems: "ГСЧ без действий в ветках",
   validationDuplicateId: "Дубликат identifier",
   validationHint: "Эти проверки можно отключить в Settings → XML & Behavior",
 
@@ -54,8 +65,8 @@ const LANG_RU = {
   clearAllConfirm: "Очистить всё?",
   deleteEventConfirm: "Удалить ивент?",
   lastEventWarning: "Нельзя удалить последний ивент!",
-  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.120",
-
-  searchPlaceholder: "Поиск по имени, ID или тегу...",
-  nothingFound: "Ничего не найдено"
+  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.200",
+  importXML: "Импорт из XML",
+  nothingFound: "Ничего не найдено",
+  finalChance: "Итоговый шанс"
 };
