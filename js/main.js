@@ -1,4 +1,4 @@
-// js/main.js — v0.9.301 — ИСПРАВЛЕНИЯ importFile, populateDatalist, КЛАСС EditorState
+// js/main.js — v0.9.301 — КЛАСС EditorState, ИСПРАВЛЕНИЯ importFile, populateDatalist
 
 const MAIN_VERSION = "v0.9.301";
 window.MAIN_VERSION = MAIN_VERSION;
@@ -215,23 +215,25 @@ function renderModelToDOM(model, container) {
   });
 }
 
-// === ФУНКЦИЯ populateDatalist (заглушка + базовая реализация) ===
+// === populateDatalist — заглушка с популярными ID ===
 function populateDatalist() {
   const datalist = document.getElementById('item-datalist');
   if (!datalist) return;
 
-  // Пока заглушка — популярные ID
-  const common = ['revolver', 'divingknife', 'plasmacutter', 'toolbox', 'oxygenite', 'crawler', 'husk', 'mudraptor', 'bleeding', 'burn', 'oxygenlow'];
-  common.forEach(id => {
+  const commonIds = [
+    'revolver', 'revolverrounds', 'divingknife', 'toolbox', 'oxygenitetank',
+    'plasmacutter', 'crowbar', 'weldingtool', 'crawler', 'husk', 'mudraptor',
+    'hammerhead', 'bleeding', 'burn', 'oxygenlow', 'radiationsickness', 'huskinfection'
+  ];
+
+  commonIds.forEach(id => {
     const opt = document.createElement('option');
     opt.value = id;
     datalist.appendChild(opt);
   });
-
-  // В будущем — заполнять из баз dbManager.databases
 }
 
-// === ФУНКЦИЯ importFile ===
+// === importFile ===
 function importFile() {
   const input = document.getElementById('file-input');
   input.onchange = e => {
@@ -242,7 +244,7 @@ function importFile() {
       try {
         const data = JSON.parse(ev.target.result);
         if (window.editorState.importData(data)) {
-          alert('Импорт завершён');
+          alert(loc('presetLoaded', 'Импорт завершён'));
         } else {
           alert('Ошибка формата файла');
         }
