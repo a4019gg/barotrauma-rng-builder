@@ -1,219 +1,406 @@
-// js/nodes.js — v0.9.200 — CREATURE, AFFLICTION, DRAG&DROP, SNAP, COLLAPSE, FINAL CHANCE
+// js/nodes.js — v0.9.200 — РЕФАКТОРИНГ: КЛАСС, БЕЗОПАСНЫЙ DOM, КОЛБЭКИ
 
 const NODES_VERSION = "v0.9.200";
 window.NODES_VERSION = NODES_VERSION;
 
-let counter = 0;
 const GRID_SIZE = 30;
 
-// === RNG ACTION ===
-function createRNG(chance = 0.5) {
-  const id = counter++;
-  const div = document.createElement('div');
-  div.className = 'node rng draggable';
-  div.dataset.id = id;
-  div.dataset.type = 'rng';
-  div.innerHTML = `
-    <div class="header-node" ondblclick="toggleCollapse(this.parentNode)">
-      <span>${L.rngAction || 'ГСЧ-событие'}</span>
-      <input type="number" step="0.001" min="0" max="1" value="${chance}" class="chance" onchange="updateAll()">
-      <button class="danger small" onclick="removeNode(this)">×</button>
-      <span class="prob"><span class="global">0.000%</span><br><small class="local">0.0%</small></span>
-      <span class="final-chance" style="margin-left:10px;color:#888"></span>
-    </div>
-    <div class="children">
-      <div class="success-label">${L.successLabel || 'Успех'}</div>
-      <div style="margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="small" onclick="addRNG('${id}-s')">${L.addRNG || '+ ГСЧ'}</button>
-        <button class="small" onclick="addSpawn('${id}-s')">${L.addItem || '+ Предмет'}</button>
-        <button class="small" onclick="addCreature('${id}-s')">${L.addCreature || '+ Существо'}</button>
-        <button class="small" onclick="addAffliction('${id}-s')">${L.addAffliction || '+ Аффикшен'}</button>
-      </div>
-      <div id="c-${id}-s"></div>
-    </div>
-    <div class="children">
-      <div class="failure-label">${L.failureLabel || 'Провал'}</div>
-      <div style="margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="small" onclick="addRNG('${id}-f')">${L.addRNG || '+ ГСЧ'}</button>
-        <button class="small" onclick="addSpawn('${id}-f')">${L.addItem || '+ Предмет'}</button>
-        <button class="small" onclick="addCreature('${id}-f')">${L.addCreature || '+ Существо'}</button>
-        <button class="small" onclick="addAffliction('${id}-f')">${L.addAffliction || '+ Аффикшен'}</button>
-      </div>
-      <div id="c-${id}-f"></div>
-    </div>`;
-  makeDraggable(div);
-  return div;
-}
-
-// === SPAWN ITEM ===
-function createSpawn(item = 'revolver') {
-  const div = document.createElement('div');
-  div.className = 'node spawn draggable';
-  div.dataset.type = 'spawn';
-  div.innerHTML = `
-    <div class="header-node" ondblclick="toggleCollapse(this.parentNode)">
-      <span>${L.spawnItem || 'Спавн предмета'}</span>
-      <input type="text" class="item-field" list="item-datalist" value="${item}" placeholder="revolver">
-      <button class="danger small" onclick="removeNode(this)">×</button>
-      <span class="prob"><span class="global">0.000%</span><br><small class="local">100.0%</small></span>
-      <span class="final-chance" style="margin-left:10px;color:#888"></span>
-    </div>`;
-  makeDraggable(div);
-  return div;
-}
-
-// === SPAWN CREATURE ===
-function createCreature(creature = 'crawler', count = 1, randomize = true, inside = true) {
-  const div = document.createElement('div');
-  div.className = 'node creature draggable';
-  div.dataset.type = 'creature';
-  div.innerHTML = `
-    <div class="header-node" ondblclick="toggleCollapse(this.parentNode)">
-      <span>${L.spawnCreature || 'Спавн существа'}</span>
-      <input type="text" class="creature-field" list="item-datalist" value="${creature}" placeholder="crawler">
-      <input type="number" min="1" value="${count}" class="count-field" style="width:60px">
-      <label><input type="checkbox" class="randomize-field" ${randomize ? 'checked' : ''}> ${L.randomizePosition || 'Случайная позиция'}</label>
-      <select class="location-field" style="width:120px">
-        <option value="inside" ${inside ? 'selected' : ''}>${L.insideSub || 'Внутри'}</option>
-        <option value="outside" ${!inside ? 'selected' : ''}>${L.outsideSub || 'Снаружи'}</option>
-      </select>
-      <button class="danger small" onclick="removeNode(this)">×</button>
-      <span class="prob"><span class="global">0.000%</span><br><small class="local">100.0%</small></span>
-      <span class="final-chance" style="margin-left:10px;color:#888"></span>
-    </div>`;
-  makeDraggable(div);
-  return div;
-}
-
-// === APPLY AFFLICTION ===
-function createAffliction(aff = 'bleeding', strength = 15, target = 'character') {
-  const div = document.createElement('div');
-  div.className = 'node affliction draggable';
-  div.dataset.type = 'affliction';
-  div.innerHTML = `
-    <div class="header-node" ondblclick="toggleCollapse(this.parentNode)">
-      <span>${L.applyAffliction || 'Применить аффикшен'}</span>
-      <input type="text" class="aff-field" value="${aff}" placeholder="bleeding">
-      <input type="number" value="${strength}" class="strength-field" style="width:60px">
-      <select class="target-field" style="width:150px">
-        <option value="character" ${target === 'character' ? 'selected' : ''}>${L.targetCharacter || 'Персонаж'}</option>
-        <option value="randomcrew" ${target === 'randomcrew' ? 'selected' : ''}>${L.targetRandomCrew || 'Случайный член экипажа'}</option>
-        <option value="allcrew" ${target === 'allcrew' ? 'selected' : ''}>${L.targetAllCrew || 'Весь экипаж'}</option>
-      </select>
-      <button class="danger small" onclick="removeNode(this)">×</button>
-      <span class="prob"><span class="global">0.000%</span><br><small class="local">100.0%</small></span>
-      <span class="final-chance" style="margin-left:10px;color:#888"></span>
-    </div>`;
-  makeDraggable(div);
-  return div;
-}
-
-// === ДОБАВЛЕНИЕ ===
-function addRNG(path) { addNode(path, createRNG); }
-function addSpawn(path) { addNode(path, createSpawn); }
-function addCreature(path) { addNode(path, createCreature); }
-function addAffliction(path) { addNode(path, createAffliction); }
-
-function addNode(path, creator) {
-  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
-  if (!container) return;
-  saveState(); // undo
-  container.appendChild(creator());
-  updateAll();
-}
-
-// === УДАЛЕНИЕ ===
-function removeNode(btn) {
-  saveState();
-  btn.closest('.node').remove();
-  updateAll();
-}
-
-// === COLLAPSE ===
-function toggleCollapse(node) {
-  node.classList.toggle('collapsed');
-}
-
-// === DRAG & DROP + SNAP ===
-function makeDraggable(node) {
-  let pos = { x: 0, y: 0 };
-
-  const header = node.querySelector('.header-node');
-  header.style.cursor = 'move';
-
-  header.onmousedown = e => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
-    e.preventDefault();
-
-    pos.x = e.clientX - node.offsetLeft;
-    pos.y = e.clientY - node.offsetTop;
-
-    document.onmousemove = drag;
-    document.onmouseup = stopDrag;
-  };
-
-  function drag(e) {
-    let newX = e.clientX - pos.x;
-    let newY = e.clientY - pos.y;
-
-    if (localStorage.getItem('snapToGrid') === 'true') {
-      newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
-      newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
-    }
-
-    node.style.position = 'absolute';
-    node.style.left = newX + 'px';
-    node.style.top = newY + 'px';
+class NodeFactory {
+  constructor(updateCallback, saveStateCallback) {
+    this.updateCallback = updateCallback;
+    this.saveStateCallback = saveStateCallback;
+    this.idCounter = 0;
   }
 
-  function stopDrag() {
-    document.onmousemove = null;
-    document.onmouseup = null;
+  generateId() {
+    return this.idCounter++;
+  }
+
+  createRNG(chance = 0.5) {
+    const id = this.generateId();
+    const node = document.createElement('div');
+    node.className = 'node rng draggable';
+    node.dataset.id = id;
+    node.dataset.type = 'rng';
+
+    const header = document.createElement('div');
+    header.className = 'header-node';
+
+    const title = document.createElement('span');
+    title.textContent = loc('rngAction', 'ГСЧ-событие');
+
+    const chanceInput = document.createElement('input');
+    chanceInput.type = 'number';
+    chanceInput.step = '0.001';
+    chanceInput.min = '0';
+    chanceInput.max = '1';
+    chanceInput.value = chance;
+    chanceInput.className = 'chance';
+    chanceInput.addEventListener('change', () => this.updateCallback());
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger small';
+    deleteBtn.textContent = '×';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.saveStateCallback();
+      node.remove();
+      this.updateCallback();
+    });
+
+    const prob = document.createElement('span');
+    prob.className = 'prob';
+    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">0.0%</small>';
+
+    const finalChance = document.createElement('span');
+    finalChance.className = 'final-chance';
+    finalChance.style.marginLeft = '10px';
+    finalChance.style.color = '#888';
+
+    header.appendChild(title);
+    header.appendChild(chanceInput);
+    header.appendChild(deleteBtn);
+    header.appendChild(prob);
+    header.appendChild(finalChance);
+
+    const successSection = this.createBranch(id, '-s', 'success-label', loc('successLabel', 'Успех'));
+    const failureSection = this.createBranch(id, '-f', 'failure-label', loc('failureLabel', 'Провал'));
+
+    node.appendChild(header);
+    node.appendChild(successSection);
+    node.appendChild(failureSection);
+
+    this.attachCommonBehaviors(node);
+    return node;
+  }
+
+  createBranch(id, suffix, labelClass, labelText) {
+    const section = document.createElement('div');
+    section.className = 'children';
+
+    const label = document.createElement('div');
+    label.className = labelClass;
+    label.textContent = labelText;
+
+    const buttons = document.createElement('div');
+    buttons.style.cssText = 'margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;';
+
+    const actions = [
+      { text: loc('addRNG', '+ ГСЧ'), action: 'addRNG' },
+      { text: loc('addItem', '+ Предмет'), action: 'addSpawn' },
+      { text: loc('addCreature', '+ Существо'), action: 'addCreature' },
+      { text: loc('addAffliction', '+ Аффикшен'), action: 'addAffliction' }
+    ];
+
+    actions.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'small';
+      btn.textContent = a.text;
+      btn.dataset.action = a.action;
+      btn.dataset.target = id + suffix;
+      btn.addEventListener('click', () => {
+        this.saveStateCallback();
+        // Вызов глобальной функции добавления (временный мостик)
+        const func = window[a.action];
+        if (typeof func === 'function') func(id + suffix);
+        this.updateCallback();
+      });
+      buttons.appendChild(btn);
+    });
+
+    const container = document.createElement('div');
+    container.id = `c-${id}${suffix}`;
+
+    section.appendChild(label);
+    section.appendChild(buttons);
+    section.appendChild(container);
+
+    return section;
+  }
+
+  createSpawn(item = 'revolver') {
+    const node = document.createElement('div');
+    node.className = 'node spawn draggable';
+    node.dataset.type = 'spawn';
+
+    const header = document.createElement('div');
+    header.className = 'header-node';
+
+    const title = document.createElement('span');
+    title.textContent = loc('spawnItem', 'Спавн предмета');
+
+    const itemInput = document.createElement('input');
+    itemInput.type = 'text';
+    itemInput.className = 'item-field';
+    itemInput.list = 'item-datalist';
+    itemInput.value = item;
+    itemInput.placeholder = 'revolver';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger small';
+    deleteBtn.textContent = '×';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.saveStateCallback();
+      node.remove();
+      this.updateCallback();
+    });
+
+    const prob = document.createElement('span');
+    prob.className = 'prob';
+    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
+
+    const finalChance = document.createElement('span');
+    finalChance.className = 'final-chance';
+    finalChance.style.marginLeft = '10px';
+    finalChance.style.color = '#888';
+
+    header.appendChild(title);
+    header.appendChild(itemInput);
+    header.appendChild(deleteBtn);
+    header.appendChild(prob);
+    header.appendChild(finalChance);
+
+    node.appendChild(header);
+    this.attachCommonBehaviors(node);
+    return node;
+  }
+
+  createCreature(creature = 'crawler', count = 1, randomize = true, inside = true) {
+    const node = document.createElement('div');
+    node.className = 'node creature draggable';
+    node.dataset.type = 'creature';
+
+    const header = document.createElement('div');
+    header.className = 'header-node';
+
+    const title = document.createElement('span');
+    title.textContent = loc('spawnCreature', 'Спавн существа');
+
+    const creatureInput = document.createElement('input');
+    creatureInput.type = 'text';
+    creatureInput.className = 'creature-field';
+    creatureInput.list = 'item-datalist';
+    creatureInput.value = creature;
+    creatureInput.placeholder = 'crawler';
+
+    const countInput = document.createElement('input');
+    countInput.type = 'number';
+    countInput.min = '1';
+    countInput.value = count;
+    countInput.className = 'count-field';
+    countInput.style.width = '60px';
+
+    const randomizeLabel = document.createElement('label');
+    const randomizeCheckbox = document.createElement('input');
+    randomizeCheckbox.type = 'checkbox';
+    randomizeCheckbox.className = 'randomize-field';
+    randomizeCheckbox.checked = randomize;
+    randomizeLabel.appendChild(randomizeCheckbox);
+    randomizeLabel.appendChild(document.createTextNode(loc('randomizePosition', 'Случайная позиция')));
+
+    const locationSelect = document.createElement('select');
+    locationSelect.className = 'location-field';
+    const insideOption = document.createElement('option');
+    insideOption.value = 'inside';
+    insideOption.textContent = loc('insideSub', 'Внутри');
+    const outsideOption = document.createElement('option');
+    outsideOption.value = 'outside';
+    outsideOption.textContent = loc('outsideSub', 'Снаружи');
+    if (inside) insideOption.selected = true;
+    else outsideOption.selected = true;
+    locationSelect.appendChild(insideOption);
+    locationSelect.appendChild(outsideOption);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger small';
+    deleteBtn.textContent = '×';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.saveStateCallback();
+      node.remove();
+      this.updateCallback();
+    });
+
+    const prob = document.createElement('span');
+    prob.className = 'prob';
+    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
+
+    const finalChance = document.createElement('span');
+    finalChance.className = 'final-chance';
+    finalChance.style.marginLeft = '10px';
+    finalChance.style.color = '#888';
+
+    header.appendChild(title);
+    header.appendChild(creatureInput);
+    header.appendChild(countInput);
+    header.appendChild(randomizeLabel);
+    header.appendChild(locationSelect);
+    header.appendChild(deleteBtn);
+    header.appendChild(prob);
+    header.appendChild(finalChance);
+
+    node.appendChild(header);
+    this.attachCommonBehaviors(node);
+    return node;
+  }
+
+  createAffliction(aff = 'bleeding', strength = 15, target = 'character') {
+    const node = document.createElement('div');
+    node.className = 'node affliction draggable';
+    node.dataset.type = 'affliction';
+
+    const header = document.createElement('div');
+    header.className = 'header-node';
+
+    const title = document.createElement('span');
+    title.textContent = loc('applyAffliction', 'Применить аффикшен');
+
+    const affInput = document.createElement('input');
+    affInput.type = 'text';
+    affInput.className = 'aff-field';
+    affInput.value = aff;
+    affInput.placeholder = 'bleeding';
+
+    const strengthInput = document.createElement('input');
+    strengthInput.type = 'number';
+    strengthInput.value = strength;
+    strengthInput.className = 'strength-field';
+    strengthInput.style.width = '60px';
+
+    const targetSelect = document.createElement('select');
+    targetSelect.className = 'target-field';
+    const options = [
+      { value: 'character', text: loc('targetCharacter', 'Персонаж') },
+      { value: 'randomcrew', text: loc('targetRandomCrew', 'Случайный член экипажа') },
+      { value: 'allcrew', text: loc('targetAllCrew', 'Весь экипаж') }
+    ];
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.text;
+      if (o.value === target) opt.selected = true;
+      targetSelect.appendChild(opt);
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger small';
+    deleteBtn.textContent = '×';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.saveStateCallback();
+      node.remove();
+      this.updateCallback();
+    });
+
+    const prob = document.createElement('span');
+    prob.className = 'prob';
+    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
+
+    const finalChance = document.createElement('span');
+    finalChance.className = 'final-chance';
+    finalChance.style.marginLeft = '10px';
+    finalChance.style.color = '#888';
+
+    header.appendChild(title);
+    header.appendChild(affInput);
+    header.appendChild(strengthInput);
+    header.appendChild(targetSelect);
+    header.appendChild(deleteBtn);
+    header.appendChild(prob);
+    header.appendChild(finalChance);
+
+    node.appendChild(header);
+    this.attachCommonBehaviors(node);
+    return node;
+  }
+
+  attachCommonBehaviors(node) {
+    const header = node.querySelector('.header-node');
+    if (header) {
+      header.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        node.classList.toggle('collapsed');
+        this.updateCallback();
+      });
+      this.makeDraggable(node, header);
+    }
+  }
+
+  makeDraggable(node, header) {
+    let pos = { x: 0, y: 0 };
+
+    const startDrag = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+      e.preventDefault();
+
+      pos.x = e.clientX - node.offsetLeft;
+      pos.y = e.clientY - node.offsetTop;
+
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', stopDrag);
+    };
+
+    const drag = (e) => {
+      let newX = e.clientX - pos.x;
+      let newY = e.clientY - pos.y;
+
+      if (localStorage.getItem('snapToGrid') === 'true') {
+        newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+        newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+      }
+
+      node.style.position = 'absolute';
+      node.style.left = newX + 'px';
+      node.style.top = newY + 'px';
+    };
+
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', stopDrag);
+      this.updateCallback();
+    };
+
+    header.addEventListener('mousedown', startDrag);
+  }
+}
+
+// Глобальный экземпляр (временный мостик к старой архитектуре)
+const nodeFactory = new NodeFactory(updateAll, saveState);
+
+// Глобальные функции добавления (для совместимости)
+window.addRNG = (path) => {
+  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (container) {
+    saveState();
+    container.appendChild(nodeFactory.createRNG());
     updateAll();
   }
-}
+};
 
-// === ИТОГОВЫЕ ШАНСЫ + ПОДСВЕТКА ===
-function updateProbabilities() {
-  // Простой расчёт глобального шанса (рекурсивно)
-  function calcGlobal(container, parentChance = 1) {
-    container.querySelectorAll(':scope > .node').forEach(node => {
-      const globalSpan = node.querySelector('.global');
-      const finalSpan = node.querySelector('.final-chance');
-
-      if (node.dataset.type === 'rng') {
-        const chance = parseFloat(node.querySelector('.chance')?.value) || 0.5;
-        const localChance = chance * parentChance;
-        globalSpan.textContent = (localChance * 100).toFixed(3) + '%';
-
-        calcGlobal(node.querySelector(`#c-${node.dataset.id}-s`), localChance);
-        calcGlobal(node.querySelector(`#c-${node.dataset.id}-f`), parentChance - localChance);
-      } else {
-        globalSpan.textContent = (parentChance * 100).toFixed(3) + '%';
-        if (finalSpan) {
-          const chance = parseFloat(globalSpan.textContent);
-          finalSpan.textContent = `${L.finalChance || 'Итоговый шанс'}: ${chance.toFixed(1)}%`;
-          if (chance < 5) finalSpan.style.color = '#f44747';
-          else if (chance < 20) finalSpan.style.color = '#ff9800';
-          else finalSpan.style.color = '#6a9955';
-        }
-      }
-    });
+window.addSpawn = (path) => {
+  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (container) {
+    saveState();
+    container.appendChild(nodeFactory.createSpawn());
+    updateAll();
   }
+};
 
-  calcGlobal(document.getElementById('root-children'));
-}
+window.addCreature = (path) => {
+  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (container) {
+    saveState();
+    container.appendChild(nodeFactory.createCreature());
+    updateAll();
+  }
+};
 
-// Вызов updateAll вызывает updateProbabilities
-function updateAll() {
-  updateProbabilities();
-  if (isTreeView) renderTree();
-}
-
-// Экспорт
-window.addRNG = addRNG;
-window.addSpawn = addSpawn;
-window.addCreature = addCreature;
-window.addAffliction = addAffliction;
-window.updateAll = updateAll;
-window.saveState = saveState;
+window.addAffliction = (path) => {
+  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
+  if (container) {
+    saveState();
+    container.appendChild(nodeFactory.createAffliction());
+    updateAll();
+  }
+};
