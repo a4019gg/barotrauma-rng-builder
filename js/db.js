@@ -1,4 +1,4 @@
-// js/db.js — v0.9.200 — ТРИ ОТДЕЛЬНЫЕ БАЗЫ: items, creatures, afflictions
+// js/db.js — v0.9.200 — ВКЛАДКИ (ПРЕДМЕТЫ / СУЩЕСТВА / АФФИКШЕНЫ), ПРЕСЕТЫ, ЛОКАЛИЗАЦИЯ
 
 const DB_VERSION = "v0.9.200";
 window.DB_VERSION = DB_VERSION;
@@ -9,14 +9,14 @@ let afflictions = [];
 
 let currentTab = 'items'; // items | creatures | afflictions
 
-// Пресеты (как раньше)
+// Пресеты
 const presets = [
   { name: "Basic Loot", file: "presets/basic-loot.json" },
   { name: "Monster Encounter", file: "presets/monster-encounter.json" },
   { name: "Affliction Test", file: "presets/affliction-test.json" }
 ];
 
-// Загрузка всех баз
+// Загрузка баз
 function loadDatabases() {
   const load = (url, target) => {
     const saved = localStorage.getItem(`${target}DB_v0.9.200`);
@@ -24,7 +24,9 @@ function loadDatabases() {
       try {
         window[target] = JSON.parse(saved);
         return;
-      } catch (e) {}
+      } catch (e) {
+        console.error(`Corrupted cache for ${target}`);
+      }
     }
 
     fetch(url)
@@ -66,9 +68,9 @@ function openDB() {
     <div style="background:var(--panel);width:90%;max-width:1200px;height:85vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
       <div style="padding:16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:16px;align-items:center;">
         <div style="display:flex;gap:8px;">
-          <button id="tab-items" class="tab-btn active">Items</button>
-          <button id="tab-creatures" class="tab-btn">Creatures</button>
-          <button id="tab-afflictions" class="tab-btn">Afflictions</button>
+          <button id="tab-items" class="tab-btn active">${L.tabItems || 'MISSING LOC KEY: tabItems'}</button>
+          <button id="tab-creatures" class="tab-btn">${L.tabCreatures || 'MISSING LOC KEY: tabCreatures'}</button>
+          <button id="tab-afflictions" class="tab-btn">${L.tabAfflictions || 'MISSING LOC KEY: tabAfflictions'}</button>
         </div>
         <input type="text" id="db-search" placeholder="${L.searchPlaceholder || 'MISSING LOC KEY: searchPlaceholder'}" style="flex:1;padding:12px;background:#333;color:#fff;border:1px solid #555;border-radius:8px;">
         <select id="db-presets" style="padding:12px;background:#333;color:#fff;border:1px solid #555;border-radius:8px;">
@@ -166,9 +168,9 @@ function openDB() {
         document.getElementById('root-children').innerHTML = data.html || '';
         updateAll();
         modal.remove();
-        alert(L.presetLoaded || 'MISSING LOC KEY: presetLoaded');
+        alert(loc('presetLoaded', 'Preset loaded'));
       })
-      .catch(() => alert(L.presetError || 'MISSING LOC KEY: presetError'));
+      .catch(() => alert(loc('presetError', 'Preset loading error')));
   };
 
   render(currentData);
