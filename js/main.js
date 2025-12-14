@@ -1,6 +1,6 @@
-// js/main.js — v0.9.301 — ИСПРАВЛЕНИЯ importFile, populateDatalist, КЛАСС EditorState
+// js/main.js — v0.9.300 — МОДЕЛЬ ДАННЫХ, АВТОБАЛАНС НА МОДЕЛИ, UI DELEGATION
 
-const MAIN_VERSION = "v0.9.301";
+const MAIN_VERSION = "v0.9.300";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
@@ -125,6 +125,7 @@ class EditorState {
     });
   }
 
+  // Рекурсивный поиск узла по ID
   findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (const node of nodes) {
       if (node.id === id) return node;
@@ -136,6 +137,7 @@ class EditorState {
     return null;
   }
 
+  // Рекурсивное удаление узла по ID
   removeNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
@@ -154,6 +156,7 @@ class EditorState {
     return false;
   }
 
+  // АВТОБАЛАНС НА МОДЕЛИ
   autoBalance() {
     this.saveState();
 
@@ -168,6 +171,7 @@ class EditorState {
             node.params.chance = parseFloat((successCount / total).toFixed(3));
           }
 
+          // Рекурсия по дочерним RNG
           if (node.children?.success) balance(node.children.success);
           if (node.children?.failure) balance(node.children.failure);
         }
@@ -188,7 +192,7 @@ class EditorState {
   exportData() {
     this.saveState();
     return {
-      version: "v0.9.301",
+      version: "v0.9.300",
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
@@ -215,47 +219,6 @@ function renderModelToDOM(model, container) {
   });
 }
 
-// === ФУНКЦИЯ populateDatalist (заглушка + базовая реализация) ===
-function populateDatalist() {
-  const datalist = document.getElementById('item-datalist');
-  if (!datalist) return;
-
-  // Пока заглушка — популярные ID
-  const common = ['revolver', 'divingknife', 'plasmacutter', 'toolbox', 'oxygenite', 'crawler', 'husk', 'mudraptor', 'bleeding', 'burn', 'oxygenlow'];
-  common.forEach(id => {
-    const opt = document.createElement('option');
-    opt.value = id;
-    datalist.appendChild(opt);
-  });
-
-  // В будущем — заполнять из баз dbManager.databases
-}
-
-// === ФУНКЦИЯ importFile ===
-function importFile() {
-  const input = document.getElementById('file-input');
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (window.editorState.importData(data)) {
-          alert('Импорт завершён');
-        } else {
-          alert('Ошибка формата файла');
-        }
-      } catch (err) {
-        alert('Ошибка чтения файла');
-        console.error(err);
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
@@ -264,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// Глобальные для совместимости
+// Глобальные для совместимости (будут удалены в v1.0)
 window.addEvent = () => window.editorState.addEvent();
 window.clearAll = () => window.editorState.clearAll();
 window.autoBalance = () => window.editorState.autoBalance();
