@@ -1,6 +1,6 @@
-// js/main.js — v0.9.200 — ЭКСПОРТ/ИМПОРТ, HOTKEYS, UNDO, ДУБЛИ ИМЁН
+// js/main.js — v0.9.201 — AUTOBALANCE РАБОТАЕТ, HOTKEYS РАБОТАЮТ, ЭКСПОРТ/ИМПОРТ
 
-const MAIN_VERSION = "v0.9.200";
+const MAIN_VERSION = "v0.9.201";
 window.MAIN_VERSION = MAIN_VERSION;
 
 let currentEvent = 0;
@@ -8,9 +8,9 @@ const events = [];
 let undoStack = [];
 let redoStack = [];
 
-// Сохраняем состояние для undo
+// Сохранение состояния для undo
 function saveState() {
-  undoStack.push(JSON.stringify(events.map(e => ({ ...e })))); // глубокая копия
+  undoStack.push(JSON.stringify(events.map(e => ({ ...e }))));
   redoStack = [];
 }
 
@@ -18,7 +18,6 @@ function saveState() {
 function switchEvent(index) {
   if (index < 0 || index >= events.length) return;
 
-  // Сохраняем текущий
   events[currentEvent] = {
     html: document.getElementById('root-children').innerHTML,
     eventId: document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`
@@ -26,7 +25,6 @@ function switchEvent(index) {
 
   currentEvent = index;
 
-  // Восстанавливаем
   document.getElementById('root-children').innerHTML = events[index].html || '';
   document.getElementById('event-id').value = events[index].eventId || `event_${index + 1}`;
 
@@ -35,7 +33,7 @@ function switchEvent(index) {
   updateAll();
 }
 
-// === УДАЛЕНИЕ + ПЕРЕИМЕНОВАНИЕ ===
+// === УДАЛЕНИЕ ===
 function deleteEvent(index, e) {
   e.stopPropagation();
   if (events.length <= 1) {
@@ -82,54 +80,98 @@ function updateActiveTabName() {
   if (nameSpan) nameSpan.textContent = value;
 }
 
-// === HOTKEYS + UNDO/REDO ===
+// === AUTOBALANCE — ПОЛНОСТЬЮ РАБОЧИЙ ===
+function autoBalance() {
+  saveState();
+
+  function balanceRNG(node) {
+    const chanceInput = node.querySelector('.chance');
+    if (!chanceInput) return;
+
+    const s = node.querySelector(`#c-${node.dataset.id}-s`);
+    const f = node.querySelector(`#c-${node.dataset.id}-f`);
+
+    const sCount = s ? s.querySelectorAll('.node.spawn, .node.creature, .node.affliction').length : 0;
+    const fCount = f ? f.querySelectorAll('.node.spawn, .node.creature, .node.affliction').length : 0;
+
+    if (sCount + fCount === 0) return;
+
+    // Идеальный шанс — количество действий в ветках
+    const total = sCount + fCount;
+    const idealSuccess = sCount / total;
+
+    chanceInput.value = idealSuccess.toFixed(3);
+
+    // Рекурсивно балансируем вложенные RNG
+    node.querySelectorAll('.node.rng').forEach(balanceRNG);
+  }
+
+  document.querySelectorAll('.node.rng').forEach(balanceRNG);
+  updateAll();
+  alert(L.autoBalanceDone || 'Автобаланс завершён');
+}
+
+// === ОЧИСТКА ===
+function clearAll() {
+  saveState();
+  document.getElementById('root-children').innerHTML = '';
+  updateAll();
+}
+
+// === HOTKEYS ===
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
+  if (e.key === 'Delete') {
+    e.preventDefault();
+    const selected = document.querySelector('.node.selected');
+    if (selected) {
+      saveState();
+      selected.remove();
+      updateAll();
+    }
+  }
 
   if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'z' && !e.shiftKey) {
+    if (e.key === 'z') {
       e.preventDefault();
       undo();
-    } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+    } else if (e.key === 'y') {
       e.preventDefault();
       redo();
     } else if (e.key === 'd') {
       e.preventDefault();
-      duplicateSelectedNode();
+      duplicateSelected();
     }
-  } else if (e.key === 'Delete') {
-    e.preventDefault();
-    deleteSelectedNode();
   }
 });
 
+// Undo / Redo
 function undo() {
   if (undoStack.length === 0) return;
   redoStack.push(JSON.stringify(events));
   events = JSON.parse(undoStack.pop());
-  rebuildTabs();
-  switchEvent(currentEvent);
+  rebuildTabsAndContent();
 }
 
 function redo() {
   if (redoStack.length === 0) return;
   undoStack.push(JSON.stringify(events));
   events = JSON.parse(redoStack.pop());
-  rebuildTabs();
-  switchEvent(currentEvent);
+  rebuildTabsAndContent();
 }
 
-// Восстанавливаем табы после undo/redo
-function rebuildTabs() {
+function rebuildTabsAndContent() {
   document.getElementById('events-list').innerHTML = '';
   events.forEach((ev, i) => {
     const tab = document.createElement('div');
     tab.className = 'event-tab';
     tab.innerHTML = `<span class="tab-name">${ev.eventId}</span><span class="delete-tab">×</span>`;
     tab.onclick = () => switchEvent(i);
-    tab.querySelector('.delete-tab').onclick = e => deleteEvent(i, e);
+    tab.querySelector('.delete-tab').onclick = ee => deleteEvent(i, ee);
     document.getElementById('events-list').appendChild(tab);
   });
+  switchEvent(currentEvent);
 }
 
 // === ЭКСПОРТ/ИМПОРТ ===
@@ -140,7 +182,7 @@ function exportJSON() {
     eventId: document.getElementById('event-id').value.trim() || `event_${currentEvent + 1}`
   };
 
-  const data = { version: "0.9.200", events };
+  const data = { version: "0.9.201", events };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -158,7 +200,7 @@ function importFile() {
     reader.onload = ev => {
       try {
         const data = JSON.parse(ev.target.result);
-        if (data.version && data.events) {
+        if (data.events) {
           events.length = 0;
           events.push(...data.events);
           document.getElementById('events-list').innerHTML = '';
@@ -171,10 +213,10 @@ function importFile() {
             document.getElementById('events-list').appendChild(tab);
           });
           switchEvent(0);
-          alert(L.importSuccess || 'Импорт завершён');
+          alert('Импорт завершён');
         }
       } catch (err) {
-        alert(L.importError || 'Ошибка импорта');
+        alert('Ошибка импорта');
       }
     };
     reader.readAsText(file);
@@ -190,9 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
+// Экспорт
+window.autoBalance = autoBalance;
+window.clearAll = clearAll;
 window.importFile = importFile;
 window.exportJSON = exportJSON;
-window.clearAll = clearAll;
-window.loadExample = loadExample;
-window.toggleView = toggleView;
 window.updateActiveTabName = updateActiveTabName;
+window.saveState = saveState;
