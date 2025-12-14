@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.120</title>
+  <title>Barotrauma RNG Builder v0.9.200</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
@@ -22,7 +22,6 @@
     <button onclick="importFile()">Import</button>
     <button onclick="exportJSON()">Export</button>
 
-    <!-- НАСТРОЙКИ -->
     <div class="dropdown">
       <button>Settings</button>
       <div class="dropdown-content">
@@ -86,6 +85,8 @@
   <div class="action-left">
     <button onclick="addRNG('')">+ RNG</button>
     <button onclick="addSpawn('')">+ Item</button>
+    <button onclick="addCreature('')">+ Creature</button>
+    <button onclick="addAffliction('')">+ Affliction</button>
     <button onclick="clearAll()">Clear</button>
     <button onclick="autoBalance()">Auto Balance</button>
   </div>
@@ -93,6 +94,7 @@
     <button class="green" onclick="generateXML()">Generate XML</button>
     <button onclick="copyXML()">Copy XML</button>
     <button onclick="downloadXML()">Download XML</button>
+    <button onclick="importFromXML()">Import from XML</button>
   </div>
 </div>
 
