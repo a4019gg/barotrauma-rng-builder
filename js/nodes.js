@@ -1,14 +1,12 @@
-// js/nodes.js — v0.9.200 — РЕФАКТОРИНГ: КЛАСС, БЕЗОПАСНЫЙ DOM, КОЛБЭКИ
+// js/nodes.js — v0.9.300 — ПОДДЕРЖКА МОДЕЛИ ДАННЫХ, CREATEFROMMODEL, DRAG&DROP
 
-const NODES_VERSION = "v0.9.200";
+const NODES_VERSION = "v0.9.300";
 window.NODES_VERSION = NODES_VERSION;
 
 const GRID_SIZE = 30;
 
 class NodeFactory {
-  constructor(updateCallback, saveStateCallback) {
-    this.updateCallback = updateCallback;
-    this.saveStateCallback = saveStateCallback;
+  constructor() {
     this.idCounter = 0;
   }
 
@@ -16,62 +14,254 @@ class NodeFactory {
     return this.idCounter++;
   }
 
-  createRNG(chance = 0.5) {
+  // === СОЗДАНИЕ МОДЕЛИ УЗЛА ===
+  createModel(type, params = {}) {
     const id = this.generateId();
+    const base = {
+      id,
+      type,
+      params
+    };
+
+    if (type === 'rng') {
+      return {
+        ...base,
+        children: {
+          success: [],
+          failure: []
+        }
+      };
+    }
+
+    return base;
+  }
+
+  createModelRNG(chance = 0.5) {
+    return this.createModel('rng', { chance });
+  }
+
+  createModelSpawn(item = 'revolver') {
+    return this.createModel('spawn', { item });
+  }
+
+  createModelCreature(creature = 'crawler', count = 1, randomize = true, inside = true) {
+    return this.createModel('creature', { creature, count, randomize, inside });
+  }
+
+  createModelAffliction(affliction = 'bleeding', strength = 15, target = 'character') {
+    return this.createModel('affliction', { affliction, strength, target });
+  }
+
+  // === СОЗДАНИЕ DOM ИЗ МОДЕЛИ ===
+  createFromModel(model) {
     const node = document.createElement('div');
-    node.className = 'node rng draggable';
-    node.dataset.id = id;
-    node.dataset.type = 'rng';
+    node.className = 'node ' + model.type + ' draggable';
+    node.dataset.id = model.id;
+    node.dataset.type = model.type;
 
     const header = document.createElement('div');
     header.className = 'header-node';
 
     const title = document.createElement('span');
-    title.textContent = loc('rngAction', 'ГСЧ-событие');
+    title.textContent = this.getTitle(model);
 
-    const chanceInput = document.createElement('input');
-    chanceInput.type = 'number';
-    chanceInput.step = '0.001';
-    chanceInput.min = '0';
-    chanceInput.max = '1';
-    chanceInput.value = chance;
-    chanceInput.className = 'chance';
-    chanceInput.addEventListener('change', () => this.updateCallback());
+    header.appendChild(title);
 
+    // Параметры в зависимости от типа
+    this.appendParams(header, model);
+
+    // Кнопка удаления
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'danger small';
     deleteBtn.textContent = '×';
     deleteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.saveStateCallback();
-      node.remove();
-      this.updateCallback();
+      // Удаление через EditorState (глобально)
+      window.editorState.removeNodeById(model.id);
     });
+    header.appendChild(deleteBtn);
 
+    // Вероятности
     const prob = document.createElement('span');
     prob.className = 'prob';
-    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">0.0%</small>';
+    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
+    header.appendChild(prob);
 
     const finalChance = document.createElement('span');
     finalChance.className = 'final-chance';
     finalChance.style.marginLeft = '10px';
     finalChance.style.color = '#888';
-
-    header.appendChild(title);
-    header.appendChild(chanceInput);
-    header.appendChild(deleteBtn);
-    header.appendChild(prob);
     header.appendChild(finalChance);
 
-    const successSection = this.createBranch(id, '-s', 'success-label', loc('successLabel', 'Успех'));
-    const failureSection = this.createBranch(id, '-f', 'failure-label', loc('failureLabel', 'Провал'));
-
     node.appendChild(header);
-    node.appendChild(successSection);
-    node.appendChild(failureSection);
 
-    this.attachCommonBehaviors(node);
+    // Для RNG — ветки
+    if (model.type === 'rng' && model.children) {
+      const successSection = this.createBranch(model.id, '-s', 'success-label', loc('successLabel', 'Успех'));
+      const failureSection = this.createBranch(model.id, '-f', 'failure-label', 'Провал'));
+
+      // Рендер дочерних узлов
+      const successContainer = successSection.querySelector(`#c-${model.id}-s`);
+      const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
+
+      model.children.success.forEach(childModel => {
+        successContainer.appendChild(this.createFromModel(childModel));
+      });
+      model.children.failure.forEach(childModel => {
+        failureContainer.appendChild(this.createFromModel(childModel));
+      });
+
+      node.appendChild(successSection);
+      node.appendChild(failureSection);
+    }
+
+    this.attachCommonBehaviors(node, model);
     return node;
+  }
+
+  getTitle(model) {
+    switch (model.type) {
+      case 'rng': return loc('rngAction', 'ГСЧ-событие');
+      case 'spawn': return loc('spawnItem', 'Спавн предмета');
+      case 'creature': return loc('spawnCreature', 'Спавн существа');
+      case 'affliction': return loc('applyAffliction', 'Применить аффикшен');
+      default: return 'Unknown';
+    }
+  }
+
+  appendParams(header, model) {
+    const params = model.params || {};
+
+    switch (model.type) {
+      case 'rng':
+        const chanceInput = document.createElement('input');
+        chanceInput.type = 'number';
+        chanceInput.step = '0.001';
+        chanceInput.min = '0';
+        chanceInput.max = '1';
+        chanceInput.value = params.chance ?? 0.5;
+        chanceInput.className = 'chance';
+        chanceInput.addEventListener('change', () => {
+          model.params.chance = parseFloat(chanceInput.value);
+          updateAll();
+        });
+        header.appendChild(chanceInput);
+        break;
+
+      case 'spawn':
+        const itemInput = document.createElement('input');
+        itemInput.type = 'text';
+        itemInput.className = 'item-field';
+        itemInput.list = 'item-datalist';
+        itemInput.value = params.item || 'revolver';
+        itemInput.placeholder = 'revolver';
+        itemInput.addEventListener('change', () => {
+          model.params.item = itemInput.value.trim();
+          updateAll();
+        });
+        header.appendChild(itemInput);
+        break;
+
+      case 'creature':
+        const creatureInput = document.createElement('input');
+        creatureInput.type = 'text';
+        creatureInput.className = 'creature-field';
+        creatureInput.list = 'item-datalist';
+        creatureInput.value = params.creature || 'crawler';
+        creatureInput.placeholder = 'crawler';
+        creatureInput.addEventListener('change', () => {
+          model.params.creature = creatureInput.value.trim();
+          updateAll();
+        });
+        header.appendChild(creatureInput);
+
+        const countInput = document.createElement('input');
+        countInput.type = 'number';
+        countInput.min = '1';
+        countInput.value = params.count ?? 1;
+        countInput.className = 'count-field';
+        countInput.style.width = '60px';
+        countInput.addEventListener('change', () => {
+          model.params.count = parseInt(countInput.value);
+          updateAll();
+        });
+        header.appendChild(countInput);
+
+        const randomizeLabel = document.createElement('label');
+        const randomizeCheckbox = document.createElement('input');
+        randomizeCheckbox.type = 'checkbox';
+        randomizeCheckbox.className = 'randomize-field';
+        randomizeCheckbox.checked = params.randomize ?? true;
+        randomizeCheckbox.addEventListener('change', () => {
+          model.params.randomize = randomizeCheckbox.checked;
+          updateAll();
+        });
+        randomizeLabel.appendChild(randomizeCheckbox);
+        randomizeLabel.appendChild(document.createTextNode(loc('randomizePosition', 'Случайная позиция')));
+        header.appendChild(randomizeLabel);
+
+        const locationSelect = document.createElement('select');
+        locationSelect.className = 'location-field';
+        const insideOption = document.createElement('option');
+        insideOption.value = 'inside';
+        insideOption.textContent = loc('insideSub', 'Внутри');
+        const outsideOption = document.createElement('option');
+        outsideOption.value = 'outside';
+        outsideOption.textContent = loc('outsideSub', 'Снаружи');
+        locationSelect.appendChild(insideOption);
+        locationSelect.appendChild(outsideOption);
+        locationSelect.value = params.inside ?? true ? 'inside' : 'outside';
+        locationSelect.addEventListener('change', () => {
+          model.params.inside = locationSelect.value === 'inside';
+          updateAll();
+        });
+        header.appendChild(locationSelect);
+        break;
+
+      case 'affliction':
+        const affInput = document.createElement('input');
+        affInput.type = 'text';
+        affInput.className = 'aff-field';
+        affInput.value = params.affliction || 'bleeding';
+        affInput.placeholder = 'bleeding';
+        affInput.addEventListener('change', () => {
+          model.params.affliction = affInput.value.trim();
+          updateAll();
+        });
+        header.appendChild(affInput);
+
+        const strengthInput = document.createElement('input');
+        strengthInput.type = 'number';
+        strengthInput.value = params.strength ?? 15;
+        strengthInput.className = 'strength-field';
+        strengthInput.style.width = '60px';
+        strengthInput.addEventListener('change', () => {
+          model.params.strength = parseFloat(strengthInput.value);
+          updateAll();
+        });
+        header.appendChild(strengthInput);
+
+        const targetSelect = document.createElement('select');
+        targetSelect.className = 'target-field';
+        const targets = [
+          { value: 'character', text: loc('targetCharacter', 'Персонаж') },
+          { value: 'randomcrew', text: loc('targetRandomCrew', 'Случайный член экипажа') },
+          { value: 'allcrew', text: loc('targetAllCrew', 'Весь экипаж') }
+        ];
+        targets.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.value;
+          opt.textContent = t.text;
+          if (t.value === (params.target || 'character')) opt.selected = true;
+          targetSelect.appendChild(opt);
+        });
+        targetSelect.addEventListener('change', () => {
+          model.params.target = targetSelect.value;
+          updateAll();
+        });
+        header.appendChild(targetSelect);
+        break;
+    }
   }
 
   createBranch(id, suffix, labelClass, labelText) {
@@ -86,24 +276,28 @@ class NodeFactory {
     buttons.style.cssText = 'margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;';
 
     const actions = [
-      { text: loc('addRNG', '+ ГСЧ'), action: 'addRNG' },
-      { text: loc('addItem', '+ Предмет'), action: 'addSpawn' },
-      { text: loc('addCreature', '+ Существо'), action: 'addCreature' },
-      { text: loc('addAffliction', '+ Аффикшен'), action: 'addAffliction' }
+      { text: loc('addRNG', '+ ГСЧ'), type: 'rng' },
+      { text: loc('addItem', '+ Предмет'), type: 'spawn' },
+      { text: loc('addCreature', '+ Существо'), type: 'creature' },
+      { text: loc('addAffliction', '+ Аффикшен'), type: 'affliction' }
     ];
 
     actions.forEach(a => {
       const btn = document.createElement('button');
       btn.className = 'small';
       btn.textContent = a.text;
-      btn.dataset.action = a.action;
-      btn.dataset.target = id + suffix;
-      btn.addEventListener('click', () => {
-        this.saveStateCallback();
-        // Вызов глобальной функции добавления (временный мостик)
-        const func = window[a.action];
-        if (typeof func === 'function') func(id + suffix);
-        this.updateCallback();
+      btn.dataset.branch = suffix; // -s или -f
+      btn.dataset.parentId = id;
+      btn.dataset.nodeType = a.type;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const parentModel = window.editorState.findNodeById(id);
+        if (parentModel && parentModel.type === 'rng') {
+          const branch = suffix === '-s' ? 'success' : 'failure';
+          const newModel = this['createModel' + a.type.charAt(0).toUpperCase() + a.type.slice(1)]();
+          parentModel.children[branch].push(newModel);
+          window.editorState.renderCurrentEvent();
+        }
       });
       buttons.appendChild(btn);
     });
@@ -118,210 +312,12 @@ class NodeFactory {
     return section;
   }
 
-  createSpawn(item = 'revolver') {
-    const node = document.createElement('div');
-    node.className = 'node spawn draggable';
-    node.dataset.type = 'spawn';
-
-    const header = document.createElement('div');
-    header.className = 'header-node';
-
-    const title = document.createElement('span');
-    title.textContent = loc('spawnItem', 'Спавн предмета');
-
-    const itemInput = document.createElement('input');
-    itemInput.type = 'text';
-    itemInput.className = 'item-field';
-    itemInput.list = 'item-datalist';
-    itemInput.value = item;
-    itemInput.placeholder = 'revolver';
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'danger small';
-    deleteBtn.textContent = '×';
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.saveStateCallback();
-      node.remove();
-      this.updateCallback();
-    });
-
-    const prob = document.createElement('span');
-    prob.className = 'prob';
-    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
-
-    const finalChance = document.createElement('span');
-    finalChance.className = 'final-chance';
-    finalChance.style.marginLeft = '10px';
-    finalChance.style.color = '#888';
-
-    header.appendChild(title);
-    header.appendChild(itemInput);
-    header.appendChild(deleteBtn);
-    header.appendChild(prob);
-    header.appendChild(finalChance);
-
-    node.appendChild(header);
-    this.attachCommonBehaviors(node);
-    return node;
-  }
-
-  createCreature(creature = 'crawler', count = 1, randomize = true, inside = true) {
-    const node = document.createElement('div');
-    node.className = 'node creature draggable';
-    node.dataset.type = 'creature';
-
-    const header = document.createElement('div');
-    header.className = 'header-node';
-
-    const title = document.createElement('span');
-    title.textContent = loc('spawnCreature', 'Спавн существа');
-
-    const creatureInput = document.createElement('input');
-    creatureInput.type = 'text';
-    creatureInput.className = 'creature-field';
-    creatureInput.list = 'item-datalist';
-    creatureInput.value = creature;
-    creatureInput.placeholder = 'crawler';
-
-    const countInput = document.createElement('input');
-    countInput.type = 'number';
-    countInput.min = '1';
-    countInput.value = count;
-    countInput.className = 'count-field';
-    countInput.style.width = '60px';
-
-    const randomizeLabel = document.createElement('label');
-    const randomizeCheckbox = document.createElement('input');
-    randomizeCheckbox.type = 'checkbox';
-    randomizeCheckbox.className = 'randomize-field';
-    randomizeCheckbox.checked = randomize;
-    randomizeLabel.appendChild(randomizeCheckbox);
-    randomizeLabel.appendChild(document.createTextNode(loc('randomizePosition', 'Случайная позиция')));
-
-    const locationSelect = document.createElement('select');
-    locationSelect.className = 'location-field';
-    const insideOption = document.createElement('option');
-    insideOption.value = 'inside';
-    insideOption.textContent = loc('insideSub', 'Внутри');
-    const outsideOption = document.createElement('option');
-    outsideOption.value = 'outside';
-    outsideOption.textContent = loc('outsideSub', 'Снаружи');
-    if (inside) insideOption.selected = true;
-    else outsideOption.selected = true;
-    locationSelect.appendChild(insideOption);
-    locationSelect.appendChild(outsideOption);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'danger small';
-    deleteBtn.textContent = '×';
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.saveStateCallback();
-      node.remove();
-      this.updateCallback();
-    });
-
-    const prob = document.createElement('span');
-    prob.className = 'prob';
-    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
-
-    const finalChance = document.createElement('span');
-    finalChance.className = 'final-chance';
-    finalChance.style.marginLeft = '10px';
-    finalChance.style.color = '#888';
-
-    header.appendChild(title);
-    header.appendChild(creatureInput);
-    header.appendChild(countInput);
-    header.appendChild(randomizeLabel);
-    header.appendChild(locationSelect);
-    header.appendChild(deleteBtn);
-    header.appendChild(prob);
-    header.appendChild(finalChance);
-
-    node.appendChild(header);
-    this.attachCommonBehaviors(node);
-    return node;
-  }
-
-  createAffliction(aff = 'bleeding', strength = 15, target = 'character') {
-    const node = document.createElement('div');
-    node.className = 'node affliction draggable';
-    node.dataset.type = 'affliction';
-
-    const header = document.createElement('div');
-    header.className = 'header-node';
-
-    const title = document.createElement('span');
-    title.textContent = loc('applyAffliction', 'Применить аффикшен');
-
-    const affInput = document.createElement('input');
-    affInput.type = 'text';
-    affInput.className = 'aff-field';
-    affInput.value = aff;
-    affInput.placeholder = 'bleeding';
-
-    const strengthInput = document.createElement('input');
-    strengthInput.type = 'number';
-    strengthInput.value = strength;
-    strengthInput.className = 'strength-field';
-    strengthInput.style.width = '60px';
-
-    const targetSelect = document.createElement('select');
-    targetSelect.className = 'target-field';
-    const options = [
-      { value: 'character', text: loc('targetCharacter', 'Персонаж') },
-      { value: 'randomcrew', text: loc('targetRandomCrew', 'Случайный член экипажа') },
-      { value: 'allcrew', text: loc('targetAllCrew', 'Весь экипаж') }
-    ];
-    options.forEach(o => {
-      const opt = document.createElement('option');
-      opt.value = o.value;
-      opt.textContent = o.text;
-      if (o.value === target) opt.selected = true;
-      targetSelect.appendChild(opt);
-    });
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'danger small';
-    deleteBtn.textContent = '×';
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.saveStateCallback();
-      node.remove();
-      this.updateCallback();
-    });
-
-    const prob = document.createElement('span');
-    prob.className = 'prob';
-    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
-
-    const finalChance = document.createElement('span');
-    finalChance.className = 'final-chance';
-    finalChance.style.marginLeft = '10px';
-    finalChance.style.color = '#888';
-
-    header.appendChild(title);
-    header.appendChild(affInput);
-    header.appendChild(strengthInput);
-    header.appendChild(targetSelect);
-    header.appendChild(deleteBtn);
-    header.appendChild(prob);
-    header.appendChild(finalChance);
-
-    node.appendChild(header);
-    this.attachCommonBehaviors(node);
-    return node;
-  }
-
-  attachCommonBehaviors(node) {
+  attachCommonBehaviors(node, model) {
     const header = node.querySelector('.header-node');
     if (header) {
       header.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         node.classList.toggle('collapsed');
-        this.updateCallback();
       });
       this.makeDraggable(node, header);
     }
@@ -358,49 +354,37 @@ class NodeFactory {
     const stopDrag = () => {
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', stopDrag);
-      this.updateCallback();
+      updateAll();
     };
 
     header.addEventListener('mousedown', startDrag);
   }
 }
 
-// Глобальный экземпляр (временный мостик к старой архитектуре)
-const nodeFactory = new NodeFactory(updateAll, saveState);
+// Глобальный экземпляр
+const nodeFactory = new NodeFactory();
 
-// Глобальные функции добавления (для совместимости)
-window.addRNG = (path) => {
-  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
-  if (container) {
-    saveState();
-    container.appendChild(nodeFactory.createRNG());
-    updateAll();
-  }
+// Глобальные функции добавления корневых узлов
+window.addRNG = () => {
+  const newModel = nodeFactory.createModelRNG();
+  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
+  window.editorState.renderCurrentEvent();
 };
 
-window.addSpawn = (path) => {
-  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
-  if (container) {
-    saveState();
-    container.appendChild(nodeFactory.createSpawn());
-    updateAll();
-  }
+window.addSpawn = () => {
+  const newModel = nodeFactory.createModelSpawn();
+  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
+  window.editorState.renderCurrentEvent();
 };
 
-window.addCreature = (path) => {
-  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
-  if (container) {
-    saveState();
-    container.appendChild(nodeFactory.createCreature());
-    updateAll();
-  }
+window.addCreature = () => {
+  const newModel = nodeFactory.createModelCreature();
+  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
+  window.editorState.renderCurrentEvent();
 };
 
-window.addAffliction = (path) => {
-  const container = path ? document.getElementById('c-' + path) : document.getElementById('root-children');
-  if (container) {
-    saveState();
-    container.appendChild(nodeFactory.createAffliction());
-    updateAll();
-  }
+window.addAffliction = () => {
+  const newModel = nodeFactory.createModelAffliction();
+  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
+  window.editorState.renderCurrentEvent();
 };
