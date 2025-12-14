@@ -1,10 +1,17 @@
-// js/utils.js — v0.9.200 — ПОЛНЫЙ, ЛОКАЛИЗАЦИЯ, ТЕМЫ, НАСТРОЙКИ
+// js/utils.js — v0.9.301 — ИСПРАВЛЕНО root-label, ПОЛНАЯ ЛОКАЛИЗАЦИЯ
 
-const UTILS_VERSION = "v0.9.200";
+const UTILS_VERSION = "v0.9.301";
 window.UTILS_VERSION = UTILS_VERSION;
 
 let currentLang = 'en';
 const L = {};
+
+// Безопасная локализация
+function loc(key, fallback = '') {
+  if (L[key]) return L[key];
+  console.warn(`MISSING LOC KEY: ${key}`);
+  return fallback || `MISSING LOC KEY: ${key}`;
+}
 
 // === ТЕМЫ ===
 function setTheme(theme) {
@@ -74,7 +81,9 @@ function toggleCheckDuplicateIDs(on) {
 function applyLocalization() {
   document.querySelectorAll('[data-l10n]').forEach(el => {
     const key = el.dataset.l10n;
-    if (L[key]) el.textContent = L[key];
+    if (L[key]) {
+      el.textContent = L[key];
+    }
   });
 }
 
@@ -84,34 +93,19 @@ function setLang(lang) {
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
   Object.assign(L, dict);
 
-  // Обновляем ключевые элементы
-  document.getElementById('root-label').textContent = L.rootLabel;
-  document.querySelectorAll('.success-label').forEach(el => el.textContent = L.successLabel);
-  document.querySelectorAll('.failure-label').forEach(el => el.textContent = L.failureLabel);
+  // Обновляем только элементы с data-l10n
+  applyLocalization();
 
-  // Кнопки
-  document.querySelector('[onclick="generateXML()"]').textContent = L.generateXML;
-  document.querySelector('[onclick="copyXML()"]').textContent = L.copyXML;
-  document.querySelector('[onclick="downloadXML()"]').textContent = L.downloadXML;
-  document.querySelector('[onclick="exportJSON()"]').textContent = L.export;
-  document.querySelector('[onclick="importFile()"]').textContent = L.import;
-  document.querySelector('[onclick="openDB()"]').textContent = L.dataBase;
-  document.querySelector('[onclick="importFromXML()"]').textContent = L.importXML;
-
-  // Кнопки действий
-  document.querySelectorAll('button[onclick^="addRNG"]').forEach(btn => btn.textContent = L.addRNG);
-  document.querySelectorAll('button[onclick^="addSpawn"]').forEach(btn => btn.textContent = L.addItem);
-  document.querySelectorAll('button[onclick^="addCreature"]').forEach(btn => btn.textContent = L.addCreature);
-  document.querySelectorAll('button[onclick^="addAffliction"]').forEach(btn => btn.textContent = L.addAffliction);
-
-  // Переключение вида
-  const isTree = document.getElementById('tree-container').style.display === 'block';
-  document.getElementById('view-btn').textContent = isTree ? L.classicView : L.treeView;
+  // Обновляем текст кнопки переключения вида (Tree View / Режим древа)
+  const viewBtn = document.getElementById('view-btn');
+  if (viewBtn) {
+    const isTree = document.getElementById('tree-container').style.display === 'block';
+    viewBtn.textContent = isTree ? loc('classicView', 'Классический') : loc('treeView', 'Режим древа');
+  }
 
   const sel = document.getElementById('lang-select');
   if (sel) sel.value = lang;
 
-  applyLocalization();
   updateAll();
 }
 
@@ -136,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setLang(localStorage.getItem('lang') || 'en');
   setUIScale(localStorage.getItem('uiScale') || '100');
   setNodeDensity(localStorage.getItem('nodeDensity') || 'normal');
-  toggleShadows(localStorage.getItem('nodeShadows') === 'true');
+  toggleShadows(localStorage.getItem('nodeShadows') !== 'false');
   toggleGrid(localStorage.getItem('bgGrid') !== 'false');
   toggleSnap(localStorage.getItem('snapToGrid') === 'true');
 
@@ -144,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showScriptVersions();
 });
 
-// Экспорт функций
+// Экспорт
 window.setTheme = setTheme;
 window.setLang = setLang;
 window.setUIScale = setUIScale;
@@ -155,3 +149,4 @@ window.toggleSnap = toggleSnap;
 window.setXMLFormat = setXMLFormat;
 window.toggleValidation = toggleValidation;
 window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
+window.loc = loc;
