@@ -36,6 +36,11 @@ const LANG_RU = {
   targetRandomCrew: "Цель: Случайный член экипажа",
   targetAllCrew: "Цель: Весь экипаж",
 
+  // Вкладки базы
+  tabItems: "Предметы",
+  tabCreatures: "Существа",
+  tabAfflictions: "Аффикшены",
+
   // Настройки
   settingsTheme: "Тема",
   settingsLanguage: "Язык",
@@ -68,5 +73,8 @@ const LANG_RU = {
   xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.200",
   importXML: "Импорт из XML",
   nothingFound: "Ничего не найдено",
-  finalChance: "Итоговый шанс"
+  finalChance: "Итоговый шанс",
+  presetLoaded: "Пресет загружен",
+  presetError: "Ошибка загрузки пресета",
+  dbError: "База данных не загружена (проверьте файлы data/*.json)"
 };
