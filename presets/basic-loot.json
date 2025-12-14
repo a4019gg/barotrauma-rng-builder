@@ -1,0 +1,32 @@
+{
+  "key": "basicLoot",
+  "author": "Editor Defaults",
+  "version": "1.0",
+  "model": [
+    {
+      "id": 1,
+      "type": "spawn",
+      "params": { "item": "revolver" }
+    },
+    {
+      "id": 2,
+      "type": "spawn",
+      "params": { "item": "revolverrounds" }
+    },
+    {
+      "id": 3,
+      "type": "spawn",
+      "params": { "item": "divingknife" }
+    },
+    {
+      "id": 4,
+      "type": "spawn",
+      "params": { "item": "toolbox" }
+    },
+    {
+      "id": 5,
+      "type": "spawn",
+      "params": { "item": "oxygenitetank" }
+    }
+  ]
+}
