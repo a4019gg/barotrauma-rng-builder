@@ -86,5 +86,6 @@ const LANG_RU = {
   copyXML: "XML скопирован в буфер обмена",
 
   // Event ID
-  eventIdLabel: "Event ID:"
+  eventIdLabel: "Event ID:",
+  importXMLHint: "Вставьте XML в поле ниже и нажмите Импорт из XML"
 };
