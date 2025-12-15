@@ -1,11 +1,15 @@
-// js/UIController.js — v0.9.401 — ДЕЛЕГИРОВАНИЕ СОБЫТИЙ И ЛОГИКА UI
+// js/UIController.js — v0.9.402 — ФИКС ДВОЙНЫХ ДЕЙСТВИЙ И МОДАЛКИ
 
 class UIController {
   constructor() {
+    this.isInitialized = false;
     this.initEventDelegation();
   }
 
   initEventDelegation() {
+    if (this.isInitialized) return; // Защита от двойной инициализации
+    this.isInitialized = true;
+
     document.addEventListener('click', this.handleClick.bind(this));
     document.addEventListener('change', this.handleChange.bind(this));
   }
@@ -14,11 +18,13 @@ class UIController {
     const target = e.target.closest('[data-action]');
     if (!target) return;
 
+    e.stopPropagation(); // Предотвращаем всплытие
+
     const action = target.dataset.action;
     const type = target.dataset.type || target.dataset.nodeType;
-    const parentId = target.dataset.parentId ? parseInt(target.dataset.parentId) : null;
+    const parentId = target.dataset.parentId ? parseInt(target.dataset.parentId, 10) : null;
     const branch = target.dataset.branch;
-    const id = target.dataset.id ? parseInt(target.dataset.id) : null;
+    const id = target.dataset.id ? parseInt(target.dataset.id, 10) : null;
 
     switch (action) {
       case 'toggleView':
@@ -26,11 +32,13 @@ class UIController {
         break;
 
       case 'openDB':
+        if (document.querySelector('.db-modal-overlay')) return; // Уже открыта
         dbManager.openDB();
         break;
 
       case 'loadExample':
-        dbManager.openDB(); // временно, пока пресеты в DB
+        if (document.querySelector('.db-modal-overlay')) return;
+        dbManager.openDB(); // Пока пресеты в DB
         break;
 
       case 'importFile':
@@ -42,16 +50,16 @@ class UIController {
         break;
 
       case 'addEvent':
-        window.editorState.addEvent();
+        editorState.addEvent();
         break;
 
       case 'addNode':
         if (type) {
           const addMap = {
-            rng: window.addRNG,
-            spawn: window.addSpawn,
-            creature: window.addCreature,
-            affliction: window.addAffliction
+            rng: addRNG,
+            spawn: addSpawn,
+            creature: addCreature,
+            affliction: addAffliction
           };
           const func = addMap[type];
           if (func) func();
@@ -60,22 +68,22 @@ class UIController {
 
       case 'addNodeToBranch':
         if (parentId !== null && branch && type) {
-          window.editorState.addNodeToBranch(parentId, branch, type);
+          editorState.addNodeToBranch(parentId, branch, type);
         }
         break;
 
       case 'removeNode':
         if (id !== null) {
-          window.editorState.removeNodeById(id);
+          editorState.removeNodeById(id);
         }
         break;
 
       case 'clearAll':
-        window.editorState.clearAll();
+        editorState.clearAll();
         break;
 
       case 'autoBalance':
-        window.editorState.autoBalance();
+        editorState.autoBalance();
         break;
 
       case 'generateXML':
@@ -138,8 +146,7 @@ class UIController {
         toggleCheckDuplicateIDs(value);
         break;
       case 'updateParam':
-        // Временная заглушка — в будущем полноценный updateParam
-        updateAll();
+        updateAll(); // Временно
         break;
       default:
         console.warn(`Unknown change action: ${action}`);
@@ -159,6 +166,7 @@ class UIController {
       tree.style.display = 'block';
       classic.style.display = 'none';
       btn.textContent = loc('classicView');
+      if (treeView && treeView.render) treeView.render();
     }
   }
 
@@ -184,7 +192,7 @@ class UIController {
   }
 }
 
-// Инициализация контроллера
-document.addEventListener('DOMContentLoaded', () => {
-  new UIController();
-});
+// Инициализация (один раз)
+if (!window.uiController) {
+  window.uiController = new UIController();
+}
