@@ -1,6 +1,6 @@
-// js/db.js — v0.9.401 — БАЗА ДАННЫХ С КЭШИРОВАНИЕМ ИКОНОК И ПОЛНОЙ ЛОКАЛИЗАЦИЕЙ
+// js/db.js — v0.9.402 — БАЗА ДАННЫХ (ФИКСЫ БАГОВ)
 
-const DB_VERSION = "v0.9.401";
+const DB_VERSION = "v0.9.402";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,7 +8,8 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map(); // Кэш иконок: ключ — строка с данными иконки
+    this.iconCache = new Map(); // Кэш иконок
+    this.isModalOpen = false; // Защита от двойного открытия
     this.loadData();
   }
 
@@ -30,6 +31,9 @@ class DatabaseManager {
   }
 
   openDB() {
+    if (this.isModalOpen) return; // Уже открыта — не открываем вторую
+    this.isModalOpen = true;
+
     const overlay = document.createElement('div');
     overlay.className = 'db-modal-overlay';
 
@@ -55,7 +59,10 @@ class DatabaseManager {
     document.body.appendChild(overlay);
 
     overlay.addEventListener('click', e => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) {
+        overlay.remove();
+        this.isModalOpen = false;
+      }
     });
 
     this.renderGrid('afflictions');
@@ -122,12 +129,12 @@ class DatabaseManager {
     top.style.gap = '12px';
     top.style.marginBottom = '8px';
 
-    const icon = this.createIcon(entry.icon);
+    const icon = this.createIcon(entry.icon || {});
     top.appendChild(icon);
 
-    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier;
+    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
     const name = document.createElement('div');
-    name.textContent = `${displayName} (${entry.identifier})`;
+    name.textContent = `${displayName} (${entry.identifier || 'unknown'})`;
     name.style.fontWeight = 'bold';
     name.style.color = '#61afef';
     top.appendChild(name);
@@ -141,16 +148,18 @@ class DatabaseManager {
     badges.style.flexWrap = 'wrap';
     badges.style.marginBottom = '8px';
 
+    // Тип
     const typeBadge = document.createElement('span');
-    typeBadge.textContent = `[${entry.type}]`;
+    typeBadge.textContent = `[${entry.type || 'unknown'}]`;
     typeBadge.style.padding = '2px 8px';
     typeBadge.style.background = '#444';
     typeBadge.style.borderRadius = '4px';
     typeBadge.style.fontSize = '12px';
     badges.appendChild(typeBadge);
 
+    // Макс. сила
     const maxBadge = document.createElement('span');
-    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength}]`;
+    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
     maxBadge.style.padding = '2px 8px';
     maxBadge.style.background = '#555';
     maxBadge.style.borderRadius = '4px';
@@ -203,11 +212,11 @@ class DatabaseManager {
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
-    // Детали с локализацией
+    // Детали
     const details = [
-      { key: 'dbDetailID', value: entry.identifier },
-      { key: 'dbDetailType', value: entry.type },
-      { key: 'dbDetailMaxStrength', value: entry.maxstrength },
+      { key: 'dbDetailID', value: entry.identifier || '—' },
+      { key: 'dbDetailType', value: entry.type || '—' },
+      { key: 'dbDetailMaxStrength', value: entry.maxstrength || '—' },
       { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
       { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
     ];
@@ -222,7 +231,7 @@ class DatabaseManager {
       card.appendChild(line);
     });
 
-    // Пустое пространство в конце
+    // Пустое пространство
     const spacer = document.createElement('div');
     spacer.style.height = '8px';
     card.appendChild(spacer);
@@ -231,7 +240,7 @@ class DatabaseManager {
   }
 
   createIcon(iconInfo) {
-    const cacheKey = `${iconInfo.texture}|${iconInfo.sourcerect}|${iconInfo.color_theme_key}`;
+    const cacheKey = `${iconInfo.texture || 'none'}|${iconInfo.sourcerect || 'none'}|${iconInfo.color_theme_key || 'none'}`;
     if (this.iconCache.has(cacheKey)) {
       return this.iconCache.get(cacheKey).cloneNode(true);
     }
@@ -245,16 +254,16 @@ class DatabaseManager {
     // Прозрачный фон
     ctx.clearRect(0, 0, 48, 48);
 
-    // Заглушка — белый силуэт (в будущем — реальное изображение из атласа)
+    // Заглушка — белый силуэт
     ctx.fillStyle = 'white';
     ctx.fillRect(8, 8, 32, 32);
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 4;
     ctx.strokeRect(8, 8, 32, 32);
 
-    // Применение цвета по color_theme_key
+    // Цвет из темы
     const rgbVar = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${iconInfo.color_theme_key}-rgb`).trim();
+      .getPropertyValue(`--${iconInfo.color_theme_key || 'icon-status-gray'}-rgb`).trim();
 
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
@@ -263,14 +272,7 @@ class DatabaseManager {
       ctx.fillRect(0, 0, 48, 48);
     }
 
-    // Обводка закомментирована
-    /*
-    ctx.strokeStyle = '#61afef';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(2, 2, 44, 44);
-    */
-
-    // Кэшируем оригинал
+    // Кэшируем
     this.iconCache.set(cacheKey, canvas);
 
     return canvas.cloneNode(true);
