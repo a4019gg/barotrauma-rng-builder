@@ -1,4 +1,4 @@
-// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИКС addNodeToBranch)
+// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИКСЫ БАГОВ)
 
 const MAIN_VERSION = "v0.9.403";
 window.MAIN_VERSION = MAIN_VERSION;
@@ -104,6 +104,7 @@ class EditorState {
         container.appendChild(nodeElement);
       }
     });
+    // updateAll() убран отсюда — вызывается только из действий (фикс двойного вызова)
   }
 
   rebuildTabs() {
@@ -150,6 +151,7 @@ class EditorState {
     const removed = this._removeNodeRecursive(id, this.events[this.currentEventIndex].model);
     if (removed) {
       this.renderCurrentEvent();
+      updateAll();
     }
     return removed;
   }
@@ -177,7 +179,6 @@ class EditorState {
       return false;
     }
 
-    // ФИКС: правильный вызов методов экземпляра nodeFactory
     let newModel;
     switch (type) {
       case 'rng':
@@ -199,6 +200,7 @@ class EditorState {
 
     parent.children[branch].push(newModel);
     this.renderCurrentEvent();
+    updateAll();
     return true;
   }
 
@@ -224,6 +226,7 @@ class EditorState {
 
     balance(this.events[this.currentEventIndex].model);
     this.renderCurrentEvent();
+    updateAll();
     alert(loc('autoBalanceDone', 'Автобаланс завершён'));
   }
 
@@ -231,6 +234,7 @@ class EditorState {
     this.saveState();
     this.events[this.currentEventIndex].model = [];
     this.renderCurrentEvent();
+    updateAll();
   }
 
   exportData() {
