@@ -10,7 +10,8 @@ const LANG_RU = {
 
   // Buttons
   generateXML: "Сгенерировать XML",
-  copyXML: "Копировать XML",
+copyXMLButton: "Копировать XML",
+copyXML: "XML скопирован в буфер обмена",
   downloadXML: "Скачать XML",
   export: "Экспорт",
   import: "Импорт",
@@ -84,7 +85,7 @@ const LANG_RU = {
   presetError: "Ошибка загрузки пресета",
   dbError: "База данных не загружена (проверьте файлы data/*.json)",
   autoBalanceDone: "Автобаланс завершён",
-  copyXML: "XML скопирован в буфер обмена",
+
 
   // DB details
   dbDetailID: "ID",
