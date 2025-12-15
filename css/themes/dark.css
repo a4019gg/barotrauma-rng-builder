@@ -1,4 +1,4 @@
-/* css/themes/dark.css — v0.9.301 — ОСНОВНАЯ ТЁМНАЯ ТЕМА */
+/* css/themes/dark.css — v0.9.401 — ТЁМНАЯ ТЕМА */
 
 :root {
   --bg: #1e1e1e;
@@ -13,7 +13,7 @@
   --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
   --shadow-high: 0 8px 24px rgba(0,0,0,0.4);
 
-  /* Иконки аффикшенов — цвета по умолчанию (тёмная тема) */
+  /* Цвета иконок аффикшенов (точно как в ванильной игре) */
   --icon-damage-red-rgb: 195, 60, 60;
   --icon-buff-green-rgb: 10, 193, 114;
   --icon-status-orange-rgb: 195, 136, 60;
