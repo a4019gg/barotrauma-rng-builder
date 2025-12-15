@@ -1,4 +1,4 @@
-// js/nodes.js — v0.9.301 — ПОДДЕРЖКА МОДЕЛИ ДАННЫХ, ИСПРАВЛЕН СИНТАКСИС
+// js/nodes.js — v0.9.301 — ПОЛНАЯ ПОДДЕРЖКА МОДЕЛИ ДАННЫХ
 
 const NODES_VERSION = "v0.9.301";
 window.NODES_VERSION = NODES_VERSION;
@@ -67,7 +67,6 @@ class NodeFactory {
 
     header.appendChild(title);
 
-    // Параметры
     this.appendParams(header, model);
 
     // Кнопка удаления
