@@ -1,166 +1,221 @@
-// js/tree.js — v0.9.300 — РЕНДЕР ИЗ МОДЕЛИ ДАННЫХ, ЦВЕТОВЫЕ ВЕТКИ, DEBOUNCE
+// js/tree.js — v0.9.401 — TREE VIEW НА D3.JS
 
-const TREE_VERSION = "v0.9.300";
+const TREE_VERSION = "v0.9.401";
 window.TREE_VERSION = TREE_VERSION;
 
-class TreeViewManager {
+class TreeView {
   constructor() {
-    this.isTreeView = false;
     this.svg = d3.select("#tree-svg");
-    this.g = this.svg.append("g");
+    this.width = 0;
+    this.height = 0;
+    this.root = null;
+    this.i = 0;
+    this.duration = 750;
+    this.tree = d3.tree();
+    this.diagonal = d3.linkHorizontal();
 
-    this.zoom = d3.zoom()
-      .scaleExtent([0.2, 4])
-      .on("zoom", event => this.g.attr("transform", event.transform));
-
-    this.svg.call(this.zoom);
-
-    // Debounce resize
-    this.debounceResize = this.debounce(() => this.renderTree(), 150);
-    window.addEventListener('resize', this.debounceResize);
+    this.init();
   }
 
-  debounce(func, wait) {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
+  init() {
+    this.updateDimensions();
+    window.addEventListener('resize', () => this.updateDimensions());
+
+    // Клик по кнопке переключения вида
+    const btn = document.getElementById('view-btn');
+    if (btn) {
+      btn.addEventListener('click', () => this.toggle());
+    }
+  }
+
+  updateDimensions() {
+    const container = document.getElementById('tree-container');
+    if (!container) return;
+    this.width = container.clientWidth - 40;
+    this.height = container.clientHeight - 40;
+    this.svg.attr("viewBox", [0, 0, this.width, this.height]);
+    this.tree.size([this.height, this.width - 200]);
+    if (this.root) this.update(this.root);
+  }
+
+  toggle() {
+    const container = document.getElementById('tree-container');
+    const classic = document.getElementById('classic-view');
+    const btn = document.getElementById('view-btn');
+
+    if (container.style.display === 'block') {
+      container.style.display = 'none';
+      classic.style.display = 'block';
+      btn.textContent = loc('treeView');
+    } else {
+      container.style.display = 'block';
+      classic.style.display = 'none';
+      btn.textContent = loc('classicView');
+      this.render();
+    }
+  }
+
+  render() {
+    const model = window.editorState.events[window.editorState.currentEventIndex].model;
+    if (model.length === 0) {
+      this.svg.selectAll("*").remove();
+      return;
+    }
+
+    // Создаём иерархию
+    const rootData = {
+      name: loc('rootLabel'),
+      children: model
     };
-  }
 
-  toggleView() {
-    this.isTreeView = !this.isTreeView;
-
-    document.getElementById('classic-view').style.display = this.isTreeView ? 'none' : 'block';
-    document.getElementById('tree-container').style.display = this.isTreeView ? 'block' : 'none';
-
-    document.getElementById('view-btn').textContent = this.isTreeView 
-      ? loc('classicView', 'Классический') 
-      : loc('treeView', 'Режим древа');
-
-    if (this.isTreeView) this.renderTree();
-  }
-
-  // Построение структуры для D3 из модели
-  buildTreeStructure(model) {
-    const children = [];
-
-    model.forEach(node => {
-      const type = node.type;
-      let name = '';
-
-      if (type === 'rng') {
-        const chance = node.params.chance ?? 0.5;
-        name = `${loc('rngAction', 'ГСЧ-событие')} ${(chance * 100).toFixed(1)}%`;
-
-        const successChildren = node.children?.success ? this.buildTreeStructure(node.children.success) : [];
-        const failureChildren = node.children?.failure ? this.buildTreeStructure(node.children.failure) : [];
-
-        if (successChildren.length > 0) {
-          children.push({ name: loc('successLabel', 'Успех'), children: successChildren, branch: 'success' });
-        }
-        if (failureChildren.length > 0) {
-          children.push({ name: loc('failureLabel', 'Провал'), children: failureChildren, branch: 'failure' });
-        }
-      } else if (type === 'spawn') {
-        const item = node.params.item || 'unknown';
-        name = `${loc('spawnItem', 'Спавн предмета')}: ${item}`;
-        children.push({ name, branch: 'leaf' });
-      } else if (type === 'creature') {
-        const creature = node.params.creature || 'crawler';
-        const count = node.params.count ?? 1;
-        name = `${loc('spawnCreature', 'Спавн существа')}: ${creature} x${count}`;
-        children.push({ name, branch: 'leaf' });
-      } else if (type === 'affliction') {
-        const aff = node.params.affliction || 'bleeding';
-        const strength = node.params.strength ?? 15;
-        name = `${loc('applyAffliction', 'Применить аффикшен')}: ${aff} (${strength})`;
-        children.push({ name, branch: 'leaf' });
+    this.root = d3.hierarchy(rootData, d => {
+      if (d.type === 'rng' && d.children) {
+        return [ 
+          { name: loc('successLabel'), children: d.children.success },
+          { name: loc('failureLabel'), children: d.children.failure }
+        ].filter(branch => branch.children.length > 0);
       }
+      return [];
     });
 
-    return children;
+    this.root.x0 = this.height / 2;
+    this.root.y0 = 0;
+
+    this.root.descendants().forEach((d, i) => {
+      d.id = i;
+      d._children = d.children;
+      if (d.depth && d.data.type !== 'rng') d.children = null;
+    });
+
+    this.update(this.root);
   }
 
-  renderTree() {
-    if (!this.isTreeView) return;
+  update(source) {
+    const nodes = this.root.descendants();
+    const links = this.root.links();
 
-    this.g.selectAll("*").remove();
+    // Нормализация для фиксированной глубины
+    nodes.forEach(d => d.y = d.depth * 180);
 
-    const model = window.editorState.events[window.editorState.currentEventIndex].model;
+    // Узлы
+    const node = this.svg.selectAll('g.node')
+      .data(nodes, d => d.id || (d.id = ++this.i));
 
-    const rootData = {
-      name: loc('rootLabel', 'Корневое событие'),
-      children: this.buildTreeStructure(model)
-    };
+    // Новые узлы
+    const nodeEnter = node.enter().append('g')
+      .attr('class', 'node')
+      .attr('transform', () => `translate(${source.y0},${source.x0})`)
+      .on('click', (event, d) => this.click(d));
 
-    const width = document.getElementById('editor-area').clientWidth - 40;
-    const height = document.getElementById('editor-area').clientHeight - 40;
+    nodeEnter.append('circle')
+      .attr('r', 1e-6)
+      .style('fill', d => d._children ? '#007acc' : '#fff')
+      .style('stroke', '#007acc')
+      .style('stroke-width', 2);
 
-    const treeLayout = d3.tree().size([height, width - 200]);
-    const root = d3.hierarchy(rootData);
-    treeLayout(root);
+    nodeEnter.append('text')
+      .attr('dy', '.35em')
+      .attr('x', d => d.children || d._children ? -13 : 13)
+      .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+      .text(d => this.nodeText(d))
+      .style('fill-opacity', 1e-6);
 
-    const link = d3.linkHorizontal()
-      .x(d => d.y)
-      .y(d => d.x);
+    // Обновление
+    const nodeUpdate = nodeEnter.merge(node);
 
-    // Связи с цветом по ветке
-    this.g.selectAll(".link")
-      .data(root.links())
-      .enter()
-      .append("path")
-      .attr("class", "link")
-      .attr("fill", "none")
-      .attr("stroke", d => {
-        if (d.target.data.branch === 'success') return '#6a9955'; // зелёный
-        if (d.target.data.branch === 'failure') return '#f44747'; // красный
-        return '#666';
+    nodeUpdate.transition()
+      .duration(this.duration)
+      .attr('transform', d => `translate(${d.y},${d.x})`);
+
+    nodeUpdate.select('circle')
+      .attr('r', 8)
+      .style('fill', d => d._children ? '#007acc' : '#fff')
+      .attr('cursor', 'pointer');
+
+    nodeUpdate.select('text')
+      .style('fill-opacity', 1);
+
+    // Удаление
+    const nodeExit = node.exit().transition()
+      .duration(this.duration)
+      .attr('transform', () => `translate(${source.y},${source.x})`)
+      .remove();
+
+    nodeExit.select('circle')
+      .attr('r', 1e-6);
+
+    nodeExit.select('text')
+      .style('fill-opacity', 1e-6);
+
+    // Связи
+    const link = this.svg.selectAll('path.link')
+      .data(links, d => d.target.id);
+
+    const linkEnter = link.enter().insert('path', 'g')
+      .attr('class', 'link')
+      .attr('d', () => {
+        const o = { x: source.x0, y: source.y0 };
+        return this.diagonal({ source: o, target: o });
+      });
+
+    linkEnter.merge(link).transition()
+      .duration(this.duration)
+      .attr('d', d => this.diagonal(d))
+      .style('fill', 'none')
+      .style('stroke', '#555')
+      .style('stroke-width', 2);
+
+    link.exit().transition()
+      .duration(this.duration)
+      .attr('d', () => {
+        const o = { x: source.x, y: source.y };
+        return this.diagonal({ source: o, target: o });
       })
-      .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", 2)
-      .attr("d", link);
+      .remove();
 
-    // Ноды
-    const nodeGroup = this.g.selectAll(".node")
-      .data(root.descendants())
-      .enter()
-      .append("g")
-      .attr("transform", d => `translate(${d.y},${d.x})`);
-
-    nodeGroup.append("circle")
-      .attr("r", d => d.children && d.children.length > 0 ? 30 : 24)
-      .attr("fill", d => d.children && d.children.length > 0 ? "#bb86fc" : "#03dac6")
-      .attr("stroke", "#ddd")
-      .attr("stroke-width", 2);
-
-    nodeGroup.append("text")
-      .attr("dy", 5)
-      .attr("x", d => d.children && d.children.length > 0 ? -40 : 40)
-      .style("text-anchor", d => d.children && d.children.length > 0 ? "end" : "start")
-      .style("font", "16px Consolas")
-      .style("fill", "#ddd")
-      .style("font-weight", "bold")
-      .text(d => d.data.name);
-
-    // Центрирование
-    const bounds = this.g.node().getBBox();
-    const scale = 0.9 * Math.min(width / bounds.width, height / bounds.height);
-    const tx = width / 2 - scale * (bounds.x + bounds.width / 2) + 100;
-    const ty = height / 2 - scale * (bounds.y + bounds.height / 2);
-
-    this.svg.transition()
-      .duration(500)
-      .call(this.zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    // Сохраняем позиции для анимации
+    nodes.forEach(d => {
+      d.x0 = d.x;
+      d.y0 = d.y;
+    });
   }
 
-  destroy() {
-    window.removeEventListener('resize', this.debounceResize);
+  nodeText(d) {
+    if (d.depth === 0) return loc('rootLabel');
+    if (d.data.name) return d.data.name;
+    if (d.data.type === 'rng') return loc('rngAction');
+    if (d.data.type === 'spawn') return loc('spawnItem') + ': ' + (d.data.params.item || '');
+    if (d.data.type === 'creature') return loc('spawnCreature') + ': ' + (d.data.params.creature || '');
+    if (d.data.type === 'affliction') return loc('applyAffliction') + ': ' + (d.data.params.affliction || '');
+    return 'Unknown';
+  }
+
+  click(d) {
+    if (d.children) {
+      d._children = d.children;
+      d.children = null;
+    } else {
+      d.children = d._children;
+      d._children = null;
+    }
+    this.update(d);
+  }
+
+  diagonal(d) {
+    return d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x)(d);
   }
 }
 
 // Глобальный экземпляр
-const treeViewManager = new TreeViewManager();
+const treeView = new TreeView();
+window.treeView = treeView;
 
-window.toggleView = () => treeViewManager.toggleView();
-window.renderTree = () => treeViewManager.renderTree();
+// Автоматический рендер при изменениях (временная связь)
+window.updateAll = () => {
+  // Заглушка для классического вида
+  if (document.getElementById('tree-container').style.display === 'block') {
+    treeView.render();
+  }
+};
