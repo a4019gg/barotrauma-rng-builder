@@ -1,6 +1,6 @@
-// js/EditorState.js — v0.9.401 — СОСТОЯНИЕ РЕДАКТОРА
+// js/EditorState.js — v0.9.402 — СОСТОЯНИЕ РЕДАКТОРА (ФИКСЫ БАГОВ)
 
-const MAIN_VERSION = "v0.9.401";
+const MAIN_VERSION = "v0.9.402";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
@@ -62,7 +62,9 @@ class EditorState {
   addEvent() {
     this.saveState();
     this.events.push({ model: [] });
-    this.switchToEvent(this.events.length - 1);
+    this.currentEventIndex = this.events.length - 1; // Явно устанавливаем индекс
+    this.renderCurrentEvent();
+    this.rebuildTabs();
   }
 
   deleteEvent(index) {
@@ -77,7 +79,8 @@ class EditorState {
     if (this.currentEventIndex >= this.events.length) {
       this.currentEventIndex = this.events.length - 1;
     }
-    this.switchToEvent(this.currentEventIndex);
+    this.renderCurrentEvent();
+    this.rebuildTabs();
     return true;
   }
 
@@ -94,10 +97,12 @@ class EditorState {
     const container = document.getElementById('root-children');
     if (!container) return;
     container.innerHTML = '';
-    const model = this.events[this.currentEventIndex].model;
+    const model = this.events[this.currentEventIndex].model || [];
     model.forEach(nodeModel => {
-      const nodeElement = nodeFactory.createFromModel(nodeModel);
-      container.appendChild(nodeElement);
+      if (nodeModel) {
+        const nodeElement = nodeFactory.createFromModel(nodeModel);
+        container.appendChild(nodeElement);
+      }
     });
     updateAll();
   }
@@ -213,7 +218,7 @@ class EditorState {
   exportData() {
     this.saveState();
     return {
-      version: "v0.9.401",
+      version: "v0.9.402",
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
