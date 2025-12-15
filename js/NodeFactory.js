@@ -1,7 +1,10 @@
-// js/NodeFactory.js — v0.9.401 — СОЗДАНИЕ И РЕНДЕР УЗЛОВ
+// js/NodeFactory.js — v0.9.402 — СОЗДАНИЕ И РЕНДЕР УЗЛОВ (ФИКСЫ БАГОВ)
 
-const NODES_VERSION = "v0.9.401";
+const NODES_VERSION = "v0.9.402";
 window.NODES_VERSION = NODES_VERSION;
+
+// GRID_SIZE теперь глобальная (из utils или constants, но пока здесь для совместимости)
+const GRID_SIZE = 30;
 
 class NodeFactory {
   constructor() {
@@ -99,12 +102,20 @@ class NodeFactory {
       const successContainer = successSection.querySelector(`#c-${model.id}-s`);
       const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
 
-      (model.children.success || []).forEach(childModel => {
-        if (childModel) successContainer.appendChild(this.createFromModel(childModel));
+      // Защита от null/undefined
+      const successChildren = model.children.success || [];
+      const failureChildren = model.children.failure || [];
+
+      successChildren.forEach(childModel => {
+        if (childModel) {
+          successContainer.appendChild(this.createFromModel(childModel));
+        }
       });
 
-      (model.children.failure || []).forEach(childModel => {
-        if (childModel) failureContainer.appendChild(this.createFromModel(childModel));
+      failureChildren.forEach(childModel => {
+        if (childModel) {
+          failureContainer.appendChild(this.createFromModel(childModel));
+        }
       });
 
       node.appendChild(successSection);
@@ -377,7 +388,7 @@ class NodeFactory {
 // Глобальный экземпляр
 const nodeFactory = new NodeFactory();
 
-// Глобальные функции добавления в корень
+// Глобальные функции добавления в корень (для совместимости)
 window.addRNG = () => {
   const newModel = nodeFactory.createModelRNG();
   window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
