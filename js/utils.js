@@ -1,6 +1,4 @@
-// js/utils.js — v0.9.401 — ЛОКАЛИЗАЦИЯ, ТЕМЫ, УТИЛИТЫ
-
-import { CONSTANTS } from './constants.js';
+// js/utils.js — v0.9.401 — УТИЛИТЫ И ЛОКАЛИЗАЦИЯ (БЕЗ import/export)
 
 const UTILS_VERSION = "v0.9.401";
 window.UTILS_VERSION = UTILS_VERSION;
@@ -9,17 +7,19 @@ let currentLang = 'en';
 const L = {};
 
 // Безопасная локализация
-export function loc(key, fallback = '') {
+function loc(key, fallback = '') {
   if (L[key]) return L[key];
   console.warn(`MISSING LOC KEY: "${key}"`);
   return fallback || `‹${key}›`;
 }
 
 // === ТЕМЫ ===
-export function setTheme(theme) {
+function setTheme(theme) {
   document.body.dataset.theme = theme;
   localStorage.setItem('theme', theme);
   const s = document.getElementById('theme-style');
+  if (!s) return;
+
   const themes = {
     'dark': 'css/themes/dark.css',
     'light': 'css/themes/light.css',
@@ -27,12 +27,13 @@ export function setTheme(theme) {
     'turbo-vision-dark': 'css/themes/turbo-vision-dark.css'
   };
   s.href = themes[theme] || 'css/themes/dark.css';
+
   const sel = document.getElementById('theme-select');
   if (sel) sel.value = theme;
 }
 
 // === МАСШТАБ ===
-export function setUIScale(val) {
+function setUIScale(val) {
   document.body.dataset.uiScale = val;
   localStorage.setItem('uiScale', val);
   const sel = document.getElementById('scale-select');
@@ -40,7 +41,7 @@ export function setUIScale(val) {
 }
 
 // === ПЛОТНОСТЬ НОД ===
-export function setNodeDensity(val) {
+function setNodeDensity(val) {
   document.body.dataset.nodeDensity = val;
   localStorage.setItem('nodeDensity', val);
   const sel = document.getElementById('density-select');
@@ -48,48 +49,48 @@ export function setNodeDensity(val) {
 }
 
 // === ТЕНИ ===
-export function toggleShadows(on) {
+function toggleShadows(on) {
   document.body.dataset.nodeShadows = on ? 'high' : 'off';
-  localStorage.setItem('nodeShadows', on);
+  localStorage.setItem('nodeShadows', on.toString());
 }
 
 // === СЕТКА ===
-export function toggleGrid(on) {
+function toggleGrid(on) {
   document.body.dataset.bgGrid = on ? 'visible' : 'off';
-  localStorage.setItem('bgGrid', on);
+  localStorage.setItem('bgGrid', on.toString());
 }
 
 // === ПРИВЯЗКА К СЕТКЕ ===
-export function toggleSnap(on) {
-  localStorage.setItem('snapToGrid', on);
+function toggleSnap(on) {
+  localStorage.setItem('snapToGrid', on.toString());
 }
 
 // === ФОРМАТ XML ===
-export function setXMLFormat(val) {
+function setXMLFormat(val) {
   localStorage.setItem('xmlFormat', val);
 }
 
 // === ВАЛИДАЦИЯ XML ===
-export function toggleValidation(on) {
-  localStorage.setItem('validateXML', on);
+function toggleValidation(on) {
+  localStorage.setItem('validateXML', on.toString());
 }
 
 // === ПРОВЕРКА ДУБЛИКАТОВ ID ===
-export function toggleCheckDuplicateIDs(on) {
-  localStorage.setItem('checkDuplicateIDs', on);
+function toggleCheckDuplicateIDs(on) {
+  localStorage.setItem('checkDuplicateIDs', on.toString());
 }
 
 // === ЛОКАЛИЗАЦИЯ ===
-export function applyLocalization() {
-  document.querySelectorAll(`[${CONSTANTS.DATA_ATTR.L10N}]`).forEach(el => {
+function applyLocalization() {
+  document.querySelectorAll('[data-l10n]').forEach(el => {
     const key = el.dataset.l10n;
-    if (L[key]) {
+    if (key && L[key]) {
       el.textContent = L[key];
     }
   });
 }
 
-export function setLang(lang) {
+function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
   const dict = lang === 'ru' ? LANG_RU : LANG_EN;
@@ -97,7 +98,6 @@ export function setLang(lang) {
 
   applyLocalization();
 
-  // Обновляем текст кнопки переключения вида
   const viewBtn = document.getElementById('view-btn');
   if (viewBtn) {
     const isTree = document.getElementById('tree-container').style.display === 'block';
@@ -107,12 +107,11 @@ export function setLang(lang) {
   const sel = document.getElementById('lang-select');
   if (sel) sel.value = lang;
 
-  // Временный вызов updateAll (в будущем — через onUpdate)
-  if (typeof updateAll === 'function') updateAll();
+  updateAll();
 }
 
 // === ВЕРСИИ ===
-export function showScriptVersions() {
+function showScriptVersions() {
   const c = document.getElementById('script-versions');
   if (!c) return;
   const v = [
@@ -126,10 +125,28 @@ export function showScriptVersions() {
   c.innerHTML = v.map(x=>`${x.n} → ${x.v}`).join('<br>');
 }
 
+// === ПОПУЛЯЦИЯ DATALIST (переместили сюда из main.js) ===
+function populateDatalist() {
+  const datalist = document.getElementById('item-datalist');
+  if (!datalist) return;
+
+  const commonIds = [
+    'revolver', 'revolverrounds', 'divingknife', 'toolbox', 'oxygenitetank',
+    'plasmacutter', 'crowbar', 'weldingtool', 'crawler', 'husk', 'mudraptor',
+    'hammerhead', 'bleeding', 'burn', 'oxygenlow', 'radiationsickness', 'huskinfection'
+  ];
+
+  commonIds.forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    datalist.appendChild(opt);
+  });
+}
+
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   setTheme(localStorage.getItem('theme') || 'dark');
-  setLang(localStorage.getItem('lang') || 'en');
+  setLang((localStorage.getItem('lang') || 'en'));
   setUIScale(localStorage.getItem('uiScale') || '100');
   setNodeDensity(localStorage.getItem('nodeDensity') || 'normal');
   toggleShadows(localStorage.getItem('nodeShadows') !== 'false');
@@ -138,4 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   applyLocalization();
   showScriptVersions();
+  populateDatalist(); // теперь здесь
 });
+
+// Глобальные функции
+window.loc = loc;
+window.setTheme = setTheme;
+window.setLang = setLang;
+window.setUIScale = setUIScale;
+window.setNodeDensity = setNodeDensity;
+window.toggleShadows = toggleShadows;
+window.toggleGrid = toggleGrid;
+window.toggleSnap = toggleSnap;
+window.setXMLFormat = setXMLFormat;
+window.toggleValidation = toggleValidation;
+window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
+window.applyLocalization = applyLocalization;
+window.showScriptVersions = showScriptVersions;
+window.populateDatalist = populateDatalist;
