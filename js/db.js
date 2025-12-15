@@ -1,6 +1,6 @@
-// js/db.js — v0.9.415 — БАЗА ДАННЫХ С ПОДДЕРЖКОЙ РАЗНЫХ АТЛАСОВ ИЗ DATA
+// js/db.js — v0.9.416 — БАЗА ДАННЫХ С ГАРАНТИРОВАННЫМИ ИКОНКАМИ
 
-const DB_VERSION = "v0.9.415";
+const DB_VERSION = "v0.9.416";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -276,8 +276,17 @@ class DatabaseManager {
   }
 
   createRealIcon(iconInfo) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+
+    // Всегда рисуем заглушку сразу — теперь точно будет видно
+    this.drawPlaceholderIcon(ctx);
+
     if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
-      return this.createPlaceholderIcon();
+      return canvas;
     }
 
     const texture = iconInfo.texture;
@@ -287,48 +296,39 @@ class DatabaseManager {
     const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
 
     if (this.iconCache.has(cacheKey)) {
-      return this.iconCache.get(cacheKey).cloneNode(true);
+      const cached = this.iconCache.get(cacheKey);
+      ctx.clearRect(0, 0, 48, 48);
+      ctx.drawImage(cached, 0, 0);
+      return canvas;
     }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 48;
-    canvas.height = 48;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return canvas;
-
-    // Заглушка сразу
-    this.drawPlaceholderIcon(ctx);
-
-    // Загружаем нужный атлас (теперь любой, из data)
     this.loadAtlasAsync(texture).then(img => {
       if (img) {
         this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
+        // Кэшируем готовую иконку
+        this.iconCache.set(cacheKey, canvas);
       }
     });
 
+    // Кэшируем с заглушкой
     this.iconCache.set(cacheKey, canvas);
-    return canvas.cloneNode(true);
+
+    return canvas;
   }
 
   drawPlaceholderIcon(ctx) {
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = '#2d2d30';
     ctx.fillRect(0, 0, 48, 48);
-    ctx.fillStyle = '#aaa';
-    ctx.font = '20px Arial';
+
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(4, 4, 40, 40);
+
+    ctx.fillStyle = '#888';
+    ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('?', 24, 24);
-  }
-
-  createPlaceholderIcon() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 48;
-    canvas.height = 48;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      this.drawPlaceholderIcon(ctx);
-    }
-    return canvas;
   }
 
   loadAtlasAsync(texture) {
@@ -356,8 +356,6 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
-    if (!img) return;
-
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
