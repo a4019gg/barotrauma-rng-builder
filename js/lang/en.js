@@ -102,4 +102,4 @@ const LANG_EN = {
   eventIdLabel: "Event ID:"
 };
 
-export default LANG_EN;
+window.LANG_EN = LANG_EN;
