@@ -1,39 +1,30 @@
-/* Flopstyle Dark — v0.9.11 — кнопки не розовые */
-:root, [data-theme="flopstyle-dark"] {
-  --bg: #121212;
-  --panel: #1e1e1e;
-  --text: #e0e0e0;
-  --accent: #bb86fc;
-  --green: #03dac6;
-  --red: #cf6679;
-  --border: #333;
-  --node-bg: #252526;
-  --input-bg: #333;
-}
-body[data-theme="flopstyle-dark"] {
-  background: #121212;
-  color: #e0e0e0;
-}
-.header { background: #1e1e1e; border-bottom: 1px solid #333; }
+/* css/themes/flopstyle-dark.css — v0.9.401 — FLOPSTYLE DARK */
 
-/* Базовые кнопки — фиолетовые, как и должно быть */
-button {
-  background: #bb86fc;
-  color: #000;
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --text: #c9d1d9;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --border: #30363d;
+  --node-bg: #21262d;
+  --grid-color: rgba(240,246,252,0.05);
+  --shadow-low: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-high: 0 8px 24px rgba(0,0,0,0.5);
+
+  /* Те же цвета иконок, что в dark (читаются хорошо на тёмном фоне) */
+  --icon-damage-red-rgb: 195, 60, 60;
+  --icon-buff-green-rgb: 10, 193, 114;
+  --icon-status-orange-rgb: 195, 136, 60;
+  --icon-debuff-red-orange-rgb: 195, 104, 60;
+  --icon-poison-darkred-rgb: 150, 26, 26;
+  --icon-status-yellow-rgb: 195, 180, 60;
+  --icon-status-brown-rgb: 139, 60, 42;
+  --icon-status-gray-rgb: 106, 106, 106;
+  --icon-debuff-purple-rgb: 143, 111, 160;
+  --icon-status-tan-rgb: 193, 162, 122;
+  --icon-debuff-blue-rgb: 60, 107, 195;
+  --icon-buff-lightgreen-rgb: 84, 171, 90;
+  --icon-debuff-violet-rgb: 120, 23, 157;
 }
-button:hover { filter: brightness(1.2); }
-
-/* ТВОИ ЦВЕТА — только конкретные кнопки */
-button[onclick="exportJSON()"] { background: #EB47A7 !important; color: #fff !important; }
-button[onclick="importFile()"], 
-button[onclick="generateXML()"] { background: #289F6B !important; color: #fff !important; }
-button[onclick="clearAll()"] { background: #e53935 !important; color: #fff !important; }
-
-.dropdown button { background: #333; color: #e0e0e0; }
-.dropdown-menu { background: #1e1e1e; border: 1px solid #444; }
-.node { background: #252526; border-left-color: #bb86fc; }
-.item-field { background: #333; border: 1px solid #444; }
-.prob { background: rgba(187,134,252,0.15); }
-.tab { background: #333; border: 1px solid #555; }
-.tab.active { background: #bb86fc; color: #000; }
-.delete-tab { background: #e53935; }
