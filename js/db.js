@@ -1,6 +1,6 @@
-// js/db.js — v0.9.402 — БАЗА ДАННЫХ (ФИКСЫ БАГОВ)
+// js/db.js — v0.9.404 — БАЗА ДАННЫХ С РЕАЛЬНЫМИ ИКОНКАМИ И РАЗНЫМИ ШАБЛОНАМИ
 
-const DB_VERSION = "v0.9.402";
+const DB_VERSION = "v0.9.404";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,8 +8,10 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map(); // Кэш иконок
-    this.isModalOpen = false; // Защита от двойного открытия
+    this.iconCache = new Map();
+    this.atlasCache = new Map(); // Кэш загруженных атласов
+    this.currentTab = 'afflictions';
+    this.isModalOpen = false;
     this.loadData();
   }
 
@@ -31,7 +33,7 @@ class DatabaseManager {
   }
 
   openDB() {
-    if (this.isModalOpen) return; // Уже открыта — не открываем вторую
+    if (this.isModalOpen) return;
     this.isModalOpen = true;
 
     const overlay = document.createElement('div');
@@ -74,9 +76,17 @@ class DatabaseManager {
 
     ['afflictions', 'items', 'creatures'].forEach(tab => {
       const btn = document.createElement('button');
-      btn.className = 'db-tab-btn' + (tab === 'afflictions' ? ' active' : '');
+      btn.className = 'db-tab-btn';
       btn.textContent = loc('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-      btn.onclick = () => this.renderGrid(tab);
+      btn.dataset.tab = tab;
+      btn.onclick = () => {
+        // Убираем active у всех
+        tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentTab = tab;
+        this.renderGrid(tab);
+      };
+      if (tab === 'afflictions') btn.classList.add('active');
       tabs.appendChild(btn);
     });
 
@@ -122,14 +132,14 @@ class DatabaseManager {
     card.style.gap = '8px';
     card.style.fontSize = '14px';
 
-    // Верхняя часть: иконка + имя + identifier
+    // Иконка + имя + identifier
     const top = document.createElement('div');
     top.style.display = 'flex';
     top.style.alignItems = 'center';
     top.style.gap = '12px';
     top.style.marginBottom = '8px';
 
-    const icon = this.createIcon(entry.icon || {});
+    const icon = this.createRealIcon(entry.icon || {});
     top.appendChild(icon);
 
     const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
@@ -141,14 +151,25 @@ class DatabaseManager {
 
     card.appendChild(top);
 
-    // Бейджики
+    // Разные шаблоны для разных типов
+    if (type === 'afflictions') {
+      this.appendAfflictionDetails(card, entry);
+    } else if (type === 'items') {
+      this.appendItemDetails(card, entry);
+    } else if (type === 'creatures') {
+      this.appendCreatureDetails(card, entry);
+    }
+
+    return card;
+  }
+
+  appendAfflictionDetails(card, entry) {
     const badges = document.createElement('div');
     badges.style.display = 'flex';
     badges.style.gap = '8px';
     badges.style.flexWrap = 'wrap';
     badges.style.marginBottom = '8px';
 
-    // Тип
     const typeBadge = document.createElement('span');
     typeBadge.textContent = `[${entry.type || 'unknown'}]`;
     typeBadge.style.padding = '2px 8px';
@@ -157,7 +178,6 @@ class DatabaseManager {
     typeBadge.style.fontSize = '12px';
     badges.appendChild(typeBadge);
 
-    // Макс. сила
     const maxBadge = document.createElement('span');
     maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
     maxBadge.style.padding = '2px 8px';
@@ -190,29 +210,25 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    // Краткое описание
-    const shortDesc = document.createElement('div');
     const descText = entry.description || loc(entry.desc_key || '') || '';
+    const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
     shortDesc.style.fontSize = '13px';
     shortDesc.style.marginBottom = '8px';
     card.appendChild(shortDesc);
 
-    // Разделитель
     const separator = document.createElement('div');
     separator.style.height = '1px';
     separator.style.background = '#444';
     separator.style.margin = '8px 0';
     card.appendChild(separator);
 
-    // Полное описание
     const fullDesc = document.createElement('div');
     fullDesc.textContent = descText || loc('noDescription');
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
-    // Детали
     const details = [
       { key: 'dbDetailID', value: entry.identifier || '—' },
       { key: 'dbDetailType', value: entry.type || '—' },
@@ -230,17 +246,32 @@ class DatabaseManager {
       line.style.fontSize = '13px';
       card.appendChild(line);
     });
-
-    // Пустое пространство
-    const spacer = document.createElement('div');
-    spacer.style.height = '8px';
-    card.appendChild(spacer);
-
-    return card;
   }
 
-  createIcon(iconInfo) {
-    const cacheKey = `${iconInfo.texture || 'none'}|${iconInfo.sourcerect || 'none'}|${iconInfo.color_theme_key || 'none'}`;
+  appendItemDetails(card, entry) {
+    // Плейсхолдер для предметов
+    const placeholder = document.createElement('div');
+    placeholder.textContent = 'Предмет: ' + (entry.identifier || 'unknown');
+    placeholder.style.color = '#aaa';
+    placeholder.style.fontSize = '14px';
+    card.appendChild(placeholder);
+  }
+
+  appendCreatureDetails(card, entry) {
+    // Плейсхолдер для существ
+    const placeholder = document.createElement('div');
+    placeholder.textContent = 'Существо: ' + (entry.identifier || 'unknown');
+    placeholder.style.color = '#aaa';
+    placeholder.style.fontSize = '14px';
+    card.appendChild(placeholder);
+  }
+
+  async createRealIcon(iconInfo) {
+    const texture = iconInfo.texture || 'assets/textures/MainIconsAtlas.png';
+    const sourcerect = iconInfo.sourcerect || '0,0,128,128';
+    const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
+
+    const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
     if (this.iconCache.has(cacheKey)) {
       return this.iconCache.get(cacheKey).cloneNode(true);
     }
@@ -251,19 +282,28 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Прозрачный фон
-    ctx.clearRect(0, 0, 48, 48);
+    // Загружаем атлас (кэшируем)
+    let atlasImg = this.atlasCache.get(texture);
+    if (!atlasImg) {
+      atlasImg = new Image();
+      atlasImg.src = texture;
+      await new Promise(resolve => {
+        atlasImg.onload = resolve;
+        atlasImg.onerror = () => resolve(); // fallback
+      });
+      this.atlasCache.set(texture, atlasImg);
+    }
 
-    // Заглушка — белый силуэт
-    ctx.fillStyle = 'white';
-    ctx.fillRect(8, 8, 32, 32);
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(8, 8, 32, 32);
+    // Парсим sourcerect: "x,y,w,h"
+    const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
+    const [sx, sy, sw, sh] = rect;
 
-    // Цвет из темы
+    // Вырезаем и масштабируем на 48x48
+    ctx.drawImage(atlasImg, sx, sy, sw, sh, 0, 0, 48, 48);
+
+    // Применяем tint
     const rgbVar = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${iconInfo.color_theme_key || 'icon-status-gray'}-rgb`).trim();
+      .getPropertyValue(`--${colorKey}-rgb`).trim();
 
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
@@ -272,9 +312,7 @@ class DatabaseManager {
       ctx.fillRect(0, 0, 48, 48);
     }
 
-    // Кэшируем
     this.iconCache.set(cacheKey, canvas);
-
     return canvas.cloneNode(true);
   }
 
