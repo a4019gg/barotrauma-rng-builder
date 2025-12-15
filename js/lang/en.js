@@ -10,7 +10,8 @@ const LANG_EN = {
 
   // Buttons
   generateXML: "Generate XML",
-  copyXML: "Copy XML",
+copyXMLButton: "Copy XML",
+copyXML: "XML copied to clipboard",
   downloadXML: "Download XML",
   export: "Export",
   import: "Import",
@@ -84,7 +85,7 @@ const LANG_EN = {
   presetError: "Preset loading error",
   dbError: "Database not loaded (check data/*.json files)",
   autoBalanceDone: "Auto balance completed",
-  copyXML: "XML copied to clipboard",
+
 
   // DB details
   dbDetailID: "ID",
