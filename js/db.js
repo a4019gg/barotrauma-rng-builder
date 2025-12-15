@@ -1,6 +1,6 @@
-// js/db.js — v0.9.418 — БАЗА ДАННЫХ С РАБОЧИМИ ИКОНКАМИ И БЕЗ ОШИБОК
+// js/db.js — v0.9.419 — БАЗА ДАННЫХ С ПРАВИЛЬНЫМИ ИКОНКАМИ И ЦВЕТОМ
 
-const DB_VERSION = "v0.9.418";
+const DB_VERSION = "v0.9.419";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -54,7 +54,7 @@ class DatabaseManager {
     header.className = 'db-modal-header';
     header.innerHTML = `<h2>${loc('dataBase')}</h2>`;
 
-    const tabs = this.createTabs.call(this); // Явный call(this) на всякий случай
+    const tabs = this.createTabs();
     const search = this.createSearchInput();
     header.appendChild(tabs);
     header.appendChild(search);
@@ -282,41 +282,49 @@ class DatabaseManager {
     card.appendChild(placeholder);
   }
 
+  // Преобразование snake_case → kebab-case
+  toKebabCase(str) {
+    return str.replace(/_/g, '-');
+  }
+
   createRealIcon(iconInfo) {
+    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
+      return this.createMissingIcon();
+    }
+
+    const texture = iconInfo.texture;
+    const sourcerect = iconInfo.sourcerect;
+    const colorKeySnake = iconInfo.color_theme_key || 'icon-status-gray';
+    const colorKeyKebab = this.toKebabCase(colorKeySnake);
+
+    const cacheKey = `${texture}|${sourcerect}|${colorKeyKebab}`;
+
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey).cloneNode(true);
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = 48;
     canvas.height = 48;
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
-      this.drawMissingIcon(ctx);
-      return canvas;
-    }
-
-    const texture = iconInfo.texture;
-    const sourcerect = iconInfo.sourcerect;
-    const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
-
-    const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
-
-    if (this.iconCache.has(cacheKey)) {
-      const cached = this.iconCache.get(cacheKey);
-      ctx.drawImage(cached, 0, 0);
-      return canvas;
-    }
-
-    // Сначала плейсхолдер
+    // Заглушка
     this.drawMissingIcon(ctx);
 
     this.loadAtlasAsync(texture).then(img => {
       if (img) {
-        this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
-        this.iconCache.set(cacheKey, canvas);
+        this.drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab);
+        // Кэшируем уже готовую иконку с цветом
+        this.iconCache.set(cacheKey, canvas.cloneNode(true));
+      } else {
+        // Если атлас не загрузился — оставляем заглушку
+        this.drawMissingIcon(ctx);
       }
     });
 
-    this.iconCache.set(cacheKey, canvas);
+    // Кэшируем с заглушкой
+    this.iconCache.set(cacheKey, canvas.cloneNode(true));
 
     return canvas;
   }
@@ -333,6 +341,17 @@ class DatabaseManager {
       ctx.textBaseline = 'middle';
       ctx.fillText('?', 24, 24);
     }
+  }
+
+  createMissingIcon() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      this.drawMissingIcon(ctx);
+    }
+    return canvas;
   }
 
   loadAtlasAsync(texture) {
@@ -359,7 +378,7 @@ class DatabaseManager {
     return promise;
   }
 
-  drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
+  drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab) {
     if (!img) return;
 
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
@@ -369,12 +388,12 @@ class DatabaseManager {
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
     const rgbVar = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${colorKey}-rgb`).trim();
+      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
 
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
       ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fillRect(0, 0, 48, 48);
       ctx.globalCompositeOperation = 'source-over'; // сброс
     }
