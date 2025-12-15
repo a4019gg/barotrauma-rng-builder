@@ -1,4 +1,4 @@
-// js/main.js — v0.9.402 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ (ФИКСЫ БАГОВ)
+// js/main.js — v0.9.403 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ (ФИНАЛЬНАЯ ВЕРСИЯ)
 
 let isInitialized = false;
 
@@ -16,34 +16,42 @@ document.addEventListener('DOMContentLoaded', () => {
   window.editorState = editorState;
   window.dbManager = dbManager;
 
-  // Глобальные функции добавления в корень
+  // Глобальные функции добавления в корень (для action-bar)
   window.addRNG = () => {
     const newModel = nodeFactory.createModelRNG();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
     editorState.renderCurrentEvent();
+    updateAll();
   };
 
   window.addSpawn = () => {
     const newModel = nodeFactory.createModelSpawn();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
     editorState.renderCurrentEvent();
+    updateAll();
   };
 
   window.addCreature = () => {
     const newModel = nodeFactory.createModelCreature();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
     editorState.renderCurrentEvent();
+    updateAll();
   };
 
   window.addAffliction = () => {
     const newModel = nodeFactory.createModelAffliction();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
     editorState.renderCurrentEvent();
+    updateAll();
   };
 
-  // Заглушка updateAll
+  // Глобальная функция updateAll (один раз на действие)
   window.updateAll = () => {
     console.log('updateAll called — probabilities recalc (placeholder)');
+    // Здесь будет расчёт вероятностей
+    if (document.getElementById('tree-container').style.display === 'block') {
+      treeView.render();
+    }
   };
 
   // Импорт JSON
@@ -79,24 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  // Функция заполнения datalist (перемещена сюда из старого main.js)
-  function populateDatalist() {
-    const datalist = document.getElementById('item-datalist');
-    if (!datalist) return;
-
-    const commonIds = [
-      'revolver', 'revolverrounds', 'divingknife', 'toolbox', 'oxygenitetank',
-      'plasmacutter', 'crowbar', 'weldingtool', 'crawler', 'husk', 'mudraptor',
-      'hammerhead', 'bleeding', 'burn', 'oxygenlow', 'radiationsickness', 'huskinfection'
-    ];
-
-    commonIds.forEach(id => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      datalist.appendChild(opt);
-    });
-  }
 
   // Начальный рендер
   editorState.renderCurrentEvent();
