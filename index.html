@@ -134,7 +134,17 @@
 <input type="file" id="file-input" style="display:none" accept=".json">
 <datalist id="item-datalist"></datalist>
 
-<!-- ПОДКЛЮЧЕНИЕ СКОМПИЛИРОВАННОГО MAIN.JS ИЗ DIST -->
-<script type="module" src="dist/main.js"></script>
+<!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ В ПРАВИЛЬНОМ ПОРЯДКЕ -->
+<script src="js/constants.js"></script>
+<script src="js/lang/en.js"></script>
+<script src="js/lang/ru.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/NodeFactory.js"></script>
+<script src="js/EditorState.js"></script>
+<script src="js/UIController.js"></script>
+<script src="js/db.js"></script>
+<script src="js/tree.js"></script>
+<script src="js/xml.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
