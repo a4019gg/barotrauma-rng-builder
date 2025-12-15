@@ -1,4 +1,4 @@
-// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИКСЫ БАГОВ)
+// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИНАЛЬНЫЙ ФИКС)
 
 const MAIN_VERSION = "v0.9.403";
 window.MAIN_VERSION = MAIN_VERSION;
@@ -40,6 +40,7 @@ class EditorState {
 
     this.renderCurrentEvent();
     this.rebuildTabs();
+    updateAll(); // один вызов после рендера
     return true;
   }
 
@@ -56,6 +57,7 @@ class EditorState {
 
     this.renderCurrentEvent();
     this.rebuildTabs();
+    updateAll(); // один вызов после рендера
     return true;
   }
 
@@ -65,6 +67,7 @@ class EditorState {
     this.currentEventIndex = this.events.length - 1;
     this.renderCurrentEvent();
     this.rebuildTabs();
+    updateAll(); // один вызов
   }
 
   deleteEvent(index) {
@@ -81,6 +84,7 @@ class EditorState {
     }
     this.renderCurrentEvent();
     this.rebuildTabs();
+    updateAll(); // один вызов
     return true;
   }
 
@@ -91,6 +95,7 @@ class EditorState {
     this.currentEventIndex = index;
     this.renderCurrentEvent();
     this.rebuildTabs();
+    updateAll(); // один вызов
   }
 
   renderCurrentEvent() {
@@ -104,7 +109,7 @@ class EditorState {
         container.appendChild(nodeElement);
       }
     });
-    // updateAll() убран отсюда — вызывается только из действий (фикс двойного вызова)
+    // updateAll() больше НЕ вызывается здесь — только в действиях
   }
 
   rebuildTabs() {
@@ -151,7 +156,7 @@ class EditorState {
     const removed = this._removeNodeRecursive(id, this.events[this.currentEventIndex].model);
     if (removed) {
       this.renderCurrentEvent();
-      updateAll();
+      updateAll(); // один вызов
     }
     return removed;
   }
@@ -200,7 +205,7 @@ class EditorState {
 
     parent.children[branch].push(newModel);
     this.renderCurrentEvent();
-    updateAll();
+    updateAll(); // один вызов
     return true;
   }
 
@@ -226,7 +231,7 @@ class EditorState {
 
     balance(this.events[this.currentEventIndex].model);
     this.renderCurrentEvent();
-    updateAll();
+    updateAll(); // один вызов
     alert(loc('autoBalanceDone', 'Автобаланс завершён'));
   }
 
@@ -234,7 +239,7 @@ class EditorState {
     this.saveState();
     this.events[this.currentEventIndex].model = [];
     this.renderCurrentEvent();
-    updateAll();
+    updateAll(); // один вызов
   }
 
   exportData() {
@@ -251,7 +256,7 @@ class EditorState {
     this.currentEventIndex = 0;
     this.renderCurrentEvent();
     this.rebuildTabs();
-    updateAll();
+    updateAll(); // один вызов
     return true;
   }
 }
