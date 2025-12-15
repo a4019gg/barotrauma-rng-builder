@@ -3,8 +3,6 @@
 const NODES_VERSION = "v0.9.401";
 window.NODES_VERSION = NODES_VERSION;
 
-const GRID_SIZE = 30;
-
 class NodeFactory {
   constructor() {
     this.idCounter = 0;
