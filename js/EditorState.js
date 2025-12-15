@@ -104,7 +104,6 @@ class EditorState {
         container.appendChild(nodeElement);
       }
     });
-    updateAll();
   }
 
   rebuildTabs() {
