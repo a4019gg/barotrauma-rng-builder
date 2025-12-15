@@ -1,6 +1,6 @@
-// js/db.js — v0.9.419 — БАЗА ДАННЫХ С ПРАВИЛЬНЫМИ ИКОНКАМИ И ЦВЕТОМ
+// js/db.js — v0.9.420 — БАЗА ДАННЫХ С СТАБИЛЬНЫМИ ИКОНКАМИ
 
-const DB_VERSION = "v0.9.419";
+const DB_VERSION = "v0.9.420";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,19 +8,12 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map();
-    this.atlasCache = new Map();
-    this.pendingAtlases = new Map();
-    this.missingIconImg = null;
+    this.iconCache = new Map(); // Кэш готовых canvas (с цветом)
+    this.atlasCache = new Map(); // Кэш загруженных Image
+    this.pendingAtlases = new Map(); // Обещания загрузки
     this.currentTab = 'afflictions';
     this.isModalOpen = false;
-    this.loadMissingIcon();
     this.loadData();
-  }
-
-  loadMissingIcon() {
-    this.missingIconImg = new Image();
-    this.missingIconImg.src = 'assets/Missing_Texture_icon.png';
   }
 
   async loadData() {
@@ -222,7 +215,7 @@ class DatabaseManager {
       buffBadge.style.padding = '2px 8px';
       buffBadge.style.background = '#218c21';
       buffBadge.style.color = 'white';
-      buffBadge.style.borderRadius = '4px';
+      limbBadge.style.borderRadius = '4px';
       buffBadge.style.fontSize = '12px';
       badges.appendChild(buffBadge);
     }
@@ -282,14 +275,14 @@ class DatabaseManager {
     card.appendChild(placeholder);
   }
 
-  // Преобразование snake_case → kebab-case
+  // snake_case → kebab-case
   toKebabCase(str) {
     return str.replace(/_/g, '-');
   }
 
   createRealIcon(iconInfo) {
     if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
-      return this.createMissingIcon();
+      return this.createColorCircleIcon(iconInfo?.color_theme_key || 'icon-status-gray');
     }
 
     const texture = iconInfo.texture;
@@ -309,47 +302,48 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Заглушка
-    this.drawMissingIcon(ctx);
+    // Сначала рисуем цветной круг как fallback (если атлас не загрузится)
+    this.drawColorCircleIcon(ctx, colorKeyKebab);
 
     this.loadAtlasAsync(texture).then(img => {
       if (img) {
         this.drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab);
-        // Кэшируем уже готовую иконку с цветом
+        // Обновляем кэш готовой иконкой
         this.iconCache.set(cacheKey, canvas.cloneNode(true));
-      } else {
-        // Если атлас не загрузился — оставляем заглушку
-        this.drawMissingIcon(ctx);
       }
+      // Если не загрузилось — остаётся цветной круг
     });
 
-    // Кэшируем с заглушкой
+    // Кэшируем с fallback
     this.iconCache.set(cacheKey, canvas.cloneNode(true));
 
     return canvas;
   }
 
-  drawMissingIcon(ctx) {
-    if (this.missingIconImg && this.missingIconImg.complete) {
-      ctx.drawImage(this.missingIconImg, 0, 0, 48, 48);
+  drawColorCircleIcon(ctx, colorKeyKebab) {
+    const rgbVar = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
+
+    if (rgbVar) {
+      const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
     } else {
-      ctx.fillStyle = '#2d2d30';
-      ctx.fillRect(0, 0, 48, 48);
-      ctx.fillStyle = '#aaa';
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', 24, 24);
+      ctx.fillStyle = '#888';
     }
+
+    ctx.beginPath();
+    ctx.arc(24, 24, 20, 0, 2 * Math.PI);
+    ctx.fill();
   }
 
-  createMissingIcon() {
+  createColorCircleIcon(colorKeySnake) {
     const canvas = document.createElement('canvas');
     canvas.width = 48;
     canvas.height = 48;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      this.drawMissingIcon(ctx);
+      const colorKeyKebab = this.toKebabCase(colorKeySnake);
+      this.drawColorCircleIcon(ctx, colorKeyKebab);
     }
     return canvas;
   }
@@ -379,8 +373,6 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab) {
-    if (!img) return;
-
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
@@ -395,7 +387,7 @@ class DatabaseManager {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fillRect(0, 0, 48, 48);
-      ctx.globalCompositeOperation = 'source-over'; // сброс
+      ctx.globalCompositeOperation = 'source-over';
     }
   }
 
