@@ -1,4 +1,4 @@
-// js/UIController.js — v0.9.402 — ФИКС ДВОЙНЫХ ДЕЙСТВИЙ И МОДАЛКИ
+// js/UIController.js — v0.9.403 — ЦЕНТРАЛИЗОВАННОЕ ДЕЛЕГИРОВАНИЕ СОБЫТИЙ
 
 class UIController {
   constructor() {
@@ -18,7 +18,7 @@ class UIController {
     const target = e.target.closest('[data-action]');
     if (!target) return;
 
-    e.stopPropagation(); // Предотвращаем всплытие
+    e.stopPropagation(); // Предотвращаем всплытие и дублирование
 
     const action = target.dataset.action;
     const type = target.dataset.type || target.dataset.nodeType;
@@ -112,41 +112,40 @@ class UIController {
     if (!target.dataset?.action) return;
 
     const action = target.dataset.action;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
 
     switch (action) {
       case 'setTheme':
-        setTheme(value);
+        setTheme(target.value);
         break;
       case 'setLang':
-        setLang(value);
+        setLang(target.value);
         break;
       case 'setUIScale':
-        setUIScale(value);
+        setUIScale(target.value);
         break;
       case 'setNodeDensity':
-        setNodeDensity(value);
+        setNodeDensity(target.value);
         break;
       case 'toggleShadows':
-        toggleShadows(value);
+        toggleShadows(target.checked);
         break;
       case 'toggleGrid':
-        toggleGrid(value);
+        toggleGrid(target.checked);
         break;
       case 'toggleSnap':
-        toggleSnap(value);
+        toggleSnap(target.checked);
         break;
       case 'setXMLFormat':
-        setXMLFormat(value);
+        setXMLFormat(target.value);
         break;
       case 'toggleValidation':
-        toggleValidation(value);
+        toggleValidation(target.checked);
         break;
       case 'toggleCheckDuplicateIDs':
-        toggleCheckDuplicateIDs(value);
+        toggleCheckDuplicateIDs(target.checked);
         break;
       case 'updateParam':
-        updateAll(); // Временно
+        updateAll(); // Вызываем updateAll только здесь для изменений параметров
         break;
       default:
         console.warn(`Unknown change action: ${action}`);
@@ -158,6 +157,8 @@ class UIController {
     const tree = document.getElementById('tree-container');
     const btn = document.getElementById('view-btn');
 
+    if (!classic || !tree || !btn) return;
+
     if (tree.style.display === 'block') {
       tree.style.display = 'none';
       classic.style.display = 'block';
@@ -166,7 +167,7 @@ class UIController {
       tree.style.display = 'block';
       classic.style.display = 'none';
       btn.textContent = loc('classicView');
-      if (treeView && treeView.render) treeView.render();
+      treeView.render(); // Рендерим при открытии
     }
   }
 
