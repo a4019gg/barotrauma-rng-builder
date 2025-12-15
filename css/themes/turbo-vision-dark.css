@@ -1,100 +1,30 @@
-/* Turbo Vision Dark — v0.9.99 — финальная версия */
+/* css/themes/turbo-vision-dark.css — v0.9.401 — TURBO VISION DARK (ретро стиль) */
 
-:root, [data-theme="turbo-vision-dark"] {
-  --bg: #0a0a0a;
-  --panel: #0f0f0f;
-  --text: #b8ffce;           /* мягкий лаймовый */
-  --accent: #00cc33;         /* яркий зелёный */
-  --hover: #00ff6f;          /* ховер */
-  --red: #ff3333;            /* красный */
-  --border: #004d00;
-  --glow: #00ff41;           /* свечение */
-  --node-bg: #0f0f0f;
-  --input-bg: #1a1a1a;
-}
+:root {
+  --bg: #000000;
+  --panel: #000080;
+  --text: #00ffff;
+  --accent: #ff00ff;
+  --green: #00ff00;
+  --red: #ff0000;
+  --border: #008080;
+  --node-bg: #0000a0;
+  --grid-color: rgba(0,255,255,0.1);
+  --shadow-low: 0 0 10px #00ffff;
+  --shadow-high: 0 0 20px #ff00ff;
 
-body[data-theme="turbo-vision-dark"] {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Lucida Console", "Courier New", monospace;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-}
-
-/* Заголовок — с сильным свечением */
-.header h1 {
-  color: #ffffff;
-  text-shadow: 
-    0 0 8px var(--glow),
-    0 0 16px var(--glow);
-  font-weight: 900;
-}
-
-/* Панели и кнопки — жирные, но без свечения */
-.header, .action-bar, .top-bar {
-  background: var(--panel);
-  border-bottom: 2px solid var(--border);
-}
-
-button {
-  background: var(--accent);
-  color: #ffffff !important;
-  border: 2px solid var(--border);
-  font-weight: 800;
-  padding: 10px 16px;
-  font-size: 14px;
-  letter-spacing: 1px;
-}
-button:hover {
-  background: var(--hover);
-  box-shadow: 0 0 12px var(--glow);
-}
-
-/* ТВОИ ЦВЕТА — только для конкретных кнопок */
-button[onclick="clearAll()"] { background: #A80000 !important; }
-button[onclick="exportJSON()"], 
-button[onclick="generateXML()"] { background: #0B9D85 !important; }
-button[onclick="importFile()"] { background: #243356 !important; }
-
-/* Настройки — заголовки со свечением */
-#settings-menu strong {
-  color: #ffffff;
-  text-shadow: 0 0 6px var(--glow);
-  font-weight: 900;
-}
-
-.dropdown-menu {
-  background: var(--panel);
-  border: 2px solid var(--border);
-  color: var(--text);
-}
-
-.node {
-  background: var(--node-bg);
-  border-left-color: var(--accent);
-  color: var(--text);
-}
-
-.item-field {
-  background: var(--input-bg);
-  color: var(--text);
-  border: 2px solid var(--border);
-  font-weight: 700;
-}
-
-.prob { background: rgba(0,255,0,0.15); color: var(--text); }
-
-.tab, .event-tab {
-  background: #1a1a1a;
-  color: var(--text);
-  border: 2px solid var(--border);
-}
-.tab.active, .event-tab.active {
-  background: var(--accent);
-  color: #000000;
-}
-
-.delete-tab {
-  background: var(--red);
-  color: #ffffff;
+  /* Ретро-цвета иконок — яркие, как в старых играх */
+  --icon-damage-red-rgb: 255, 0, 0;
+  --icon-buff-green-rgb: 0, 255, 0;
+  --icon-status-orange-rgb: 255, 165, 0;
+  --icon-debuff-red-orange-rgb: 255, 69, 0;
+  --icon-poison-darkred-rgb: 139, 0, 0;
+  --icon-status-yellow-rgb: 255, 255, 0;
+  --icon-status-brown-rgb: 165, 42, 42;
+  --icon-status-gray-rgb: 128, 128, 128;
+  --icon-debuff-purple-rgb: 128, 0, 128;
+  --icon-status-tan-rgb: 210, 180, 140;
+  --icon-debuff-blue-rgb: 0, 0, 255;
+  --icon-buff-lightgreen-rgb: 144, 238, 144;
+  --icon-debuff-violet-rgb: 148, 0, 211;
 }
