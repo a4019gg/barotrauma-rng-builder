@@ -1,6 +1,6 @@
-// js/db.js — v0.9.411 — БАЗА ДАННЫХ С РАБОЧИМИ ИКОНКАМИ И БЕЗ ОШИБОК
+// js/db.js — v0.9.413 — БАЗА ДАННЫХ БЕЗ ЛОКАЛИЗАЦИИ СОДЕРЖИМОГО
 
-const DB_VERSION = "v0.9.411";
+const DB_VERSION = "v0.9.413";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -147,7 +147,8 @@ class DatabaseManager {
     const icon = this.createRealIcon(entry.icon || {});
     top.appendChild(icon);
 
-    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
+    // СОДЕРЖИМОЕ БЕЗ ЛОКАЛИЗАЦИИ — только из JSON
+    const displayName = entry.name || entry.identifier || 'Unknown';
     const nameDiv = document.createElement('div');
     nameDiv.textContent = displayName;
     nameDiv.style.fontWeight = 'bold';
@@ -222,7 +223,8 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    const descText = entry.description || loc(entry.desc_key || '') || '';
+    // ОПИСАНИЕ БЕЗ ЛОКАЛИЗАЦИИ
+    const descText = entry.description || '';
     const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
@@ -237,7 +239,7 @@ class DatabaseManager {
     card.appendChild(separator);
 
     const fullDesc = document.createElement('div');
-    fullDesc.textContent = descText || loc('noDescription');
+    fullDesc.textContent = descText || 'Нет описания';
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
@@ -261,7 +263,7 @@ class DatabaseManager {
 
   appendItemDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
@@ -269,7 +271,7 @@ class DatabaseManager {
 
   appendCreatureDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
