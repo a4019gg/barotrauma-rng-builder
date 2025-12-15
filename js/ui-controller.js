@@ -1,4 +1,4 @@
-// js/ui-controller.js — v0.9.301 — ДЕЛЕГИРОВАНИЕ click/change, copy/download
+// js/ui-controller.js — v0.9.302 — ДЕЛЕГИРОВАНИЕ click/change, copy/download
 
 class UIController {
   constructor() {
