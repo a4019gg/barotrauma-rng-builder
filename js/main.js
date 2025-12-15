@@ -1,17 +1,22 @@
-// js/main.js — v0.9.401 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ
+// js/main.js — v0.9.401 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ (ЧИСТЫЙ JS, БЕЗ МОДУЛЕЙ)
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Создаём экземпляры компонентов
+  // Создаём основные компоненты
   const nodeFactory = new NodeFactory();
-  const editorState = new EditorState({ nodeFactory });
-  const uiController = new UIController({ editorState, nodeFactory });
+  const editorState = new EditorState();
+  const uiController = new UIController();
 
-  // Глобальные ссылки для совместимости с старым кодом и кнопками
+  // Передаём зависимости (где нужно)
+  // NodeFactory пока не требует зависимостей
+  // EditorState использует nodeFactory глобально (временная совместимость)
+  // UIController — чистое делегирование, не нуждается в зависимостях
+
+  // Глобальные ссылки для совместимости со старым кодом и кнопками
   window.nodeFactory = nodeFactory;
   window.editorState = editorState;
   window.dbManager = dbManager; // из db.js
 
-  // Глобальные функции добавления в корень (для кнопок в action-bar)
+  // Глобальные функции добавления в корень (для action-bar)
   window.addRNG = () => {
     const newModel = nodeFactory.createModelRNG();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
@@ -36,12 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
     editorState.renderCurrentEvent();
   };
 
-  // Заглушки для функций, которые пока не реализованы полностью
+  // Заглушка для updateAll (расчёт вероятностей — позже)
   window.updateAll = () => {
     console.log('updateAll called — probabilities recalc (placeholder)');
-    // В будущем здесь будет расчёт вероятностей
+    // В будущем здесь будет полноценный расчёт
   };
 
+  // Импорт JSON
   window.importFile = () => {
     const input = document.getElementById('file-input');
     input.onchange = (e) => {
@@ -63,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.click();
   };
 
+  // Экспорт JSON
   window.exportJSON = () => {
     const data = editorState.exportData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
