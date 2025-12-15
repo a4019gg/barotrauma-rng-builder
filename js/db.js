@@ -1,6 +1,6 @@
-// js/db.js — v0.9.404 — БАЗА ДАННЫХ С РЕАЛЬНЫМИ ИКОНКАМИ И РАЗНЫМИ ШАБЛОНАМИ
+// js/db.js — v0.9.405 — ФИКС ИКОНОК (асинхронная загрузка + кэш)
 
-const DB_VERSION = "v0.9.404";
+const DB_VERSION = "v0.9.405";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,8 +8,9 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map();
-    this.atlasCache = new Map(); // Кэш загруженных атласов
+    this.iconCache = new Map(); // Кэш готовых canvas
+    this.atlasCache = new Map(); // Кэш загруженных Image
+    this.pendingAtlases = new Map(); // Обещания загрузки
     this.currentTab = 'afflictions';
     this.isModalOpen = false;
     this.loadData();
@@ -80,7 +81,6 @@ class DatabaseManager {
       btn.textContent = loc('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
       btn.dataset.tab = tab;
       btn.onclick = () => {
-        // Убираем active у всех
         tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.currentTab = tab;
@@ -132,7 +132,6 @@ class DatabaseManager {
     card.style.gap = '8px';
     card.style.fontSize = '14px';
 
-    // Иконка + имя + identifier
     const top = document.createElement('div');
     top.style.display = 'flex';
     top.style.alignItems = 'center';
@@ -151,7 +150,6 @@ class DatabaseManager {
 
     card.appendChild(top);
 
-    // Разные шаблоны для разных типов
     if (type === 'afflictions') {
       this.appendAfflictionDetails(card, entry);
     } else if (type === 'items') {
@@ -164,6 +162,7 @@ class DatabaseManager {
   }
 
   appendAfflictionDetails(card, entry) {
+    // ... (тот же код, что был раньше) ...
     const badges = document.createElement('div');
     badges.style.display = 'flex';
     badges.style.gap = '8px';
@@ -249,7 +248,6 @@ class DatabaseManager {
   }
 
   appendItemDetails(card, entry) {
-    // Плейсхолдер для предметов
     const placeholder = document.createElement('div');
     placeholder.textContent = 'Предмет: ' + (entry.identifier || 'unknown');
     placeholder.style.color = '#aaa';
@@ -258,7 +256,6 @@ class DatabaseManager {
   }
 
   appendCreatureDetails(card, entry) {
-    // Плейсхолдер для существ
     const placeholder = document.createElement('div');
     placeholder.textContent = 'Существо: ' + (entry.identifier || 'unknown');
     placeholder.style.color = '#aaa';
@@ -266,12 +263,13 @@ class DatabaseManager {
     card.appendChild(placeholder);
   }
 
-  async createRealIcon(iconInfo) {
+  createRealIcon(iconInfo) {
     const texture = iconInfo.texture || 'assets/textures/MainIconsAtlas.png';
     const sourcerect = iconInfo.sourcerect || '0,0,128,128';
     const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
 
     const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
+
     if (this.iconCache.has(cacheKey)) {
       return this.iconCache.get(cacheKey).cloneNode(true);
     }
@@ -282,26 +280,63 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Загружаем атлас (кэшируем)
-    let atlasImg = this.atlasCache.get(texture);
-    if (!atlasImg) {
-      atlasImg = new Image();
-      atlasImg.src = texture;
-      await new Promise(resolve => {
-        atlasImg.onload = resolve;
-        atlasImg.onerror = () => resolve(); // fallback
+    // Если атлас уже загружен — рисуем сразу
+    const atlasImg = this.atlasCache.get(texture);
+    if (atlasImg && atlasImg.complete) {
+      this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
+    } else {
+      // Заглушка
+      ctx.fillStyle = '#333';
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.fillStyle = '#666';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', 24, 24);
+
+      // Загружаем атлас асинхронно
+      this.loadAtlasAsync(texture).then(img => {
+        this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
+        // Обновляем все карточки с этой иконкой (если нужно)
       });
-      this.atlasCache.set(texture, atlasImg);
     }
 
-    // Парсим sourcerect: "x,y,w,h"
+    this.iconCache.set(cacheKey, canvas);
+    return canvas.cloneNode(true);
+  }
+
+  loadAtlasAsync(texture) {
+    if (this.pendingAtlases.has(texture)) {
+      return this.pendingAtlases.get(texture);
+    }
+
+    const img = new Image();
+    img.src = texture;
+
+    const promise = new Promise(resolve => {
+      img.onload = () => {
+        this.atlasCache.set(texture, img);
+        resolve(img);
+      };
+      img.onerror = () => {
+        console.warn('Failed to load atlas:', texture);
+        resolve(null);
+      };
+    });
+
+    this.pendingAtlases.set(texture, promise);
+    return promise;
+  }
+
+  drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
+    if (!img) return;
+
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
-    // Вырезаем и масштабируем на 48x48
-    ctx.drawImage(atlasImg, sx, sy, sw, sh, 0, 0, 48, 48);
+    ctx.clearRect(0, 0, 48, 48);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
-    // Применяем tint
     const rgbVar = getComputedStyle(document.documentElement)
       .getPropertyValue(`--${colorKey}-rgb`).trim();
 
@@ -311,9 +346,6 @@ class DatabaseManager {
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fillRect(0, 0, 48, 48);
     }
-
-    this.iconCache.set(cacheKey, canvas);
-    return canvas.cloneNode(true);
   }
 
   filterGrid(query) {
