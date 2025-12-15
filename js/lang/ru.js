@@ -102,4 +102,4 @@ const LANG_RU = {
   eventIdLabel: "Event ID:"
 };
 
-export default LANG_RU;
+window.LANG_RU = LANG_RU;
