@@ -1,25 +1,17 @@
 // js/main.js — v0.9.401 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Инициализация компонентов
+  // Создаём экземпляры компонентов
   const nodeFactory = new NodeFactory();
   const editorState = new EditorState({ nodeFactory });
   const uiController = new UIController({ editorState, nodeFactory });
 
-  // Начальный рендер
-  editorState.renderCurrentEvent();
-  editorState.rebuildTabs();
-
-  // Дополнительная инициализация
-  populateDatalist();
-  showScriptVersions();
-
-  // Глобальные ссылки для совместимости (временно)
-  window.editorState = editorState;
+  // Глобальные ссылки для совместимости с старым кодом и кнопками
   window.nodeFactory = nodeFactory;
-  window.dbManager = dbManager;
+  window.editorState = editorState;
+  window.dbManager = dbManager; // из db.js
 
-  // Глобальные функции добавления в корень (временные)
+  // Глобальные функции добавления в корень (для кнопок в action-bar)
   window.addRNG = () => {
     const newModel = nodeFactory.createModelRNG();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
@@ -44,13 +36,31 @@ document.addEventListener('DOMContentLoaded', () => {
     editorState.renderCurrentEvent();
   };
 
-  // Заглушки для глобальных функций (пока не реализованы)
+  // Заглушки для функций, которые пока не реализованы полностью
   window.updateAll = () => {
     console.log('updateAll called — probabilities recalc (placeholder)');
+    // В будущем здесь будет расчёт вероятностей
   };
 
   window.importFile = () => {
-    console.log('importFile called');
+    const input = document.getElementById('file-input');
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          editorState.importData(data);
+          alert(loc('presetLoaded'));
+        } catch (err) {
+          alert(loc('presetError'));
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   };
 
   window.exportJSON = () => {
@@ -59,8 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'rng-builder.json';
+    a.download = 'rng-builder-event.json';
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Начальный рендер
+  editorState.renderCurrentEvent();
+  editorState.rebuildTabs();
+
+  // Дополнительная инициализация
+  populateDatalist();
+  showScriptVersions();
 });
