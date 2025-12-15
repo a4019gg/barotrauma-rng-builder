@@ -1,9 +1,9 @@
-// js/NodeFactory.js — v0.9.402 — СОЗДАНИЕ И РЕНДЕР УЗЛОВ (ФИКСЫ БАГОВ)
+// js/NodeFactory.js — v0.9.403 — СОЗДАНИЕ И РЕНДЕР УЗЛОВ (ФИКСЫ БАГОВ)
 
-const NODES_VERSION = "v0.9.402";
+const NODES_VERSION = "v0.9.403";
 window.NODES_VERSION = NODES_VERSION;
 
-// GRID_SIZE теперь глобальная (из utils или constants, но пока здесь для совместимости)
+// GRID_SIZE теперь явно определён (фикс ошибки "not defined")
 const GRID_SIZE = 30;
 
 class NodeFactory {
@@ -67,7 +67,6 @@ class NodeFactory {
 
     const title = document.createElement('span');
     title.textContent = this.getTitle(model);
-
     header.appendChild(title);
 
     this.appendParams(header, model);
@@ -102,7 +101,7 @@ class NodeFactory {
       const successContainer = successSection.querySelector(`#c-${model.id}-s`);
       const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
 
-      // Защита от null/undefined
+      // Защита от null/undefined (фикс исчезновения нод)
       const successChildren = model.children.success || [];
       const failureChildren = model.children.failure || [];
 
@@ -162,7 +161,8 @@ class NodeFactory {
         const itemInput = document.createElement('input');
         itemInput.type = 'text';
         itemInput.className = 'item-field';
-        itemInput.list = 'item-datalist';
+        // ФИКС: setAttribute вместо прямого присваивания list
+        itemInput.setAttribute('list', 'item-datalist');
         itemInput.value = params.item || 'revolver';
         itemInput.placeholder = loc('itemPlaceholder');
         itemInput.dataset.action = 'updateParam';
@@ -179,7 +179,7 @@ class NodeFactory {
         const creatureInput = document.createElement('input');
         creatureInput.type = 'text';
         creatureInput.className = 'creature-field';
-        creatureInput.list = 'item-datalist';
+        creatureInput.setAttribute('list', 'item-datalist');
         creatureInput.value = params.creature || 'crawler';
         creatureInput.placeholder = loc('creaturePlaceholder');
         creatureInput.dataset.action = 'updateParam';
@@ -388,7 +388,7 @@ class NodeFactory {
 // Глобальный экземпляр
 const nodeFactory = new NodeFactory();
 
-// Глобальные функции добавления в корень (для совместимости)
+// Глобальные функции добавления в корень
 window.addRNG = () => {
   const newModel = nodeFactory.createModelRNG();
   window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
