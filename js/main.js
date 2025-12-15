@@ -1,4 +1,4 @@
-// js/main.js — v0.9.403 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ (ФИНАЛЬНАЯ ВЕРСИЯ)
+// js/main.js — v0.9.403 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ
 
 let isInitialized = false;
 
@@ -11,12 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const editorState = new EditorState();
   const uiController = new UIController();
 
-  // Глобальные ссылки для совместимости
+  // Глобальные ссылки для совместимости со всем кодом
   window.nodeFactory = nodeFactory;
   window.editorState = editorState;
   window.dbManager = dbManager;
 
-  // Глобальные функции добавления в корень (для action-bar)
+  // Глобальные функции добавления в корень (для кнопок в action-bar)
   window.addRNG = () => {
     const newModel = nodeFactory.createModelRNG();
     editorState.events[editorState.currentEventIndex].model.push(newModel);
@@ -45,16 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAll();
   };
 
-  // Глобальная функция updateAll (один раз на действие)
+  // Единая глобальная функция updateAll (вызывается только один раз на действие)
   window.updateAll = () => {
     console.log('updateAll called — probabilities recalc (placeholder)');
     // Здесь будет расчёт вероятностей
-    if (document.getElementById('tree-container').style.display === 'block') {
+    if (document.getElementById('tree-container') && document.getElementById('tree-container').style.display === 'block') {
       treeView.render();
     }
   };
 
-  // Импорт JSON
+  // Импорт JSON (пресеты или сохранённые события)
   window.importFile = () => {
     const input = document.getElementById('file-input');
     input.onchange = (e) => {
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
   editorState.renderCurrentEvent();
   editorState.rebuildTabs();
 
-  // Дополнительная инициализация
+  // Дополнительная инициализация (datalist и версии)
   populateDatalist();
   showScriptVersions();
 });
