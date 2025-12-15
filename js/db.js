@@ -1,42 +1,29 @@
-// js/db.ts — v0.9.401 — БАЗА ДАННЫХ С НОВЫМ ИНТЕРФЕЙСОМ АФФЛИКТОВ
+// js/db.js — v0.9.401 — БАЗА ДАННЫХ С ПОЛНОЙ ЛОКАЛИЗАЦИЕЙ
 
-import { loc } from './utils';
-
-interface IconInfo {
-  texture: string;
-  sourcerect: string;
-  color_theme_key: string;
-  origin?: string;
-}
-
-interface AfflictionEntry {
-  identifier: string;
-  name?: string;
-  name_key?: string;
-  description?: string;
-  desc_key?: string;
-  type: string;
-  maxstrength: string | number;
-  limbspecific: boolean;
-  isbuff: boolean;
-  icon: IconInfo;
-}
+const DB_VERSION = "v0.9.401";
+window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
-  private afflictions: AfflictionEntry[] = [];
-
   constructor() {
-    this.loadAfflictions();
+    this.afflictions = [];
+    this.items = [];
+    this.creatures = [];
+    this.loadData();
   }
 
-  private async loadAfflictions() {
+  async loadData() {
     try {
-      const response = await fetch('data/afflictions.json');
-      if (!response.ok) throw new Error('Failed to load afflictions');
-      this.afflictions = await response.json();
-      this.renderGrid('afflictions');
+      const [affResp, itemResp, creatureResp] = await Promise.all([
+        fetch('data/afflictions.json'),
+        fetch('data/items.json'),
+        fetch('data/creatures.json')
+      ]);
+
+      if (affResp.ok) this.afflictions = await affResp.json();
+      if (itemResp.ok) this.items = await itemResp.json();
+      if (creatureResp.ok) this.creatures = await creatureResp.json();
     } catch (err) {
-      console.error('DB Error:', err);
+      console.error('Failed to load database', err);
       alert(loc('dbError'));
     }
   }
@@ -52,22 +39,8 @@ class DatabaseManager {
     header.className = 'db-modal-header';
     header.innerHTML = `<h2>${loc('dataBase')}</h2>`;
 
-    const tabs = document.createElement('div');
-    tabs.className = 'db-tabs';
-    ['items', 'creatures', 'afflictions'].forEach(tab => {
-      const btn = document.createElement('button');
-      btn.className = 'db-tab-btn' + (tab === 'afflictions' ? ' active' : '');
-      btn.textContent = loc('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-      btn.onclick = () => this.renderGrid(tab);
-      tabs.appendChild(btn);
-    });
-
-    const search = document.createElement('input');
-    search.type = 'text';
-    search.className = 'db-search-input';
-    search.placeholder = loc('searchPlaceholder');
-    search.oninput = () => this.filterGrid(search.value);
-
+    const tabs = this.createTabs();
+    const search = this.createSearchInput();
     header.appendChild(tabs);
     header.appendChild(search);
 
@@ -87,12 +60,36 @@ class DatabaseManager {
     this.renderGrid('afflictions');
   }
 
-  private renderGrid(tab: string) {
-    const grid = document.getElementById('db-grid') as HTMLElement;
+  createTabs() {
+    const tabs = document.createElement('div');
+    tabs.className = 'db-tabs';
+
+    ['afflictions', 'items', 'creatures'].forEach(tab => {
+      const btn = document.createElement('button');
+      btn.className = 'db-tab-btn' + (tab === 'afflictions' ? ' active' : '');
+      btn.textContent = loc('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      btn.onclick = () => this.renderGrid(tab);
+      tabs.appendChild(btn);
+    });
+
+    return tabs;
+  }
+
+  createSearchInput() {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'db-search-input';
+    input.placeholder = loc('searchPlaceholder');
+    input.oninput = (e) => this.filterGrid(e.target.value);
+    return input;
+  }
+
+  renderGrid(type) {
+    const grid = document.getElementById('db-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
-    const data = tab === 'afflictions' ? this.afflictions : [];
+    const data = this[type] || [];
 
     if (data.length === 0) {
       const empty = document.createElement('div');
@@ -103,12 +100,12 @@ class DatabaseManager {
     }
 
     data.forEach(entry => {
-      const card = this.createAfflictionCard(entry as AfflictionEntry);
+      const card = this.createCard(entry, type);
       grid.appendChild(card);
     });
   }
 
-  private createAfflictionCard(entry: AfflictionEntry): HTMLElement {
+  createCard(entry, type) {
     const card = document.createElement('div');
     card.className = 'db-entry-btn';
     card.style.padding = '12px';
@@ -117,47 +114,51 @@ class DatabaseManager {
     card.style.gap = '8px';
     card.style.fontSize = '14px';
 
-    // Верхняя часть — иконка + имя + identifier
-    const topRow = document.createElement('div');
-    topRow.style.display = 'flex';
-    topRow.style.alignItems = 'center';
-    topRow.style.gap = '12px';
+    // Верхняя часть: иконка + имя + identifier
+    const top = document.createElement('div');
+    top.style.display = 'flex';
+    top.style.alignItems = 'center';
+    top.style.gap = '12px';
+    top.style.marginBottom = '8px';
 
-    const iconCanvas = this.createIconCanvas(entry.icon);
-    topRow.appendChild(iconCanvas);
+    const icon = this.createIcon(entry.icon);
+    top.appendChild(icon);
 
-    const namePart = document.createElement('div');
     const displayName = entry.name || loc(entry.name_key || '') || entry.identifier;
-    namePart.textContent = `${displayName} (${entry.identifier})`;
-    namePart.style.fontWeight = 'bold';
-    namePart.style.color = '#61afef';
-    topRow.appendChild(namePart);
+    const name = document.createElement('div');
+    name.textContent = `${displayName} (${entry.identifier})`;
+    name.style.fontWeight = 'bold';
+    name.style.color = '#61afef';
+    top.appendChild(name);
 
-    card.appendChild(topRow);
+    card.appendChild(top);
 
     // Бейджики
-    const badgesRow = document.createElement('div');
-    badgesRow.style.display = 'flex';
-    badgesRow.style.gap = '8px';
-    badgesRow.style.alignItems = 'center';
-    badgesRow.style.flexWrap = 'wrap';
+    const badges = document.createElement('div');
+    badges.style.display = 'flex';
+    badges.style.gap = '8px';
+    badges.style.flexWrap = 'wrap';
+    badges.style.marginBottom = '8px';
 
+    // Тип
     const typeBadge = document.createElement('span');
     typeBadge.textContent = `[${entry.type}]`;
     typeBadge.style.padding = '2px 8px';
     typeBadge.style.background = '#444';
     typeBadge.style.borderRadius = '4px';
     typeBadge.style.fontSize = '12px';
-    badgesRow.appendChild(typeBadge);
+    badges.appendChild(typeBadge);
 
+    // Макс. сила
     const maxBadge = document.createElement('span');
-    maxBadge.textContent = `[Max: ${entry.maxstrength}]`;
+    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength}]`;
     maxBadge.style.padding = '2px 8px';
     maxBadge.style.background = '#555';
     maxBadge.style.borderRadius = '4px';
     maxBadge.style.fontSize = '12px';
-    badgesRow.appendChild(maxBadge);
+    badges.appendChild(maxBadge);
 
+    // Limbspecific
     if (entry.limbspecific) {
       const limbBadge = document.createElement('span');
       limbBadge.textContent = '[limb]';
@@ -166,9 +167,10 @@ class DatabaseManager {
       limbBadge.style.color = 'white';
       limbBadge.style.borderRadius = '4px';
       limbBadge.style.fontSize = '12px';
-      badgesRow.appendChild(limbBadge);
+      badges.appendChild(limbBadge);
     }
 
+    // Isbuff
     if (entry.isbuff) {
       const buffBadge = document.createElement('span');
       buffBadge.textContent = '[buff]';
@@ -177,10 +179,10 @@ class DatabaseManager {
       buffBadge.style.color = 'white';
       buffBadge.style.borderRadius = '4px';
       buffBadge.style.fontSize = '12px';
-      badgesRow.appendChild(buffBadge);
+      badges.appendChild(buffBadge);
     }
 
-    card.appendChild(badgesRow);
+    card.appendChild(badges);
 
     // Краткое описание
     const shortDesc = document.createElement('div');
@@ -188,7 +190,7 @@ class DatabaseManager {
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
     shortDesc.style.fontSize = '13px';
-    shortDesc.style.marginTop = '4px';
+    shortDesc.style.marginBottom = '8px';
     card.appendChild(shortDesc);
 
     // Разделитель
@@ -198,28 +200,29 @@ class DatabaseManager {
     separator.style.margin = '8px 0';
     card.appendChild(separator);
 
-    // Полное описание и детали
+    // Полное описание
     const fullDesc = document.createElement('div');
-    fullDesc.textContent = descText || 'Нет описания';
+    fullDesc.textContent = descText || loc('noDescription');
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
+    // Детали с локализацией
     const details = [
-      { label: 'ID', value: entry.identifier },
-      { label: 'Тип', value: entry.type },
-      { label: 'Макс. сила', value: entry.maxstrength },
-      { label: 'Локально', value: entry.limbspecific ? 'да' : 'нет' },
-      { label: 'Бафф', value: entry.isbuff ? 'да' : 'нет' }
+      { key: 'dbDetailID', value: entry.identifier },
+      { key: 'dbDetailType', value: entry.type },
+      { key: 'dbDetailMaxStrength', value: entry.maxstrength },
+      { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
+      { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
     ];
 
     details.forEach(d => {
       const line = document.createElement('div');
-      line.innerHTML = `<strong>${d.label}:</strong> ${d.value}`;
+      line.innerHTML = `<strong>${loc(d.key)}:</strong> ${d.value}`;
       line.style.fontSize = '13px';
       card.appendChild(line);
     });
 
-    // Пустая строка в конце
+    // Пустое пространство в конце
     const spacer = document.createElement('div');
     spacer.style.height = '8px';
     card.appendChild(spacer);
@@ -227,26 +230,27 @@ class DatabaseManager {
     return card;
   }
 
-  private createIconCanvas(icon: IconInfo): HTMLCanvasElement {
+  createIcon(iconInfo) {
     const canvas = document.createElement('canvas');
     canvas.width = 48;
     canvas.height = 48;
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Заглушка — в будущем загрузим атлас и вырежем sourcerect
+    // Заглушка — фон
     ctx.fillStyle = '#333';
     ctx.fillRect(0, 0, 48, 48);
 
     // Применение цвета по color_theme_key
-    const rgbVar = getComputedStyle(document.documentElement).getPropertyValue(`--${icon.color_theme_key}-rgb`).trim();
+    const rgbVar = getComputedStyle(document.documentElement).getPropertyValue(`--${iconInfo.color_theme_key}-rgb`).trim();
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
       ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fillRect(0, 0, 48, 48);
     }
 
+    // Рамка
     ctx.strokeStyle = '#61afef';
     ctx.lineWidth = 2;
     ctx.strokeRect(2, 2, 44, 44);
@@ -254,19 +258,17 @@ class DatabaseManager {
     return canvas;
   }
 
-  private filterGrid(query: string) {
-    const grid = document.getElementById('db-grid') as HTMLElement;
+  filterGrid(query) {
+    const grid = document.getElementById('db-grid');
     if (!grid) return;
 
     const cards = grid.querySelectorAll('.db-entry-btn');
     cards.forEach(card => {
-      const text = card.textContent?.toLowerCase() || '';
-      (card as HTMLElement).style.display = text.includes(query.toLowerCase()) ? 'flex' : 'none';
+      const text = card.textContent.toLowerCase();
+      card.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
     });
   }
 }
 
 const dbManager = new DatabaseManager();
-(window as any).dbManager = dbManager;
-
-export default dbManager;
+window.dbManager = dbManager;
