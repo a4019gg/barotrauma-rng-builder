@@ -1,18 +1,36 @@
-// js/main.js — v0.9.302 — КЛАСС EditorState, ИСПРАВЛЕНИЯ exportJSON, updateAll, importFile, populateDatalist
+// js/EditorState.ts — v0.9.401 — КЛАСС СОСТОЯНИЯ РЕДАКТОРА НА TYPESCRIPT
 
-const MAIN_VERSION = "v0.9.302";
-window.MAIN_VERSION = MAIN_VERSION;
+import { NodeModel, EventModel } from './shared/types';
+import nodeFactory from './NodeFactory';
+import { loc } from './utils';
+
+const MAIN_VERSION = "v0.9.401";
+(window as any).MAIN_VERSION = MAIN_VERSION;
+
+interface EditorStateDependencies {
+  nodeFactory?: typeof nodeFactory;
+  onUpdate?: () => void;
+  loc?: typeof loc;
+}
 
 class EditorState {
-  constructor() {
-    this.currentEventIndex = 0;
-    this.events = [{ model: [] }];
-    this.undoStack = [];
-    this.redoStack = [];
-    this.maxHistory = 50;
+  private currentEventIndex: number = 0;
+  private events: EventModel[] = [{ model: [] }];
+  private undoStack: string[] = [];
+  private redoStack: string[] = [];
+  private maxHistory: number = 50;
+
+  private nodeFactory: typeof nodeFactory;
+  private onUpdate: () => void;
+  private loc: typeof loc;
+
+  constructor(dependencies: EditorStateDependencies = {}) {
+    this.nodeFactory = dependencies.nodeFactory || nodeFactory;
+    this.onUpdate = dependencies.onUpdate || (() => console.log('update triggered'));
+    this.loc = dependencies.loc || loc;
   }
 
-  saveState() {
+  private saveState(): void {
     const state = JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
@@ -23,18 +41,18 @@ class EditorState {
     this.redoStack = [];
   }
 
-  deepCopy(obj) {
+  private deepCopy<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
   }
 
-  undo() {
+  undo(): boolean {
     if (this.undoStack.length === 0) return false;
     this.redoStack.push(JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
     }));
 
-    const prev = JSON.parse(this.undoStack.pop());
+    const prev = JSON.parse(this.undoStack.pop()!);
     this.events = prev.events;
     this.currentEventIndex = prev.currentEventIndex;
 
@@ -43,14 +61,14 @@ class EditorState {
     return true;
   }
 
-  redo() {
+  redo(): boolean {
     if (this.redoStack.length === 0) return false;
     this.undoStack.push(JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
     }));
 
-    const next = JSON.parse(this.redoStack.pop());
+    const next = JSON.parse(this.redoStack.pop()!);
     this.events = next.events;
     this.currentEventIndex = next.currentEventIndex;
 
@@ -59,18 +77,18 @@ class EditorState {
     return true;
   }
 
-  addEvent() {
+  addEvent(): void {
     this.saveState();
     this.events.push({ model: [] });
     this.switchToEvent(this.events.length - 1);
   }
 
-  deleteEvent(index) {
+  deleteEvent(index: number): boolean {
     if (this.events.length <= 1) {
-      alert(loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
+      alert(this.loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
       return false;
     }
-    if (!confirm(loc('deleteEventConfirm', 'Удалить ивент?'))) return false;
+    if (!confirm(this.loc('deleteEventConfirm', 'Удалить ивент?'))) return false;
 
     this.saveState();
     this.events.splice(index, 1);
@@ -81,7 +99,7 @@ class EditorState {
     return true;
   }
 
-  switchToEvent(index) {
+  switchToEvent(index: number): void {
     if (index < 0 || index >= this.events.length) return;
 
     this.saveState();
@@ -90,15 +108,22 @@ class EditorState {
     this.rebuildTabs();
   }
 
-  renderCurrentEvent() {
+  renderCurrentEvent(): void {
     const container = document.getElementById('root-children');
     if (!container) return;
     container.innerHTML = '';
-    renderModelToDOM(this.events[this.currentEventIndex].model, container);
-    updateAll();
+    this.renderModelToDOM(this.events[this.currentEventIndex].model, container);
+    this.onUpdate();
   }
 
-  rebuildTabs() {
+  private renderModelToDOM(model: NodeModel[], container: HTMLElement): void {
+    model.forEach(nodeModel => {
+      const nodeElement = this.nodeFactory.createFromModel(nodeModel);
+      container.appendChild(nodeElement);
+    });
+  }
+
+  rebuildTabs(): void {
     const list = document.getElementById('events-list');
     if (!list) return;
     list.innerHTML = '';
@@ -127,7 +152,7 @@ class EditorState {
     });
   }
 
-  findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
+  findNodeById(id: number, nodes: NodeModel[] = this.events[this.currentEventIndex].model): NodeModel | null {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.type === 'rng' && node.children) {
@@ -138,17 +163,24 @@ class EditorState {
     return null;
   }
 
-  removeNodeById(id, nodes = this.events[this.currentEventIndex].model) {
+  removeNodeById(id: number): boolean {
+    const removed = this._removeNodeRecursive(id, this.events[this.currentEventIndex].model);
+    if (removed) {
+      this.renderCurrentEvent();
+      this.onUpdate();
+    }
+    return removed;
+  }
+
+  private _removeNodeRecursive(id: number, nodes: NodeModel[]): boolean {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       if (node.id === id) {
         nodes.splice(i, 1);
-        this.renderCurrentEvent();
         return true;
       }
       if (node.type === 'rng' && node.children) {
-        if (this.removeNodeById(id, node.children.success) || this.removeNodeById(id, node.children.failure)) {
-          this.renderCurrentEvent();
+        if (this._removeNodeRecursive(id, node.children.success) || this._removeNodeRecursive(id, node.children.failure)) {
           return true;
         }
       }
@@ -156,10 +188,24 @@ class EditorState {
     return false;
   }
 
-  autoBalance() {
+  addNodeToBranch(parentId: number, branch: 'success' | 'failure', type: string): boolean {
+    const parent = this.findNodeById(parentId);
+    if (!parent || parent.type !== 'rng' || !parent.children || !parent.children[branch]) {
+      console.warn('Cannot add to branch: invalid parent or branch', { parentId, branch, type });
+      return false;
+    }
+
+    const newModel = (this.nodeFactory as any)[`createModel${type.charAt(0).toUpperCase() + type.slice(1)}`]();
+    parent.children[branch].push(newModel);
+    this.renderCurrentEvent();
+    this.onUpdate();
+    return true;
+  }
+
+  autoBalance(): void {
     this.saveState();
 
-    function balance(nodes) {
+    const balance = (nodes: NodeModel[]) => {
       nodes.forEach(node => {
         if (node.type === 'rng') {
           const successCount = node.children?.success ? node.children.success.filter(n => n.type !== 'rng').length : 0;
@@ -174,123 +220,51 @@ class EditorState {
           if (node.children?.failure) balance(node.children.failure);
         }
       });
-    }
+    };
 
     balance(this.events[this.currentEventIndex].model);
     this.renderCurrentEvent();
-    alert(loc('autoBalanceDone', 'Автобаланс завершён'));
+    this.onUpdate();
+    alert(this.loc('autoBalanceDone', 'Автобаланс завершён'));
   }
 
-  clearAll() {
+  clearAll(): void {
     this.saveState();
     this.events[this.currentEventIndex].model = [];
     this.renderCurrentEvent();
+    this.onUpdate();
   }
 
-  exportData() {
+  exportData(): any {
     this.saveState();
     return {
-      version: "v0.9.302",
+      version: "v0.9.401",
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
 
-  importData(data) {
+  importData(data: any): boolean {
     if (!data.events || !Array.isArray(data.events)) return false;
-    this.events = data.events.map(e => ({ model: e.model || [] }));
+    this.events = data.events.map((e: any) => ({ model: e.model || [] }));
     this.currentEventIndex = 0;
     this.renderCurrentEvent();
     this.rebuildTabs();
-    updateAll();
+    this.onUpdate();
     return true;
   }
 }
 
-// Глобальный экземпляр
-window.editorState = new EditorState();
-
-// Рендерер
-function renderModelToDOM(model, container) {
-  model.forEach(nodeModel => {
-    const nodeElement = nodeFactory.createFromModel(nodeModel);
-    container.appendChild(nodeElement);
-  });
-}
-
-// === populateDatalist — базовая реализация с популярными ID ===
-function populateDatalist() {
-  const datalist = document.getElementById('item-datalist');
-  if (!datalist) return;
-
-  const commonIds = [
-    'revolver', 'revolverrounds', 'divingknife', 'toolbox', 'oxygenitetank',
-    'plasmacutter', 'crowbar', 'weldingtool', 'crawler', 'husk', 'mudraptor',
-    'hammerhead', 'bleeding', 'burn', 'oxygenlow', 'radiationsickness', 'huskinfection'
-  ];
-
-  commonIds.forEach(id => {
-    const opt = document.createElement('option');
-    opt.value = id;
-    datalist.appendChild(opt);
-  });
-}
-
-// === importFile ===
-function importFile() {
-  const input = document.getElementById('file-input');
-  if (!input) return;
-  input.onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (window.editorState.importData(data)) {
-          alert(loc('presetLoaded', 'Импорт завершён'));
-        } else {
-          alert('Ошибка формата файла');
-        }
-      } catch (err) {
-        alert('Ошибка чтения файла');
-        console.error(err);
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
-
-// === updateAll — временная заглушка (в будущем — расчёт вероятностей на модели) ===
-function updateAll() {
-  console.log('updateAll called — probabilities recalc (placeholder)');
-  // В v1.0 здесь будет полноценный расчёт final/global chance на модели
-}
-
-// === exportJSON ===
-function exportJSON() {
-  const data = window.editorState.exportData();
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rng-builder-v0.9.302.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-// === СТАРТ ===
-document.addEventListener('DOMContentLoaded', () => {
-  populateDatalist();
-  window.editorState.renderCurrentEvent();
-  window.editorState.rebuildTabs();
-  showScriptVersions();
-});
+// Глобальный экземпляр (временно, пока не перейдём на main.ts)
+const editorState = new EditorState();
 
 // Глобальные для совместимости
-window.addEvent = () => window.editorState.addEvent();
-window.clearAll = () => window.editorState.clearAll();
-window.autoBalance = () => window.editorState.autoBalance();
-window.importFile = importFile;
-window.exportJSON = exportJSON;
-window.updateAll = updateAll;
+(window as any).editorState = editorState;
+
+(window as any).addEvent = () => editorState.addEvent();
+(window as any).clearAll = () => editorState.clearAll();
+(window as any).autoBalance = () => editorState.autoBalance();
+(window as any).importFile = importFile;
+(window as any).exportJSON = exportJSON;
+(window as any).updateAll = updateAll;
+
+export default editorState;
