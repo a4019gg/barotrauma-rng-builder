@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.401</title>
+  <title>Barotrauma RNG Builder v0.9.402</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link rel="stylesheet" href="css/style.css" id="main-style">
   <link rel="stylesheet" id="theme-style">
@@ -92,7 +92,8 @@
   </div>
   <div class="action-right">
     <button class="green" data-action="generateXML" data-l10n="generateXML">Сгенерировать XML</button>
-    <button data-action="copyXML" data-l10n="copyXML">Копировать XML</button>
+    <!-- ФИКС: новый ключ для кнопки -->
+    <button data-action="copyXML" data-l10n="copyXMLButton">Копировать XML</button>
     <button data-action="downloadXML" data-l10n="downloadXML">Скачать XML</button>
     <button data-action="importFromXML" data-l10n="importXML">Импорт из XML</button>
   </div>
@@ -134,7 +135,7 @@
 <input type="file" id="file-input" style="display:none" accept=".json">
 <datalist id="item-datalist"></datalist>
 
-<!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ В ПРАВИЛЬНОМ ПОРЯДКЕ -->
+<!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
 <script src="js/lang/en.js"></script>
 <script src="js/lang/ru.js"></script>
 <script src="js/utils.js"></script>
