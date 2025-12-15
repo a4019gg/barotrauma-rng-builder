@@ -1,6 +1,6 @@
-// js/db.js — v0.9.408 — БАЗА ДАННЫХ С ЛОКАЛИЗАЦИЕЙ ТОЛЬКО ИНТЕРФЕЙСА
+// js/db.js — v0.9.409 — БАЗА ДАННЫХ С ПРАВИЛЬНЫМИ ИКОНКАМИ И ЛОКАЛИЗАЦИЕЙ ИНТЕРФЕЙСА
 
-const DB_VERSION = "v0.9.408";
+const DB_VERSION = "v0.9.409";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -142,7 +142,7 @@ class DatabaseManager {
     const icon = this.createRealIcon(entry.icon || {});
     top.appendChild(icon);
 
-    const displayName = entry.name || entry.identifier || 'Unknown';
+    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
     const nameDiv = document.createElement('div');
     nameDiv.textContent = displayName;
     nameDiv.style.fontWeight = 'bold';
@@ -154,7 +154,7 @@ class DatabaseManager {
 
     // ID на отдельной строке
     const idLine = document.createElement('div');
-    idLine.textContent = 'ID: ' + (entry.identifier || 'unknown');
+    idLine.textContent = loc('dbDetailID') + ': ' + (entry.identifier || 'unknown');
     idLine.style.color = '#aaa';
     idLine.style.fontSize = '13px';
     idLine.style.wordBreak = 'break-all';
@@ -187,7 +187,7 @@ class DatabaseManager {
     badges.appendChild(typeBadge);
 
     const maxBadge = document.createElement('span');
-    maxBadge.textContent = `[Макс. сила: ${entry.maxstrength || '—'}]`;
+    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
     maxBadge.style.padding = '2px 8px';
     maxBadge.style.background = '#555';
     maxBadge.style.borderRadius = '4px';
@@ -218,7 +218,7 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    const descText = entry.description || '';
+    const descText = entry.description || loc(entry.desc_key || '') || '';
     const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
@@ -233,21 +233,21 @@ class DatabaseManager {
     card.appendChild(separator);
 
     const fullDesc = document.createElement('div');
-    fullDesc.textContent = descText || 'Нет описания';
+    fullDesc.textContent = descText || loc('noDescription');
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
     const details = [
-      { label: 'Тип', value: entry.type || '—' },
-      { label: 'Макс. сила', value: entry.maxstrength || '—' },
-      { label: 'Локально', value: entry.limbspecific ? 'да' : 'нет' },
-      { label: 'Бафф', value: entry.isbuff ? 'да' : 'нет' }
+      { key: 'dbDetailType', value: entry.type || '—' },
+      { key: 'dbDetailMaxStrength', value: entry.maxstrength || '—' },
+      { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
+      { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
     ];
 
     details.forEach(d => {
       const line = document.createElement('div');
       const label = document.createElement('strong');
-      label.textContent = d.label + ': ';
+      label.textContent = loc(d.key) + ': ';
       line.appendChild(label);
       line.appendChild(document.createTextNode(d.value));
       line.style.fontSize = '13px';
@@ -257,7 +257,7 @@ class DatabaseManager {
 
   appendItemDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = 'Предмет: ' + (entry.identifier || 'unknown');
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
@@ -265,15 +265,31 @@ class DatabaseManager {
 
   appendCreatureDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = 'Существо: ' + (entry.identifier || 'unknown');
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
   }
 
   createRealIcon(iconInfo) {
-    const texture = iconInfo.texture || 'assets/textures/MainIconsAtlas.png';
-    const sourcerect = iconInfo.sourcerect || '0,0,128,128';
+    // Если iconInfo нет — заглушка
+    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 48;
+      canvas.height = 48;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#333';
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.fillStyle = '#666';
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', 24, 24);
+      return canvas;
+    }
+
+    const texture = iconInfo.texture;
+    const sourcerect = iconInfo.sourcerect;
     const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
 
     const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
@@ -289,9 +305,11 @@ class DatabaseManager {
     if (!ctx) return canvas;
 
     const atlasImg = this.atlasCache.get(texture);
+
     if (atlasImg && atlasImg.complete) {
       this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
     } else {
+      // Заглушка пока атлас грузится
       ctx.fillStyle = '#333';
       ctx.fillRect(0, 0, 48, 48);
       ctx.fillStyle = '#666';
@@ -300,8 +318,11 @@ class DatabaseManager {
       ctx.textBaseline = 'middle';
       ctx.fillText('?', 24, 24);
 
+      // Асинхронная загрузка атласа
       this.loadAtlasAsync(texture).then(img => {
-        this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
+        if (img) {
+          this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
+        }
       });
     }
 
@@ -315,6 +336,7 @@ class DatabaseManager {
     }
 
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // На всякий случай
     img.src = texture;
 
     const promise = new Promise(resolve => {
@@ -322,7 +344,10 @@ class DatabaseManager {
         this.atlasCache.set(texture, img);
         resolve(img);
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => {
+        console.warn('Failed to load atlas:', texture);
+        resolve(null);
+      };
     });
 
     this.pendingAtlases.set(texture, promise);
@@ -330,8 +355,6 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
-    if (!img) return;
-
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
