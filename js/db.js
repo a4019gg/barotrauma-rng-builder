@@ -1,6 +1,6 @@
-// js/db.js — v0.9.405 — ФИКС ИКОНОК (асинхронная загрузка + кэш)
+// js/db.js — v0.9.408 — БАЗА ДАННЫХ С ЛОКАЛИЗАЦИЕЙ ТОЛЬКО ИНТЕРФЕЙСА
 
-const DB_VERSION = "v0.9.405";
+const DB_VERSION = "v0.9.408";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,9 +8,9 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map(); // Кэш готовых canvas
-    this.atlasCache = new Map(); // Кэш загруженных Image
-    this.pendingAtlases = new Map(); // Обещания загрузки
+    this.iconCache = new Map();
+    this.atlasCache = new Map();
+    this.pendingAtlases = new Map();
     this.currentTab = 'afflictions';
     this.isModalOpen = false;
     this.loadData();
@@ -132,6 +132,7 @@ class DatabaseManager {
     card.style.gap = '8px';
     card.style.fontSize = '14px';
 
+    // Верхняя часть: иконка + название
     const top = document.createElement('div');
     top.style.display = 'flex';
     top.style.alignItems = 'center';
@@ -141,14 +142,23 @@ class DatabaseManager {
     const icon = this.createRealIcon(entry.icon || {});
     top.appendChild(icon);
 
-    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
-    const name = document.createElement('div');
-    name.textContent = `${displayName} (${entry.identifier || 'unknown'})`;
-    name.style.fontWeight = 'bold';
-    name.style.color = '#61afef';
-    top.appendChild(name);
+    const displayName = entry.name || entry.identifier || 'Unknown';
+    const nameDiv = document.createElement('div');
+    nameDiv.textContent = displayName;
+    nameDiv.style.fontWeight = 'bold';
+    nameDiv.style.color = '#61afef';
+    nameDiv.style.fontSize = '16px';
+    top.appendChild(nameDiv);
 
     card.appendChild(top);
+
+    // ID на отдельной строке
+    const idLine = document.createElement('div');
+    idLine.textContent = 'ID: ' + (entry.identifier || 'unknown');
+    idLine.style.color = '#aaa';
+    idLine.style.fontSize = '13px';
+    idLine.style.wordBreak = 'break-all';
+    card.appendChild(idLine);
 
     if (type === 'afflictions') {
       this.appendAfflictionDetails(card, entry);
@@ -162,7 +172,6 @@ class DatabaseManager {
   }
 
   appendAfflictionDetails(card, entry) {
-    // ... (тот же код, что был раньше) ...
     const badges = document.createElement('div');
     badges.style.display = 'flex';
     badges.style.gap = '8px';
@@ -178,7 +187,7 @@ class DatabaseManager {
     badges.appendChild(typeBadge);
 
     const maxBadge = document.createElement('span');
-    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
+    maxBadge.textContent = `[Макс. сила: ${entry.maxstrength || '—'}]`;
     maxBadge.style.padding = '2px 8px';
     maxBadge.style.background = '#555';
     maxBadge.style.borderRadius = '4px';
@@ -209,7 +218,7 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    const descText = entry.description || loc(entry.desc_key || '') || '';
+    const descText = entry.description || '';
     const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
@@ -224,22 +233,21 @@ class DatabaseManager {
     card.appendChild(separator);
 
     const fullDesc = document.createElement('div');
-    fullDesc.textContent = descText || loc('noDescription');
+    fullDesc.textContent = descText || 'Нет описания';
     fullDesc.style.marginBottom = '8px';
     card.appendChild(fullDesc);
 
     const details = [
-      { key: 'dbDetailID', value: entry.identifier || '—' },
-      { key: 'dbDetailType', value: entry.type || '—' },
-      { key: 'dbDetailMaxStrength', value: entry.maxstrength || '—' },
-      { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
-      { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
+      { label: 'Тип', value: entry.type || '—' },
+      { label: 'Макс. сила', value: entry.maxstrength || '—' },
+      { label: 'Локально', value: entry.limbspecific ? 'да' : 'нет' },
+      { label: 'Бафф', value: entry.isbuff ? 'да' : 'нет' }
     ];
 
     details.forEach(d => {
       const line = document.createElement('div');
       const label = document.createElement('strong');
-      label.textContent = loc(d.key) + ': ';
+      label.textContent = d.label + ': ';
       line.appendChild(label);
       line.appendChild(document.createTextNode(d.value));
       line.style.fontSize = '13px';
@@ -280,12 +288,10 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Если атлас уже загружен — рисуем сразу
     const atlasImg = this.atlasCache.get(texture);
     if (atlasImg && atlasImg.complete) {
       this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
     } else {
-      // Заглушка
       ctx.fillStyle = '#333';
       ctx.fillRect(0, 0, 48, 48);
       ctx.fillStyle = '#666';
@@ -294,10 +300,8 @@ class DatabaseManager {
       ctx.textBaseline = 'middle';
       ctx.fillText('?', 24, 24);
 
-      // Загружаем атлас асинхронно
       this.loadAtlasAsync(texture).then(img => {
         this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
-        // Обновляем все карточки с этой иконкой (если нужно)
       });
     }
 
@@ -318,10 +322,7 @@ class DatabaseManager {
         this.atlasCache.set(texture, img);
         resolve(img);
       };
-      img.onerror = () => {
-        console.warn('Failed to load atlas:', texture);
-        resolve(null);
-      };
+      img.onerror = () => resolve(null);
     });
 
     this.pendingAtlases.set(texture, promise);
