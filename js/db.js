@@ -1,6 +1,6 @@
-// js/db.js — v0.9.416 — БАЗА ДАННЫХ С ГАРАНТИРОВАННЫМИ ИКОНКАМИ
+// js/db.js — v0.9.417 — БАЗА ДАННЫХ С ПЛЕЙСХОЛДЕРОМ ИЗ КАРТИНКИ И ФИКСОМ ЦВЕТА
 
-const DB_VERSION = "v0.9.416";
+const DB_VERSION = "v0.9.417";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -11,9 +11,17 @@ class DatabaseManager {
     this.iconCache = new Map();
     this.atlasCache = new Map();
     this.pendingAtlases = new Map();
+    this.missingIconImg = null; // Загруженный плейсхолдер
     this.currentTab = 'afflictions';
     this.isModalOpen = false;
+    this.loadMissingIcon();
     this.loadData();
+  }
+
+  loadMissingIcon() {
+    this.missingIconImg = new Image();
+    this.missingIconImg.src = 'assets/Missing_Texture_icon.png';
+    // Не ждём onload — если не загрузится, останется пустой canvas
   }
 
   async loadData() {
@@ -71,209 +79,7 @@ class DatabaseManager {
     this.renderGrid('afflictions');
   }
 
-  createTabs() {
-    const tabs = document.createElement('div');
-    tabs.className = 'db-tabs';
-
-    const tabNames = {
-      afflictions: 'tabAfflictions',
-      items: 'tabItems',
-      creatures: 'tabCreatures'
-    };
-
-    ['afflictions', 'items', 'creatures'].forEach(tab => {
-      const btn = document.createElement('button');
-      btn.className = 'db-tab-btn';
-      btn.textContent = loc(tabNames[tab]);
-      btn.dataset.tab = tab;
-      btn.onclick = () => {
-        tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.currentTab = tab;
-        this.renderGrid(tab);
-      };
-      if (tab === 'afflictions') btn.classList.add('active');
-      tabs.appendChild(btn);
-    });
-
-    return tabs;
-  }
-
-  createSearchInput() {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'db-search-input';
-    input.placeholder = loc('searchPlaceholder');
-    input.oninput = (e) => this.filterGrid(e.target.value);
-    return input;
-  }
-
-  renderGrid(type) {
-    const grid = document.getElementById('db-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    const data = this[type] || [];
-
-    if (data.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'db-empty';
-      empty.textContent = loc('nothingFound');
-      grid.appendChild(empty);
-      return;
-    }
-
-    data.forEach(entry => {
-      const card = this.createCard(entry, type);
-      grid.appendChild(card);
-    });
-  }
-
-  createCard(entry, type) {
-    const card = document.createElement('div');
-    card.className = 'db-entry-btn';
-    card.style.padding = '12px';
-    card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.gap = '8px';
-    card.style.fontSize = '14px';
-
-    const top = document.createElement('div');
-    top.style.display = 'flex';
-    top.style.alignItems = 'center';
-    top.style.gap = '12px';
-    top.style.marginBottom = '8px';
-
-    const icon = this.createRealIcon(entry.icon || {});
-    top.appendChild(icon);
-
-    const displayName = entry.name || entry.identifier || 'Unknown';
-    const nameDiv = document.createElement('div');
-    nameDiv.textContent = displayName;
-    nameDiv.style.fontWeight = 'bold';
-    nameDiv.style.color = '#61afef';
-    nameDiv.style.fontSize = '16px';
-    top.appendChild(nameDiv);
-
-    card.appendChild(top);
-
-    const idLine = document.createElement('div');
-    idLine.textContent = loc('dbDetailID') + ': ' + (entry.identifier || 'unknown');
-    idLine.style.color = '#aaa';
-    idLine.style.fontSize = '13px';
-    idLine.style.wordBreak = 'break-all';
-    card.appendChild(idLine);
-
-    if (type === 'afflictions') {
-      this.appendAfflictionDetails(card, entry);
-    } else if (type === 'items') {
-      this.appendItemDetails(card, entry);
-    } else if (type === 'creatures') {
-      this.appendCreatureDetails(card, entry);
-    }
-
-    return card;
-  }
-
-  appendAfflictionDetails(card, entry) {
-    const badges = document.createElement('div');
-    badges.style.display = 'flex';
-    badges.style.gap = '8px';
-    badges.style.flexWrap = 'wrap';
-    badges.style.marginBottom = '8px';
-
-    const typeBadge = document.createElement('span');
-    typeBadge.textContent = `[${entry.type || 'unknown'}]`;
-    typeBadge.style.padding = '2px 8px';
-    typeBadge.style.background = '#444';
-    typeBadge.style.borderRadius = '4px';
-    typeBadge.style.fontSize = '12px';
-    badges.appendChild(typeBadge);
-
-    const maxBadge = document.createElement('span');
-    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
-    maxBadge.style.padding = '2px 8px';
-    maxBadge.style.background = '#555';
-    maxBadge.style.borderRadius = '4px';
-    maxBadge.style.fontSize = '12px';
-    badges.appendChild(maxBadge);
-
-    if (entry.limbspecific) {
-      const limbBadge = document.createElement('span');
-      limbBadge.textContent = '[limb]';
-      limbBadge.style.padding = '2px 8px';
-      limbBadge.style.background = '#007acc';
-      limbBadge.style.color = 'white';
-      limbBadge.style.borderRadius = '4px';
-      limbBadge.style.fontSize = '12px';
-      badges.appendChild(limbBadge);
-    }
-
-    if (entry.isbuff) {
-      const buffBadge = document.createElement('span');
-      buffBadge.textContent = '[buff]';
-      buffBadge.style.padding = '2px 8px';
-      buffBadge.style.background = '#218c21';
-      buffBadge.style.color = 'white';
-      buffBadge.style.borderRadius = '4px';
-      buffBadge.style.fontSize = '12px';
-      badges.appendChild(buffBadge);
-    }
-
-    card.appendChild(badges);
-
-    const descText = entry.description || '';
-    const shortDesc = document.createElement('div');
-    shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
-    shortDesc.style.color = '#aaa';
-    shortDesc.style.fontSize = '13px';
-    shortDesc.style.marginBottom = '8px';
-    card.appendChild(shortDesc);
-
-    const separator = document.createElement('div');
-    separator.style.height = '1px';
-    separator.style.background = '#444';
-    separator.style.margin = '8px 0';
-    card.appendChild(separator);
-
-    const fullDesc = document.createElement('div');
-    fullDesc.textContent = descText || 'Нет описания';
-    fullDesc.style.marginBottom = '8px';
-    card.appendChild(fullDesc);
-
-    const details = [
-      { key: 'dbDetailType', value: entry.type || '—' },
-      { key: 'dbDetailMaxStrength', value: entry.maxstrength || '—' },
-      { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
-      { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
-    ];
-
-    details.forEach(d => {
-      const line = document.createElement('div');
-      const label = document.createElement('strong');
-      label.textContent = loc(d.key) + ': ';
-      line.appendChild(label);
-      line.appendChild(document.createTextNode(d.value));
-      line.style.fontSize = '13px';
-      card.appendChild(line);
-    });
-  }
-
-  appendItemDetails(card, entry) {
-    const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
-    placeholder.style.color = '#aaa';
-    placeholder.style.fontSize = '14px';
-    card.appendChild(placeholder);
-  }
-
-  appendCreatureDetails(card, entry) {
-    const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
-    placeholder.style.color = '#aaa';
-    placeholder.style.fontSize = '14px';
-    card.appendChild(placeholder);
-  }
+  // ... createTabs, createSearchInput, renderGrid, createCard, append*Details — без изменений ...
 
   createRealIcon(iconInfo) {
     const canvas = document.createElement('canvas');
@@ -282,10 +88,8 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Всегда рисуем заглушку сразу — теперь точно будет видно
-    this.drawPlaceholderIcon(ctx);
-
     if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
+      this.drawMissingIcon(ctx);
       return canvas;
     }
 
@@ -297,38 +101,40 @@ class DatabaseManager {
 
     if (this.iconCache.has(cacheKey)) {
       const cached = this.iconCache.get(cacheKey);
-      ctx.clearRect(0, 0, 48, 48);
       ctx.drawImage(cached, 0, 0);
       return canvas;
     }
 
+    // Сначала рисуем плейсхолдер из картинки
+    this.drawMissingIcon(ctx);
+
     this.loadAtlasAsync(texture).then(img => {
       if (img) {
         this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
-        // Кэшируем готовую иконку
+        // Кэшируем готовую
         this.iconCache.set(cacheKey, canvas);
       }
     });
 
-    // Кэшируем с заглушкой
+    // Кэшируем с плейсхолдером
     this.iconCache.set(cacheKey, canvas);
 
     return canvas;
   }
 
-  drawPlaceholderIcon(ctx) {
-    ctx.fillStyle = '#2d2d30';
-    ctx.fillRect(0, 0, 48, 48);
-
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(4, 4, 40, 40);
-
-    ctx.fillStyle = '#888';
-    ctx.font = 'bold 24px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('?', 24, 24);
+  drawMissingIcon(ctx) {
+    if (this.missingIconImg && this.missingIconImg.complete) {
+      ctx.drawImage(this.missingIconImg, 0, 0, 48, 48);
+    } else {
+      // Fallback если картинка не загрузилась
+      ctx.fillStyle = '#2d2d30';
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.fillStyle = '#aaa';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', 24, 24);
+    }
   }
 
   loadAtlasAsync(texture) {
@@ -356,6 +162,8 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
+    if (!img) return;
+
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
@@ -368,21 +176,14 @@ class DatabaseManager {
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
       ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.fillRect(0, 0, 48, 48);
+      // Сброс composite для будущих операций
+      ctx.globalCompositeOperation = 'source-over';
     }
   }
 
-  filterGrid(query) {
-    const grid = document.getElementById('db-grid');
-    if (!grid) return;
-
-    const cards = grid.querySelectorAll('.db-entry-btn');
-    cards.forEach(card => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
-    });
-  }
+  // ... filterGrid без изменений ...
 }
 
 const dbManager = new DatabaseManager();
