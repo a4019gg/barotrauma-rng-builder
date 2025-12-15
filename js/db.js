@@ -1,6 +1,6 @@
-// js/db.js — v0.9.410 — БАЗА ДАННЫХ С ИСПРАВЛЕННЫМИ ИКОНКАМИ И БЕЗ MISSING LOC KEY
+// js/db.js — v0.9.411 — БАЗА ДАННЫХ С РАБОЧИМИ ИКОНКАМИ И БЕЗ ОШИБОК
 
-const DB_VERSION = "v0.9.410";
+const DB_VERSION = "v0.9.411";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -29,7 +29,7 @@ class DatabaseManager {
       if (creatureResp.ok) this.creatures = await creatureResp.json();
     } catch (err) {
       console.error('Failed to load database', err);
-      alert(loc('dbError') || 'Ошибка загрузки базы данных');
+      alert(loc('dbError'));
     }
   }
 
@@ -138,7 +138,6 @@ class DatabaseManager {
     card.style.gap = '8px';
     card.style.fontSize = '14px';
 
-    // Верхняя часть: иконка + название
     const top = document.createElement('div');
     top.style.display = 'flex';
     top.style.alignItems = 'center';
@@ -158,7 +157,6 @@ class DatabaseManager {
 
     card.appendChild(top);
 
-    // ID на отдельной строке
     const idLine = document.createElement('div');
     idLine.textContent = loc('dbDetailID') + ': ' + (entry.identifier || 'unknown');
     idLine.style.color = '#aaa';
@@ -303,7 +301,7 @@ class DatabaseManager {
     if (atlasImg && atlasImg.complete) {
       this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
     } else {
-      this.createPlaceholderIcon(ctx);
+      this.drawPlaceholderIcon(ctx);
 
       this.loadAtlasAsync(texture).then(img => {
         if (img) {
@@ -316,21 +314,25 @@ class DatabaseManager {
     return canvas.cloneNode(true);
   }
 
-  createPlaceholderIcon(ctx = null) {
-    const canvas = ctx ? null : document.createElement('canvas');
-    const c = ctx || canvas.getContext('2d');
+  drawPlaceholderIcon(ctx) {
+    ctx.fillStyle = '#333';
+    ctx.fillRect(0, 0, 48, 48);
+    ctx.fillStyle = '#666';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 24, 24);
+  }
+
+  createPlaceholderIcon() {
+    const canvas = document.createElement('canvas');
     canvas.width = 48;
     canvas.height = 48;
-
-    c.fillStyle = '#333';
-    c.fillRect(0, 0, 48, 48);
-    c.fillStyle = '#666';
-    c.font = '20px Arial';
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillText('?', 24, 24);
-
-    return canvas || null;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      this.drawPlaceholderIcon(ctx);
+    }
+    return canvas;
   }
 
   loadAtlasAsync(texture) {
@@ -339,6 +341,7 @@ class DatabaseManager {
     }
 
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = texture;
 
     const promise = new Promise(resolve => {
@@ -357,6 +360,8 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
+    if (!img) return;
+
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
