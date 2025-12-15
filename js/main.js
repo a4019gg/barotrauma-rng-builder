@@ -1,6 +1,6 @@
-// js/main.js — v0.9.301 — КЛАСС EditorState, ИСПРАВЛЕНИЯ importFile, populateDatalist
+// js/main.js — v0.9.302 — КЛАСС EditorState, ИСПРАВЛЕНИЯ exportJSON, updateAll, importFile, populateDatalist
 
-const MAIN_VERSION = "v0.9.301";
+const MAIN_VERSION = "v0.9.302";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
@@ -92,6 +92,7 @@ class EditorState {
 
   renderCurrentEvent() {
     const container = document.getElementById('root-children');
+    if (!container) return;
     container.innerHTML = '';
     renderModelToDOM(this.events[this.currentEventIndex].model, container);
     updateAll();
@@ -99,6 +100,7 @@ class EditorState {
 
   rebuildTabs() {
     const list = document.getElementById('events-list');
+    if (!list) return;
     list.innerHTML = '';
 
     this.events.forEach((ev, i) => {
@@ -188,7 +190,7 @@ class EditorState {
   exportData() {
     this.saveState();
     return {
-      version: "v0.9.301",
+      version: "v0.9.302",
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
@@ -215,7 +217,7 @@ function renderModelToDOM(model, container) {
   });
 }
 
-// === populateDatalist — заглушка с популярными ID ===
+// === populateDatalist — базовая реализация с популярными ID ===
 function populateDatalist() {
   const datalist = document.getElementById('item-datalist');
   if (!datalist) return;
@@ -236,6 +238,7 @@ function populateDatalist() {
 // === importFile ===
 function importFile() {
   const input = document.getElementById('file-input');
+  if (!input) return;
   input.onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -258,6 +261,24 @@ function importFile() {
   input.click();
 }
 
+// === updateAll — временная заглушка (в будущем — расчёт вероятностей на модели) ===
+function updateAll() {
+  console.log('updateAll called — probabilities recalc (placeholder)');
+  // В v1.0 здесь будет полноценный расчёт final/global chance на модели
+}
+
+// === exportJSON ===
+function exportJSON() {
+  const data = window.editorState.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rng-builder-v0.9.302.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // === СТАРТ ===
 document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
@@ -272,3 +293,4 @@ window.clearAll = () => window.editorState.clearAll();
 window.autoBalance = () => window.editorState.autoBalance();
 window.importFile = importFile;
 window.exportJSON = exportJSON;
+window.updateAll = updateAll;
