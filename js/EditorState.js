@@ -1,36 +1,18 @@
-// js/EditorState.ts — v0.9.401 — КЛАСС СОСТОЯНИЯ РЕДАКТОРА НА TYPESCRIPT
-
-import { NodeModel, EventModel } from './shared/types';
-import nodeFactory from './NodeFactory';
-import { loc } from './utils';
+// js/EditorState.js — v0.9.401 — СОСТОЯНИЕ РЕДАКТОРА
 
 const MAIN_VERSION = "v0.9.401";
-(window as any).MAIN_VERSION = MAIN_VERSION;
-
-interface EditorStateDependencies {
-  nodeFactory?: typeof nodeFactory;
-  onUpdate?: () => void;
-  loc?: typeof loc;
-}
+window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
-  private currentEventIndex: number = 0;
-  private events: EventModel[] = [{ model: [] }];
-  private undoStack: string[] = [];
-  private redoStack: string[] = [];
-  private maxHistory: number = 50;
-
-  private nodeFactory: typeof nodeFactory;
-  private onUpdate: () => void;
-  private loc: typeof loc;
-
-  constructor(dependencies: EditorStateDependencies = {}) {
-    this.nodeFactory = dependencies.nodeFactory || nodeFactory;
-    this.onUpdate = dependencies.onUpdate || (() => console.log('update triggered'));
-    this.loc = dependencies.loc || loc;
+  constructor() {
+    this.currentEventIndex = 0;
+    this.events = [{ model: [] }];
+    this.undoStack = [];
+    this.redoStack = [];
+    this.maxHistory = 50;
   }
 
-  private saveState(): void {
+  saveState() {
     const state = JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
@@ -41,18 +23,18 @@ class EditorState {
     this.redoStack = [];
   }
 
-  private deepCopy<T>(obj: T): T {
+  deepCopy(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
-  undo(): boolean {
+  undo() {
     if (this.undoStack.length === 0) return false;
     this.redoStack.push(JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
     }));
 
-    const prev = JSON.parse(this.undoStack.pop()!);
+    const prev = JSON.parse(this.undoStack.pop());
     this.events = prev.events;
     this.currentEventIndex = prev.currentEventIndex;
 
@@ -61,14 +43,14 @@ class EditorState {
     return true;
   }
 
-  redo(): boolean {
+  redo() {
     if (this.redoStack.length === 0) return false;
     this.undoStack.push(JSON.stringify({
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
       currentEventIndex: this.currentEventIndex
     }));
 
-    const next = JSON.parse(this.redoStack.pop()!);
+    const next = JSON.parse(this.redoStack.pop());
     this.events = next.events;
     this.currentEventIndex = next.currentEventIndex;
 
@@ -77,18 +59,18 @@ class EditorState {
     return true;
   }
 
-  addEvent(): void {
+  addEvent() {
     this.saveState();
     this.events.push({ model: [] });
     this.switchToEvent(this.events.length - 1);
   }
 
-  deleteEvent(index: number): boolean {
+  deleteEvent(index) {
     if (this.events.length <= 1) {
-      alert(this.loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
+      alert(loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
       return false;
     }
-    if (!confirm(this.loc('deleteEventConfirm', 'Удалить ивент?'))) return false;
+    if (!confirm(loc('deleteEventConfirm', 'Удалить ивент?'))) return false;
 
     this.saveState();
     this.events.splice(index, 1);
@@ -99,7 +81,7 @@ class EditorState {
     return true;
   }
 
-  switchToEvent(index: number): void {
+  switchToEvent(index) {
     if (index < 0 || index >= this.events.length) return;
 
     this.saveState();
@@ -108,22 +90,19 @@ class EditorState {
     this.rebuildTabs();
   }
 
-  renderCurrentEvent(): void {
+  renderCurrentEvent() {
     const container = document.getElementById('root-children');
     if (!container) return;
     container.innerHTML = '';
-    this.renderModelToDOM(this.events[this.currentEventIndex].model, container);
-    this.onUpdate();
-  }
-
-  private renderModelToDOM(model: NodeModel[], container: HTMLElement): void {
+    const model = this.events[this.currentEventIndex].model;
     model.forEach(nodeModel => {
-      const nodeElement = this.nodeFactory.createFromModel(nodeModel);
+      const nodeElement = nodeFactory.createFromModel(nodeModel);
       container.appendChild(nodeElement);
     });
+    updateAll();
   }
 
-  rebuildTabs(): void {
+  rebuildTabs() {
     const list = document.getElementById('events-list');
     if (!list) return;
     list.innerHTML = '';
@@ -152,7 +131,7 @@ class EditorState {
     });
   }
 
-  findNodeById(id: number, nodes: NodeModel[] = this.events[this.currentEventIndex].model): NodeModel | null {
+  findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.type === 'rng' && node.children) {
@@ -163,16 +142,15 @@ class EditorState {
     return null;
   }
 
-  removeNodeById(id: number): boolean {
+  removeNodeById(id) {
     const removed = this._removeNodeRecursive(id, this.events[this.currentEventIndex].model);
     if (removed) {
       this.renderCurrentEvent();
-      this.onUpdate();
     }
     return removed;
   }
 
-  private _removeNodeRecursive(id: number, nodes: NodeModel[]): boolean {
+  _removeNodeRecursive(id, nodes) {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       if (node.id === id) {
@@ -188,24 +166,23 @@ class EditorState {
     return false;
   }
 
-  addNodeToBranch(parentId: number, branch: 'success' | 'failure', type: string): boolean {
+  addNodeToBranch(parentId, branch, type) {
     const parent = this.findNodeById(parentId);
     if (!parent || parent.type !== 'rng' || !parent.children || !parent.children[branch]) {
       console.warn('Cannot add to branch: invalid parent or branch', { parentId, branch, type });
       return false;
     }
 
-    const newModel = (this.nodeFactory as any)[`createModel${type.charAt(0).toUpperCase() + type.slice(1)}`]();
+    const newModel = nodeFactory[`createModel${type.charAt(0).toUpperCase() + type.slice(1)}`]();
     parent.children[branch].push(newModel);
     this.renderCurrentEvent();
-    this.onUpdate();
     return true;
   }
 
-  autoBalance(): void {
+  autoBalance() {
     this.saveState();
 
-    const balance = (nodes: NodeModel[]) => {
+    const balance = (nodes) => {
       nodes.forEach(node => {
         if (node.type === 'rng') {
           const successCount = node.children?.success ? node.children.success.filter(n => n.type !== 'rng').length : 0;
@@ -224,18 +201,16 @@ class EditorState {
 
     balance(this.events[this.currentEventIndex].model);
     this.renderCurrentEvent();
-    this.onUpdate();
-    alert(this.loc('autoBalanceDone', 'Автобаланс завершён'));
+    alert(loc('autoBalanceDone', 'Автобаланс завершён'));
   }
 
-  clearAll(): void {
+  clearAll() {
     this.saveState();
     this.events[this.currentEventIndex].model = [];
     this.renderCurrentEvent();
-    this.onUpdate();
   }
 
-  exportData(): any {
+  exportData() {
     this.saveState();
     return {
       version: "v0.9.401",
@@ -243,28 +218,16 @@ class EditorState {
     };
   }
 
-  importData(data: any): boolean {
+  importData(data) {
     if (!data.events || !Array.isArray(data.events)) return false;
-    this.events = data.events.map((e: any) => ({ model: e.model || [] }));
+    this.events = data.events.map(e => ({ model: e.model || [] }));
     this.currentEventIndex = 0;
     this.renderCurrentEvent();
     this.rebuildTabs();
-    this.onUpdate();
+    updateAll();
     return true;
   }
 }
 
-// Глобальный экземпляр (временно, пока не перейдём на main.ts)
-const editorState = new EditorState();
-
-// Глобальные для совместимости
-(window as any).editorState = editorState;
-
-(window as any).addEvent = () => editorState.addEvent();
-(window as any).clearAll = () => editorState.clearAll();
-(window as any).autoBalance = () => editorState.autoBalance();
-(window as any).importFile = importFile;
-(window as any).exportJSON = exportJSON;
-(window as any).updateAll = updateAll;
-
-export default editorState;
+// Глобальный экземпляр
+window.editorState = new EditorState();
