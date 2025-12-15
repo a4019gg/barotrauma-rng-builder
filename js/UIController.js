@@ -1,43 +1,24 @@
-// js/UIController.ts — v0.9.401 — ЦЕНТРАЛИЗОВАННЫЙ КОНТРОЛЛЕР СОБЫТИЙ
-
-import editorState from './EditorState';
-import nodeFactory from './NodeFactory';
-import { loc } from './utils';
-
-interface UIControllerDependencies {
-  editorState?: typeof editorState;
-  nodeFactory?: typeof nodeFactory;
-  loc?: typeof loc;
-}
+// js/UIController.js — v0.9.401 — ДЕЛЕГИРОВАНИЕ СОБЫТИЙ И ЛОГИКА UI
 
 class UIController {
-  private editorState: typeof editorState;
-  private nodeFactory: typeof nodeFactory;
-  private loc: typeof loc;
-
-  constructor(dependencies: UIControllerDependencies = {}) {
-    this.editorState = dependencies.editorState || editorState;
-    this.nodeFactory = dependencies.nodeFactory || nodeFactory;
-    this.loc = dependencies.loc || loc;
-
+  constructor() {
     this.initEventDelegation();
   }
 
-  private initEventDelegation(): void {
-    // Центральное делегирование всех событий
+  initEventDelegation() {
     document.addEventListener('click', this.handleClick.bind(this));
     document.addEventListener('change', this.handleChange.bind(this));
   }
 
-  private handleClick(e: MouseEvent): void {
-    const target = (e.target as HTMLElement).closest('[data-action]') as HTMLElement;
+  handleClick(e) {
+    const target = e.target.closest('[data-action]');
     if (!target) return;
 
-    const action = target.dataset.action as string;
+    const action = target.dataset.action;
     const type = target.dataset.type || target.dataset.nodeType;
-    const parentId = target.dataset.parentId ? parseInt(target.dataset.parentId) : undefined;
-    const branch = target.dataset.branch as 'success' | 'failure' | undefined;
-    const id = target.dataset.id ? parseInt(target.dataset.id) : undefined;
+    const parentId = target.dataset.parentId ? parseInt(target.dataset.parentId) : null;
+    const branch = target.dataset.branch;
+    const id = target.dataset.id ? parseInt(target.dataset.id) : null;
 
     switch (action) {
       case 'toggleView':
@@ -45,53 +26,60 @@ class UIController {
         break;
 
       case 'openDB':
-        this.openDB();
+        dbManager.openDB();
         break;
 
       case 'loadExample':
-        this.openDB(); // временно, пока пресеты в DB
+        dbManager.openDB(); // временно, пока пресеты в DB
         break;
 
       case 'importFile':
-        this.importFile();
+        importFile();
         break;
 
       case 'exportJSON':
-        this.exportJSON();
+        exportJSON();
         break;
 
       case 'addEvent':
-        this.editorState.addEvent();
+        window.editorState.addEvent();
         break;
 
       case 'addNode':
         if (type) {
-          this.addNodeToRoot(type);
+          const addMap = {
+            rng: window.addRNG,
+            spawn: window.addSpawn,
+            creature: window.addCreature,
+            affliction: window.addAffliction
+          };
+          const func = addMap[type];
+          if (func) func();
         }
         break;
 
       case 'addNodeToBranch':
-        if (parentId !== undefined && branch && type) {
-          this.editorState.addNodeToBranch(parentId, branch, type);
+        if (parentId !== null && branch && type) {
+          window.editorState.addNodeToBranch(parentId, branch, type);
         }
         break;
 
       case 'removeNode':
-        if (id !== undefined) {
-          this.editorState.removeNodeById(id);
+        if (id !== null) {
+          window.editorState.removeNodeById(id);
         }
         break;
 
       case 'clearAll':
-        this.editorState.clearAll();
+        window.editorState.clearAll();
         break;
 
       case 'autoBalance':
-        this.editorState.autoBalance();
+        window.editorState.autoBalance();
         break;
 
       case 'generateXML':
-        this.generateXML();
+        generateXML();
         break;
 
       case 'copyXML':
@@ -103,127 +91,100 @@ class UIController {
         break;
 
       case 'importFromXML':
-        this.importFromXML();
+        importFromXML();
         break;
 
       default:
-        console.warn(`Unknown data-action: ${action}`);
+        console.warn(`Unknown action: ${action}`);
     }
   }
 
-  private handleChange(e: Event): void {
-    const target = e.target as HTMLElement;
+  handleChange(e) {
+    const target = e.target;
     if (!target.dataset?.action) return;
 
     const action = target.dataset.action;
-    const value = (target as HTMLInputElement | HTMLSelectElement).type === 'checkbox' 
-      ? (target as HTMLInputElement).checked 
-      : (target as HTMLInputElement | HTMLSelectElement).value;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
 
     switch (action) {
       case 'setTheme':
-        setTheme(value as string);
+        setTheme(value);
         break;
       case 'setLang':
-        setLang(value as 'en' | 'ru');
+        setLang(value);
         break;
       case 'setUIScale':
-        setUIScale(value as string);
+        setUIScale(value);
         break;
       case 'setNodeDensity':
-        setNodeDensity(value as string);
+        setNodeDensity(value);
         break;
       case 'toggleShadows':
-        toggleShadows(value as boolean);
+        toggleShadows(value);
         break;
       case 'toggleGrid':
-        toggleGrid(value as boolean);
+        toggleGrid(value);
         break;
       case 'toggleSnap':
-        toggleSnap(value as boolean);
+        toggleSnap(value);
         break;
       case 'setXMLFormat':
-        setXMLFormat(value as string);
+        setXMLFormat(value);
         break;
       case 'toggleValidation':
-        toggleValidation(value as boolean);
+        toggleValidation(value);
         break;
       case 'toggleCheckDuplicateIDs':
-        toggleCheckDuplicateIDs(value as boolean);
+        toggleCheckDuplicateIDs(value);
         break;
       case 'updateParam':
-        const key = target.dataset.key;
-        const nodeId = target.dataset.id ? parseInt(target.dataset.id) : undefined;
-        if (key && nodeId !== undefined) {
-          // В будущем — editorState.updateNodeParam(nodeId, key, value)
-          // Пока — updateAll()
-          updateAll();
-        }
+        // Временная заглушка — в будущем полноценный updateParam
+        updateAll();
         break;
       default:
-        console.warn(`Unknown change data-action: ${action}`);
+        console.warn(`Unknown change action: ${action}`);
     }
   }
 
-  // === ДЕЙСТВИЯ ===
-  private toggleView(): void {
-    // Заглушка — реализация tree view
-    console.log('Toggle view');
+  toggleView() {
+    const classic = document.getElementById('classic-view');
+    const tree = document.getElementById('tree-container');
+    const btn = document.getElementById('view-btn');
+
+    if (tree.style.display === 'block') {
+      tree.style.display = 'none';
+      classic.style.display = 'block';
+      btn.textContent = loc('treeView');
+    } else {
+      tree.style.display = 'block';
+      classic.style.display = 'none';
+      btn.textContent = loc('classicView');
+    }
   }
 
-  private openDB(): void {
-    // Заглушка — открытие базы
-    console.log('Open DB');
+  copyXML() {
+    const output = document.getElementById('output');
+    if (!output) return;
+    output.select();
+    output.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    alert(loc('copyXML'));
   }
 
-  private importFile(): void {
-    // Заглушка
-    console.log('Import file');
-  }
-
-  private exportJSON(): void {
-    const data = this.editorState.exportData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  downloadXML() {
+    generateXML();
+    const output = document.getElementById('output').value;
+    const blob = new Blob([output], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'rng-builder.json';
+    a.download = 'barotrauma-event.xml';
     a.click();
     URL.revokeObjectURL(url);
   }
-
-  private addNodeToRoot(type: string): void {
-    const newModel = (this.nodeFactory as any)[`createModel${type.charAt(0).toUpperCase() + type.slice(1)}`]();
-    this.editorState.events[this.editorState.currentEventIndex].model.push(newModel);
-    this.editorState.renderCurrentEvent();
-  }
-
-  private generateXML(): void {
-    // Заглушка
-    console.log('Generate XML');
-  }
-
-  private copyXML(): void {
-    const output = document.getElementById('output') as HTMLTextAreaElement;
-    if (output) {
-      output.select();
-      document.execCommand('copy');
-      alert(this.loc('copyXML', 'XML скопирован в буфер обмена'));
-    }
-  }
-
-  private downloadXML(): void {
-    // Заглушка
-    console.log('Download XML');
-  }
-
-  private importFromXML(): void {
-    // Заглушка
-    console.log('Import from XML');
-  }
 }
 
-// Инициализация (временно глобально)
+// Инициализация контроллера
 document.addEventListener('DOMContentLoaded', () => {
   new UIController();
 });
