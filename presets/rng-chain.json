@@ -6,18 +6,24 @@
     {
       "id": 1,
       "type": "rng",
-      "params": { "chance": 0.4 },
+      "params": {
+        "chance": 0.4
+      },
       "children": {
         "success": [
           {
             "id": 2,
             "type": "spawn",
-            "params": { "item": "plasmacutter" }
+            "params": {
+              "item": "plasmacutter"
+            }
           },
           {
             "id": 3,
             "type": "rng",
-            "params": { "chance": 0.5 },
+            "params": {
+              "chance": 0.5
+            },
             "children": {
               "success": [
                 {
@@ -34,7 +40,9 @@
                 {
                   "id": 5,
                   "type": "spawn",
-                  "params": { "item": "fulcrum" }
+                  "params": {
+                    "item": "fulcrum"
+                  }
                 }
               ]
             }
