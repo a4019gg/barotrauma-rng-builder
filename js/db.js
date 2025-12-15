@@ -1,6 +1,6 @@
-// js/db.js — v0.9.413 — БАЗА ДАННЫХ БЕЗ ЛОКАЛИЗАЦИИ СОДЕРЖИМОГО
+// js/db.js — v0.9.414 — БАЗА ДАННЫХ С РАБОЧИМИ ИКОНКАМИ
 
-const DB_VERSION = "v0.9.413";
+const DB_VERSION = "v0.9.414";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -147,7 +147,6 @@ class DatabaseManager {
     const icon = this.createRealIcon(entry.icon || {});
     top.appendChild(icon);
 
-    // СОДЕРЖИМОЕ БЕЗ ЛОКАЛИЗАЦИИ — только из JSON
     const displayName = entry.name || entry.identifier || 'Unknown';
     const nameDiv = document.createElement('div');
     nameDiv.textContent = displayName;
@@ -223,7 +222,6 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    // ОПИСАНИЕ БЕЗ ЛОКАЛИЗАЦИИ
     const descText = entry.description || '';
     const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
@@ -298,19 +296,15 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    const atlasImg = this.atlasCache.get(texture);
+    // Всегда рисуем заглушку сначала
+    this.drawPlaceholderIcon(ctx);
 
-    if (atlasImg && atlasImg.complete) {
-      this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
-    } else {
-      this.drawPlaceholderIcon(ctx);
-
-      this.loadAtlasAsync(texture).then(img => {
-        if (img) {
-          this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
-        }
-      });
-    }
+    // Пытаемся загрузить атлас
+    this.loadAtlasAsync(texture).then(img => {
+      if (img) {
+        this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
+      }
+    });
 
     this.iconCache.set(cacheKey, canvas);
     return canvas.cloneNode(true);
@@ -319,7 +313,7 @@ class DatabaseManager {
   drawPlaceholderIcon(ctx) {
     ctx.fillStyle = '#333';
     ctx.fillRect(0, 0, 48, 48);
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#aaa';
     ctx.font = '20px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -362,8 +356,6 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
-    if (!img) return;
-
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
