@@ -1,11 +1,14 @@
-// js/lang/ru.js — v0.9.301 — ПОЛНАЯ РУССКАЯ ЛОКАЛИЗАЦИЯ
+// js/lang/ru.js — v0.9.401 — РУССКАЯ ЛОКАЛИЗАЦИЯ
 
 const LANG_RU = {
+  // Root
   rootLabel: "Корневое событие",
+
+  // Branches
   successLabel: "Успех",
   failureLabel: "Провал",
 
-  // Кнопки
+  // Buttons
   generateXML: "Сгенерировать XML",
   copyXML: "Копировать XML",
   downloadXML: "Скачать XML",
@@ -21,31 +24,37 @@ const LANG_RU = {
   presets: "Пресеты и примеры",
   addEvent: "+ Добавить ивент",
 
-  // Ноды
+  // Node titles
   rngAction: "ГСЧ-событие",
   spawnItem: "Спавн предмета",
   spawnCreature: "Спавн существа",
   applyAffliction: "Применить аффикшен",
+  unknownNode: "Неизвестный узел",
 
-  // Параметры
+  // Parameters
   chance: "Шанс",
   count: "Количество",
   randomizePosition: "Случайная позиция",
   insideSub: "Внутри подлодки",
   outsideSub: "Снаружи подлодки",
-  targetCharacter: "Персонаж",
-  targetRandomCrew: "Случайный член экипажа",
-  targetAllCrew: "Весь экипаж",
+  targetCharacter: "Цель: Персонаж",
+  targetRandomCrew: "Цель: Случайный член экипажа",
+  targetAllCrew: "Цель: Весь экипаж",
 
-  // Вкладки базы
+  // Placeholders
+  itemPlaceholder: "revolver",
+  creaturePlaceholder: "crawler",
+  afflictionPlaceholder: "bleeding",
+
+  // DB tabs
+  tabAfflictions: "Аффикшены",
   tabItems: "Предметы",
   tabCreatures: "Существа",
-  tabAfflictions: "Аффикшены",
 
-  // Поиск
+  // Search
   searchPlaceholder: "Поиск...",
 
-  // Настройки
+  // Settings
   settings: "Настройки",
   settingsTheme: "Тема",
   settingsLanguage: "Язык",
@@ -59,33 +68,38 @@ const LANG_RU = {
   settingsValidateXML: "Валидация XML",
   settingsCheckDuplicates: "Проверка дубликатов ID",
 
-  // Режимы вида
+  // View modes
   treeView: "Режим древа",
-  classicView: "Классический",
+  classicView: "Классический вид",
 
-  // Валидация
-  validationTitle: "Валидация XML — найдены проблемы:",
-  validationEmptyEvent: "Событие пустое — ничего не спавнится",
-  validationZeroChance: "ГСЧ с шансом 0% или 100% — бессмысленно",
-  validationNoItems: "ГСЧ без действий в ветках",
-  validationDuplicateId: "Дубликат identifier",
-  validationHint: "Эти проверки можно отключить в Настройки → XML и поведение",
-
-  // Сообщения
+  // Messages
   clearAllConfirm: "Очистить всё?",
   deleteEventConfirm: "Удалить ивент?",
   lastEventWarning: "Нельзя удалить последний ивент!",
-  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.301",
+  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.401",
   importXML: "Импорт из XML",
+  importXMLHint: "Вставьте XML в поле ниже и нажмите Импорт из XML",
   nothingFound: "Ничего не найдено",
-  finalChance: "Итоговый шанс",
   presetLoaded: "Пресет загружен",
   presetError: "Ошибка загрузки пресета",
   dbError: "База данных не загружена (проверьте файлы data/*.json)",
   autoBalanceDone: "Автобаланс завершён",
   copyXML: "XML скопирован в буфер обмена",
 
+  // DB details
+  dbDetailID: "ID",
+  dbDetailType: "Тип",
+  dbDetailMaxStrength: "Макс. сила",
+  dbDetailLimbSpecific: "Локально",
+  dbDetailIsBuff: "Бафф",
+  noDescription: "Нет описания",
+
+  // Yes/No
+  yes: "да",
+  no: "нет",
+
   // Event ID
-  eventIdLabel: "Event ID:",
-  importXMLHint: "Вставьте XML в поле ниже и нажмите Импорт из XML"
+  eventIdLabel: "Event ID:"
 };
+
+export default LANG_RU;
