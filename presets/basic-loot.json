@@ -6,27 +6,37 @@
     {
       "id": 1,
       "type": "spawn",
-      "params": { "item": "revolver" }
+      "params": {
+        "item": "revolver"
+      }
     },
     {
       "id": 2,
       "type": "spawn",
-      "params": { "item": "revolverrounds" }
+      "params": {
+        "item": "revolverrounds"
+      }
     },
     {
       "id": 3,
       "type": "spawn",
-      "params": { "item": "divingknife" }
+      "params": {
+        "item": "divingknife"
+      }
     },
     {
       "id": 4,
       "type": "spawn",
-      "params": { "item": "toolbox" }
+      "params": {
+        "item": "toolbox"
+      }
     },
     {
       "id": 5,
       "type": "spawn",
-      "params": { "item": "oxygenitetank" }
+      "params": {
+        "item": "oxygenitetank"
+      }
     }
   ]
 }
