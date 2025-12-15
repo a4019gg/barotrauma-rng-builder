@@ -1,6 +1,6 @@
-// js/db.js — v0.9.414 — БАЗА ДАННЫХ С РАБОЧИМИ ИКОНКАМИ
+// js/db.js — v0.9.415 — БАЗА ДАННЫХ С ПОДДЕРЖКОЙ РАЗНЫХ АТЛАСОВ ИЗ DATA
 
-const DB_VERSION = "v0.9.414";
+const DB_VERSION = "v0.9.415";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -276,12 +276,12 @@ class DatabaseManager {
   }
 
   createRealIcon(iconInfo) {
-    if (!iconInfo) {
+    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
       return this.createPlaceholderIcon();
     }
 
-    const texture = iconInfo.texture || 'assets/textures/MainIconsAtlas.png';
-    const sourcerect = iconInfo.sourcerect || '0,0,128,128';
+    const texture = iconInfo.texture;
+    const sourcerect = iconInfo.sourcerect;
     const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
 
     const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
@@ -296,10 +296,10 @@ class DatabaseManager {
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Всегда рисуем заглушку сначала
+    // Заглушка сразу
     this.drawPlaceholderIcon(ctx);
 
-    // Пытаемся загрузить атлас
+    // Загружаем нужный атлас (теперь любой, из data)
     this.loadAtlasAsync(texture).then(img => {
       if (img) {
         this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
@@ -356,6 +356,8 @@ class DatabaseManager {
   }
 
   drawIconFromAtlas(ctx, img, sourcerect, colorKey) {
+    if (!img) return;
+
     const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
     const [sx, sy, sw, sh] = rect;
 
