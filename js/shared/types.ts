@@ -1,3 +1,5 @@
+// js/shared/types.ts — базовые типы для всего проекта
+
 export interface NodeParams {
   chance?: number;
   item?: string;
@@ -8,7 +10,7 @@ export interface NodeParams {
   affliction?: string;
   strength?: number;
   target?: string;
-  [key: string]: any;
+  [key: string]: any; // для гибкости
 }
 
 export interface NodeModel {
@@ -29,3 +31,7 @@ export interface NodeModel {
 export interface EventModel {
   model: NodeModel[];
 }
+
+export type Branch = 'success' | 'failure';
+
+export type NodeType = 'rng' | 'spawn' | 'creature' | 'affliction';
