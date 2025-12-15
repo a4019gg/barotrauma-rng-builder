@@ -96,7 +96,7 @@ class NodeFactory {
     // Для RNG — ветки
     if (model.type === 'rng' && model.children) {
       const successSection = this.createBranch(model.id, '-s', 'success-label', loc('successLabel', 'Успех'));
-      const failureSection = this.createBranch(model.id, '-f', 'failure-label', 'Провал'));
+      const failureSection = this.createBranch(model.id, '-f', 'failure-label', 'Провал');
 
       const successContainer = successSection.querySelector(`#c-${model.id}-s`);
       const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
