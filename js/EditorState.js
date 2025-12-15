@@ -1,6 +1,6 @@
-// js/EditorState.js — v0.9.402 — СОСТОЯНИЕ РЕДАКТОРА (ФИКСЫ БАГОВ)
+// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИКС addNodeToBranch)
 
-const MAIN_VERSION = "v0.9.402";
+const MAIN_VERSION = "v0.9.403";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
@@ -62,7 +62,7 @@ class EditorState {
   addEvent() {
     this.saveState();
     this.events.push({ model: [] });
-    this.currentEventIndex = this.events.length - 1; // Явно устанавливаем индекс
+    this.currentEventIndex = this.events.length - 1;
     this.renderCurrentEvent();
     this.rebuildTabs();
   }
@@ -178,7 +178,26 @@ class EditorState {
       return false;
     }
 
-    const newModel = nodeFactory[`createModel${type.charAt(0).toUpperCase() + type.slice(1)}`]();
+    // ФИКС: правильный вызов методов экземпляра nodeFactory
+    let newModel;
+    switch (type) {
+      case 'rng':
+        newModel = nodeFactory.createModelRNG();
+        break;
+      case 'spawn':
+        newModel = nodeFactory.createModelSpawn();
+        break;
+      case 'creature':
+        newModel = nodeFactory.createModelCreature();
+        break;
+      case 'affliction':
+        newModel = nodeFactory.createModelAffliction();
+        break;
+      default:
+        console.warn('Unknown node type for branch:', type);
+        return false;
+    }
+
     parent.children[branch].push(newModel);
     this.renderCurrentEvent();
     return true;
@@ -218,7 +237,7 @@ class EditorState {
   exportData() {
     this.saveState();
     return {
-      version: "v0.9.402",
+      version: "v0.9.403",
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
