@@ -1,51 +1,46 @@
-/* css/themes/light.css — полная светлая тема */
+/* css/themes/light.css — мягкая светлая тема (не ослепляющая) */
 
-:root[data-theme="light"] {
-  --bg: #f8f9fa;
-  --panel: #ffffff;
-  --text: #212529;
-  --accent: #0d6efd;
-  --green: #198754;
-  --red: #dc3545;
-  --border: #dee2e6;
-  --node-bg: #ffffff;
-  --grid-color: rgba(0,0,0,0.06);
-  --shadow-low: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-  --shadow-high: 0 10px 20px rgba(0,0,0,0.15), 0 6px 6px rgba(0,0,0,0.1);
+:root {
+  --bg: #f5f5f5;               /* мягкий серый фон */
+  --panel: #e0e0e0;             /* панели чуть темнее */
+  --text: #333;                 /* тёмный текст */
+  --accent: #0066cc;            /* синий акцент (чуть темнее) */
+  --green: #4a7c59;             /* зелёный */
+  --red: #c42b2b;               /* красный */
+  --border: #ccc;
+  --node-bg: #ffffff;           /* белые ноды */
+  --grid-color: rgba(0,0,0,0.08); /* слабая сетка */
+  --shadow-low: 0 2px 8px rgba(0,0,0,0.1);
+  --shadow-high: 0 8px 24px rgba(0,0,0,0.2);
+
+  /* Иконки аффикшенов — адаптация под светлый фон (чуть темнее оригинала) */
+  --icon-damage-red-rgb: 180, 40, 40;
+  --icon-buff-green-rgb: 0, 160, 90;
+  --icon-status-orange-rgb: 180, 120, 40;
+  --icon-debuff-red-orange-rgb: 180, 80, 40;
+  --icon-poison-darkred-rgb: 130, 20, 20;
+  --icon-status-yellow-rgb: 180, 160, 40;
+  --icon-status-brown-rgb: 120, 50, 30;
+  --icon-status-gray-rgb: 90, 90, 90;
+  --icon-debuff-purple-rgb: 130, 100, 140;
+  --icon-status-tan-rgb: 170, 140, 100;
+  --icon-debuff-blue-rgb: 40, 90, 170;
+  --icon-buff-lightgreen-rgb: 70, 150, 70;
+  --icon-debuff-violet-rgb: 100, 10, 130;
 }
 
-/* Переопределяем сетку в светлой теме */
-body[data-theme="light"] #editor-area::before {
-  background-image:
-    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
-}
-
-/* Улучшенный вид нод */
-body[data-theme="light"] .node {
-  border-left-color: var(--accent);
-  box-shadow: var(--shadow-low);
-}
-
-/* Чуть светлее фон у панелей */
-body[data-theme="light"] .top-bar,
-body[data-theme="light"] .action-bar,
-body[data-theme="light"] .event-id-bar {
+/* Дополнительно — инвертировать тёмные элементы */
+.dropdown-content {
   background: #ffffff;
-  border-color: #dee2e6;
+  border: 1px solid #ddd;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
-/* Текстареа в светлой теме */
-body[data-theme="light"] textarea#output {
-  background: #f8f9fa;
-  color: #212529;
-  border: 1px solid #ced4da;
+textarea#output {
+  background: #ffffff;
+  color: #333;
 }
 
-/* Кнопки в светлом стиле */
-body[data-theme="light"] button {
-  filter: none;
-}
-body[data-theme="light"] button:hover {
-  opacity: 0.9;
+.node {
+  box-shadow: var(--shadow-low);
 }
