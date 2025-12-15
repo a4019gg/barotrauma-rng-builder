@@ -1,4 +1,4 @@
-// js/db.js — v0.9.401 — БАЗА ДАННЫХ С ПОЛНОЙ ЛОКАЛИЗАЦИЕЙ
+// js/db.js — v0.9.401 — БАЗА ДАННЫХ С КЭШИРОВАНИЕМ ИКОНОК И ПОЛНОЙ ЛОКАЛИЗАЦИЕЙ
 
 const DB_VERSION = "v0.9.401";
 window.DB_VERSION = DB_VERSION;
@@ -8,6 +8,7 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
+    this.iconCache = new Map(); // Кэш иконок: ключ — строка с данными иконки
     this.loadData();
   }
 
@@ -140,7 +141,6 @@ class DatabaseManager {
     badges.style.flexWrap = 'wrap';
     badges.style.marginBottom = '8px';
 
-    // Тип
     const typeBadge = document.createElement('span');
     typeBadge.textContent = `[${entry.type}]`;
     typeBadge.style.padding = '2px 8px';
@@ -149,7 +149,6 @@ class DatabaseManager {
     typeBadge.style.fontSize = '12px';
     badges.appendChild(typeBadge);
 
-    // Макс. сила
     const maxBadge = document.createElement('span');
     maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength}]`;
     maxBadge.style.padding = '2px 8px';
@@ -158,7 +157,6 @@ class DatabaseManager {
     maxBadge.style.fontSize = '12px';
     badges.appendChild(maxBadge);
 
-    // Limbspecific
     if (entry.limbspecific) {
       const limbBadge = document.createElement('span');
       limbBadge.textContent = '[limb]';
@@ -170,7 +168,6 @@ class DatabaseManager {
       badges.appendChild(limbBadge);
     }
 
-    // Isbuff
     if (entry.isbuff) {
       const buffBadge = document.createElement('span');
       buffBadge.textContent = '[buff]';
@@ -217,7 +214,10 @@ class DatabaseManager {
 
     details.forEach(d => {
       const line = document.createElement('div');
-      line.innerHTML = `<strong>${loc(d.key)}:</strong> ${d.value}`;
+      const label = document.createElement('strong');
+      label.textContent = loc(d.key) + ': ';
+      line.appendChild(label);
+      line.appendChild(document.createTextNode(d.value));
       line.style.fontSize = '13px';
       card.appendChild(line);
     });
@@ -231,18 +231,31 @@ class DatabaseManager {
   }
 
   createIcon(iconInfo) {
+    const cacheKey = `${iconInfo.texture}|${iconInfo.sourcerect}|${iconInfo.color_theme_key}`;
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey).cloneNode(true);
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = 48;
     canvas.height = 48;
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
 
-    // Заглушка — фон
-    ctx.fillStyle = '#333';
-    ctx.fillRect(0, 0, 48, 48);
+    // Прозрачный фон
+    ctx.clearRect(0, 0, 48, 48);
+
+    // Заглушка — белый силуэт (в будущем — реальное изображение из атласа)
+    ctx.fillStyle = 'white';
+    ctx.fillRect(8, 8, 32, 32);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(8, 8, 32, 32);
 
     // Применение цвета по color_theme_key
-    const rgbVar = getComputedStyle(document.documentElement).getPropertyValue(`--${iconInfo.color_theme_key}-rgb`).trim();
+    const rgbVar = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${iconInfo.color_theme_key}-rgb`).trim();
+
     if (rgbVar) {
       const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
       ctx.globalCompositeOperation = 'source-atop';
@@ -250,12 +263,17 @@ class DatabaseManager {
       ctx.fillRect(0, 0, 48, 48);
     }
 
-    // Рамка
+    // Обводка закомментирована
+    /*
     ctx.strokeStyle = '#61afef';
     ctx.lineWidth = 2;
     ctx.strokeRect(2, 2, 44, 44);
+    */
 
-    return canvas;
+    // Кэшируем оригинал
+    this.iconCache.set(cacheKey, canvas);
+
+    return canvas.cloneNode(true);
   }
 
   filterGrid(query) {
