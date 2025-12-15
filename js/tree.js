@@ -1,13 +1,13 @@
-// js/tree.js — v0.9.401 — TREE VIEW НА D3.JS
+// js/tree.js — v0.9.403 — TREE VIEW НА D3.JS (ФИКС viewBox)
 
-const TREE_VERSION = "v0.9.401";
+const TREE_VERSION = "v0.9.403";
 window.TREE_VERSION = TREE_VERSION;
 
 class TreeView {
   constructor() {
     this.svg = d3.select("#tree-svg");
-    this.width = 0;
-    this.height = 0;
+    this.width = 800;
+    this.height = 600;
     this.root = null;
     this.i = 0;
     this.duration = 750;
@@ -21,7 +21,6 @@ class TreeView {
     this.updateDimensions();
     window.addEventListener('resize', () => this.updateDimensions());
 
-    // Клик по кнопке переключения вида
     const btn = document.getElementById('view-btn');
     if (btn) {
       btn.addEventListener('click', () => this.toggle());
@@ -31,10 +30,24 @@ class TreeView {
   updateDimensions() {
     const container = document.getElementById('tree-container');
     if (!container) return;
-    this.width = container.clientWidth - 40;
-    this.height = container.clientHeight - 40;
+
+    const rect = container.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      // Контейнер ещё не видим — отложим
+      requestAnimationFrame(() => this.updateDimensions());
+      return;
+    }
+
+    this.width = rect.width - 40;
+    this.height = rect.height - 40;
+
+    // Минимальные размеры, чтобы избежать negative viewBox
+    this.width = Math.max(this.width, 800);
+    this.height = Math.max(this.height, 600);
+
     this.svg.attr("viewBox", [0, 0, this.width, this.height]);
     this.tree.size([this.height, this.width - 200]);
+
     if (this.root) this.update(this.root);
   }
 
@@ -42,6 +55,8 @@ class TreeView {
     const container = document.getElementById('tree-container');
     const classic = document.getElementById('classic-view');
     const btn = document.getElementById('view-btn');
+
+    if (!container || !classic || !btn) return;
 
     if (container.style.display === 'block') {
       container.style.display = 'none';
@@ -51,7 +66,7 @@ class TreeView {
       container.style.display = 'block';
       classic.style.display = 'none';
       btn.textContent = loc('classicView');
-      this.render();
+      this.render(); // Рендерим при открытии
     }
   }
 
@@ -62,7 +77,6 @@ class TreeView {
       return;
     }
 
-    // Создаём иерархию
     const rootData = {
       name: loc('rootLabel'),
       children: model
@@ -70,9 +84,9 @@ class TreeView {
 
     this.root = d3.hierarchy(rootData, d => {
       if (d.type === 'rng' && d.children) {
-        return [ 
-          { name: loc('successLabel'), children: d.children.success },
-          { name: loc('failureLabel'), children: d.children.failure }
+        return [
+          { name: loc('successLabel'), children: d.children.success || [] },
+          { name: loc('failureLabel'), children: d.children.failure || [] }
         ].filter(branch => branch.children.length > 0);
       }
       return [];
@@ -94,14 +108,11 @@ class TreeView {
     const nodes = this.root.descendants();
     const links = this.root.links();
 
-    // Нормализация для фиксированной глубины
     nodes.forEach(d => d.y = d.depth * 180);
 
-    // Узлы
     const node = this.svg.selectAll('g.node')
       .data(nodes, d => d.id || (d.id = ++this.i));
 
-    // Новые узлы
     const nodeEnter = node.enter().append('g')
       .attr('class', 'node')
       .attr('transform', () => `translate(${source.y0},${source.x0})`)
@@ -120,7 +131,6 @@ class TreeView {
       .text(d => this.nodeText(d))
       .style('fill-opacity', 1e-6);
 
-    // Обновление
     const nodeUpdate = nodeEnter.merge(node);
 
     nodeUpdate.transition()
@@ -135,7 +145,6 @@ class TreeView {
     nodeUpdate.select('text')
       .style('fill-opacity', 1);
 
-    // Удаление
     const nodeExit = node.exit().transition()
       .duration(this.duration)
       .attr('transform', () => `translate(${source.y},${source.x})`)
@@ -147,7 +156,6 @@ class TreeView {
     nodeExit.select('text')
       .style('fill-opacity', 1e-6);
 
-    // Связи
     const link = this.svg.selectAll('path.link')
       .data(links, d => d.target.id);
 
@@ -173,7 +181,6 @@ class TreeView {
       })
       .remove();
 
-    // Сохраняем позиции для анимации
     nodes.forEach(d => {
       d.x0 = d.x;
       d.y0 = d.y;
@@ -184,9 +191,9 @@ class TreeView {
     if (d.depth === 0) return loc('rootLabel');
     if (d.data.name) return d.data.name;
     if (d.data.type === 'rng') return loc('rngAction');
-    if (d.data.type === 'spawn') return loc('spawnItem') + ': ' + (d.data.params.item || '');
-    if (d.data.type === 'creature') return loc('spawnCreature') + ': ' + (d.data.params.creature || '');
-    if (d.data.type === 'affliction') return loc('applyAffliction') + ': ' + (d.data.params.affliction || '');
+    if (d.data.type === 'spawn') return loc('spawnItem') + ': ' + (d.data.params?.item || '');
+    if (d.data.type === 'creature') return loc('spawnCreature') + ': ' + (d.data.params?.creature || '');
+    if (d.data.type === 'affliction') return loc('applyAffliction') + ': ' + (d.data.params?.affliction || '');
     return 'Unknown';
   }
 
@@ -212,9 +219,8 @@ class TreeView {
 const treeView = new TreeView();
 window.treeView = treeView;
 
-// Автоматический рендер при изменениях (временная связь)
+// Рендер при изменении модели (временная связь)
 window.updateAll = () => {
-  // Заглушка для классического вида
   if (document.getElementById('tree-container').style.display === 'block') {
     treeView.render();
   }
