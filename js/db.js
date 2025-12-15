@@ -1,6 +1,6 @@
-// js/db.js — v0.9.409 — БАЗА ДАННЫХ С ПРАВИЛЬНЫМИ ИКОНКАМИ И ЛОКАЛИЗАЦИЕЙ ИНТЕРФЕЙСА
+// js/db.js — v0.9.410 — БАЗА ДАННЫХ С ИСПРАВЛЕННЫМИ ИКОНКАМИ И БЕЗ MISSING LOC KEY
 
-const DB_VERSION = "v0.9.409";
+const DB_VERSION = "v0.9.410";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -29,7 +29,7 @@ class DatabaseManager {
       if (creatureResp.ok) this.creatures = await creatureResp.json();
     } catch (err) {
       console.error('Failed to load database', err);
-      alert(loc('dbError'));
+      alert(loc('dbError') || 'Ошибка загрузки базы данных');
     }
   }
 
@@ -75,10 +75,16 @@ class DatabaseManager {
     const tabs = document.createElement('div');
     tabs.className = 'db-tabs';
 
+    const tabNames = {
+      afflictions: 'tabAfflictions',
+      items: 'tabItems',
+      creatures: 'tabCreatures'
+    };
+
     ['afflictions', 'items', 'creatures'].forEach(tab => {
       const btn = document.createElement('button');
       btn.className = 'db-tab-btn';
-      btn.textContent = loc('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+      btn.textContent = loc(tabNames[tab]);
       btn.dataset.tab = tab;
       btn.onclick = () => {
         tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
@@ -257,7 +263,7 @@ class DatabaseManager {
 
   appendItemDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
@@ -265,31 +271,19 @@ class DatabaseManager {
 
   appendCreatureDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
   }
 
   createRealIcon(iconInfo) {
-    // Если iconInfo нет — заглушка
-    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
-      const canvas = document.createElement('canvas');
-      canvas.width = 48;
-      canvas.height = 48;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#333';
-      ctx.fillRect(0, 0, 48, 48);
-      ctx.fillStyle = '#666';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', 24, 24);
-      return canvas;
+    if (!iconInfo) {
+      return this.createPlaceholderIcon();
     }
 
-    const texture = iconInfo.texture;
-    const sourcerect = iconInfo.sourcerect;
+    const texture = iconInfo.texture || 'assets/textures/MainIconsAtlas.png';
+    const sourcerect = iconInfo.sourcerect || '0,0,128,128';
     const colorKey = iconInfo.color_theme_key || 'icon-status-gray';
 
     const cacheKey = `${texture}|${sourcerect}|${colorKey}`;
@@ -309,16 +303,8 @@ class DatabaseManager {
     if (atlasImg && atlasImg.complete) {
       this.drawIconFromAtlas(ctx, atlasImg, sourcerect, colorKey);
     } else {
-      // Заглушка пока атлас грузится
-      ctx.fillStyle = '#333';
-      ctx.fillRect(0, 0, 48, 48);
-      ctx.fillStyle = '#666';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', 24, 24);
+      this.createPlaceholderIcon(ctx);
 
-      // Асинхронная загрузка атласа
       this.loadAtlasAsync(texture).then(img => {
         if (img) {
           this.drawIconFromAtlas(ctx, img, sourcerect, colorKey);
@@ -330,13 +316,29 @@ class DatabaseManager {
     return canvas.cloneNode(true);
   }
 
+  createPlaceholderIcon(ctx = null) {
+    const canvas = ctx ? null : document.createElement('canvas');
+    const c = ctx || canvas.getContext('2d');
+    canvas.width = 48;
+    canvas.height = 48;
+
+    c.fillStyle = '#333';
+    c.fillRect(0, 0, 48, 48);
+    c.fillStyle = '#666';
+    c.font = '20px Arial';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('?', 24, 24);
+
+    return canvas || null;
+  }
+
   loadAtlasAsync(texture) {
     if (this.pendingAtlases.has(texture)) {
       return this.pendingAtlases.get(texture);
     }
 
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // На всякий случай
     img.src = texture;
 
     const promise = new Promise(resolve => {
