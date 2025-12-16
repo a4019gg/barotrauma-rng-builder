@@ -1,6 +1,6 @@
-// js/db.js — v0.9.421 — ИСПРАВЛЕННЫЕ ИКОНКИ С ЦВЕТОМ И МИССИНГОМ
+// js/db.js — v0.9.419 — БАЗА ДАННЫХ С ИНДИКАТОРОМ ЗАГРУЗКИ И ИСПРАВЛЕННЫМИ ИКОНКАМИ
 
-const DB_VERSION = "v0.9.421";
+const DB_VERSION = "v0.9.419";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -8,62 +8,14 @@ class DatabaseManager {
     this.afflictions = [];
     this.items = [];
     this.creatures = [];
-    this.iconCache = new Map(); // Ключ: `${texture}|${sourcerect}|${colorKey}`, Значение: Promise(canvas)
-    this.atlasCache = new Map(); // Ключ: путь к атласу, Значение: Promise(Image)
-    this.missingIconCanvas = null; // Заглушка
+    this.iconCache = new Map(); // Ключ: `${texture}|${sourcerect}|${colorKey}`
+    this.atlasCache = new Map(); // Ключ: путь к атласу
+    this.pendingAtlases = new Map(); // Ключ: путь к атласу, Значение: Promise
+    this.missingIconCanvas = null; // Кэшированный fallback canvas
     this.currentTab = 'afflictions';
     this.isModalOpen = false;
-    this.loadMissingIcon(); // Загрузить заглушку
     this.loadData();
   }
-
-  loadMissingIcon() {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 48;
-        canvas.height = 48;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          // Нарисовать "Missing Texture" на канвасе
-          ctx.fillStyle = '#333';
-          ctx.fillRect(0, 0, 48, 48);
-          ctx.strokeStyle = '#f00';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(2, 2, 44, 44);
-          ctx.fillStyle = '#f00';
-          ctx.font = 'bold 16px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('?', 24, 24);
-        }
-        this.missingIconCanvas = canvas;
-        resolve(canvas);
-      };
-      img.onerror = () => {
-        console.error('Failed to load missing texture icon');
-        // Создать простую заглушку
-        const fallbackCanvas = document.createElement('canvas');
-        fallbackCanvas.width = 48;
-        fallbackCanvas.height = 48;
-        const ctx = fallbackCanvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#f00';
-          ctx.fillRect(0, 0, 48, 48);
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 16px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('?', 24, 24);
-        }
-        this.missingIconCanvas = fallbackCanvas;
-        resolve(fallbackCanvas);
-      };
-      img.src = 'assets/Missing_Texture_icon.png'; // Или другой путь к заглушке
-    });
-  }
-
 
   async loadData() {
     try {
@@ -84,7 +36,6 @@ class DatabaseManager {
 
   async openDB() {
     if (this.isModalOpen) return;
-    await this.loadMissingIcon(); // Убедиться, что заглушка загружена
     this.isModalOpen = true;
 
     const overlay = document.createElement('div');
@@ -106,6 +57,23 @@ class DatabaseManager {
     grid.className = 'db-grid';
     grid.id = 'db-grid';
 
+    // === ДОБАВЛЕН ИНДИКАТОР ЗАГРУЗКИ ===
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'db-loading-indicator';
+    loadingIndicator.textContent = loc('loadingDatabase', 'Загрузка базы данных...');
+    loadingIndicator.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      color: #aaa;
+      text-align: center;
+      z-index: 1001; /* Выше, чем карточки, но ниже оверлея */
+    `;
+    content.appendChild(loadingIndicator);
+    // ================================
+
     content.appendChild(header);
     content.appendChild(grid);
     overlay.appendChild(content);
@@ -118,7 +86,13 @@ class DatabaseManager {
       }
     });
 
-    this.renderGrid('afflictions');
+    // === ОТЛОЖЕННАЯ ОТРИСОВКА С ПОКАЗОМ ИНДИКАТОРА ===
+    // Позволяем DOM обновиться и показать индикатор
+    setTimeout(async () => {
+      await this.renderGrid(this.currentTab); // Ждём завершения отрисовки
+      loadingIndicator.remove(); // Убираем индикатор после отрисовки
+    }, 10); // Небольшая задержка, чтобы индикатор успел отобразиться
+    // =============================================
   }
 
   createTabs() {
@@ -140,8 +114,11 @@ class DatabaseManager {
         tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.currentTab = tab;
-        this.renderGrid(tab);
+        // === ОБНОВЛЁННЫЙ ВЫЗОВ renderGrid ===
+        this.renderGrid(tab).catch(console.error); // Обработка ошибок отрисовки
+        // ===================================
       };
+      if (tab === 'afflictions') btn.classList.add('active');
       tabs.appendChild(btn);
     });
 
@@ -157,7 +134,8 @@ class DatabaseManager {
     return input;
   }
 
-  renderGrid(type) {
+  // === ОБНОВЛЁННЫЙ renderGrid (асинхронный) ===
+  async renderGrid(type) {
     const grid = document.getElementById('db-grid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -172,13 +150,19 @@ class DatabaseManager {
       return;
     }
 
-    data.forEach(async (entry) => { // async для createCard
-      const card = await this.createCard(entry, type); // await
-      grid.appendChild(card);
+    // Используем Promise.all для параллельной отрисовки всех карточек
+    const cardPromises = data.map(entry => this.createCard(entry, type));
+    const cards = await Promise.all(cardPromises);
+
+    cards.forEach(card => {
+      if (card) { // Проверяем, что карточка успешно создана
+        grid.appendChild(card);
+      }
     });
   }
+  // =========================================
 
-  // Асинхронная функция для создания карточки (с ожиданием иконки)
+  // === ОБНОВЛЁННЫЙ createCard (асинхронный) ===
   async createCard(entry, type) {
     const card = document.createElement('div');
     card.className = 'db-entry-btn';
@@ -194,11 +178,20 @@ class DatabaseManager {
     top.style.gap = '12px';
     top.style.marginBottom = '8px';
 
+    // --- ИСПРАВЛЕНО ---
     // Ждём, пока иконка будет готова
-    const icon = await this.createRealIcon(entry.icon || {});
-    top.appendChild(icon);
+    try {
+      const icon = await this.createRealIcon(entry.icon || {}); // await
+      top.appendChild(icon);
+    } catch (e) {
+      console.error(`Failed to create icon for entry ${entry.identifier || entry.id}`, e);
+      // Используем fallback иконку
+      const fallbackIcon = this.createMissingIconCanvas(); // <-- Новый метод для fallback
+      top.appendChild(fallbackIcon);
+    }
+    // -----------------
 
-    const displayName = entry.name || entry.identifier || 'Unknown';
+    const displayName = entry.name || loc(entry.name_key || '') || entry.identifier || 'Unknown';
     const nameDiv = document.createElement('div');
     nameDiv.textContent = displayName;
     nameDiv.style.fontWeight = 'bold';
@@ -225,155 +218,7 @@ class DatabaseManager {
 
     return card;
   }
-
-  // === ИСПРАВЛЕННАЯ ФУНКЦИЯ createRealIcon ===
-  async createRealIcon(iconInfo) {
-    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
-      // Вернуть заглушку, если нет данных
-      return this.missingIconCanvas ? this.missingIconCanvas.cloneNode(true) : this.createFallbackIcon();
-    }
-
-    const texturePath = iconInfo.texture;
-    const sourcerectStr = iconInfo.sourcerect;
-    // Преобразуем color_theme_key из snake_case в kebab-case
-    const colorKeySnake = iconInfo.color_theme_key || 'icon-status-gray';
-    const colorKeyKebab = colorKeySnake.replace(/_/g, '-');
-    const cacheKey = `${texturePath}|${sourcerectStr}|${colorKeyKebab}`;
-
-    // Проверяем кэш (ожидаем Promise(canvas))
-    if (this.iconCache.has(cacheKey)) {
-      const canvasPromise = this.iconCache.get(cacheKey);
-      try {
-        const cachedCanvas = await canvasPromise;
-        return cachedCanvas.cloneNode(true);
-      } catch (e) {
-        console.warn(`Cache miss for ${cacheKey} due to error:`, e);
-        // Если кэш сломался, пересоздаём
-      }
-    }
-
-    // Создаём промис для отрисовки иконки и кладём его в кэш
-    const canvasPromise = this.renderIconToCanvas(texturePath, sourcerectStr, colorKeyKebab);
-    this.iconCache.set(cacheKey, canvasPromise);
-
-    try {
-      const finalCanvas = await canvasPromise;
-      return finalCanvas.cloneNode(true);
-    } catch (e) {
-      console.error(`Failed to render icon for ${cacheKey}:`, e);
-      // В случае ошибки отрисовки, возвращаем заглушку
-      return this.missingIconCanvas ? this.missingIconCanvas.cloneNode(true) : this.createFallbackIcon();
-    }
-  }
-
-  // === ФУНКЦИЯ ОТРИСОВКИ ИКОНКИ ===
-  async renderIconToCanvas(texturePath, sourcerectStr, colorKeyKebab) {
-    const atlasImage = await this.loadAtlas(texturePath);
-    if (!atlasImage) {
-      // Если атлас не загрузился, возвращаем заглушку
-      return this.missingIconCanvas ? this.missingIconCanvas.cloneNode(true) : this.createFallbackIcon();
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 48;
-    canvas.height = 48;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get 2d context');
-      return canvas; // Возврат пустого canvas как fallback
-    }
-
-    // Отрисовка из атласа
-    const rect = sourcerectStr.split(',').map(Number);
-    if (rect.length !== 4) {
-      console.warn(`Invalid sourcerect format: ${sourcerectStr}`);
-      return this.missingIconCanvas ? this.missingIconCanvas.cloneNode(true) : this.createFallbackIcon();
-    }
-    const [sx, sy, sw, sh] = rect;
-
-    // Проверяем, не выходит ли sourcerect за границы атласа
-    if (sx < 0 || sy < 0 || sx + sw > atlasImage.width || sy + sh > atlasImage.height) {
-      console.warn(`Sourcerect out of bounds for ${texturePath}: ${sourcerectStr}`);
-      return this.missingIconCanvas ? this.missingIconCanvas.cloneNode(true) : this.createFallbackIcon();
-    }
-
-    ctx.drawImage(atlasImage, sx, sy, sw, sh, 0, 0, 48, 48);
-
-    // Наложение цвета
-    const rgbStr = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
-
-    if (rgbStr) {
-      const [r, g, b] = rgbStr.split(',').map(v => parseInt(v.trim(), 10));
-      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
-        // Используем source-atop для наложения цвета
-        ctx.globalCompositeOperation = 'source-in'; // Оставляем только непрозрачные пиксели
-        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        ctx.fillRect(0, 0, 48, 48);
-
-        ctx.globalCompositeOperation = 'destination-over'; // Переключаемся, чтобы нарисовать белый фон
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, 48, 48);
-
-        ctx.globalCompositeOperation = 'source-over'; // Возвращаемся к нормальному режиму
-      } else {
-        console.warn(`Invalid RGB values from CSS variable --${colorKeyKebab}-rgb: ${rgbStr}`);
-      }
-    } else {
-        // console.warn(`CSS variable --${colorKeyKebab}-rgb not found`); // Может быть много в консоли
-    }
-
-    return canvas;
-  }
-
-  // === ЗАГРУЗКА АТЛАСА С КЭШИРОВАНИЕМ ===
-  async loadAtlas(path) {
-    // Проверяем кэш атласов (ожидаем Promise(Image))
-    if (this.atlasCache.has(path)) {
-      const imagePromise = this.atlasCache.get(path);
-      return imagePromise;
-    }
-
-    // Создаём промис загрузки и кладём его в кэш
-    const imagePromise = new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous'; // Для CORS, если нужно
-      img.onload = () => resolve(img);
-      img.onerror = () => {
-        console.warn(`Failed to load atlas: ${path}`);
-        reject(new Error(`Failed to load atlas: ${path}`));
-      };
-      img.src = path; // Используем путь из JSON (должен быть assets/textures/...)
-    });
-
-    this.atlasCache.set(path, imagePromise);
-
-    try {
-      const loadedImage = await imagePromise;
-      return loadedImage;
-    } catch (e) {
-      // Удаляем сломанный промис из кэша
-      this.atlasCache.delete(path);
-      return null;
-    }
-  }
-
-  createFallbackIcon() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 48;
-    canvas.height = 48;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#f00';
-      ctx.fillRect(0, 0, 48, 48);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 16px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', 24, 24);
-    }
-    return canvas;
-  }
+  // ==========================================
 
   appendAfflictionDetails(card, entry) {
     const badges = document.createElement('div');
@@ -422,7 +267,7 @@ class DatabaseManager {
 
     card.appendChild(badges);
 
-    const descText = entry.description || '';
+    const descText = entry.description || loc(entry.desc_key || '') || '';
     const shortDesc = document.createElement('div');
     shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
     shortDesc.style.color = '#aaa';
@@ -461,7 +306,7 @@ class DatabaseManager {
 
   appendItemDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
@@ -469,10 +314,205 @@ class DatabaseManager {
 
   appendCreatureDetails(card, entry) {
     const placeholder = document.createElement('div');
-    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.textContent = entry.name || loc(entry.name_key || '') || entry.identifier || 'unknown';
     placeholder.style.color = '#aaa';
     placeholder.style.fontSize = '14px';
     card.appendChild(placeholder);
+  }
+
+  // === ИСПРАВЛЕННЫЙ createRealIcon (асинхронный) ===
+  async createRealIcon(iconInfo) {
+    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
+      return this.createMissingIconCanvas(); // Используем fallback
+    }
+
+    const texture = iconInfo.texture;
+    const sourcerect = iconInfo.sourcerect;
+    // Преобразуем color_theme_key из snake_case в kebab-case
+    const colorKeySnake = iconInfo.color_theme_key || 'icon-status-gray';
+    const colorKeyKebab = this.toKebabCase(colorKeySnake);
+
+    const cacheKey = `${texture}|${sourcerect}|${colorKeyKebab}`;
+
+    // Проверяем кэш готовых canvas
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey).cloneNode(true);
+    }
+
+    // Создаём canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get 2d context');
+      return canvas; // Возврат пустого canvas как fallback
+    }
+
+    // Рисуем fallback (плейсхолдер) сразу
+    this.drawMissingIcon(ctx);
+
+    // Пытаемся получить атлас
+    let atlasImage = this.atlasCache.get(texture);
+
+    if (!atlasImage) {
+      // Если атлас не в кэше, проверяем, не загружается ли он уже
+      if (this.pendingAtlases.has(texture)) {
+        atlasImage = await this.pendingAtlases.get(texture); // Ждём завершения загрузки
+      } else {
+        // Если не загружается, начинаем загрузку
+        const atlasPromise = this.loadAtlasAsync(texture);
+        this.pendingAtlases.set(texture, atlasPromise);
+        atlasImage = await atlasPromise; // Ждём завершения новой загрузки
+      }
+    }
+
+    if (atlasImage) {
+      // Если атлас успешно получен, рисуем на canvas
+      this.drawIconFromAtlas(ctx, atlasImage, sourcerect, colorKeyKebab);
+    } else {
+      // Если атлас не удалось загрузить, оставляем fallback
+      console.warn(`Could not load atlas for icon: ${texture}`);
+    }
+
+    // Кэшируем готовый canvas (клон для возврата, оригинальный для кэша)
+    this.iconCache.set(cacheKey, canvas);
+    return canvas.cloneNode(true);
+  }
+  // ===============================================
+
+  // === НОВЫЙ МЕТОД: Создание fallback иконки ===
+  createMissingIconCanvas() {
+    if (this.missingIconCanvas) {
+      return this.missingIconCanvas.cloneNode(true); // Возвращаем клон кэшированного
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // Рисуем простую заглушку
+      ctx.fillStyle = '#f00'; // Красный фон
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.fillStyle = '#fff'; // Белый текст
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', 24, 24);
+    }
+    this.missingIconCanvas = canvas; // Кэшируем
+    return canvas.cloneNode(true); // Возвращаем клон
+  }
+  // =============================================
+
+  // === МЕТОД ДЛЯ ОТРИСОВКИ ПЛЕЙШХОЛДЕРА (используется в createRealIcon до загрузки атласа) ===
+  drawMissingIcon(ctx) {
+    // Рисует простую сетку или цвет как плейсхолдер
+    ctx.fillStyle = '#333';
+    ctx.fillRect(0, 0, 48, 48);
+    ctx.strokeStyle = '#f00';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, 44, 44);
+    ctx.fillStyle = '#f00';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 24, 24);
+  }
+  // ================================================================================
+
+  // === МЕТОД ДЛЯ ЗАГРУЗКИ АТЛАСА С КЭШИРОВАНИЕМ ===
+  async loadAtlasAsync(path) {
+    // Проверяем кэш атласов (ожидаем Promise(Image))
+    if (this.atlasCache.has(path)) {
+      // Если в кэше, возвращаем изображение напрямую (оно уже загружено)
+      return this.atlasCache.get(path);
+    }
+
+    // Создаём промис загрузки и кладём его в кэш
+    const imagePromise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous'; // Для CORS, если нужно
+      img.onload = () => {
+        this.atlasCache.set(path, img); // Кэшируем изображение
+        resolve(img);
+      };
+      img.onerror = () => {
+        console.warn(`Failed to load atlas: ${path}`);
+        // Не кэшируем 'null' или 'undefined', иначе всегда будет ошибка
+        reject(new Error(`Failed to load atlas: ${path}`));
+      };
+      // Используем путь из JSON (должен быть assets/textures/...)
+      // Предполагается, что путь уже изменён в JSON на 'assets/textures/...'
+      img.src = path;
+    });
+
+    // Кэшируем *Promise*, чтобы другие вызовы ждали одну и ту же загрузку
+    this.atlasCache.set(path, imagePromise);
+
+    try {
+      const loadedImage = await imagePromise;
+      return loadedImage;
+    } catch (e) {
+      // Если загрузка не удалась, удаляем промис из кэша (но не сам 'null')
+      // this.atlasCache.delete(path); // Не удаляем, чтобы не перезапускать неудачную попытку
+      // Возвращаем null, чтобы вызывающая сторона знала об ошибке
+      return null;
+    }
+  }
+  // ====================================================================================================
+
+  // === МЕТОД ДЛЯ ОТРИСОВКИ ИКОНКИ ИЗ АТЛАСА С ЦВЕТОМ ===
+  drawIconFromAtlas(ctx, img, sourcerectStr, colorKeyKebab) {
+    if (!img) return;
+
+    const rect = sourcerectStr.split(',').map(v => parseInt(v.trim()));
+    if (rect.length !== 4) {
+      console.warn(`Invalid sourcerect format: ${sourcerectStr}`);
+      return;
+    }
+    const [sx, sy, sw, sh] = rect;
+
+    // Проверяем, не выходит ли sourcerect за границы атласа
+    if (sx < 0 || sy < 0 || sx + sw > img.width || sy + sh > img.height) {
+      console.warn(`Sourcerect out of bounds for ${texturePath}: ${sourcerectStr}`);
+      return;
+    }
+
+    // Очищаем и рисуем часть атласа на canvas 48x48
+    ctx.clearRect(0, 0, 48, 48);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
+
+    // Накладываем цвет
+    const rgbStr = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
+
+    if (rgbStr) {
+      const [r, g, b] = rgbStr.split(',').map(v => parseInt(v.trim(), 10));
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        // Используем source-atop для наложения цвета
+        ctx.globalCompositeOperation = 'source-in'; // Оставляем только непрозрачные пиксели
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillRect(0, 0, 48, 48);
+
+        ctx.globalCompositeOperation = 'destination-over'; // Переключаемся, чтобы нарисовать белый фон
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 48, 48);
+
+        ctx.globalCompositeOperation = 'source-over'; // Возвращаемся к нормальному режиму
+      } else {
+        console.warn(`Invalid RGB values from CSS variable --${colorKeyKebab}-rgb: ${rgbStr}`);
+      }
+    } else {
+      // console.warn(`CSS variable --${colorKeyKebab}-rgb not found`); // Может быть много в консоли
+    }
+  }
+  // ======================================================================================
+
+  // snake_case -> kebab-case
+  toKebabCase(str) {
+    return str.replace(/_/g, '-');
   }
 
   filterGrid(query) {
