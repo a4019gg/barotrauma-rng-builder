@@ -60,7 +60,7 @@ class DatabaseManager {
         this.missingIconCanvas = fallbackCanvas;
         resolve(fallbackCanvas);
       };
-      img.src = 'assets/missing_texture.png'; // Или другой путь к заглушке
+      img.src = 'assets/Missing_Texture_icon.png'; // Или другой путь к заглушке
     });
   }
 
