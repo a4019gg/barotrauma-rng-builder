@@ -1,79 +1,178 @@
 const DB_VERSION = "v0.9.422";
 window.DB_VERSION = DB_VERSION;
 
-/* DB cards */
+// js/db.js — DB UI (final)
 
-.db-entry {
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 10px;
-  border-radius: 6px;
-  background: rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+class DatabaseManager {
+  constructor() {
+    this.currentTab = "afflictions";
+    this.sortAsc = true;
+    this.expandByDefault = false; // читается из настроек, если есть
+    this.data = {
+      afflictions: [],
+      items: [],
+      creatures: []
+    };
+    this.init();
+  }
+
+  async init() {
+    await this.loadData();
+    this.bindUI();
+    this.render();
+  }
+
+  async loadData() {
+    const load = async (url) => {
+      const r = await fetch(url);
+      return r.ok ? r.json() : [];
+    };
+
+    this.data.afflictions = await load("data/afflictions.json");
+    this.data.items = await load("data/items.json");
+    this.data.creatures = await load("data/creatures.json");
+  }
+
+  bindUI() {
+    const grid = document.getElementById("db-grid");
+
+    grid.addEventListener("click", (e) => {
+      const card = e.target.closest(".db-entry");
+      if (!card) return;
+
+      if (e.target.classList.contains("info-toggle")) {
+        this.toggleCard(card);
+        e.stopPropagation();
+        return;
+      }
+
+      // click on card = copy ID
+      const id = card.dataset.id;
+      navigator.clipboard.writeText(id);
+    });
+
+    document.getElementById("db-expand-all")
+      ?.addEventListener("click", () => this.toggleExpandAll());
+
+    document.getElementById("db-sort")
+      ?.addEventListener("click", () => {
+        this.sortAsc = !this.sortAsc;
+        this.render();
+      });
+  }
+
+  render() {
+    const grid = document.getElementById("db-grid");
+    grid.innerHTML = "";
+
+    let list = [...this.data[this.currentTab]];
+    list.sort((a, b) =>
+      this.sortAsc
+        ? a.id.localeCompare(b.id)
+        : b.id.localeCompare(a.id)
+    );
+
+    const frag = document.createDocumentFragment();
+    list.forEach(entry => frag.appendChild(this.createCard(entry)));
+    grid.appendChild(frag);
+  }
+
+  createCard(entry) {
+    const card = document.createElement("div");
+    card.className = "db-entry";
+    card.dataset.id = entry.id;
+
+    if (this.expandByDefault) card.classList.add("expanded");
+
+    card.innerHTML = `
+      <div class="db-header">
+        <div class="db-title">
+          <strong>${entry.name || entry.id}</strong>
+          <span class="db-id">${entry.id}</span>
+        </div>
+        <span class="info-toggle">ⓘ</span>
+      </div>
+
+      <div class="db-summary">
+        ${entry.description || ""}
+      </div>
+
+      <div class="db-details"></div>
+
+      <div class="db-tags">
+        ${this.renderTags(entry)}
+      </div>
+    `;
+
+    return card;
+  }
+
+  renderTags(entry) {
+    const tags = [];
+    if (entry.category) tags.push(entry.category);
+    if (Array.isArray(entry.tags)) tags.push(...entry.tags);
+
+    return tags.map(t => `<span class="db-tag">${t}</span>`).join("");
+  }
+
+  toggleCard(card) {
+    const expanded = card.classList.toggle("expanded");
+    if (expanded) this.ensureDetails(card);
+  }
+
+  toggleExpandAll() {
+    const cards = [...document.querySelectorAll(".db-entry")];
+    const expand = !cards.every(c => c.classList.contains("expanded"));
+
+    let i = 0;
+    const batch = () => {
+      for (let n = 0; n < 20 && i < cards.length; n++, i++) {
+        const c = cards[i];
+        c.classList.toggle("expanded", expand);
+        if (expand) this.ensureDetails(c);
+      }
+      if (i < cards.length) requestAnimationFrame(batch);
+    };
+    batch();
+  }
+
+  ensureDetails(card) {
+    const box = card.querySelector(".db-details");
+    if (box.dataset.ready) return;
+
+    const id = card.dataset.id;
+    const entry = this.data[this.currentTab].find(e => e.id === id);
+    box.dataset.ready = "1";
+
+    box.innerHTML = this.renderDetails(entry);
+  }
+
+  renderDetails(entry) {
+    if (this.currentTab === "afflictions") {
+      return `
+        <div><b>Type:</b> ${entry.type}</div>
+        <div><b>Max strength:</b> ${entry.maxstrength}</div>
+        <div><b>Limb specific:</b> ${entry.limbspecific ? "yes" : "no"}</div>
+        <div><b>Buff:</b> ${entry.isbuff ? "yes" : "no"}</div>
+      `;
+    }
+
+    if (this.currentTab === "items") {
+      return `
+        <div><b>Category:</b> ${entry.category}</div>
+        <div><b>ID:</b> ${entry.id}</div>
+      `;
+    }
+
+    if (this.currentTab === "creatures") {
+      return `
+        <div><b>Category:</b> ${entry.category}</div>
+        <div><b>ID:</b> ${entry.id}</div>
+      `;
+    }
+
+    return "";
+  }
 }
 
-.db-entry.expanded {
-  border-color: rgba(255,255,255,0.2);
-}
-
-.db-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-}
-
-.db-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.db-id {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.info-toggle {
-  cursor: pointer;
-  opacity: 0.6;
-}
-.info-toggle:hover {
-  opacity: 1;
-}
-
-.db-summary {
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-.db-details {
-  display: none;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  font-size: 13px;
-  gap: 4px;
-}
-
-.db-entry.expanded .db-details {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.db-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.db-tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.08);
-  opacity: 0.85;
-}
+window.dbManager = new DatabaseManager();
