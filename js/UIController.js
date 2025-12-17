@@ -1,41 +1,53 @@
-// js/UIController.js — v0.9.421
+// js/UIController.js — v0.9.430 — UI CONTROLLER (MULTISELECT + HOTKEYS)
 
-const UI_VERSION = "v0.9.421";
+const UI_VERSION = "v0.9.430";
 window.UI_VERSION = UI_VERSION;
 
 class UIController {
   constructor() {
-    if (UIController._instance) return UIController._instance;
-    UIController._instance = this;
-
     this.isInitialized = false;
-    this.initEventDelegation();
+    this.selectedNodeIds = new Set();
+    this.init();
   }
 
-  initEventDelegation() {
+  init() {
     if (this.isInitialized) return;
     this.isInitialized = true;
 
     document.addEventListener("click", this.handleClick.bind(this));
     document.addEventListener("change", this.handleChange.bind(this));
+    document.addEventListener("keydown", this.handleKeyDown.bind(this));
   }
 
   /* =========================
-     CLICK HANDLER
+     CLICK HANDLING
      ========================= */
 
   handleClick(e) {
-    const target = e.target.closest("[data-action]");
-    if (!target) return;
+    const nodeEl = e.target.closest(".node");
+    const actionEl = e.target.closest("[data-action]");
 
-    e.preventDefault();
+    // --- NODE SELECTION ---
+    if (nodeEl && !actionEl) {
+      const id = Number(nodeEl.dataset.id);
+      if (e.shiftKey) {
+        this.toggleSelection(id, nodeEl);
+      } else {
+        this.clearSelection();
+        this.selectNode(id, nodeEl);
+      }
+      return;
+    }
+
+    // --- ACTIONS ---
+    if (!actionEl) return;
     e.stopPropagation();
 
-    const action = target.dataset.action;
-    const type = target.dataset.type || target.dataset.nodeType;
-    const parentId = target.dataset.parentId ? parseInt(target.dataset.parentId, 10) : null;
-    const branch = target.dataset.branch;
-    const id = target.dataset.id ? parseInt(target.dataset.id, 10) : null;
+    const action = actionEl.dataset.action;
+    const id = actionEl.dataset.id ? Number(actionEl.dataset.id) : null;
+    const type = actionEl.dataset.type || actionEl.dataset.nodeType;
+    const parentId = actionEl.dataset.parentId ? Number(actionEl.dataset.parentId) : null;
+    const branch = actionEl.dataset.branch;
 
     switch (action) {
       case "toggleView":
@@ -43,36 +55,21 @@ class UIController {
         break;
 
       case "openDB":
-        dbManager.openDB();
-        break;
-
-      case "loadExample":
-        dbManager.openDB();
-        break;
-
-      case "importFile":
-        importFile();
-        break;
-
-      case "exportJSON":
-        exportJSON();
+        if (!document.querySelector(".db-modal-overlay")) {
+          dbManager.openDB();
+        }
         break;
 
       case "addEvent":
         editorState.addEvent();
-        uiNotify("addEventDone", "success");
+        break;
+
+      case "removeNode":
+        this.removeNodes(id);
         break;
 
       case "addNode":
-        if (type) {
-          const map = {
-            rng: addRNG,
-            spawn: addSpawn,
-            creature: addCreature,
-            affliction: addAffliction
-          };
-          map[type]?.();
-        }
+        this.addRootNode(type);
         break;
 
       case "addNodeToBranch":
@@ -81,27 +78,17 @@ class UIController {
         }
         break;
 
-      case "removeNode":
-        if (id !== null) {
-          editorState.removeNodeById(id);
-        }
-        break;
-
       case "clearAll":
-        if (confirm(loc("clearAllConfirm"))) {
-          editorState.clearAll();
-          uiNotify("clearAllDone", "warning");
-        }
+        editorState.clearAll();
+        this.clearSelection();
         break;
 
       case "autoBalance":
         editorState.autoBalance();
-        uiNotify("autoBalanceDone", "success");
         break;
 
       case "generateXML":
         generateXML();
-        uiNotify("xmlGenerated", "success");
         break;
 
       case "copyXML":
@@ -110,7 +97,6 @@ class UIController {
 
       case "downloadXML":
         this.downloadXML();
-        uiNotify("downloadXML", "info");
         break;
 
       case "importFromXML":
@@ -118,164 +104,153 @@ class UIController {
         break;
 
       default:
-        console.warn(`[UI] Unknown action: ${action}`);
+        console.warn("[UI] Unknown action:", action);
     }
   }
 
   /* =========================
-     CHANGE HANDLER
+     CHANGE HANDLING
      ========================= */
 
   handleChange(e) {
-    const target = e.target;
-    if (!target.dataset?.action) return;
+    const el = e.target;
+    if (!el.dataset?.action) return;
 
-    const action = target.dataset.action;
+    if (el.dataset.action === "updateParam") {
+      updateAll();
+      return;
+    }
 
-    switch (action) {
-      case "setTheme":
-        setTheme(target.value);
-        break;
-      case "setLang":
-        setLang(target.value);
-        break;
-      case "setUIScale":
-        setUIScale(target.value);
-        break;
-      case "setNodeDensity":
-        setNodeDensity(target.value);
-        break;
-      case "toggleShadows":
-        toggleShadows(target.checked);
-        break;
-      case "toggleGrid":
-        toggleGrid(target.checked);
-        break;
-      case "toggleSnap":
-        toggleSnap(target.checked);
-        break;
-      case "setXMLFormat":
-        setXMLFormat(target.value);
-        break;
-      case "toggleValidation":
-        toggleValidation(target.checked);
-        break;
-      case "toggleCheckDuplicateIDs":
-        toggleCheckDuplicateIDs(target.checked);
-        break;
-      case "updateParam":
-        updateAll(); // строго один раз
-        break;
+    switch (el.dataset.action) {
+      case "setTheme": setTheme(el.value); break;
+      case "setLang": setLang(el.value); break;
+      case "setUIScale": setUIScale(el.value); break;
+      case "setNodeDensity": setNodeDensity(el.value); break;
+      case "toggleShadows": toggleShadows(el.checked); break;
+      case "toggleGrid": toggleGrid(el.checked); break;
+      case "toggleSnap": toggleSnap(el.checked); break;
+      case "setXMLFormat": setXMLFormat(el.value); break;
+      case "toggleValidation": toggleValidation(el.checked); break;
+      case "toggleCheckDuplicateIDs": toggleCheckDuplicateIDs(el.checked); break;
       default:
-        console.warn(`[UI] Unknown change action: ${action}`);
+        console.warn("[UI] Unknown change action:", el.dataset.action);
     }
   }
 
   /* =========================
-     VIEW / XML
+     KEYBOARD
      ========================= */
+
+  handleKeyDown(e) {
+    if (e.key === "Escape") {
+      this.clearSelection();
+    }
+
+    if (e.key === "Delete") {
+      if (this.selectedNodeIds.size > 0) {
+        this.removeNodes();
+      }
+    }
+  }
+
+  /* =========================
+     NODE SELECTION
+     ========================= */
+
+  selectNode(id, el) {
+    this.selectedNodeIds.add(id);
+    el.classList.add("selected");
+  }
+
+  toggleSelection(id, el) {
+    if (this.selectedNodeIds.has(id)) {
+      this.selectedNodeIds.delete(id);
+      el.classList.remove("selected");
+    } else {
+      this.selectNode(id, el);
+    }
+  }
+
+  clearSelection() {
+    this.selectedNodeIds.forEach(id => {
+      const el = document.querySelector(`.node[data-id="${id}"]`);
+      if (el) el.classList.remove("selected");
+    });
+    this.selectedNodeIds.clear();
+  }
+
+  removeNodes(singleId = null) {
+    const ids = singleId !== null
+      ? [singleId]
+      : Array.from(this.selectedNodeIds);
+
+    if (!ids.length) return;
+
+    editorState.saveState(
+      ids.length > 1 ? "Delete multiple nodes" : "Delete node"
+    );
+
+    ids.forEach(id => editorState.removeNodeById(id, true));
+    editorState.commit();
+    this.clearSelection();
+  }
+
+  /* =========================
+     HELPERS
+     ========================= */
+
+  addRootNode(type) {
+    const map = {
+      rng: () => nodeFactory.createModelRNG(),
+      spawn: () => nodeFactory.createModelSpawn(),
+      creature: () => nodeFactory.createModelCreature(),
+      affliction: () => nodeFactory.createModelAffliction()
+    };
+    const fn = map[type];
+    if (!fn) return;
+
+    editorState.saveState("Add root node");
+    editorState.events[editorState.currentEventIndex].model.push(fn());
+    editorState.commit();
+  }
 
   toggleView() {
     const classic = document.getElementById("classic-view");
     const tree = document.getElementById("tree-container");
     const btn = document.getElementById("view-btn");
-
     if (!classic || !tree || !btn) return;
 
-    const isTree = tree.style.display === "block";
+    const treeVisible = tree.style.display === "block";
+    tree.style.display = treeVisible ? "none" : "block";
+    classic.style.display = treeVisible ? "block" : "none";
+    btn.textContent = loc(treeVisible ? "treeView" : "classicView");
 
-    tree.style.display = isTree ? "none" : "block";
-    classic.style.display = isTree ? "block" : "none";
-    btn.textContent = loc(isTree ? "treeView" : "classicView");
-
-    if (!isTree) treeView.render();
+    if (!treeVisible) treeView.render();
   }
 
   copyXML() {
-    const output = document.getElementById("output");
-    if (!output) return;
-
-    output.select();
-    output.setSelectionRange(0, 99999);
+    const out = document.getElementById("output");
+    if (!out) return;
+    out.select();
     document.execCommand("copy");
-    uiNotify("copyXML", "info");
+    alert(loc("copyXML"));
   }
 
   downloadXML() {
     generateXML();
-    const output = document.getElementById("output")?.value;
-    if (!output) return;
-
-    const blob = new Blob([output], { type: "text/plain" });
+    const data = document.getElementById("output").value;
+    const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "barotrauma-event.xml";
     a.click();
-
     URL.revokeObjectURL(url);
   }
 }
 
 /* =========================
-   UI NOTIFY (TOASTS)
-   ========================= */
-
-function uiNotify(messageKey, type = "info", timeout = 2500) {
-  let container = document.getElementById("ui-toast-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "ui-toast-container";
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement("div");
-  toast.className = `ui-toast ui-toast-${type}`;
-
-  const iconMap = {
-    info: "ⓘ",
-    success: "✓",
-    warning: "⚠",
-    error: "✖"
-  };
-
-  toast.innerHTML = `
-    <span class="ui-toast-icon">${iconMap[type] || "ⓘ"}</span>
-    <span class="ui-toast-text">${loc(messageKey)}</span>
-  `;
-
-  container.appendChild(toast);
-
-  let hideTimer;
-  let remaining = timeout;
-  let start;
-
-  const startTimer = () => {
-    start = Date.now();
-    hideTimer = setTimeout(hide, remaining);
-  };
-
-  const hide = () => {
-    toast.classList.remove("show");
-    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
-  };
-
-  toast.addEventListener("mouseenter", () => {
-    clearTimeout(hideTimer);
-    remaining -= Date.now() - start;
-  });
-
-  toast.addEventListener("mouseleave", startTimer);
-
-  requestAnimationFrame(() => {
-    toast.classList.add("show");
-    startTimer();
-  });
-}
-
-/* =========================
-   INIT (SINGLETON)
+   GLOBAL INIT
    ========================= */
 
 if (!window.uiController) {
