@@ -1,10 +1,10 @@
-// js/db.js — v0.9.420_clean_strict
+// js/db.js — v0.9.421_final_multiply
 
-const DB_VERSION = "v0.9.420_clean_strict";
+const DB_VERSION = "v0.9.421_final_multiply";
 window.DB_VERSION = DB_VERSION;
 
 /* =========================
-   STRICT LOCALIZATION WRAPPER
+   STRICT LOCALIZATION
    ========================= */
 
 function strictLoc(key) {
@@ -15,7 +15,7 @@ function strictLoc(key) {
 
   const value = window.loc(key);
   if (value === undefined || value === null || value === "") {
-    console.error(`[LOC] Missing localization key: "${key}"`);
+    console.error(`[LOC] Missing localization key: ${key}`);
     return "";
   }
 
@@ -36,26 +36,18 @@ class DatabaseManager {
     this.atlasCache = new Map();
     this.pendingAtlases = new Map();
 
-    this.missingIconImg = null;
+    this.missingIconImg = new Image();
+    this.missingIconImg.src = "assets/Missing_Texture_icon.png";
 
     this.currentTab = "afflictions";
     this.isModalOpen = false;
 
-    this.loadMissingIcon();
     this.loadData();
   }
 
   /* =========================
-     ASSETS
+     DATA
      ========================= */
-
-  loadMissingIcon() {
-    this.missingIconImg = new Image();
-    this.missingIconImg.src = "assets/Missing_Texture_icon.png";
-    this.missingIconImg.onerror = () => {
-      console.error("[ICON] Missing placeholder icon not found");
-    };
-  }
 
   async loadData() {
     try {
@@ -111,12 +103,12 @@ class DatabaseManager {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
 
-    overlay.addEventListener("click", e => {
+    overlay.onclick = e => {
       if (e.target === overlay) {
         overlay.remove();
         this.isModalOpen = false;
       }
-    });
+    };
 
     this.renderGrid(this.currentTab);
   }
@@ -138,8 +130,7 @@ class DatabaseManager {
       if (key === this.currentTab) btn.classList.add("active");
 
       btn.onclick = () => {
-        document
-          .querySelectorAll(".db-tab-btn")
+        document.querySelectorAll(".db-tab-btn")
           .forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         this.currentTab = key;
@@ -198,8 +189,8 @@ class DatabaseManager {
 
     const header = document.createElement("div");
     header.style.display = "flex";
-    header.style.gap = "12px";
     header.style.alignItems = "center";
+    header.style.gap = "12px";
 
     const icon = await this.createIcon(entry.icon);
     header.appendChild(icon);
@@ -223,7 +214,7 @@ class DatabaseManager {
   }
 
   /* =========================
-     ICONS
+     ICONS (MULTIPLY)
      ========================= */
 
   async createIcon(icon) {
@@ -251,28 +242,42 @@ class DatabaseManager {
     if (this.atlasCache.has(path)) return this.atlasCache.get(path);
     if (this.pendingAtlases.has(path)) return this.pendingAtlases.get(path);
 
-    const p = new Promise(resolve => {
+    const promise = new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
         this.atlasCache.set(path, img);
+        this.pendingAtlases.delete(path);
         resolve(img);
       };
       img.onerror = () => {
         console.error(`[ICON] Failed to load atlas: ${path}`);
+        this.pendingAtlases.delete(path);
         resolve(null);
       };
       img.src = path;
     });
 
-    this.pendingAtlases.set(path, p);
-    return p;
+    this.pendingAtlases.set(path, promise);
+    return promise;
   }
 
   drawFromAtlas(ctx, img, icon) {
-    const [x, y, w, h] = icon.sourcerect.split(",").map(Number);
-    ctx.drawImage(img, x, y, w, h, 0, 0, 48, 48);
+    const rect = icon.sourcerect.split(",").map(Number);
+    if (rect.length !== 4) {
+      console.error("[ICON] Invalid sourcerect:", icon.sourcerect);
+      return;
+    }
+
+    const [sx, sy, sw, sh] = rect;
+
+    ctx.clearRect(0, 0, 48, 48);
+
+    // 1. draw white mask
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
     const key = icon.color_theme_key?.replace(/_/g, "-");
+    if (!key) return;
+
     const rgb = getComputedStyle(document.documentElement)
       .getPropertyValue(`--${key}-rgb`)
       .trim();
@@ -282,9 +287,15 @@ class DatabaseManager {
       return;
     }
 
-    ctx.globalCompositeOperation = "source-in";
+    // 2. multiply color over mask
+    ctx.globalCompositeOperation = "multiply";
     ctx.fillStyle = `rgb(${rgb})`;
     ctx.fillRect(0, 0, 48, 48);
+
+    // 3. restore alpha (important!)
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
+
     ctx.globalCompositeOperation = "source-over";
   }
 
@@ -321,6 +332,7 @@ class DatabaseManager {
   filterGrid(q) {
     const grid = document.getElementById("db-grid");
     if (!grid) return;
+
     grid.querySelectorAll(".db-entry-btn").forEach(c => {
       c.style.display = c.textContent.toLowerCase().includes(q.toLowerCase())
         ? ""
