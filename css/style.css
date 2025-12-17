@@ -602,32 +602,7 @@ body.dragging {
   user-select: none;
 }
 
-/* --- Ноды не должны растягиваться по ширине --- */
-.node {
-  width: fit-content;
-  max-width: 100%;
-}
 
-/* --- Контейнер нод не растягивает элементы --- */
-#classic-view > #tree-root {
-  align-items: flex-start;
-}
-
-/* --- Сетка должна быть под нодами, но над фоном --- */
-#editor-area {
-  position: absolute;
-  z-index: 0;
-}
-
-#editor-area::before {
-  z-index: 0;
-}
-
-#classic-view,
-#tree-container {
-  position: relative;
-  z-index: 1;
-}
 
 /* --- Улучшение визуала перетаскивания --- */
 .node.dragging {
