@@ -1,19 +1,19 @@
-const DB_VERSION = "v0.9.422";
-window.DB_VERSION = DB_VERSION;
+// js/db.js — v0.9.421_final_multiply
 
-// js/db.js — DB UI (final)
+const DB_VERSION = "v0.9.421_final_multiply";
+window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
   constructor() {
     this.currentTab = "afflictions";
     this.sortAsc = true;
     this.expandByDefault = false; // читается из настроек, если есть
+
     this.data = {
       afflictions: [],
       items: [],
       creatures: []
     };
-    this.init();
   }
 
   async init() {
@@ -25,52 +25,82 @@ class DatabaseManager {
   async loadData() {
     const load = async (url) => {
       const r = await fetch(url);
-      return r.ok ? r.json() : [];
+      if (!r.ok) {
+        console.error(`[DB] Failed to load ${url}`);
+        return [];
+      }
+      return r.json();
     };
 
     this.data.afflictions = await load("data/afflictions.json");
-    this.data.items = await load("data/items.json");
-    this.data.creatures = await load("data/creatures.json");
+    this.data.items        = await load("data/items.json");
+    this.data.creatures    = await load("data/creatures.json");
   }
 
   bindUI() {
-    const grid = document.getElementById("db-grid");
+    const grid = document.querySelector(".db-grid");
+    if (!grid) {
+      console.error("[DB] .db-grid not found");
+      return;
+    }
 
+    /* Event delegation */
     grid.addEventListener("click", (e) => {
       const card = e.target.closest(".db-entry");
       if (!card) return;
 
       if (e.target.classList.contains("info-toggle")) {
-        this.toggleCard(card);
         e.stopPropagation();
+        this.toggleCard(card);
         return;
       }
 
       // click on card = copy ID
       const id = card.dataset.id;
-      navigator.clipboard.writeText(id);
+      if (id) navigator.clipboard.writeText(id);
     });
 
-    document.getElementById("db-expand-all")
-      ?.addEventListener("click", () => this.toggleExpandAll());
+    const expandAllBtn = document.querySelector("[data-db-expand-all]");
+    expandAllBtn?.addEventListener("click", () => this.toggleExpandAll());
 
-    document.getElementById("db-sort")
-      ?.addEventListener("click", () => {
-        this.sortAsc = !this.sortAsc;
+    const sortBtn = document.querySelector("[data-db-sort]");
+    sortBtn?.addEventListener("click", () => {
+      this.sortAsc = !this.sortAsc;
+      this.render();
+    });
+
+    document.querySelectorAll(".db-tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        if (!tab || tab === this.currentTab) return;
+
+        document.querySelector(".db-tab-btn.active")?.classList.remove("active");
+        btn.classList.add("active");
+
+        this.currentTab = tab;
         this.render();
       });
+    });
   }
 
   render() {
-    const grid = document.getElementById("db-grid");
+    const grid = document.querySelector(".db-grid");
+    if (!grid) return;
+
     grid.innerHTML = "";
 
-    let list = [...this.data[this.currentTab]];
+    let list = [...(this.data[this.currentTab] || [])];
+
     list.sort((a, b) =>
       this.sortAsc
         ? a.id.localeCompare(b.id)
         : b.id.localeCompare(a.id)
     );
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="db-empty">Nothing found</div>`;
+      return;
+    }
 
     const frag = document.createDocumentFragment();
     list.forEach(entry => frag.appendChild(this.createCard(entry)));
@@ -109,10 +139,34 @@ class DatabaseManager {
 
   renderTags(entry) {
     const tags = [];
-    if (entry.category) tags.push(entry.category);
-    if (Array.isArray(entry.tags)) tags.push(...entry.tags);
 
-    return tags.map(t => `<span class="db-tag">${t}</span>`).join("");
+    if (entry.category) {
+      tags.push(`<span class="db-tag">${entry.category}</span>`);
+    }
+
+    if (Array.isArray(entry.tags)) {
+      entry.tags.forEach(t =>
+        tags.push(`<span class="db-tag">${t}</span>`)
+      );
+    }
+
+    // эффекты — семантические тэги
+    if (this.currentTab === "afflictions") {
+      if (entry.type) {
+        tags.push(`<span class="db-tag" data-tag="${entry.type.toUpperCase()}">${entry.type}</span>`);
+      }
+      if (entry.limbspecific) {
+        tags.push(`<span class="db-tag" data-tag="LIMB">LIMB</span>`);
+      }
+      if (entry.isbuff === true) {
+        tags.push(`<span class="db-tag" data-tag="BUFF">BUFF</span>`);
+      }
+      if (entry.isbuff === false) {
+        tags.push(`<span class="db-tag" data-tag="DEBUFF">DEBUFF</span>`);
+      }
+    }
+
+    return tags.join("");
   }
 
   toggleCard(card) {
@@ -122,9 +176,11 @@ class DatabaseManager {
 
   toggleExpandAll() {
     const cards = [...document.querySelectorAll(".db-entry")];
-    const expand = !cards.every(c => c.classList.contains("expanded"));
+    if (!cards.length) return;
 
+    const expand = !cards.every(c => c.classList.contains("expanded"));
     let i = 0;
+
     const batch = () => {
       for (let n = 0; n < 20 && i < cards.length; n++, i++) {
         const c = cards[i];
@@ -133,17 +189,19 @@ class DatabaseManager {
       }
       if (i < cards.length) requestAnimationFrame(batch);
     };
+
     batch();
   }
 
   ensureDetails(card) {
     const box = card.querySelector(".db-details");
-    if (box.dataset.ready) return;
+    if (!box || box.dataset.ready) return;
 
     const id = card.dataset.id;
     const entry = this.data[this.currentTab].find(e => e.id === id);
-    box.dataset.ready = "1";
+    if (!entry) return;
 
+    box.dataset.ready = "1";
     box.innerHTML = this.renderDetails(entry);
   }
 
@@ -159,15 +217,15 @@ class DatabaseManager {
 
     if (this.currentTab === "items") {
       return `
-        <div><b>Category:</b> ${entry.category}</div>
         <div><b>ID:</b> ${entry.id}</div>
+        <div><b>Category:</b> ${entry.category || "-"}</div>
       `;
     }
 
     if (this.currentTab === "creatures") {
       return `
-        <div><b>Category:</b> ${entry.category}</div>
         <div><b>ID:</b> ${entry.id}</div>
+        <div><b>Category:</b> ${entry.category || "-"}</div>
       `;
     }
 
@@ -175,4 +233,8 @@ class DatabaseManager {
   }
 }
 
-window.dbManager = new DatabaseManager();
+/* гарантированная инициализация после DOM */
+document.addEventListener("DOMContentLoaded", () => {
+  window.dbManager = new DatabaseManager();
+  window.dbManager.init();
+});
