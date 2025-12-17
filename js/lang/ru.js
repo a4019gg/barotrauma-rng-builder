@@ -24,7 +24,9 @@ copyXML: "XML скопирован в буфер обмена",
   autoBalance: "Автобаланс",
   presets: "Пресеты и примеры",
   addEvent: "+ Добавить ивент",
-
+// DB short badges
+dbDetailLimbSpecificShort: "Конечность",
+dbDetailIsBuffShort: "Бафф",
   // Node titles
   rngAction: "ГСЧ-событие",
   spawnItem: "Спавн предмета",
