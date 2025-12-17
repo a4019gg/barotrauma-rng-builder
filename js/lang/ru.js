@@ -101,6 +101,8 @@ dbDetailIsBuffShort: "Бафф",
   yes: "да",
   no: "нет",
 
+  clearAllDone: "Все узлы удалены",
+
   // Event ID
   eventIdLabel: "Event ID:"
 };
