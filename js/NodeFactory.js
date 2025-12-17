@@ -1,414 +1,311 @@
-// js/NodeFactory.js — v0.9.403 — СОЗДАНИЕ И РЕНДЕР УЗЛОВ (ФИКСЫ БАГОВ)
+// js/NodeFactory.js — v0.9.430 — NODE FACTORY (DRAG→ATTACH FINAL)
 
-const NODES_VERSION = "v0.9.403";
+const NODES_VERSION = "v0.9.430";
 window.NODES_VERSION = NODES_VERSION;
 
-// GRID_SIZE теперь явно определён (фикс ошибки "not defined")
 const GRID_SIZE = 30;
+const AUTO_SCROLL_MARGIN = 80;
+const AUTO_SCROLL_SPEED = 20;
 
 class NodeFactory {
   constructor() {
     this.idCounter = 0;
+    this.dragState = null;
+    this.bindGlobalHotkeys();
   }
+
+  /* =========================
+     MODEL
+     ========================= */
 
   generateId() {
     return this.idCounter++;
   }
 
-  // === СОЗДАНИЕ МОДЕЛИ УЗЛА ===
   createModel(type, params = {}) {
-    const id = this.generateId();
-    const base = {
-      id,
-      type,
-      params
-    };
-
-    if (type === 'rng') {
-      return {
-        ...base,
-        children: {
-          success: [],
-          failure: []
-        }
-      };
-    }
-
+    const base = { id: this.generateId(), type, params };
+    if (type === "rng") base.children = { success: [], failure: [] };
     return base;
   }
 
-  createModelRNG(chance = 0.5) {
-    return this.createModel('rng', { chance });
+  createModelRNG() {
+    return this.createModel("rng", { chance: 0.5 });
+  }
+  createModelSpawn() {
+    return this.createModel("spawn", { item: "revolver" });
+  }
+  createModelCreature() {
+    return this.createModel("creature", {
+      creature: "crawler",
+      count: 1,
+      randomize: true,
+      inside: true
+    });
+  }
+  createModelAffliction() {
+    return this.createModel("affliction", {
+      affliction: "bleeding",
+      strength: 15,
+      target: "character"
+    });
   }
 
-  createModelSpawn(item = 'revolver') {
-    return this.createModel('spawn', { item });
-  }
+  /* =========================
+     DOM
+     ========================= */
 
-  createModelCreature(creature = 'crawler', count = 1, randomize = true, inside = true) {
-    return this.createModel('creature', { creature, count, randomize, inside });
-  }
-
-  createModelAffliction(affliction = 'bleeding', strength = 15, target = 'character') {
-    return this.createModel('affliction', { affliction, strength, target });
-  }
-
-  // === СОЗДАНИЕ DOM ИЗ МОДЕЛИ ===
   createFromModel(model) {
-    if (!model) return document.createElement('div');
-
-    const node = document.createElement('div');
-    node.className = 'node ' + model.type + ' draggable';
+    const node = document.createElement("div");
+    node.className = `node ${model.type} draggable`;
     node.dataset.id = model.id;
-    node.dataset.type = model.type;
 
-    const header = document.createElement('div');
-    header.className = 'header-node';
+    const header = document.createElement("div");
+    header.className = "node-header";
 
-    const title = document.createElement('span');
+    const title = document.createElement("span");
+    title.className = "node-title";
     title.textContent = this.getTitle(model);
     header.appendChild(title);
 
     this.appendParams(header, model);
 
-    // Кнопка удаления
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'danger small';
-    deleteBtn.textContent = '×';
-    deleteBtn.dataset.action = 'removeNode';
-    deleteBtn.dataset.id = model.id;
-    header.appendChild(deleteBtn);
-
-    // Вероятности (заглушка)
-    const prob = document.createElement('span');
-    prob.className = 'prob';
-    prob.innerHTML = '<span class="global">0.000%</span><br><small class="local">100.0%</small>';
-    header.appendChild(prob);
-
-    const finalChance = document.createElement('span');
-    finalChance.className = 'final-chance';
-    finalChance.style.marginLeft = '10px';
-    finalChance.style.color = '#888';
-    header.appendChild(finalChance);
+    const del = document.createElement("button");
+    del.className = "danger small";
+    del.textContent = "×";
+    del.dataset.action = "removeNode";
+    del.dataset.id = model.id;
+    header.appendChild(del);
 
     node.appendChild(header);
 
-    // Для RNG — ветки
-    if (model.type === 'rng' && model.children) {
-      const successSection = this.createBranch(model.id, '-s', 'success-label', loc('successLabel'));
-      const failureSection = this.createBranch(model.id, '-f', 'failure-label', loc('failureLabel'));
-
-      const successContainer = successSection.querySelector(`#c-${model.id}-s`);
-      const failureContainer = failureSection.querySelector(`#c-${model.id}-f`);
-
-      // Защита от null/undefined (фикс исчезновения нод)
-      const successChildren = model.children.success || [];
-      const failureChildren = model.children.failure || [];
-
-      successChildren.forEach(childModel => {
-        if (childModel) {
-          successContainer.appendChild(this.createFromModel(childModel));
-        }
-      });
-
-      failureChildren.forEach(childModel => {
-        if (childModel) {
-          failureContainer.appendChild(this.createFromModel(childModel));
-        }
-      });
-
-      node.appendChild(successSection);
-      node.appendChild(failureSection);
+    if (model.type === "rng") {
+      node.appendChild(this.createBranch(model, "success"));
+      node.appendChild(this.createBranch(model, "failure"));
     }
 
-    this.attachCommonBehaviors(node, model);
+    this.makeDraggable(node, header);
     return node;
   }
 
   getTitle(model) {
-    switch (model.type) {
-      case 'rng': return loc('rngAction');
-      case 'spawn': return loc('spawnItem');
-      case 'creature': return loc('spawnCreature');
-      case 'affliction': return loc('applyAffliction');
-      default: return loc('unknownNode');
+    return {
+      rng: loc("rngAction"),
+      spawn: loc("spawnItem"),
+      creature: loc("spawnCreature"),
+      affliction: loc("applyAffliction")
+    }[model.type] || loc("unknownNode");
+  }
+
+  appendParams(container, model) {
+    const bind = (el, key) => {
+      el.dataset.action = "updateParam";
+      el.dataset.id = model.id;
+      el.dataset.key = key;
+      return el;
+    };
+
+    const p = model.params;
+
+    if (model.type === "rng") {
+      const i = bind(document.createElement("input"), "chance");
+      i.type = "number";
+      i.step = "0.001";
+      i.min = 0; i.max = 1;
+      i.value = p.chance;
+      container.appendChild(i);
+    }
+
+    if (model.type === "spawn") {
+      const i = bind(document.createElement("input"), "item");
+      i.value = p.item;
+      i.placeholder = loc("itemPlaceholder");
+      container.appendChild(i);
+    }
+
+    if (model.type === "creature") {
+      const c = bind(document.createElement("input"), "creature");
+      c.value = p.creature;
+      c.placeholder = loc("creaturePlaceholder");
+
+      const n = bind(document.createElement("input"), "count");
+      n.type = "number";
+      n.min = 1;
+      n.value = p.count;
+
+      container.append(c, n);
+    }
+
+    if (model.type === "affliction") {
+      const a = bind(document.createElement("input"), "affliction");
+      a.value = p.affliction;
+      a.placeholder = loc("afflictionPlaceholder");
+
+      const s = bind(document.createElement("input"), "strength");
+      s.type = "number";
+      s.value = p.strength;
+
+      container.append(a, s);
     }
   }
 
-  appendParams(header, model) {
-    const params = model.params || {};
+  createBranch(model, branch) {
+    const wrap = document.createElement("div");
+    wrap.className = "node-branch";
+    wrap.dataset.branch = branch;
+    wrap.dataset.parentId = model.id;
 
-    switch (model.type) {
-      case 'rng':
-        const chanceInput = document.createElement('input');
-        chanceInput.type = 'number';
-        chanceInput.step = '0.001';
-        chanceInput.min = '0';
-        chanceInput.max = '1';
-        chanceInput.value = params.chance ?? 0.5;
-        chanceInput.className = 'chance';
-        chanceInput.dataset.action = 'updateParam';
-        chanceInput.dataset.key = 'chance';
-        chanceInput.dataset.id = model.id;
-        chanceInput.addEventListener('change', () => {
-          model.params.chance = parseFloat(chanceInput.value) || 0.5;
-          updateAll();
-        });
-        header.appendChild(chanceInput);
-        break;
+    const title = document.createElement("div");
+    title.className = "node-branch-title";
+    title.textContent = loc(branch === "success" ? "successLabel" : "failureLabel");
 
-      case 'spawn':
-        const itemInput = document.createElement('input');
-        itemInput.type = 'text';
-        itemInput.className = 'item-field';
-        // ФИКС: setAttribute вместо прямого присваивания list
-        itemInput.setAttribute('list', 'item-datalist');
-        itemInput.value = params.item || 'revolver';
-        itemInput.placeholder = loc('itemPlaceholder');
-        itemInput.dataset.action = 'updateParam';
-        itemInput.dataset.key = 'item';
-        itemInput.dataset.id = model.id;
-        itemInput.addEventListener('change', () => {
-          model.params.item = itemInput.value.trim() || 'revolver';
-          updateAll();
-        });
-        header.appendChild(itemInput);
-        break;
+    const children = document.createElement("div");
+    children.className = "node-children";
 
-      case 'creature':
-        const creatureInput = document.createElement('input');
-        creatureInput.type = 'text';
-        creatureInput.className = 'creature-field';
-        creatureInput.setAttribute('list', 'item-datalist');
-        creatureInput.value = params.creature || 'crawler';
-        creatureInput.placeholder = loc('creaturePlaceholder');
-        creatureInput.dataset.action = 'updateParam';
-        creatureInput.dataset.key = 'creature';
-        creatureInput.dataset.id = model.id;
-        creatureInput.addEventListener('change', () => {
-          model.params.creature = creatureInput.value.trim() || 'crawler';
-          updateAll();
-        });
-        header.appendChild(creatureInput);
+    model.children[branch].forEach(c =>
+      children.appendChild(this.createFromModel(c))
+    );
 
-        const countInput = document.createElement('input');
-        countInput.type = 'number';
-        countInput.min = '1';
-        countInput.value = params.count ?? 1;
-        countInput.className = 'count-field';
-        countInput.style.width = '60px';
-        countInput.dataset.action = 'updateParam';
-        countInput.dataset.key = 'count';
-        countInput.dataset.id = model.id;
-        countInput.addEventListener('change', () => {
-          model.params.count = parseInt(countInput.value) || 1;
-          updateAll();
-        });
-        header.appendChild(countInput);
-
-        const randomizeLabel = document.createElement('label');
-        const randomizeCheckbox = document.createElement('input');
-        randomizeCheckbox.type = 'checkbox';
-        randomizeCheckbox.checked = params.randomize ?? true;
-        randomizeCheckbox.dataset.action = 'updateParam';
-        randomizeCheckbox.dataset.key = 'randomize';
-        randomizeCheckbox.dataset.id = model.id;
-        randomizeCheckbox.addEventListener('change', () => {
-          model.params.randomize = randomizeCheckbox.checked;
-          updateAll();
-        });
-        randomizeLabel.appendChild(randomizeCheckbox);
-        randomizeLabel.appendChild(document.createTextNode(loc('randomizePosition')));
-        header.appendChild(randomizeLabel);
-
-        const locationSelect = document.createElement('select');
-        locationSelect.className = 'location-field';
-        const insideOption = document.createElement('option');
-        insideOption.value = 'inside';
-        insideOption.textContent = loc('insideSub');
-        const outsideOption = document.createElement('option');
-        outsideOption.value = 'outside';
-        outsideOption.textContent = loc('outsideSub');
-        locationSelect.appendChild(insideOption);
-        locationSelect.appendChild(outsideOption);
-        locationSelect.value = params.inside ?? true ? 'inside' : 'outside';
-        locationSelect.dataset.action = 'updateParam';
-        locationSelect.dataset.key = 'inside';
-        locationSelect.dataset.id = model.id;
-        locationSelect.addEventListener('change', () => {
-          model.params.inside = locationSelect.value === 'inside';
-          updateAll();
-        });
-        header.appendChild(locationSelect);
-        break;
-
-      case 'affliction':
-        const affInput = document.createElement('input');
-        affInput.type = 'text';
-        affInput.className = 'aff-field';
-        affInput.value = params.affliction || 'bleeding';
-        affInput.placeholder = loc('afflictionPlaceholder');
-        affInput.dataset.action = 'updateParam';
-        affInput.dataset.key = 'affliction';
-        affInput.dataset.id = model.id;
-        affInput.addEventListener('change', () => {
-          model.params.affliction = affInput.value.trim() || 'bleeding';
-          updateAll();
-        });
-        header.appendChild(affInput);
-
-        const strengthInput = document.createElement('input');
-        strengthInput.type = 'number';
-        strengthInput.value = params.strength ?? 15;
-        strengthInput.className = 'strength-field';
-        strengthInput.style.width = '60px';
-        strengthInput.dataset.action = 'updateParam';
-        strengthInput.dataset.key = 'strength';
-        strengthInput.dataset.id = model.id;
-        strengthInput.addEventListener('change', () => {
-          model.params.strength = parseFloat(strengthInput.value) || 15;
-          updateAll();
-        });
-        header.appendChild(strengthInput);
-
-        const targetSelect = document.createElement('select');
-        targetSelect.className = 'target-field';
-        const targets = [
-          { value: 'character', text: loc('targetCharacter') },
-          { value: 'randomcrew', text: loc('targetRandomCrew') },
-          { value: 'allcrew', text: loc('targetAllCrew') }
-        ];
-        targets.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t.value;
-          opt.textContent = t.text;
-          if (t.value === (params.target || 'character')) opt.selected = true;
-          targetSelect.appendChild(opt);
-        });
-        targetSelect.dataset.action = 'updateParam';
-        targetSelect.dataset.key = 'target';
-        targetSelect.dataset.id = model.id;
-        targetSelect.addEventListener('change', () => {
-          model.params.target = targetSelect.value;
-          updateAll();
-        });
-        header.appendChild(targetSelect);
-        break;
-    }
+    wrap.append(title, children);
+    return wrap;
   }
 
-  createBranch(id, suffix, labelClass, labelText) {
-    const section = document.createElement('div');
-    section.className = 'children';
+  /* =========================
+     DRAG → ATTACH
+     ========================= */
 
-    const label = document.createElement('div');
-    label.className = labelClass;
-    label.textContent = labelText;
-
-    const buttons = document.createElement('div');
-    buttons.style.cssText = 'margin:6px 0;display:flex;gap:6px;flex-wrap:wrap;';
-
-    const actions = [
-      { text: loc('addRNG'), type: 'rng' },
-      { text: loc('addItem'), type: 'spawn' },
-      { text: loc('addCreature'), type: 'creature' },
-      { text: loc('addAffliction'), type: 'affliction' }
-    ];
-
-    actions.forEach(a => {
-      const btn = document.createElement('button');
-      btn.className = 'small';
-      btn.textContent = a.text;
-      btn.dataset.action = 'addNodeToBranch';
-      btn.dataset.parentId = id;
-      btn.dataset.branch = suffix === '-s' ? 'success' : 'failure';
-      btn.dataset.nodeType = a.type;
-      buttons.appendChild(btn);
+  makeDraggable(node, handle) {
+    handle.addEventListener("mousedown", e => {
+      if (["INPUT", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
+      this.startDrag(e, node);
     });
-
-    const container = document.createElement('div');
-    container.id = `c-${id}${suffix}`;
-
-    section.appendChild(label);
-    section.appendChild(buttons);
-    section.appendChild(container);
-
-    return section;
   }
 
-  attachCommonBehaviors(node, model) {
-    const header = node.querySelector('.header-node');
-    if (header) {
-      header.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        node.classList.toggle('collapsed');
-      });
-      this.makeDraggable(node, header);
+  startDrag(e, node) {
+    const rect = node.getBoundingClientRect();
+    this.dragState = {
+      node,
+      id: Number(node.dataset.id),
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top
+    };
+
+    node.classList.add("dragging");
+
+    document.addEventListener("mousemove", this.onDrag);
+    document.addEventListener("mouseup", this.onDrop);
+  }
+
+  onDrag = (e) => {
+    if (!this.dragState) return;
+    const { node, offsetX, offsetY } = this.dragState;
+
+    let x = e.clientX - offsetX;
+    let y = e.clientY - offsetY;
+
+    if (localStorage.getItem("snapToGrid") === "true") {
+      x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+      y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+    }
+
+    node.style.position = "absolute";
+    node.style.left = `${x}px`;
+    node.style.top = `${y}px`;
+
+    this.autoScroll(e);
+    this.highlightDropZones(e);
+  };
+
+  onDrop = (e) => {
+    const drag = this.dragState;
+    if (!drag) return;
+
+    const dropZone = document.elementFromPoint(e.clientX, e.clientY)
+      ?.closest(".node-branch");
+
+    document.querySelectorAll(".node-branch.highlight")
+      .forEach(z => z.classList.remove("highlight"));
+
+    drag.node.classList.remove("dragging");
+
+    if (dropZone && this.canAttach(drag.id, dropZone)) {
+      editorState.saveState();
+
+      const parentId = Number(dropZone.dataset.parentId);
+      const branch = dropZone.dataset.branch;
+      const model = editorState.findNodeById(drag.id);
+
+      editorState.removeNodeById(drag.id);
+      const parent = editorState.findNodeById(parentId);
+      parent.children[branch].push(model);
+
+      editorState.renderCurrentEvent();
+      updateAll();
+    }
+
+    this.dragState = null;
+    document.removeEventListener("mousemove", this.onDrag);
+    document.removeEventListener("mouseup", this.onDrop);
+  };
+
+  canAttach(childId, zone) {
+    const parentId = Number(zone.dataset.parentId);
+    if (childId === parentId) return false;
+
+    const parent = editorState.findNodeById(parentId);
+    if (!parent || parent.type !== "rng") return false;
+
+    const isDescendant = (node) => {
+      if (!node.children) return false;
+      return ["success", "failure"].some(b =>
+        node.children[b].some(c =>
+          c.id === childId || isDescendant(c)
+        )
+      );
+    };
+
+    return !isDescendant(editorState.findNodeById(childId));
+  }
+
+  highlightDropZones(e) {
+    document.querySelectorAll(".node-branch")
+      .forEach(z => z.classList.remove("highlight"));
+
+    const z = document.elementFromPoint(e.clientX, e.clientY)
+      ?.closest(".node-branch");
+
+    if (z && this.canAttach(this.dragState.id, z)) {
+      z.classList.add("highlight");
     }
   }
 
-  makeDraggable(node, header) {
-    let pos = { x: 0, y: 0 };
+  autoScroll(e) {
+    const c = document.getElementById("classic-view");
+    if (!c) return;
 
-    const startDrag = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
-      e.preventDefault();
+    const r = c.getBoundingClientRect();
+    if (e.clientY < r.top + AUTO_SCROLL_MARGIN) {
+      c.scrollTop -= AUTO_SCROLL_SPEED;
+    } else if (e.clientY > r.bottom - AUTO_SCROLL_MARGIN) {
+      c.scrollTop += AUTO_SCROLL_SPEED;
+    }
+  }
 
-      pos.x = e.clientX - node.offsetLeft;
-      pos.y = e.clientY - node.offsetTop;
+  /* =========================
+     HOTKEYS
+     ========================= */
 
-      document.addEventListener('mousemove', drag);
-      document.addEventListener('mouseup', stopDrag);
-    };
-
-    const drag = (e) => {
-      let newX = e.clientX - pos.x;
-      let newY = e.clientY - pos.y;
-
-      if (localStorage.getItem('snapToGrid') === 'true') {
-        newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
-        newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+  bindGlobalHotkeys() {
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && this.dragState) {
+        this.dragState.node.classList.remove("dragging");
+        this.dragState = null;
       }
-
-      node.style.position = 'absolute';
-      node.style.left = newX + 'px';
-      node.style.top = newY + 'px';
-    };
-
-    const stopDrag = () => {
-      document.removeEventListener('mousemove', drag);
-      document.removeEventListener('mouseup', stopDrag);
-      updateAll();
-    };
-
-    header.addEventListener('mousedown', startDrag);
+    });
   }
 }
 
-// Глобальный экземпляр
-const nodeFactory = new NodeFactory();
+/* =========================
+   GLOBAL
+   ========================= */
 
-// Глобальные функции добавления в корень
-window.addRNG = () => {
-  const newModel = nodeFactory.createModelRNG();
-  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
-  window.editorState.renderCurrentEvent();
-};
-
-window.addSpawn = () => {
-  const newModel = nodeFactory.createModelSpawn();
-  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
-  window.editorState.renderCurrentEvent();
-};
-
-window.addCreature = () => {
-  const newModel = nodeFactory.createModelCreature();
-  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
-  window.editorState.renderCurrentEvent();
-};
-
-window.addAffliction = () => {
-  const newModel = nodeFactory.createModelAffliction();
-  window.editorState.events[window.editorState.currentEventIndex].model.push(newModel);
-  window.editorState.renderCurrentEvent();
-};
+window.nodeFactory = new NodeFactory();
