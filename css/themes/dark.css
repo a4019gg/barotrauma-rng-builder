@@ -1,4 +1,8 @@
-/* css/themes/dark.css — v0.9.401 — ТЁМНАЯ ТЕМА */
+/* css/themes/dark.css — v0.9.421 — ТЁМНАЯ ТЕМА */
+
+/* =========================
+   ROOT VARIABLES
+   ========================= */
 
 :root {
   --bg: #1e1e1e;
@@ -13,7 +17,7 @@
   --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
   --shadow-high: 0 8px 24px rgba(0,0,0,0.4);
 
-  /* Цвета иконок аффикшенов (точно как в ванильной игре) */
+  /* Цвета иконок аффликшенов (vanilla Barotrauma) */
   --icon-damage-red-rgb: 195, 60, 60;
   --icon-damage-orange-rgb: 195, 136, 60;
   --icon-buff-green-rgb: 10, 193, 114;
@@ -28,4 +32,231 @@
   --icon-debuff-blue-rgb: 60, 107, 195;
   --icon-buff-lightgreen-rgb: 84, 171, 90;
   --icon-debuff-violet-rgb: 120, 23, 157;
+}
+
+/* =========================
+   GLOBAL
+   ========================= */
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Panels */
+.top-bar,
+.action-bar,
+#events-panel,
+.event-id-bar,
+textarea#output,
+.db-modal-content {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+/* =========================
+   LEFT PANEL / EVENTS
+   ========================= */
+
+.event-tab {
+  background: var(--node-bg);
+}
+
+.event-tab:hover {
+  background: #363636;
+}
+
+.event-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.delete-tab {
+  background: var(--red);
+  color: #fff;
+}
+
+/* =========================
+   EDITOR GRID
+   ========================= */
+
+#editor-area::before {
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+}
+
+/* =========================
+   NODES
+   ========================= */
+
+.node {
+  background: var(--node-bg);
+  box-shadow: var(--shadow-low);
+}
+
+.node.rng        { border-left-color: var(--accent); }
+.node.spawn      { border-left-color: #61afef; }
+.node.creature   { border-left-color: #f44336; }
+.node.affliction { border-left-color: #ff9800; }
+
+body[data-node-shadows="high"] .node {
+  box-shadow: var(--shadow-high);
+}
+
+body[data-node-shadows="off"] .node {
+  box-shadow: none;
+}
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+button {
+  background: var(--accent);
+  color: #fff;
+}
+
+button:hover {
+  filter: brightness(1.2);
+}
+
+button.green  { background: var(--green); }
+button.danger { background: var(--red); }
+
+/* =========================
+   DROPDOWN
+   ========================= */
+
+.dropdown-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-high);
+}
+
+.dropdown-content strong {
+  color: var(--accent);
+}
+
+.dropdown-content hr {
+  border-top: 1px solid var(--border);
+}
+
+/* =========================
+   DB MODAL
+   ========================= */
+
+.db-modal-overlay {
+  background: rgba(0,0,0,0.9);
+}
+
+.db-modal-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.db-tab-btn {
+  background: #333;
+  color: #fff;
+}
+
+.db-tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.db-search-input {
+  background: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+/* =========================
+   DB CARDS
+   ========================= */
+
+.db-entry {
+  background: var(--node-bg);
+  border: 1px solid var(--border);
+}
+
+.db-entry:hover {
+  background: #363636;
+}
+
+.db-entry.expanded {
+  border-color: var(--accent);
+}
+
+.db-id {
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.db-summary {
+  color: var(--text);
+  opacity: 0.85;
+}
+
+.db-details {
+  color: var(--text);
+  opacity: 0;
+}
+
+.db-entry.expanded .db-details {
+  opacity: 1;
+}
+
+.info-toggle {
+  color: var(--text);
+  opacity: 0.6;
+}
+
+.info-toggle:hover {
+  opacity: 1;
+}
+
+/* =========================
+   DB TAGS — NEUTRAL
+   ========================= */
+
+.db-tag {
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  opacity: 0.85;
+}
+
+/* =========================
+   DB TAGS — AFFLICTIONS (SEMANTIC)
+   ========================= */
+
+.db-tag[data-tag="DAMAGE"] {
+  border-left: 3px solid rgb(var(--icon-damage-red-rgb));
+}
+
+.db-tag[data-tag="STATUS"] {
+  border-left: 3px solid rgb(var(--icon-status-orange-rgb));
+}
+
+.db-tag[data-tag="BUFF"] {
+  border-left: 3px solid rgb(var(--icon-buff-green-rgb));
+}
+
+.db-tag[data-tag="DEBUFF"] {
+  border-left: 3px solid rgb(var(--icon-debuff-red-orange-rgb));
+}
+
+.db-tag[data-tag="POISON"] {
+  border-left: 3px solid rgb(var(--icon-poison-darkred-rgb));
+}
+
+.db-tag[data-tag="LIMB"] {
+  border-left: 3px solid rgb(var(--icon-status-yellow-rgb));
+}
+
+/* =========================
+   DB EMPTY STATE
+   ========================= */
+
+.db-empty {
+  color: #888;
 }
