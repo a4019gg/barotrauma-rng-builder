@@ -1,24 +1,35 @@
-// js/UIController.js — v0.9.403 — ЦЕНТРАЛИЗОВАННОЕ ДЕЛЕГИРОВАНИЕ СОБЫТИЙ
+// js/UIController.js — v0.9.421
+
+const UI_VERSION = "v0.9.421";
+window.UI_VERSION = UI_VERSION;
 
 class UIController {
   constructor() {
+    if (UIController._instance) return UIController._instance;
+    UIController._instance = this;
+
     this.isInitialized = false;
     this.initEventDelegation();
   }
 
   initEventDelegation() {
-    if (this.isInitialized) return; // Защита от двойной инициализации
+    if (this.isInitialized) return;
     this.isInitialized = true;
 
-    document.addEventListener('click', this.handleClick.bind(this));
-    document.addEventListener('change', this.handleChange.bind(this));
+    document.addEventListener("click", this.handleClick.bind(this));
+    document.addEventListener("change", this.handleChange.bind(this));
   }
 
+  /* =========================
+     CLICK HANDLER
+     ========================= */
+
   handleClick(e) {
-    const target = e.target.closest('[data-action]');
+    const target = e.target.closest("[data-action]");
     if (!target) return;
 
-    e.stopPropagation(); // Предотвращаем всплытие и дублирование
+    e.preventDefault();
+    e.stopPropagation();
 
     const action = target.dataset.action;
     const type = target.dataset.type || target.dataset.nodeType;
@@ -27,85 +38,93 @@ class UIController {
     const id = target.dataset.id ? parseInt(target.dataset.id, 10) : null;
 
     switch (action) {
-      case 'toggleView':
+      case "toggleView":
         this.toggleView();
         break;
 
-      case 'openDB':
-        if (document.querySelector('.db-modal-overlay')) return; // Уже открыта
+      case "openDB":
         dbManager.openDB();
         break;
 
-      case 'loadExample':
-        if (document.querySelector('.db-modal-overlay')) return;
-        dbManager.openDB(); // Пока пресеты в DB
+      case "loadExample":
+        dbManager.openDB();
         break;
 
-      case 'importFile':
+      case "importFile":
         importFile();
         break;
 
-      case 'exportJSON':
+      case "exportJSON":
         exportJSON();
         break;
 
-      case 'addEvent':
+      case "addEvent":
         editorState.addEvent();
+        uiNotify("addEventDone", "success");
         break;
 
-      case 'addNode':
+      case "addNode":
         if (type) {
-          const addMap = {
+          const map = {
             rng: addRNG,
             spawn: addSpawn,
             creature: addCreature,
             affliction: addAffliction
           };
-          const func = addMap[type];
-          if (func) func();
+          map[type]?.();
         }
         break;
 
-      case 'addNodeToBranch':
+      case "addNodeToBranch":
         if (parentId !== null && branch && type) {
           editorState.addNodeToBranch(parentId, branch, type);
         }
         break;
 
-      case 'removeNode':
+      case "removeNode":
         if (id !== null) {
           editorState.removeNodeById(id);
         }
         break;
 
-      case 'clearAll':
-        editorState.clearAll();
+      case "clearAll":
+        if (confirm(loc("clearAllConfirm"))) {
+          editorState.clearAll();
+          uiNotify("clearAllDone", "warning");
+        }
         break;
 
-      case 'autoBalance':
+      case "autoBalance":
         editorState.autoBalance();
+        uiNotify("autoBalanceDone", "success");
         break;
 
-      case 'generateXML':
+      case "generateXML":
         generateXML();
+        uiNotify("xmlGenerated", "success");
         break;
 
-      case 'copyXML':
+      case "copyXML":
         this.copyXML();
         break;
 
-      case 'downloadXML':
+      case "downloadXML":
         this.downloadXML();
+        uiNotify("downloadXML", "info");
         break;
 
-      case 'importFromXML':
+      case "importFromXML":
         importFromXML();
         break;
 
       default:
-        console.warn(`Unknown action: ${action}`);
+        console.warn(`[UI] Unknown action: ${action}`);
     }
   }
+
+  /* =========================
+     CHANGE HANDLER
+     ========================= */
 
   handleChange(e) {
     const target = e.target;
@@ -114,86 +133,151 @@ class UIController {
     const action = target.dataset.action;
 
     switch (action) {
-      case 'setTheme':
+      case "setTheme":
         setTheme(target.value);
         break;
-      case 'setLang':
+      case "setLang":
         setLang(target.value);
         break;
-      case 'setUIScale':
+      case "setUIScale":
         setUIScale(target.value);
         break;
-      case 'setNodeDensity':
+      case "setNodeDensity":
         setNodeDensity(target.value);
         break;
-      case 'toggleShadows':
+      case "toggleShadows":
         toggleShadows(target.checked);
         break;
-      case 'toggleGrid':
+      case "toggleGrid":
         toggleGrid(target.checked);
         break;
-      case 'toggleSnap':
+      case "toggleSnap":
         toggleSnap(target.checked);
         break;
-      case 'setXMLFormat':
+      case "setXMLFormat":
         setXMLFormat(target.value);
         break;
-      case 'toggleValidation':
+      case "toggleValidation":
         toggleValidation(target.checked);
         break;
-      case 'toggleCheckDuplicateIDs':
+      case "toggleCheckDuplicateIDs":
         toggleCheckDuplicateIDs(target.checked);
         break;
-      case 'updateParam':
-        updateAll(); // Вызываем updateAll только здесь для изменений параметров
+      case "updateParam":
+        updateAll(); // строго один раз
         break;
       default:
-        console.warn(`Unknown change action: ${action}`);
+        console.warn(`[UI] Unknown change action: ${action}`);
     }
   }
 
+  /* =========================
+     VIEW / XML
+     ========================= */
+
   toggleView() {
-    const classic = document.getElementById('classic-view');
-    const tree = document.getElementById('tree-container');
-    const btn = document.getElementById('view-btn');
+    const classic = document.getElementById("classic-view");
+    const tree = document.getElementById("tree-container");
+    const btn = document.getElementById("view-btn");
 
     if (!classic || !tree || !btn) return;
 
-    if (tree.style.display === 'block') {
-      tree.style.display = 'none';
-      classic.style.display = 'block';
-      btn.textContent = loc('treeView');
-    } else {
-      tree.style.display = 'block';
-      classic.style.display = 'none';
-      btn.textContent = loc('classicView');
-      treeView.render(); // Рендерим при открытии
-    }
+    const isTree = tree.style.display === "block";
+
+    tree.style.display = isTree ? "none" : "block";
+    classic.style.display = isTree ? "block" : "none";
+    btn.textContent = loc(isTree ? "treeView" : "classicView");
+
+    if (!isTree) treeView.render();
   }
 
   copyXML() {
-    const output = document.getElementById('output');
+    const output = document.getElementById("output");
     if (!output) return;
+
     output.select();
     output.setSelectionRange(0, 99999);
-    document.execCommand('copy');
-    alert(loc('copyXML'));
+    document.execCommand("copy");
+    uiNotify("copyXML", "info");
   }
 
   downloadXML() {
     generateXML();
-    const output = document.getElementById('output').value;
-    const blob = new Blob([output], { type: 'text/plain' });
+    const output = document.getElementById("output")?.value;
+    if (!output) return;
+
+    const blob = new Blob([output], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'barotrauma-event.xml';
+    a.download = "barotrauma-event.xml";
     a.click();
+
     URL.revokeObjectURL(url);
   }
 }
 
-// Инициализация (один раз)
+/* =========================
+   UI NOTIFY (TOASTS)
+   ========================= */
+
+function uiNotify(messageKey, type = "info", timeout = 2500) {
+  let container = document.getElementById("ui-toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "ui-toast-container";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `ui-toast ui-toast-${type}`;
+
+  const iconMap = {
+    info: "ⓘ",
+    success: "✓",
+    warning: "⚠",
+    error: "✖"
+  };
+
+  toast.innerHTML = `
+    <span class="ui-toast-icon">${iconMap[type] || "ⓘ"}</span>
+    <span class="ui-toast-text">${loc(messageKey)}</span>
+  `;
+
+  container.appendChild(toast);
+
+  let hideTimer;
+  let remaining = timeout;
+  let start;
+
+  const startTimer = () => {
+    start = Date.now();
+    hideTimer = setTimeout(hide, remaining);
+  };
+
+  const hide = () => {
+    toast.classList.remove("show");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  };
+
+  toast.addEventListener("mouseenter", () => {
+    clearTimeout(hideTimer);
+    remaining -= Date.now() - start;
+  });
+
+  toast.addEventListener("mouseleave", startTimer);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+    startTimer();
+  });
+}
+
+/* =========================
+   INIT (SINGLETON)
+   ========================= */
+
 if (!window.uiController) {
   window.uiController = new UIController();
 }
