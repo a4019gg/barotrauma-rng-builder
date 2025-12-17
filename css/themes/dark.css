@@ -262,7 +262,7 @@ button.danger { background: var(--red); }
 }
 
 /* =========================
-   UI TOASTS (DARK THEME)
+   UI TOASTS — BASE (THEME)
    ========================= */
 
 .ui-toast {
@@ -272,3 +272,22 @@ button.danger { background: var(--red); }
   box-shadow: var(--shadow-high);
 }
 
+/* =========================
+   UI TOASTS — TYPES
+   ========================= */
+
+.ui-toast-info {
+  border-left: 4px solid var(--accent);
+}
+
+.ui-toast-success {
+  border-left: 4px solid var(--green);
+}
+
+.ui-toast-warning {
+  border-left: 4px solid rgb(var(--icon-status-orange-rgb));
+}
+
+.ui-toast-error {
+  border-left: 4px solid var(--red);
+}
