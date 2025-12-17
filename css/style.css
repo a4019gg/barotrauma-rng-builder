@@ -1,23 +1,31 @@
-/* css/style.css — v0.9.401 — БАЗОВЫЕ СТИЛИ (БЕЗ ЦВЕТОВ — ВСЕ В ТЕМАХ) */
+/* css/style.css — v0.9.421 — БАЗОВЫЕ СТИЛИ
+   ❗ БЕЗ ЦВЕТОВ: все цвета, фоны, бордеры, ховеры — В ТЕМАХ
+*/
 
-* { box-sizing: border-box; }
+/* =========================
+   RESET / BASE
+   ========================= */
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  background: var(--bg);
-  color: var(--text);
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Топ + Action бары */
-.top-bar, .action-bar {
+/* =========================
+   TOP / ACTION BARS
+   ========================= */
+
+.top-bar,
+.action-bar {
   height: 50px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -25,7 +33,10 @@ body {
   flex-shrink: 0;
 }
 
-/* Главный контейнер */
+/* =========================
+   MAIN LAYOUT
+   ========================= */
+
 #main-container {
   flex: 1;
   display: flex;
@@ -33,103 +44,135 @@ body {
   overflow: hidden;
 }
 
-/* Левая панель */
+/* =========================
+   LEFT PANEL
+   ========================= */
+
 #events-panel {
   width: 240px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
 }
-.panel-header { padding: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-#events-list { flex: 1; overflow-y: auto; padding: 8px; min-height: 0; }
+
+.panel-header {
+  padding: 12px;
+  flex-shrink: 0;
+}
+
+#events-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 0;
+}
+
 .event-tab {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background: var(--node-bg);
   border-radius: 6px;
   margin-bottom: 6px;
   cursor: pointer;
 }
-.event-tab:hover { background: #363636; }
-.event-tab.active { background: var(--accent); color: white; }
-.delete-tab { background: var(--red); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
 
-/* Рабочая область */
+.delete-tab {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* =========================
+   EDITOR AREA
+   ========================= */
+
 #editor-area {
   position: absolute;
   left: 240px;
   top: 0;
   right: 0;
   bottom: 200px;
-  background: var(--bg);
 }
 
-/* Сетка */
+/* background grid overlay */
 #editor-area::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 30px 30px;
   pointer-events: none;
-  opacity: 0.3;
   z-index: 0;
 }
-body[data-bg-grid="off"] #editor-area::before { display: none; }
 
-/* Режимы */
-#classic-view, #tree-container {
+body[data-bg-grid="off"] #editor-area::before {
+  display: none;
+}
+
+/* =========================
+   VIEW MODES
+   ========================= */
+
+#classic-view,
+#tree-container {
   position: absolute;
   inset: 0;
   overflow-y: auto;
 }
-#classic-view   { z-index: 10; }
-#tree-container { z-index: 5; display: none; }
 
-/* Отступ для содержимого */
+#classic-view {
+  z-index: 10;
+}
+
+#tree-container {
+  z-index: 5;
+  display: none;
+}
+
+/* =========================
+   CONTENT PADDING
+   ========================= */
+
 #classic-view > #tree-root {
   padding: 20px;
 }
+
 #tree-svg {
   width: 100%;
   height: 100%;
   display: block;
   padding: 20px;
-  box-sizing: border-box;
 }
 
-/* Узлы */
+/* =========================
+   NODES
+   ========================= */
+
 .node {
   margin: 12px;
   padding: 14px;
-  background: var(--node-bg);
   border-radius: 8px;
-  border-left: 5px solid var(--accent);
-  box-shadow: var(--shadow-low);
   position: relative;
   z-index: 1;
 }
-.node.rng { border-left-color: var(--accent); }
-.node.spawn { border-left-color: #61afef; }
-.node.creature { border-left-color: #f44336; }
-.node.affliction { border-left-color: #ff9800; }
 
-.node.collapsed > .children { display: none; }
+.node.collapsed > .children {
+  display: none;
+}
 
-/* Нижние панели */
+/* =========================
+   BOTTOM PANELS
+   ========================= */
+
 .event-id-bar {
   position: absolute;
   left: 240px;
   right: 0;
   bottom: 160px;
   height: 40px;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -143,8 +186,6 @@ textarea#output {
   right: 0;
   bottom: 0;
   height: 160px;
-  background: var(--panel);
-  color: var(--text);
   font-family: Consolas, monospace;
   padding: 10px;
   border: none;
@@ -152,85 +193,216 @@ textarea#output {
   z-index: 99;
 }
 
-/* Кнопки */
+/* =========================
+   BUTTONS
+   ========================= */
+
 button {
   padding: 7px 12px;
-  background: var(--accent);
-  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
-button:hover { filter: brightness(1.2); }
-button.green { background: var(--green); }
-button.danger { background: var(--red); }
-button.small { padding: 4px 8px; font-size: 12px; }
 
-/* Дропдаун */
-.dropdown { position: relative; display: inline-block; }
+button.small {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* =========================
+   DROPDOWN
+   ========================= */
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
 .dropdown-content {
   display: none;
   position: absolute;
   right: 0;
   top: 100%;
-  background: var(--panel);
   min-width: 280px;
-  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   z-index: 99999;
-  box-shadow: var(--shadow-high);
 }
-.dropdown:hover .dropdown-content { display: block; }
-.dropdown-content strong { display: block; margin: 12px 0 6px 0; color: var(--accent); }
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content strong {
+  display: block;
+  margin: 12px 0 6px 0;
+}
+
 .dropdown-content select,
-.dropdown-content label { display: block; width: 100%; margin-bottom: 8px; }
-.dropdown-content hr { margin: 12px 0; border-top: 1px solid var(--border); }
+.dropdown-content label {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
 
-/* Настройки */
-body[data-ui-scale="80"]   { font-size: 80%; }
-body[data-ui-scale="120"]  { font-size: 120%; }
-body[data-ui-scale="150"]  { font-size: 150%; }
-body[data-node-density="compact"] .node     { margin: 4px; padding: 8px; font-size: 13px; }
-body[data-node-density="comfortable"] .node { margin: 24px; padding: 20px; font-size: 16px; }
-body[data-node-shadows="high"] .node { box-shadow: var(--shadow-high); }
-body[data-node-shadows="off"] .node  { box-shadow: none; }
+.dropdown-content hr {
+  margin: 12px 0;
+}
 
-/* DB модалка */
+/* =========================
+   UI SETTINGS
+   ========================= */
+
+body[data-ui-scale="80"]  { font-size: 80%; }
+body[data-ui-scale="120"] { font-size: 120%; }
+body[data-ui-scale="150"] { font-size: 150%; }
+
+body[data-node-density="compact"] .node {
+  margin: 4px;
+  padding: 8px;
+  font-size: 13px;
+}
+
+body[data-node-density="comfortable"] .node {
+  margin: 24px;
+  padding: 20px;
+  font-size: 16px;
+}
+
+/* =========================
+   DB MODAL
+   ========================= */
+
 .db-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-  display: flex; align-items: center; justify-content: center; z-index: 10001;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
 }
+
 .db-modal-content {
-  background: var(--panel); width: 90%; max-width: 1200px; height: 85vh; border-radius: 12px;
-  display: flex; flex-direction: column; overflow: hidden;
+  width: 90%;
+  max-width: 1200px;
+  height: 85vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+
 .db-modal-header {
-  padding: 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; gap: 16px; align-items: center;
+  padding: 16px;
+  flex-shrink: 0;
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
+
 .db-tabs {
-  display: flex; gap: 8px;
+  display: flex;
+  gap: 8px;
 }
+
 .db-tab-btn {
-  padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
-.db-tab-btn.active {
-  background: var(--accent); color: white;
-}
+
 .db-search-input {
-  flex: 1; padding: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 8px;
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
 }
+
+/* =========================
+   DB GRID
+   ========================= */
+
 .db-grid {
-  flex: 1; overflow-y: auto; padding: 20px; display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
+
 .db-empty {
-  flex: 1; display: flex; align-items: center; justify-content: center; color: #888; font-size: 20px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
 }
-.db-entry-btn {
-  padding: 16px; background: var(--node-bg); border: none; border-radius: 8px;
-  text-align: left; cursor: pointer; transition: background 0.2s;
+
+/* =========================
+   DB CARDS (STRUCTURE ONLY)
+   ========================= */
+
+.db-entry {
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
 }
-.db-entry-btn:hover {
-  background: #363636;
+
+.db-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.db-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-id {
+  font-size: 11px;
+}
+
+.info-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.db-summary {
+  font-size: 13px;
+}
+
+.db-details {
+  display: none;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 13px;
+}
+
+.db-entry.expanded .db-details {
+  display: block;
+  transform: translateY(0);
+}
+
+/* =========================
+   DB TAGS (STRUCTURE)
+   ========================= */
+
+.db-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+.db-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
