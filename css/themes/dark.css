@@ -15,6 +15,7 @@
 
   /* Цвета иконок аффикшенов (точно как в ванильной игре) */
   --icon-damage-red-rgb: 195, 60, 60;
+  --icon-damage-orange-rgb: 195, 136, 60;
   --icon-buff-green-rgb: 10, 193, 114;
   --icon-status-orange-rgb: 195, 136, 60;
   --icon-debuff-red-orange-rgb: 195, 104, 60;
