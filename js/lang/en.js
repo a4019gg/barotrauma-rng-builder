@@ -15,7 +15,7 @@ copyXML: "XML copied to clipboard",
   downloadXML: "Download XML",
   export: "Export",
   import: "Import",
-  dataBase: "Data Base",
+  dataBase: "Database",
   addRNG: "+ RNG",
   addItem: "+ Item",
   addCreature: "+ Creature",
@@ -85,6 +85,9 @@ copyXML: "XML copied to clipboard",
   presetError: "Preset loading error",
   dbError: "Database not loaded (check data/*.json files)",
   autoBalanceDone: "Auto balance completed",
+// DB short badges
+dbDetailLimbSpecificShort: "Limb",
+dbDetailIsBuffShort: "Buff",
 
 
   // DB details
