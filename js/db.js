@@ -1,240 +1,243 @@
-// js/db.js — v0.9.421_final_multiply
+// js/db.js — v0.9.431 — DATABASE MANAGER (ARCHITECTURE FIX)
 
-const DB_VERSION = "v0.9.421_final_multiply";
+const DB_VERSION = "v0.9.431";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
   constructor() {
+    this.initialized = false;
+    this.domReady = false;
+
     this.currentTab = "afflictions";
     this.sortAsc = true;
-    this.expandByDefault = false; // читается из настроек, если есть
+    this.expandByDefault = false;
 
-    this.data = {
-      afflictions: [],
-      items: [],
-      creatures: []
-    };
+    this.data = null;
   }
 
+  /* =========================
+     PUBLIC API
+     ========================= */
+
+  async openDB() {
+    if (!this.domReady) {
+      this.createModal();
+      await this.init();
+    }
+
+    const overlay = document.querySelector(".db-modal-overlay");
+    if (overlay) overlay.style.display = "flex";
+  }
+
+  closeDB() {
+    const overlay = document.querySelector(".db-modal-overlay");
+    if (overlay) overlay.style.display = "none";
+  }
+
+  /* =========================
+     INIT
+     ========================= */
+
   async init() {
+    if (this.initialized) return;
+    this.initialized = true;
+
     await this.loadData();
     this.bindUI();
     this.render();
   }
 
-  async loadData() {
-    const load = async (url) => {
-      const r = await fetch(url);
-      if (!r.ok) {
-        console.error(`[DB] Failed to load ${url}`);
-        return [];
-      }
-      return r.json();
-    };
+  /* =========================
+     DOM CREATION
+     ========================= */
 
-    this.data.afflictions = await load("data/afflictions.json");
-    this.data.items        = await load("data/items.json");
-    this.data.creatures    = await load("data/creatures.json");
-  }
-
-  bindUI() {
-    const grid = document.querySelector(".db-grid");
-    if (!grid) {
-      console.error("[DB] .db-grid not found");
+  createModal() {
+    if (document.querySelector(".db-modal-overlay")) {
+      this.domReady = true;
       return;
     }
 
-    /* Event delegation */
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `
+<div class="db-modal-overlay" style="display:none">
+  <div class="db-modal-content">
+    <div class="db-modal-header">
+      <div class="db-tabs">
+        <button class="db-tab-btn active" data-tab="afflictions">${loc("tabAfflictions")}</button>
+        <button class="db-tab-btn" data-tab="items">${loc("tabItems")}</button>
+        <button class="db-tab-btn" data-tab="creatures">${loc("tabCreatures")}</button>
+      </div>
+
+      <input class="db-search-input" placeholder="${loc("searchPlaceholder")}" />
+
+      <button class="db-expand-all">⧉</button>
+      <button class="db-sort">A–Z</button>
+      <button class="db-close">✕</button>
+    </div>
+
+    <div class="db-grid"></div>
+  </div>
+</div>`
+    );
+
+    this.domReady = true;
+  }
+
+  /* =========================
+     DATA
+     ========================= */
+
+  async loadData() {
+    const load = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load " + url);
+      return res.json();
+    };
+
+    try {
+      const [aff, items, creatures] = await Promise.all([
+        load("data/afflictions.json"),
+        load("data/items.json"),
+        load("data/creatures.json")
+      ]);
+
+      this.data = {
+        afflictions: aff,
+        items,
+        creatures
+      };
+    } catch (e) {
+      console.error("[DB] Data load error", e);
+      alert(loc("dbError"));
+    }
+  }
+
+  /* =========================
+     UI BINDING
+     ========================= */
+
+  bindUI() {
+    const overlay = document.querySelector(".db-modal-overlay");
+    const grid = overlay.querySelector(".db-grid");
+
+    overlay.querySelector(".db-close").onclick = () => this.closeDB();
+
+    overlay.querySelector(".db-sort").onclick = () => {
+      this.sortAsc = !this.sortAsc;
+      overlay.querySelector(".db-sort").textContent = this.sortAsc ? "A–Z" : "Z–A";
+      this.render();
+    };
+
+    overlay.querySelector(".db-expand-all").onclick = () => {
+      this.toggleExpandAll();
+    };
+
+    overlay.querySelector(".db-search-input").oninput = () => this.render();
+
+    overlay.querySelectorAll(".db-tab-btn").forEach(btn => {
+      btn.onclick = () => {
+        overlay.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.currentTab = btn.dataset.tab;
+        this.render();
+      };
+    });
+
     grid.addEventListener("click", (e) => {
       const card = e.target.closest(".db-entry");
       if (!card) return;
 
-      if (e.target.classList.contains("info-toggle")) {
-        e.stopPropagation();
-        this.toggleCard(card);
+      if (e.target.classList.contains("db-id")) {
+        navigator.clipboard.writeText(card.dataset.id);
         return;
       }
 
-      // click on card = copy ID
-      const id = card.dataset.id;
-      if (id) navigator.clipboard.writeText(id);
-    });
-
-    const expandAllBtn = document.querySelector("[data-db-expand-all]");
-    expandAllBtn?.addEventListener("click", () => this.toggleExpandAll());
-
-    const sortBtn = document.querySelector("[data-db-sort]");
-    sortBtn?.addEventListener("click", () => {
-      this.sortAsc = !this.sortAsc;
-      this.render();
-    });
-
-    document.querySelectorAll(".db-tab-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const tab = btn.dataset.tab;
-        if (!tab || tab === this.currentTab) return;
-
-        document.querySelector(".db-tab-btn.active")?.classList.remove("active");
-        btn.classList.add("active");
-
-        this.currentTab = tab;
-        this.render();
-      });
+      this.toggleCard(card);
     });
   }
+
+  /* =========================
+     RENDER
+     ========================= */
 
   render() {
     const grid = document.querySelector(".db-grid");
-    if (!grid) return;
+    if (!grid || !this.data) return;
 
-    grid.innerHTML = "";
-
+    const search = document.querySelector(".db-search-input").value.toLowerCase();
     let list = [...(this.data[this.currentTab] || [])];
 
-    list.sort((a, b) =>
-      this.sortAsc
-        ? a.id.localeCompare(b.id)
-        : b.id.localeCompare(a.id)
-    );
-
-    if (!list.length) {
-      grid.innerHTML = `<div class="db-empty">Nothing found</div>`;
-      return;
-    }
-
-    const frag = document.createDocumentFragment();
-    list.forEach(entry => frag.appendChild(this.createCard(entry)));
-    grid.appendChild(frag);
-  }
-
-  createCard(entry) {
-    const card = document.createElement("div");
-    card.className = "db-entry";
-    card.dataset.id = entry.id;
-
-    if (this.expandByDefault) card.classList.add("expanded");
-
-    card.innerHTML = `
-      <div class="db-header">
-        <div class="db-title">
-          <strong>${entry.name || entry.id}</strong>
-          <span class="db-id">${entry.id}</span>
-        </div>
-        <span class="info-toggle">ⓘ</span>
-      </div>
-
-      <div class="db-summary">
-        ${entry.description || ""}
-      </div>
-
-      <div class="db-details"></div>
-
-      <div class="db-tags">
-        ${this.renderTags(entry)}
-      </div>
-    `;
-
-    return card;
-  }
-
-  renderTags(entry) {
-    const tags = [];
-
-    if (entry.category) {
-      tags.push(`<span class="db-tag">${entry.category}</span>`);
-    }
-
-    if (Array.isArray(entry.tags)) {
-      entry.tags.forEach(t =>
-        tags.push(`<span class="db-tag">${t}</span>`)
+    if (search) {
+      list = list.filter(e =>
+        e.name?.toLowerCase().includes(search) ||
+        e.id?.toLowerCase().includes(search)
       );
     }
 
-    // эффекты — семантические тэги
-    if (this.currentTab === "afflictions") {
-      if (entry.type) {
-        tags.push(`<span class="db-tag" data-tag="${entry.type.toUpperCase()}">${entry.type}</span>`);
-      }
-      if (entry.limbspecific) {
-        tags.push(`<span class="db-tag" data-tag="LIMB">LIMB</span>`);
-      }
-      if (entry.isbuff === true) {
-        tags.push(`<span class="db-tag" data-tag="BUFF">BUFF</span>`);
-      }
-      if (entry.isbuff === false) {
-        tags.push(`<span class="db-tag" data-tag="DEBUFF">DEBUFF</span>`);
-      }
+    list.sort((a, b) => {
+      const r = a.name.localeCompare(b.name);
+      return this.sortAsc ? r : -r;
+    });
+
+    grid.innerHTML = "";
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="db-empty">${loc("nothingFound")}</div>`;
+      return;
     }
 
-    return tags.join("");
+    list.forEach(entry => {
+      grid.insertAdjacentHTML("beforeend", this.createCard(entry));
+    });
+  }
+
+  /* =========================
+     CARDS
+     ========================= */
+
+  createCard(entry) {
+    const desc = entry.description || loc("noDescription");
+    return `
+<div class="db-entry" data-id="${entry.id}">
+  <div class="db-header">
+    <strong>${entry.name}</strong>
+    <span class="db-id">${entry.id}</span>
+  </div>
+  <div class="db-description">${desc}</div>
+  <div class="db-details" style="display:none">
+    ${this.renderDetails(entry)}
+  </div>
+</div>`;
   }
 
   toggleCard(card) {
-    const expanded = card.classList.toggle("expanded");
-    if (expanded) this.ensureDetails(card);
+    const box = card.querySelector(".db-details");
+    box.style.display = box.style.display === "none" ? "block" : "none";
   }
 
   toggleExpandAll() {
     const cards = [...document.querySelectorAll(".db-entry")];
-    if (!cards.length) return;
+    const expand = !cards.every(c => c.querySelector(".db-details").style.display === "block");
 
-    const expand = !cards.every(c => c.classList.contains("expanded"));
-    let i = 0;
-
-    const batch = () => {
-      for (let n = 0; n < 20 && i < cards.length; n++, i++) {
-        const c = cards[i];
-        c.classList.toggle("expanded", expand);
-        if (expand) this.ensureDetails(c);
-      }
-      if (i < cards.length) requestAnimationFrame(batch);
-    };
-
-    batch();
-  }
-
-  ensureDetails(card) {
-    const box = card.querySelector(".db-details");
-    if (!box || box.dataset.ready) return;
-
-    const id = card.dataset.id;
-    const entry = this.data[this.currentTab].find(e => e.id === id);
-    if (!entry) return;
-
-    box.dataset.ready = "1";
-    box.innerHTML = this.renderDetails(entry);
+    cards.forEach(c => {
+      c.querySelector(".db-details").style.display = expand ? "block" : "none";
+    });
   }
 
   renderDetails(entry) {
-    if (this.currentTab === "afflictions") {
-      return `
-        <div><b>Type:</b> ${entry.type}</div>
-        <div><b>Max strength:</b> ${entry.maxstrength}</div>
-        <div><b>Limb specific:</b> ${entry.limbspecific ? "yes" : "no"}</div>
-        <div><b>Buff:</b> ${entry.isbuff ? "yes" : "no"}</div>
-      `;
-    }
-
-    if (this.currentTab === "items") {
-      return `
-        <div><b>ID:</b> ${entry.id}</div>
-        <div><b>Category:</b> ${entry.category || "-"}</div>
-      `;
-    }
-
-    if (this.currentTab === "creatures") {
-      return `
-        <div><b>ID:</b> ${entry.id}</div>
-        <div><b>Category:</b> ${entry.category || "-"}</div>
-      `;
-    }
-
-    return "";
+    return `
+<div><strong>${loc("dbDetailID")}:</strong> ${entry.id}</div>
+<div><strong>${loc("dbDetailType")}:</strong> ${entry.type || "-"}</div>
+${entry.maxstrength ? `<div><strong>${loc("dbDetailMaxStrength")}:</strong> ${entry.maxstrength}</div>` : ""}
+`;
   }
 }
 
-/* гарантированная инициализация после DOM */
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================
+   GLOBAL
+   ========================= */
+
+if (!window.dbManager) {
   window.dbManager = new DatabaseManager();
-  window.dbManager.init();
-});
+}
