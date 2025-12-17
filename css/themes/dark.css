@@ -260,3 +260,15 @@ button.danger { background: var(--red); }
 .db-empty {
   color: #888;
 }
+
+/* =========================
+   UI TOASTS (DARK THEME)
+   ========================= */
+
+.ui-toast {
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-high);
+}
+
