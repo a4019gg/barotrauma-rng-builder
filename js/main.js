@@ -1,65 +1,53 @@
-// js/main.js — v0.9.403 — ТОЧКА ВХОДА И ИНИЦИАЛИЗАЦИЯ
+// js/main.js — v0.9.430 — ENTRY POINT (CLEAN)
 
-let isInitialized = false;
+// Этот файл — ТОЛЬКО точка входа.
+// Он не создаёт core-классы и не управляет логикой редактора.
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (isInitialized) return; // Защита от двойной инициализации
-  isInitialized = true;
+  // Проверка наличия ключевых модулей
+  if (!window.nodeFactory || !window.editorState || !window.uiController) {
+    console.error(
+      '[MAIN] Core modules not initialized:',
+      {
+        nodeFactory: window.nodeFactory,
+        editorState: window.editorState,
+        uiController: window.uiController
+      }
+    );
+    return;
+  }
 
-  // Создаём основные компоненты
-  const nodeFactory = new NodeFactory();
-  const editorState = new EditorState();
-  const uiController = new UIController();
+  // Начальный рендер текущего события
+  editorState.renderCurrentEvent();
+  editorState.rebuildTabs();
 
-  // Глобальные ссылки для совместимости со всем кодом
-  window.nodeFactory = nodeFactory;
-  window.editorState = editorState;
-  window.dbManager = dbManager;
+  // =========================
+  // Глобальные утилиты
+  // =========================
 
-  // Глобальные функции добавления в корень (для кнопок в action-bar)
-  window.addRNG = () => {
-    const newModel = nodeFactory.createModelRNG();
-    editorState.events[editorState.currentEventIndex].model.push(newModel);
-    editorState.renderCurrentEvent();
-    updateAll();
-  };
-
-  window.addSpawn = () => {
-    const newModel = nodeFactory.createModelSpawn();
-    editorState.events[editorState.currentEventIndex].model.push(newModel);
-    editorState.renderCurrentEvent();
-    updateAll();
-  };
-
-  window.addCreature = () => {
-    const newModel = nodeFactory.createModelCreature();
-    editorState.events[editorState.currentEventIndex].model.push(newModel);
-    editorState.renderCurrentEvent();
-    updateAll();
-  };
-
-  window.addAffliction = () => {
-    const newModel = nodeFactory.createModelAffliction();
-    editorState.events[editorState.currentEventIndex].model.push(newModel);
-    editorState.renderCurrentEvent();
-    updateAll();
-  };
-
-  // Единая глобальная функция updateAll (вызывается только один раз на действие)
+  // Единая точка updateAll (вызывается EditorState / UIController)
   window.updateAll = () => {
-    console.log('updateAll called — probabilities recalc (placeholder)');
-    // Здесь будет расчёт вероятностей
-    if (document.getElementById('tree-container') && document.getElementById('tree-container').style.display === 'block') {
+    // Здесь позже будет расчёт вероятностей RNG
+    if (
+      document.getElementById('tree-container') &&
+      document.getElementById('tree-container').style.display === 'block'
+    ) {
       treeView.render();
     }
   };
 
-  // Импорт JSON (пресеты или сохранённые события)
+  // =========================
+  // Импорт / Экспорт
+  // =========================
+
   window.importFile = () => {
     const input = document.getElementById('file-input');
+    if (!input) return;
+
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
@@ -67,32 +55,46 @@ document.addEventListener('DOMContentLoaded', () => {
           editorState.importData(data);
           alert(loc('presetLoaded'));
         } catch (err) {
-          alert(loc('presetError'));
           console.error(err);
+          alert(loc('presetError'));
         }
       };
       reader.readAsText(file);
     };
+
     input.click();
   };
 
-  // Экспорт JSON
   window.exportJSON = () => {
     const data = editorState.exportData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob(
+      [JSON.stringify(data, null, 2)],
+      { type: 'application/json' }
+    );
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = 'rng-builder-event.json';
     a.click();
+
     URL.revokeObjectURL(url);
   };
 
-  // Начальный рендер
-  editorState.renderCurrentEvent();
-  editorState.rebuildTabs();
+  // =========================
+  // Вспомогательная инициализация
+  // =========================
 
-  // Дополнительная инициализация (datalist и версии)
   populateDatalist();
   showScriptVersions();
+
+  // Debug
+  console.log(
+    '[MAIN] Ready',
+    {
+      MAIN_VERSION,
+      UI_VERSION,
+      DB_VERSION
+    }
+  );
 });
