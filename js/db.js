@@ -1,6 +1,6 @@
-// js/db.js — v0.9.431 — DATABASE MANAGER (ARCHITECTURE FIX)
+// js/db.js — v0.9.432 — FINAL DATABASE PASS
 
-const DB_VERSION = "v0.9.431";
+const DB_VERSION = "v0.9.432";
 window.DB_VERSION = DB_VERSION;
 
 class DatabaseManager {
@@ -10,8 +10,8 @@ class DatabaseManager {
 
     this.currentTab = "afflictions";
     this.sortAsc = true;
-    this.expandByDefault = false;
 
+    this.expandedCard = null; // только ОДНА раскрытая карточка
     this.data = null;
   }
 
@@ -48,7 +48,7 @@ class DatabaseManager {
   }
 
   /* =========================
-     DOM CREATION
+     DOM
      ========================= */
 
   createModal() {
@@ -71,9 +71,8 @@ class DatabaseManager {
 
       <input class="db-search-input" placeholder="${loc("searchPlaceholder")}" />
 
-      <button class="db-expand-all">⧉</button>
-      <button class="db-sort">A–Z</button>
-      <button class="db-close">✕</button>
+      <button class="db-sort-btn">A–Z</button>
+      <button class="db-close-btn">✕</button>
     </div>
 
     <div class="db-grid"></div>
@@ -121,25 +120,25 @@ class DatabaseManager {
     const overlay = document.querySelector(".db-modal-overlay");
     const grid = overlay.querySelector(".db-grid");
 
-    overlay.querySelector(".db-close").onclick = () => this.closeDB();
+    overlay.querySelector(".db-close-btn").onclick = () => this.closeDB();
 
-    overlay.querySelector(".db-sort").onclick = () => {
+    overlay.querySelector(".db-sort-btn").onclick = () => {
       this.sortAsc = !this.sortAsc;
-      overlay.querySelector(".db-sort").textContent = this.sortAsc ? "A–Z" : "Z–A";
+      overlay.querySelector(".db-sort-btn").textContent = this.sortAsc ? "A–Z" : "Z–A";
       this.render();
     };
 
-    overlay.querySelector(".db-expand-all").onclick = () => {
-      this.toggleExpandAll();
+    overlay.querySelector(".db-search-input").oninput = () => {
+      this.expandedCard = null;
+      this.render();
     };
-
-    overlay.querySelector(".db-search-input").oninput = () => this.render();
 
     overlay.querySelectorAll(".db-tab-btn").forEach(btn => {
       btn.onclick = () => {
         overlay.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         this.currentTab = btn.dataset.tab;
+        this.expandedCard = null;
         this.render();
       };
     });
@@ -148,12 +147,16 @@ class DatabaseManager {
       const card = e.target.closest(".db-entry");
       if (!card) return;
 
-      if (e.target.classList.contains("db-id")) {
-        navigator.clipboard.writeText(card.dataset.id);
+      // ⓘ — раскрытие
+      if (e.target.classList.contains("db-info")) {
+        this.toggleCard(card);
+        e.stopPropagation();
         return;
       }
 
-      this.toggleCard(card);
+      // клик по карточке = копировать ID
+      const id = card.dataset.id;
+      if (id) navigator.clipboard.writeText(id);
     });
   }
 
@@ -168,15 +171,20 @@ class DatabaseManager {
     const search = document.querySelector(".db-search-input").value.toLowerCase();
     let list = [...(this.data[this.currentTab] || [])];
 
+    // фильтрация мусора
+    list = list.filter(e => e && (e.name || e.identifier || e.id));
+
     if (search) {
       list = list.filter(e =>
-        e.name?.toLowerCase().includes(search) ||
-        e.id?.toLowerCase().includes(search)
+        (e.name || "").toLowerCase().includes(search) ||
+        (e.identifier || e.id || "").toLowerCase().includes(search)
       );
     }
 
     list.sort((a, b) => {
-      const r = a.name.localeCompare(b.name);
+      const an = a.name || "";
+      const bn = b.name || "";
+      const r = an.localeCompare(bn);
       return this.sortAsc ? r : -r;
     });
 
@@ -197,14 +205,25 @@ class DatabaseManager {
      ========================= */
 
   createCard(entry) {
+    const id = entry.identifier || entry.id || "unknown";
+    const name = entry.name || id;
     const desc = entry.description || loc("noDescription");
+
     return `
-<div class="db-entry" data-id="${entry.id}">
-  <div class="db-header">
-    <strong>${entry.name}</strong>
-    <span class="db-id">${entry.id}</span>
+<div class="db-entry" data-id="${id}">
+  <div class="db-card-header">
+    <div class="db-icon">${this.createIcon(entry)}</div>
+    <div class="db-main">
+      <div class="db-title">${name}</div>
+      <div class="db-desc">${desc}</div>
+    </div>
+    <div class="db-info">ⓘ</div>
   </div>
-  <div class="db-description">${desc}</div>
+
+  <div class="db-tags">
+    ${this.renderTags(entry)}
+  </div>
+
   <div class="db-details" style="display:none">
     ${this.renderDetails(entry)}
   </div>
@@ -212,25 +231,80 @@ class DatabaseManager {
   }
 
   toggleCard(card) {
-    const box = card.querySelector(".db-details");
-    box.style.display = box.style.display === "none" ? "block" : "none";
+    const details = card.querySelector(".db-details");
+
+    if (this.expandedCard && this.expandedCard !== card) {
+      this.expandedCard.querySelector(".db-details").style.display = "none";
+    }
+
+    const isOpen = details.style.display === "block";
+    details.style.display = isOpen ? "none" : "block";
+    this.expandedCard = isOpen ? null : card;
   }
 
-  toggleExpandAll() {
-    const cards = [...document.querySelectorAll(".db-entry")];
-    const expand = !cards.every(c => c.querySelector(".db-details").style.display === "block");
-
-    cards.forEach(c => {
-      c.querySelector(".db-details").style.display = expand ? "block" : "none";
-    });
-  }
+  /* =========================
+     DETAILS
+     ========================= */
 
   renderDetails(entry) {
-    return `
-<div><strong>${loc("dbDetailID")}:</strong> ${entry.id}</div>
-<div><strong>${loc("dbDetailType")}:</strong> ${entry.type || "-"}</div>
-${entry.maxstrength ? `<div><strong>${loc("dbDetailMaxStrength")}:</strong> ${entry.maxstrength}</div>` : ""}
-`;
+    const rows = [];
+
+    const id = entry.identifier || entry.id;
+    if (id) rows.push(`<div><strong>${loc("dbDetailID")}:</strong> ${id}</div>`);
+
+    if (entry.type)
+      rows.push(`<div><strong>${loc("dbDetailType")}:</strong> ${entry.type}</div>`);
+
+    if (entry.maxstrength)
+      rows.push(`<div><strong>${loc("dbDetailMaxStrength")}:</strong> ${entry.maxstrength}</div>`);
+
+    if (typeof entry.limbspecific === "boolean")
+      rows.push(`<div><strong>${loc("dbDetailLimbSpecific")}:</strong> ${entry.limbspecific ? loc("yes") : loc("no")}</div>`);
+
+    if (typeof entry.isbuff === "boolean")
+      rows.push(`<div><strong>${loc("dbDetailIsBuff")}:</strong> ${entry.isbuff ? loc("yes") : loc("no")}</div>`);
+
+    return rows.join("");
+  }
+
+  /* =========================
+     TAGS
+     ========================= */
+
+  renderTags(entry) {
+    const tags = [];
+
+    if (entry.category)
+      tags.push(`<span class="db-tag">${entry.category}</span>`);
+
+    if (Array.isArray(entry.tags)) {
+      entry.tags.forEach(t => {
+        tags.push(`<span class="db-tag">${t}</span>`);
+      });
+    }
+
+    if (entry.limbspecific)
+      tags.push(`<span class="db-tag db-tag-accent">${loc("dbDetailLimbSpecificShort")}</span>`);
+
+    if (entry.isbuff)
+      tags.push(`<span class="db-tag db-tag-green">${loc("dbDetailIsBuffShort")}</span>`);
+
+    return tags.join("");
+  }
+
+  /* =========================
+     ICONS
+     ========================= */
+
+  createIcon(entry) {
+    if (!window.createRealIcon) return "";
+
+    try {
+      return createRealIcon(entry);
+    } catch (e) {
+      console.warn("[DB] Icon error:", entry, e);
+      return "";
+    }
   }
 }
 
