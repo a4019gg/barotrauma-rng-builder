@@ -1,162 +1,194 @@
-// js/EditorState.js — v0.9.403 — СОСТОЯНИЕ РЕДАКТОРА (ФИНАЛЬНЫЙ ФИКС)
+// js/EditorState.js — v0.9.430 — STATE CORE (COMMIT + HISTORY)
 
-const MAIN_VERSION = "v0.9.403";
+const MAIN_VERSION = "v0.9.430";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
   constructor() {
     this.currentEventIndex = 0;
     this.events = [{ model: [] }];
+
     this.undoStack = [];
     this.redoStack = [];
     this.maxHistory = 50;
+
+    this.lastActionLabel = "";
   }
 
-  saveState() {
-    const state = JSON.stringify({
+  /* =========================
+     HISTORY / SNAPSHOTS
+     ========================= */
+
+  saveState(label = "") {
+    const snapshot = {
       events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
-      currentEventIndex: this.currentEventIndex
-    });
+      currentEventIndex: this.currentEventIndex,
+      label
+    };
 
-    this.undoStack.push(state);
+    this.undoStack.push(JSON.stringify(snapshot));
     if (this.undoStack.length > this.maxHistory) this.undoStack.shift();
-    this.redoStack = [];
+    this.redoStack.length = 0;
+
+    this.lastActionLabel = label;
   }
+
+  undo() {
+    if (!this.undoStack.length) return false;
+
+    const current = {
+      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
+      currentEventIndex: this.currentEventIndex,
+      label: this.lastActionLabel
+    };
+    this.redoStack.push(JSON.stringify(current));
+
+    const prev = JSON.parse(this.undoStack.pop());
+    this.events = prev.events;
+    this.currentEventIndex = prev.currentEventIndex;
+    this.lastActionLabel = prev.label || "";
+
+    this.commit();
+    return true;
+  }
+
+  redo() {
+    if (!this.redoStack.length) return false;
+
+    const current = {
+      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
+      currentEventIndex: this.currentEventIndex,
+      label: this.lastActionLabel
+    };
+    this.undoStack.push(JSON.stringify(current));
+
+    const next = JSON.parse(this.redoStack.pop());
+    this.events = next.events;
+    this.currentEventIndex = next.currentEventIndex;
+    this.lastActionLabel = next.label || "";
+
+    this.commit();
+    return true;
+  }
+
+  /* =========================
+     CORE HELPERS
+     ========================= */
 
   deepCopy(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
-  undo() {
-    if (this.undoStack.length === 0) return false;
-    this.redoStack.push(JSON.stringify({
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
-      currentEventIndex: this.currentEventIndex
-    }));
-
-    const prev = JSON.parse(this.undoStack.pop());
-    this.events = prev.events;
-    this.currentEventIndex = prev.currentEventIndex;
-
+  commit() {
     this.renderCurrentEvent();
-    this.rebuildTabs();
-    updateAll(); // один вызов после рендера
-    return true;
+    updateAll();
   }
 
-  redo() {
-    if (this.redoStack.length === 0) return false;
-    this.undoStack.push(JSON.stringify({
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
-      currentEventIndex: this.currentEventIndex
-    }));
-
-    const next = JSON.parse(this.redoStack.pop());
-    this.events = next.events;
-    this.currentEventIndex = next.currentEventIndex;
-
-    this.renderCurrentEvent();
-    this.rebuildTabs();
-    updateAll(); // один вызов после рендера
-    return true;
-  }
+  /* =========================
+     EVENT MANAGEMENT
+     ========================= */
 
   addEvent() {
-    this.saveState();
+    this.saveState("Add event");
     this.events.push({ model: [] });
     this.currentEventIndex = this.events.length - 1;
-    this.renderCurrentEvent();
+    this.commit();
     this.rebuildTabs();
-    updateAll(); // один вызов
   }
 
   deleteEvent(index) {
     if (this.events.length <= 1) {
-      alert(loc('lastEventWarning', 'Нельзя удалить последний ивент!'));
+      alert(loc("lastEventWarning"));
       return false;
     }
-    if (!confirm(loc('deleteEventConfirm', 'Удалить ивент?'))) return false;
+    if (!confirm(loc("deleteEventConfirm"))) return false;
 
-    this.saveState();
+    this.saveState("Delete event");
     this.events.splice(index, 1);
     if (this.currentEventIndex >= this.events.length) {
       this.currentEventIndex = this.events.length - 1;
     }
-    this.renderCurrentEvent();
+    this.commit();
     this.rebuildTabs();
-    updateAll(); // один вызов
     return true;
   }
 
   switchToEvent(index) {
     if (index < 0 || index >= this.events.length) return;
-
-    this.saveState();
+    this.saveState("Switch event");
     this.currentEventIndex = index;
-    this.renderCurrentEvent();
+    this.commit();
     this.rebuildTabs();
-    updateAll(); // один вызов
   }
 
+  /* =========================
+     RENDERING
+     ========================= */
+
   renderCurrentEvent() {
-    const container = document.getElementById('root-children');
+    const container = document.getElementById("root-children");
     if (!container) return;
-    container.innerHTML = '';
+
+    container.innerHTML = "";
     const model = this.events[this.currentEventIndex].model || [];
     model.forEach(nodeModel => {
       if (nodeModel) {
-        const nodeElement = nodeFactory.createFromModel(nodeModel);
-        container.appendChild(nodeElement);
+        container.appendChild(nodeFactory.createFromModel(nodeModel));
       }
     });
-    // updateAll() больше НЕ вызывается здесь — только в действиях
   }
 
   rebuildTabs() {
-    const list = document.getElementById('events-list');
+    const list = document.getElementById("events-list");
     if (!list) return;
-    list.innerHTML = '';
 
-    this.events.forEach((ev, i) => {
-      const tab = document.createElement('div');
-      tab.className = 'event-tab' + (i === this.currentEventIndex ? ' active' : '');
+    list.innerHTML = "";
+    this.events.forEach((_, i) => {
+      const tab = document.createElement("div");
+      tab.className = "event-tab" + (i === this.currentEventIndex ? " active" : "");
 
-      const name = document.createElement('span');
-      name.className = 'tab-name';
+      const name = document.createElement("span");
       name.textContent = `event_${i + 1}`;
 
-      const del = document.createElement('span');
-      del.className = 'delete-tab';
-      del.textContent = '×';
-      del.onclick = (e) => {
+      const del = document.createElement("span");
+      del.className = "delete-tab";
+      del.textContent = "×";
+      del.onclick = e => {
         e.stopPropagation();
         this.deleteEvent(i);
       };
 
-      tab.appendChild(name);
-      tab.appendChild(del);
+      tab.append(name, del);
       tab.onclick = () => this.switchToEvent(i);
-
       list.appendChild(tab);
     });
   }
 
+  /* =========================
+     NODE OPERATIONS
+     ========================= */
+
   findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (const node of nodes) {
       if (node.id === id) return node;
-      if (node.type === 'rng' && node.children) {
-        const found = this.findNodeById(id, node.children.success) || this.findNodeById(id, node.children.failure);
+      if (node.type === "rng" && node.children) {
+        const found =
+          this.findNodeById(id, node.children.success) ||
+          this.findNodeById(id, node.children.failure);
         if (found) return found;
       }
     }
     return null;
   }
 
-  removeNodeById(id) {
-    const removed = this._removeNodeRecursive(id, this.events[this.currentEventIndex].model);
-    if (removed) {
-      this.renderCurrentEvent();
-      updateAll(); // один вызов
+  removeNodeById(id, silent = false) {
+    const removed = this._removeNodeRecursive(
+      id,
+      this.events[this.currentEventIndex].model
+    );
+
+    if (removed && !silent) {
+      this.commit();
     }
     return removed;
   }
@@ -168,8 +200,11 @@ class EditorState {
         nodes.splice(i, 1);
         return true;
       }
-      if (node.type === 'rng' && node.children) {
-        if (this._removeNodeRecursive(id, node.children.success) || this._removeNodeRecursive(id, node.children.failure)) {
+      if (node.type === "rng" && node.children) {
+        if (
+          this._removeNodeRecursive(id, node.children.success) ||
+          this._removeNodeRecursive(id, node.children.failure)
+        ) {
           return true;
         }
       }
@@ -179,87 +214,86 @@ class EditorState {
 
   addNodeToBranch(parentId, branch, type) {
     const parent = this.findNodeById(parentId);
-    if (!parent || parent.type !== 'rng' || !parent.children || !parent.children[branch]) {
-      console.warn('Cannot add to branch: invalid parent or branch', { parentId, branch, type });
-      return false;
-    }
+    if (!parent || parent.type !== "rng") return false;
 
-    let newModel;
+    let model;
     switch (type) {
-      case 'rng':
-        newModel = nodeFactory.createModelRNG();
-        break;
-      case 'spawn':
-        newModel = nodeFactory.createModelSpawn();
-        break;
-      case 'creature':
-        newModel = nodeFactory.createModelCreature();
-        break;
-      case 'affliction':
-        newModel = nodeFactory.createModelAffliction();
-        break;
-      default:
-        console.warn('Unknown node type for branch:', type);
-        return false;
+      case "rng": model = nodeFactory.createModelRNG(); break;
+      case "spawn": model = nodeFactory.createModelSpawn(); break;
+      case "creature": model = nodeFactory.createModelCreature(); break;
+      case "affliction": model = nodeFactory.createModelAffliction(); break;
+      default: return false;
     }
 
-    parent.children[branch].push(newModel);
-    this.renderCurrentEvent();
-    updateAll(); // один вызов
+    this.saveState("Add node to branch");
+    parent.children[branch].push(model);
+    this.commit();
     return true;
   }
 
+  /* =========================
+     UTILITIES
+     ========================= */
+
+  clearAll() {
+    if (!confirm(loc("clearAllConfirm"))) return;
+    this.saveState("Clear all nodes");
+    this.events[this.currentEventIndex].model = [];
+    this.commit();
+    alert(loc("clearAllDone"));
+  }
+
   autoBalance() {
-    this.saveState();
+    this.saveState("Auto balance");
 
-    const balance = (nodes) => {
+    const balance = nodes => {
       nodes.forEach(node => {
-        if (node.type === 'rng') {
-          const successCount = node.children?.success ? node.children.success.filter(n => n.type !== 'rng').length : 0;
-          const failureCount = node.children?.failure ? node.children.failure.filter(n => n.type !== 'rng').length : 0;
-          const total = successCount + failureCount;
-
+        if (node.type === "rng") {
+          const s = node.children?.success?.length || 0;
+          const f = node.children?.failure?.length || 0;
+          const total = s + f;
           if (total > 0) {
-            node.params.chance = parseFloat((successCount / total).toFixed(3));
+            node.params.chance = +(s / total).toFixed(3);
           }
-
-          if (node.children?.success) balance(node.children.success);
-          if (node.children?.failure) balance(node.children.failure);
+          balance(node.children.success);
+          balance(node.children.failure);
         }
       });
     };
 
     balance(this.events[this.currentEventIndex].model);
-    this.renderCurrentEvent();
-    updateAll(); // один вызов
-    alert(loc('autoBalanceDone', 'Автобаланс завершён'));
-  }
-
-  clearAll() {
-    this.saveState();
-    this.events[this.currentEventIndex].model = [];
-    this.renderCurrentEvent();
-    updateAll(); // один вызов
+    this.commit();
+    alert(loc("autoBalanceDone"));
   }
 
   exportData() {
-    this.saveState();
+    this.saveState("Export data");
     return {
-      version: "v0.9.403",
+      version: MAIN_VERSION,
       events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
     };
   }
 
   importData(data) {
-    if (!data.events || !Array.isArray(data.events)) return false;
+    if (!data?.events || !Array.isArray(data.events)) return false;
+    this.saveState("Import data");
     this.events = data.events.map(e => ({ model: e.model || [] }));
     this.currentEventIndex = 0;
-    this.renderCurrentEvent();
+    this.commit();
     this.rebuildTabs();
-    updateAll(); // один вызов
     return true;
   }
 }
 
-// Глобальный экземпляр
+/* =========================
+   GLOBAL INSTANCE
+   ========================= */
+
 window.editorState = new EditorState();
+
+/*
+IMPORTANT:
+Any operation that changes node hierarchy
+(delete, drag→attach, import, clear)
+MUST call saveState() BEFORE mutation.
+*/
