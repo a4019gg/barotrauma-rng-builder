@@ -102,6 +102,9 @@ dbDetailIsBuffShort: "Buff",
   yes: "yes",
   no: "no",
 
+  clearAllDone: "All nodes removed",
+
+
   // Event ID
   eventIdLabel: "Event ID:"
 };
