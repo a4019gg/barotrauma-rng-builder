@@ -34,6 +34,11 @@ dbDetailIsBuffShort: "Бафф",
   applyAffliction: "Применить аффикшен",
   unknownNode: "Неизвестный узел",
 
+  // Notifications / toasts
+clearAllDone: "Все узлы удалены",
+addEventDone: "Ивент добавлен",
+xmlGenerated: "XML сгенерирован",
+
   // Parameters
   chance: "Шанс",
   count: "Количество",
