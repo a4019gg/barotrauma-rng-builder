@@ -437,3 +437,151 @@ body[data-node-density="comfortable"] .node {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* =========================================================
+   NODE UX EXTENSIONS — v0.9.430
+   ========================================================= */
+
+/* ---------- Header layout ---------- */
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.node-title {
+  font-weight: 600;
+  flex: 1;
+  cursor: grab;
+}
+
+.node-header button {
+  flex-shrink: 0;
+}
+
+/* ---------- Selected nodes ---------- */
+
+.node.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Dragging ---------- */
+
+.node.dragging {
+  opacity: 0.85;
+  cursor: grabbing;
+  box-shadow: var(--shadow-high);
+  z-index: 9999;
+}
+
+/* ---------- RNG branches ---------- */
+
+.node-branch {
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.node-branch-title {
+  font-size: 13px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ---------- Drop highlight ---------- */
+
+.node-branch.highlight {
+  border-color: var(--accent);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- RNG percent badges ---------- */
+
+.node-branch-title .rng-percent {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* ---------- Children container ---------- */
+
+.node-children {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ---------- Inline warnings ---------- */
+
+.node-warning {
+  font-size: 14px;
+  color: var(--red);
+  cursor: help;
+}
+
+/* ---------- Locked nodes ---------- */
+
+.node.locked {
+  opacity: 0.6;
+}
+
+.node.locked .node-title {
+  cursor: not-allowed;
+}
+
+.node-lock {
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.node-lock:hover {
+  opacity: 1;
+}
+
+/* ---------- Inputs ---------- */
+
+.node input,
+.node select {
+  background: #333;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+
+.node input.small {
+  width: 64px;
+}
+
+/* ---------- Compact density ---------- */
+
+body[data-node-density="compact"] .node-header {
+  gap: 4px;
+}
+
+body[data-node-density="compact"] .node-title {
+  font-size: 13px;
+}
+
+/* ---------- Large screens (4K / 8K) ---------- */
+
+@media (min-width: 2560px) {
+  .node {
+    font-size: 17px;
+  }
+
+  .node input,
+  .node select {
+    font-size: 15px;
+  }
+}
