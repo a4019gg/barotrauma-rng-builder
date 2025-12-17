@@ -585,3 +585,52 @@ body[data-node-density="compact"] .node-title {
     font-size: 15px;
   }
 }
+
+/* =========================================================
+   DnD + LAYOUT PATCH — v0.9.431
+   ========================================================= */
+
+/* --- Запрет выделения текста при drag --- */
+.node,
+.node * {
+  user-select: none;
+}
+
+/* --- Глобальный drag state --- */
+body.dragging {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+/* --- Ноды не должны растягиваться по ширине --- */
+.node {
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* --- Контейнер нод не растягивает элементы --- */
+#classic-view > #tree-root {
+  align-items: flex-start;
+}
+
+/* --- Сетка должна быть под нодами, но над фоном --- */
+#editor-area {
+  position: absolute;
+  z-index: 0;
+}
+
+#editor-area::before {
+  z-index: 0;
+}
+
+#classic-view,
+#tree-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Улучшение визуала перетаскивания --- */
+.node.dragging {
+  pointer-events: none;
+  opacity: 0.85;
+}
