@@ -1,7 +1,6 @@
 // js/utils.js — v0.9.401 — УТИЛИТЫ И ЛОКАЛИЗАЦИЯ (БЕЗ import/export)
 
-const UTILS_VERSION = "v0.9.401";
-window.UTILS_VERSION = UTILS_VERSION;
+window.UTILS_VERSION = "v0.9.401";
 
 let currentLang = 'en';
 const L = {};
