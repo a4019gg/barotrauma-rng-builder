@@ -310,18 +310,45 @@ class DatabaseManager {
     desc.className = "db-card-desc";
     desc.textContent = entry.description || "";
     card.appendChild(desc);
+/* ---------- TAGS ---------- */
 
-    /* ---------- TAGS ---------- */
+const tags = document.createElement("div");
+tags.className = "db-card-tags";
 
-    const tags = document.createElement("div");
-    tags.className = "db-card-tags";
+/* priority: main semantic tags first */
+const PRIMARY = ["DAMAGE", "STATUS", "BUFF", "DEBUFF", "POISON"];
+const tagSet = new Set();
 
-    if (entry.type) tags.appendChild(this.makeTag(entry.type));
-    if (entry.isbuff) tags.appendChild(this.makeTag("buff"));
-    if (entry.limbspecific) tags.appendChild(this.makeTag("limb"));
-    if (entry.category) tags.appendChild(this.makeTag(entry.category));
+/* 1. main type */
+if (entry.type) {
+  tagSet.add(String(entry.type).toUpperCase());
+}
 
-    card.appendChild(tags);
+/* 2. flags */
+if (entry.isbuff) tagSet.add("BUFF");
+if (entry.limbspecific) tagSet.add("LIMB");
+
+/* 3. extra tags / category */
+if (Array.isArray(entry.tags)) {
+  entry.tags.forEach(t => tagSet.add(String(t).toUpperCase()));
+}
+if (entry.category) {
+  tagSet.add(String(entry.category).toUpperCase());
+}
+
+/* sort: primary first, rest after */
+const sorted = [
+  ...PRIMARY.filter(t => tagSet.has(t)),
+  ...[...tagSet].filter(t => !PRIMARY.includes(t))
+];
+
+/* render */
+sorted.forEach(t => {
+  tags.appendChild(this.makeTag(t));
+});
+
+card.appendChild(tags);
+
 
     /* ---------- DETAILS ---------- */
 
