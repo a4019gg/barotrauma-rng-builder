@@ -211,7 +211,7 @@ class DatabaseManager {
           console.warn("[DB] Icon error", e);
         }
       } else {
-        iconBox.innerHTML = `<div class="db-icon-placeholder"></div>`;
+        iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png" alt="">`;
       }
     });
   }
