@@ -838,3 +838,15 @@ body.dragging {
     border-top: 1px solid var(--border);
   }
 }
+
+/* when one card is expanded — de-emphasize others */
+.db-grid:has(.db-entry.expanded) .db-entry:not(.expanded) {
+  opacity: 0.75;
+  filter: saturate(0.85);
+}
+
+/* active expanded card */
+.db-entry.expanded {
+  opacity: 1;
+  filter: none;
+}
