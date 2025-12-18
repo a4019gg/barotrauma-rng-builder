@@ -839,14 +839,45 @@ body.dragging {
   }
 }
 
-/* when one card is expanded — de-emphasize others */
-.db-grid:has(.db-entry.expanded) .db-entry:not(.expanded) {
-  opacity: 0.75;
-  filter: saturate(0.85);
+/* =========================
+   DETAILS PLACEHOLDER (DARKER)
+   ========================= */
+
+/* базово скрываем детали */
+.db-card-details {
+  display: none;
 }
 
-/* active expanded card */
-.db-entry.expanded {
-  opacity: 1;
-  filter: none;
+/* если есть раскрытая карточка —
+   показываем заглушку у остальных */
+.db-grid:has(.db-entry.expanded)
+  .db-entry:not(.expanded)
+  .db-card-details::before {
+
+  content: "details hidden";
+  display: block;
+
+  margin-top: 8px;
+  padding-top: 8px;
+
+  font-size: 12px;
+  letter-spacing: 0.02em;
+
+  color: var(--text);
+  opacity: 0.25;
+
+  border-top: 1px dashed var(--border);
+
+  /* лёгкое затемнение области */
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15),
+    rgba(0,0,0,0.25)
+  );
+}
+
+/* раскрытая карточка — реальные детали */
+.db-entry.expanded .db-card-details {
+  display: block;
+  background: none;
 }
