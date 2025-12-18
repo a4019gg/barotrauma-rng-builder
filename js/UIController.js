@@ -1,5 +1,5 @@
 // js/UIController.js — v0.9.430 — UI CONTROLLER (MULTISELECT + HOTKEYS)
-window.UI_VERSION = "v0.9.430;
+window.UI_VERSION = "v0.9.430";
 
 class UIController {
   constructor() {
