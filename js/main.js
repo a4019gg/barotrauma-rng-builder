@@ -92,9 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log(
     '[MAIN] Ready',
     {
-      MAIN_VERSION,
-      UI_VERSION,
-      DB_VERSION
+window.MAIN_VERSION,
+window.UI_VERSION,
+window.DB_VERSION
     }
   );
 });
