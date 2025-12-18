@@ -706,3 +706,6 @@ body.dragging {
   padding: 16px;
   background: var(--panel);
 }
+
+.db-details { display: none; }
+.db-entry-btn.expanded .db-details { display: block; }
