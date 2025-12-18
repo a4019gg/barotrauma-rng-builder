@@ -1,6 +1,6 @@
-// js/EditorState.js — v0.9.430 — STATE CORE (COMMIT + HISTORY)
+// js/EditorState.js — v0.9.500 — STATE CORE (STABLE + PREPARED)
 
-const MAIN_VERSION = "v0.9.430";
+const MAIN_VERSION = "v0.9.500";
 window.MAIN_VERSION = MAIN_VERSION;
 
 class EditorState {
@@ -21,15 +21,16 @@ class EditorState {
 
   saveState(label = "") {
     const snapshot = {
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
+      events: this.deepCopy(this.events),
       currentEventIndex: this.currentEventIndex,
       label
     };
 
     this.undoStack.push(JSON.stringify(snapshot));
-    if (this.undoStack.length > this.maxHistory) this.undoStack.shift();
+    if (this.undoStack.length > this.maxHistory) {
+      this.undoStack.shift();
+    }
     this.redoStack.length = 0;
-
     this.lastActionLabel = label;
   }
 
@@ -37,7 +38,7 @@ class EditorState {
     if (!this.undoStack.length) return false;
 
     const current = {
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
+      events: this.deepCopy(this.events),
       currentEventIndex: this.currentEventIndex,
       label: this.lastActionLabel
     };
@@ -48,6 +49,7 @@ class EditorState {
     this.currentEventIndex = prev.currentEventIndex;
     this.lastActionLabel = prev.label || "";
 
+    this.rebuildIdCounter();
     this.commit();
     return true;
   }
@@ -56,7 +58,7 @@ class EditorState {
     if (!this.redoStack.length) return false;
 
     const current = {
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) })),
+      events: this.deepCopy(this.events),
       currentEventIndex: this.currentEventIndex,
       label: this.lastActionLabel
     };
@@ -67,6 +69,7 @@ class EditorState {
     this.currentEventIndex = next.currentEventIndex;
     this.lastActionLabel = next.label || "";
 
+    this.rebuildIdCounter();
     this.commit();
     return true;
   }
@@ -82,6 +85,27 @@ class EditorState {
   commit() {
     this.renderCurrentEvent();
     updateAll();
+  }
+
+  rebuildIdCounter() {
+    let maxId = -1;
+
+    const walk = nodes => {
+      nodes.forEach(n => {
+        if (typeof n.id === "number") {
+          maxId = Math.max(maxId, n.id);
+        }
+        if (n.type === "rng" && n.children) {
+          walk(n.children.success || []);
+          walk(n.children.failure || []);
+        }
+      });
+    };
+
+    this.events.forEach(e => walk(e.model));
+    if (window.nodeFactory) {
+      window.nodeFactory.idCounter = maxId + 1;
+    }
   }
 
   /* =========================
@@ -132,9 +156,9 @@ class EditorState {
     container.innerHTML = "";
     const model = this.events[this.currentEventIndex].model || [];
     model.forEach(nodeModel => {
-      if (nodeModel) {
-        container.appendChild(nodeFactory.createFromModel(nodeModel));
-      }
+      container.appendChild(
+        nodeFactory.createFromModel(nodeModel)
+      );
     });
   }
 
@@ -145,7 +169,8 @@ class EditorState {
     list.innerHTML = "";
     this.events.forEach((_, i) => {
       const tab = document.createElement("div");
-      tab.className = "event-tab" + (i === this.currentEventIndex ? " active" : "");
+      tab.className =
+        "event-tab" + (i === this.currentEventIndex ? " active" : "");
 
       const name = document.createElement("span");
       name.textContent = `event_${i + 1}`;
@@ -165,31 +190,29 @@ class EditorState {
   }
 
   /* =========================
-     NODE OPERATIONS
+     NODE OPERATIONS (ONLY HERE)
      ========================= */
 
   findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.type === "rng" && node.children) {
-        const found =
+        return (
           this.findNodeById(id, node.children.success) ||
-          this.findNodeById(id, node.children.failure);
-        if (found) return found;
+          this.findNodeById(id, node.children.failure)
+        );
       }
     }
     return null;
   }
 
-  removeNodeById(id, silent = false) {
+  removeNodeById(id) {
+    this.saveState("Remove node");
     const removed = this._removeNodeRecursive(
       id,
       this.events[this.currentEventIndex].model
     );
-
-    if (removed && !silent) {
-      this.commit();
-    }
+    if (removed) this.commit();
     return removed;
   }
 
@@ -212,21 +235,19 @@ class EditorState {
     return false;
   }
 
-  addNodeToBranch(parentId, branch, type) {
+  attachNode(childId, parentId, branch) {
     const parent = this.findNodeById(parentId);
-    if (!parent || parent.type !== "rng") return false;
+    const child = this.findNodeById(childId);
+    if (!parent || !child || parent.type !== "rng") return false;
 
-    let model;
-    switch (type) {
-      case "rng": model = nodeFactory.createModelRNG(); break;
-      case "spawn": model = nodeFactory.createModelSpawn(); break;
-      case "creature": model = nodeFactory.createModelCreature(); break;
-      case "affliction": model = nodeFactory.createModelAffliction(); break;
-      default: return false;
-    }
+    this.saveState("Attach node");
 
-    this.saveState("Add node to branch");
-    parent.children[branch].push(model);
+    this._removeNodeRecursive(
+      childId,
+      this.events[this.currentEventIndex].model
+    );
+
+    parent.children[branch].push(child);
     this.commit();
     return true;
   }
@@ -249,11 +270,11 @@ class EditorState {
     const balance = nodes => {
       nodes.forEach(node => {
         if (node.type === "rng") {
-          const s = node.children?.success?.length || 0;
-          const f = node.children?.failure?.length || 0;
-          const total = s + f;
-          if (total > 0) {
-            node.params.chance = +(s / total).toFixed(3);
+          const s = node.children.success.length;
+          const f = node.children.failure.length;
+          const t = s + f;
+          if (t > 0) {
+            node.params.chance = +(s / t).toFixed(3);
           }
           balance(node.children.success);
           balance(node.children.failure);
@@ -267,18 +288,18 @@ class EditorState {
   }
 
   exportData() {
-    this.saveState("Export data");
     return {
       version: MAIN_VERSION,
-      events: this.events.map(e => ({ model: this.deepCopy(e.model) }))
+      events: this.deepCopy(this.events)
     };
   }
 
   importData(data) {
     if (!data?.events || !Array.isArray(data.events)) return false;
     this.saveState("Import data");
-    this.events = data.events.map(e => ({ model: e.model || [] }));
+    this.events = this.deepCopy(data.events);
     this.currentEventIndex = 0;
+    this.rebuildIdCounter();
     this.commit();
     this.rebuildTabs();
     return true;
@@ -290,10 +311,3 @@ class EditorState {
    ========================= */
 
 window.editorState = new EditorState();
-
-/*
-IMPORTANT:
-Any operation that changes node hierarchy
-(delete, drag→attach, import, clear)
-MUST call saveState() BEFORE mutation.
-*/
