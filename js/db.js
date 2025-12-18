@@ -360,16 +360,12 @@ class DatabaseManager {
     return card;
   }
 
-makeTag(text) {
-  const t = document.createElement("span");
-  t.className = "db-tag";
-
-  if (typeof text === "string") {
-    t.classList.add(text.toLowerCase());
-    t.textContent = text;
-  }
-
-  return t;
+makeTag(tag) {
+  const el = document.createElement("span");
+  el.className = "db-tag";
+  el.textContent = tag;
+  el.dataset.tag = tag.toUpperCase();
+  return el;
 }
 
 
