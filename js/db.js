@@ -1,340 +1,407 @@
-// js/db.js — v0.9.436 — DB (AFFLICTION ADAPTER FINAL)
+// js/db.js — v0.9.420 — БАЗА ДАННЫХ С СТАБИЛЬНЫМИ ИКОНКАМИ
 
-const DB_VERSION = "v0.9.436";
+const DB_VERSION = "v0.9.420";
 window.DB_VERSION = DB_VERSION;
-
-/* =========================
-   ADAPTERS
-   ========================= */
-
-function adaptAffliction(raw) {
-  return {
-    id: raw.identifier,
-    identifier: raw.identifier,
-    name: raw.name || raw.identifier,
-    description: raw.description || "",
-
-    // gameplay
-    type: raw.type || "unknown",
-    maxstrength: Number(raw.maxstrength) || 0,
-    limbspecific: raw.limbspecific === true || raw.limbspecific === "true",
-    isbuff: raw.isbuff === true || raw.isbuff === "true",
-
-    // icon (DB understands this format)
-    icon: raw.icon || null,
-
-    // tags
-    category: "Affliction",
-
-    _raw: raw
-  };
-}
-
-function adaptItem(raw) {
-  return {
-    id: raw.id,
-    name: raw.name || raw.id,
-    category: raw.category || "Item",
-    tags: raw.tags || [],
-    description: "",
-    icon: null
-  };
-}
-
-function adaptCreature(raw) {
-  return {
-    id: raw.id,
-    name: raw.name || raw.id,
-    category: raw.category || "Creature",
-    description: "",
-    icon: null
-  };
-}
-
-/* =========================
-   DATABASE MANAGER
-   ========================= */
 
 class DatabaseManager {
   constructor() {
-    this.initialized = false;
-    this.domReady = false;
-
-    this.currentTab = "afflictions";
-    this.sortAsc = true;
-    this.expandedCard = null;
-
-    this.data = {
-      afflictions: [],
-      items: [],
-      creatures: []
-    };
+    this.afflictions = [];
+    this.items = [];
+    this.creatures = [];
+    this.iconCache = new Map(); // Кэш готовых canvas (с цветом)
+    this.atlasCache = new Map(); // Кэш загруженных Image
+    this.pendingAtlases = new Map(); // Обещания загрузки
+    this.currentTab = 'afflictions';
+    this.isModalOpen = false;
+    this.loadData();
   }
-
-  /* =========================
-     PUBLIC
-     ========================= */
-
-  async openDB() {
-    this.createModal();
-    await this.init();
-    document.querySelector(".db-modal-overlay").style.display = "flex";
-  }
-
-  closeDB() {
-    const overlay = document.querySelector(".db-modal-overlay");
-    if (overlay) overlay.remove();
-    this.initialized = false;
-    this.domReady = false;
-    this.expandedCard = null;
-  }
-
-  /* =========================
-     INIT
-     ========================= */
-
-  async init() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    await this.loadData();
-    this.bindUI();
-    this.render();
-  }
-
-  /* =========================
-     MODAL
-     ========================= */
-
-  createModal() {
-    if (this.domReady) return;
-
-    document.body.insertAdjacentHTML("beforeend", `
-<div class="db-modal-overlay">
-  <div class="db-modal-content">
-
-    <div class="db-pane">
-      <div class="db-modal-header">
-        <div class="db-tabs">
-          <button class="db-tab-btn active" data-tab="afflictions">${loc("tabAfflictions")}</button>
-          <button class="db-tab-btn" data-tab="items">${loc("tabItems")}</button>
-          <button class="db-tab-btn" data-tab="creatures">${loc("tabCreatures")}</button>
-        </div>
-
-        <input class="db-search-input" placeholder="${loc("searchPlaceholder")}">
-        <button class="db-sort-btn">A–Z</button>
-        <button class="db-expand-all-btn">⧉</button>
-        <button class="db-close-btn">✕</button>
-      </div>
-
-      <div class="db-grid"></div>
-    </div>
-
-    <div class="db-legend-pane">
-      <h3>Legend</h3>
-      <div>ⓘ — open details</div>
-      <div>Click card — copy ID</div>
-      <div>⧉ — expand / collapse all</div>
-    </div>
-
-  </div>
-</div>
-    `);
-
-    this.domReady = true;
-  }
-
-  /* =========================
-     DATA
-     ========================= */
 
   async loadData() {
-    const load = async (url) => {
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(url);
-      return r.json();
-    };
-
     try {
-      const [aff, items, creatures] = await Promise.all([
-        load("data/afflictions.json"),
-        load("data/items.json"),
-        load("data/creatures.json")
+      const [affResp, itemResp, creatureResp] = await Promise.all([
+        fetch('data/afflictions.json'),
+        fetch('data/items.json'),
+        fetch('data/creatures.json')
       ]);
 
-      this.data.afflictions = aff.map(adaptAffliction);
-      this.data.items = items.map(adaptItem);
-      this.data.creatures = creatures.map(adaptCreature);
-    } catch (e) {
-      console.error("[DB] load error", e);
+      if (affResp.ok) this.afflictions = await affResp.json();
+      if (itemResp.ok) this.items = await itemResp.json();
+      if (creatureResp.ok) this.creatures = await creatureResp.json();
+    } catch (err) {
+      console.error('Failed to load database', err);
+      alert(loc('dbError'));
     }
   }
 
-  /* =========================
-     UI
-     ========================= */
+  openDB() {
+    if (this.isModalOpen) return;
+    this.isModalOpen = true;
 
-  bindUI() {
-    const overlay = document.querySelector(".db-modal-overlay");
-    const grid = overlay.querySelector(".db-grid");
+    const overlay = document.createElement('div');
+    overlay.className = 'db-modal-overlay';
 
-    overlay.querySelector(".db-close-btn").onclick = () => this.closeDB();
+    const content = document.createElement('div');
+    content.className = 'db-modal-content';
 
-    overlay.querySelector(".db-sort-btn").onclick = () => {
-      this.sortAsc = !this.sortAsc;
-      overlay.querySelector(".db-sort-btn").textContent = this.sortAsc ? "A–Z" : "Z–A";
-      this.render();
+    const header = document.createElement('div');
+    header.className = 'db-modal-header';
+    header.innerHTML = `<h2>${loc('dataBase')}</h2>`;
+
+    const tabs = this.createTabs();
+    const search = this.createSearchInput();
+    header.appendChild(tabs);
+    header.appendChild(search);
+
+    const grid = document.createElement('div');
+    grid.className = 'db-grid';
+    grid.id = 'db-grid';
+
+    content.appendChild(header);
+    content.appendChild(grid);
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) {
+        overlay.remove();
+        this.isModalOpen = false;
+      }
+    });
+
+    this.renderGrid('afflictions');
+  }
+
+  createTabs() {
+    const tabs = document.createElement('div');
+    tabs.className = 'db-tabs';
+
+    const tabNames = {
+      afflictions: 'tabAfflictions',
+      items: 'tabItems',
+      creatures: 'tabCreatures'
     };
 
-    overlay.querySelector(".db-expand-all-btn").onclick = () => {
-      const cards = [...overlay.querySelectorAll(".db-entry")];
-      const expand = !cards.every(c => c.querySelector(".db-details").style.display === "block");
-      cards.forEach(c => c.querySelector(".db-details").style.display = expand ? "block" : "none");
-      this.expandedCard = null;
-    };
-
-    overlay.querySelector(".db-search-input").oninput = () => {
-      this.expandedCard = null;
-      this.render();
-    };
-
-    overlay.querySelectorAll(".db-tab-btn").forEach(btn => {
+    ['afflictions', 'items', 'creatures'].forEach(tab => {
+      const btn = document.createElement('button');
+      btn.className = 'db-tab-btn';
+      btn.textContent = loc(tabNames[tab]);
+      btn.dataset.tab = tab;
       btn.onclick = () => {
-        overlay.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        this.currentTab = btn.dataset.tab;
-        this.expandedCard = null;
-        this.render();
+        tabs.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentTab = tab;
+        this.renderGrid(tab);
+      };
+      if (tab === 'afflictions') btn.classList.add('active');
+      tabs.appendChild(btn);
+    });
+
+    return tabs;
+  }
+
+  createSearchInput() {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'db-search-input';
+    input.placeholder = loc('searchPlaceholder');
+    input.oninput = (e) => this.filterGrid(e.target.value);
+    return input;
+  }
+
+  renderGrid(type) {
+    const grid = document.getElementById('db-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const data = this[type] || [];
+
+    if (data.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'db-empty';
+      empty.textContent = loc('nothingFound');
+      grid.appendChild(empty);
+      return;
+    }
+
+    data.forEach(entry => {
+      const card = this.createCard(entry, type);
+      grid.appendChild(card);
+    });
+  }
+
+  createCard(entry, type) {
+    const card = document.createElement('div');
+    card.className = 'db-entry-btn';
+    card.style.padding = '12px';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '8px';
+    card.style.fontSize = '14px';
+
+    const top = document.createElement('div');
+    top.style.display = 'flex';
+    top.style.alignItems = 'center';
+    top.style.gap = '12px';
+    top.style.marginBottom = '8px';
+
+    const icon = this.createRealIcon(entry.icon || {});
+    top.appendChild(icon);
+
+    const displayName = entry.name || entry.identifier || 'Unknown';
+    const nameDiv = document.createElement('div');
+    nameDiv.textContent = displayName;
+    nameDiv.style.fontWeight = 'bold';
+    nameDiv.style.color = '#61afef';
+    nameDiv.style.fontSize = '16px';
+    top.appendChild(nameDiv);
+
+    card.appendChild(top);
+
+    const idLine = document.createElement('div');
+    idLine.textContent = loc('dbDetailID') + ': ' + (entry.identifier || 'unknown');
+    idLine.style.color = '#aaa';
+    idLine.style.fontSize = '13px';
+    idLine.style.wordBreak = 'break-all';
+    card.appendChild(idLine);
+
+    if (type === 'afflictions') {
+      this.appendAfflictionDetails(card, entry);
+    } else if (type === 'items') {
+      this.appendItemDetails(card, entry);
+    } else if (type === 'creatures') {
+      this.appendCreatureDetails(card, entry);
+    }
+
+    return card;
+  }
+
+  appendAfflictionDetails(card, entry) {
+    const badges = document.createElement('div');
+    badges.style.display = 'flex';
+    badges.style.gap = '8px';
+    badges.style.flexWrap = 'wrap';
+    badges.style.marginBottom = '8px';
+
+    const typeBadge = document.createElement('span');
+    typeBadge.textContent = `[${entry.type || 'unknown'}]`;
+    typeBadge.style.padding = '2px 8px';
+    typeBadge.style.background = '#444';
+    typeBadge.style.borderRadius = '4px';
+    typeBadge.style.fontSize = '12px';
+    badges.appendChild(typeBadge);
+
+    const maxBadge = document.createElement('span');
+    maxBadge.textContent = `[${loc('dbDetailMaxStrength')}: ${entry.maxstrength || '—'}]`;
+    maxBadge.style.padding = '2px 8px';
+    maxBadge.style.background = '#555';
+    maxBadge.style.borderRadius = '4px';
+    maxBadge.style.fontSize = '12px';
+    badges.appendChild(maxBadge);
+
+    if (entry.limbspecific) {
+      const limbBadge = document.createElement('span');
+      limbBadge.textContent = '[limb]';
+      limbBadge.style.padding = '2px 8px';
+      limbBadge.style.background = '#007acc';
+      limbBadge.style.color = 'white';
+      limbBadge.style.borderRadius = '4px';
+      limbBadge.style.fontSize = '12px';
+      badges.appendChild(limbBadge);
+    }
+
+    if (entry.isbuff) {
+      const buffBadge = document.createElement('span');
+      buffBadge.textContent = '[buff]';
+      buffBadge.style.padding = '2px 8px';
+      buffBadge.style.background = '#218c21';
+      buffBadge.style.color = 'white';
+      limbBadge.style.borderRadius = '4px';
+      buffBadge.style.fontSize = '12px';
+      badges.appendChild(buffBadge);
+    }
+
+    card.appendChild(badges);
+
+    const descText = entry.description || '';
+    const shortDesc = document.createElement('div');
+    shortDesc.textContent = descText.length > 60 ? descText.substring(0, 60) + '...' : descText;
+    shortDesc.style.color = '#aaa';
+    shortDesc.style.fontSize = '13px';
+    shortDesc.style.marginBottom = '8px';
+    card.appendChild(shortDesc);
+
+    const separator = document.createElement('div');
+    separator.style.height = '1px';
+    separator.style.background = '#444';
+    separator.style.margin = '8px 0';
+    card.appendChild(separator);
+
+    const fullDesc = document.createElement('div');
+    fullDesc.textContent = descText || 'Нет описания';
+    fullDesc.style.marginBottom = '8px';
+    card.appendChild(fullDesc);
+
+    const details = [
+      { key: 'dbDetailType', value: entry.type || '—' },
+      { key: 'dbDetailMaxStrength', value: entry.maxstrength || '—' },
+      { key: 'dbDetailLimbSpecific', value: entry.limbspecific ? loc('yes') : loc('no') },
+      { key: 'dbDetailIsBuff', value: entry.isbuff ? loc('yes') : loc('no') }
+    ];
+
+    details.forEach(d => {
+      const line = document.createElement('div');
+      const label = document.createElement('strong');
+      label.textContent = loc(d.key) + ': ';
+      line.appendChild(label);
+      line.appendChild(document.createTextNode(d.value));
+      line.style.fontSize = '13px';
+      card.appendChild(line);
+    });
+  }
+
+  appendItemDetails(card, entry) {
+    const placeholder = document.createElement('div');
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.style.color = '#aaa';
+    placeholder.style.fontSize = '14px';
+    card.appendChild(placeholder);
+  }
+
+  appendCreatureDetails(card, entry) {
+    const placeholder = document.createElement('div');
+    placeholder.textContent = entry.name || entry.identifier || 'unknown';
+    placeholder.style.color = '#aaa';
+    placeholder.style.fontSize = '14px';
+    card.appendChild(placeholder);
+  }
+
+  // snake_case → kebab-case
+  toKebabCase(str) {
+    return str.replace(/_/g, '-');
+  }
+
+  createRealIcon(iconInfo) {
+    if (!iconInfo || !iconInfo.texture || !iconInfo.sourcerect) {
+      return this.createColorCircleIcon(iconInfo?.color_theme_key || 'icon-status-gray');
+    }
+
+    const texture = iconInfo.texture;
+    const sourcerect = iconInfo.sourcerect;
+    const colorKeySnake = iconInfo.color_theme_key || 'icon-status-gray';
+    const colorKeyKebab = this.toKebabCase(colorKeySnake);
+
+    const cacheKey = `${texture}|${sourcerect}|${colorKeyKebab}`;
+
+    if (this.iconCache.has(cacheKey)) {
+      return this.iconCache.get(cacheKey).cloneNode(true);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+
+    // Сначала рисуем цветной круг как fallback (если атлас не загрузится)
+    this.drawColorCircleIcon(ctx, colorKeyKebab);
+
+    this.loadAtlasAsync(texture).then(img => {
+      if (img) {
+        this.drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab);
+        // Обновляем кэш готовой иконкой
+        this.iconCache.set(cacheKey, canvas.cloneNode(true));
+      }
+      // Если не загрузилось — остаётся цветной круг
+    });
+
+    // Кэшируем с fallback
+    this.iconCache.set(cacheKey, canvas.cloneNode(true));
+
+    return canvas;
+  }
+
+  drawColorCircleIcon(ctx, colorKeyKebab) {
+    const rgbVar = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
+
+    if (rgbVar) {
+      const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    } else {
+      ctx.fillStyle = '#888';
+    }
+
+    ctx.beginPath();
+    ctx.arc(24, 24, 20, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  createColorCircleIcon(colorKeySnake) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 48;
+    canvas.height = 48;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const colorKeyKebab = this.toKebabCase(colorKeySnake);
+      this.drawColorCircleIcon(ctx, colorKeyKebab);
+    }
+    return canvas;
+  }
+
+  loadAtlasAsync(texture) {
+    if (this.pendingAtlases.has(texture)) {
+      return this.pendingAtlases.get(texture);
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = texture;
+
+    const promise = new Promise(resolve => {
+      img.onload = () => {
+        this.atlasCache.set(texture, img);
+        resolve(img);
+      };
+      img.onerror = () => {
+        console.warn('Failed to load atlas:', texture);
+        resolve(null);
       };
     });
 
-    grid.addEventListener("click", (e) => {
-      const card = e.target.closest(".db-entry");
-      if (!card) return;
-
-      if (e.target.classList.contains("db-info")) {
-        this.toggleCard(card);
-        e.stopPropagation();
-        return;
-      }
-
-      navigator.clipboard.writeText(card.dataset.id);
-    });
+    this.pendingAtlases.set(texture, promise);
+    return promise;
   }
 
-  /* =========================
-     RENDER
-     ========================= */
+  drawIconFromAtlas(ctx, img, sourcerect, colorKeyKebab) {
+    const rect = sourcerect.split(',').map(v => parseInt(v.trim()));
+    const [sx, sy, sw, sh] = rect;
 
-  render() {
-    const grid = document.querySelector(".db-grid");
-    const search = document.querySelector(".db-search-input").value.toLowerCase();
-    let list = [...this.data[this.currentTab]];
+    ctx.clearRect(0, 0, 48, 48);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
-    if (search) {
-      list = list.filter(e =>
-        e.name.toLowerCase().includes(search) ||
-        e.id.toLowerCase().includes(search)
-      );
+    const rgbVar = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${colorKeyKebab}-rgb`).trim();
+
+    if (rgbVar) {
+      const [r, g, b] = rgbVar.split(',').map(v => parseInt(v.trim()));
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.globalCompositeOperation = 'source-over';
     }
+  }
 
-    list.sort((a, b) => {
-      const r = a.name.localeCompare(b.name);
-      return this.sortAsc ? r : -r;
-    });
+  filterGrid(query) {
+    const grid = document.getElementById('db-grid');
+    if (!grid) return;
 
-    grid.innerHTML = list.map(e => this.createCard(e)).join("");
-
-    grid.querySelectorAll(".db-entry").forEach((card, i) => {
-      const entry = list[i];
-      const iconBox = card.querySelector(".db-icon");
-      iconBox.innerHTML = "";
-
-     if (this.currentTab === "afflictions" && entry.icon) {
-  const img = document.createElement("img");
-  img.src = entry.icon.texture;
-  img.style.width = "32px";
-  img.style.height = "32px";
-  img.style.objectFit = "none";
-
-  // sourcerect: "x,y,w,h"
-  const [x, y, w, h] = entry.icon.sourcerect.split(",").map(Number);
-  img.style.objectPosition = `-${x}px -${y}px`;
-  img.style.clipPath = `inset(${y}px ${x + w}px ${y + h}px ${x}px)`;
-
-  iconBox.appendChild(img);
-} else {
-  iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png">`;
-}
-
+    const cards = grid.querySelectorAll('.db-entry-btn');
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      card.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
     });
   }
-
-  /* =========================
-     CARDS
-     ========================= */
-
-  createCard(e) {
-    return `
-<div class="db-entry" data-id="${e.id}">
-  <div class="db-card-header">
-    <div class="db-icon"></div>
-
-    <div class="db-main">
-      <div class="db-title">${e.name}</div>
-      <div class="db-id">${e.id}</div>
-      <div class="db-desc">${e.description}</div>
-    </div>
-
-    <div class="db-info">ⓘ</div>
-  </div>
-
-  <div class="db-tags">${this.renderTags(e)}</div>
-  <div class="db-details" style="display:none">${this.renderDetails(e)}</div>
-</div>`;
-  }
-
-  toggleCard(card) {
-    if (this.expandedCard && this.expandedCard !== card) {
-      this.expandedCard.querySelector(".db-details").style.display = "none";
-    }
-    const box = card.querySelector(".db-details");
-    const open = box.style.display === "block";
-    box.style.display = open ? "none" : "block";
-    this.expandedCard = open ? null : card;
-  }
-
-  /* =========================
-     DETAILS
-     ========================= */
-
-  renderDetails(e) {
-    return `
-<div><strong>ID:</strong> ${e.id}</div>
-<div><strong>Type:</strong> ${e.type}</div>
-<div><strong>Max strength:</strong> ${e.maxstrength}</div>
-<div><strong>Limb:</strong> ${e.limbspecific ? "yes" : "no"}</div>
-<div><strong>Buff:</strong> ${e.isbuff ? "yes" : "no"}</div>
-    `;
-  }
-
-  /* =========================
-     TAGS
-     ========================= */
-
-  renderTags(e) {
-    const tags = [];
-    if (e.category) tags.push(`<span class="db-tag">${e.category}</span>`);
-    if (e.isbuff) tags.push(`<span class="db-tag db-tag-green">Buff</span>`);
-    if (e.type === "damage") tags.push(`<span class="db-tag db-tag-red">Damage</span>`);
-    return tags.join("");
-  }
 }
 
-/* =========================
-   GLOBAL
-   ========================= */
-
-if (!window.dbManager) {
-  window.dbManager = new DatabaseManager();
-}
+const dbManager = new DatabaseManager();
+window.dbManager = dbManager;
