@@ -1,7 +1,6 @@
 // js/db.js — v0.9.435 — DATABASE (FINAL JS)
 
-const DB_VERSION = "v0.9.435";
-window.DB_VERSION = DB_VERSION;
+window.DB_VERSION = "v0.9.435";
 
 /* =========================
    STRICT LOCALIZATION
