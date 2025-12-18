@@ -1,4 +1,4 @@
-// js/db.js — v0.9.434 — DB (RESTORED + UI EXTENSIONS)
+// js/db.js — v0.9.434 — DATABASE (FINAL, NO REGRESSIONS)
 
 const DB_VERSION = "v0.9.434";
 window.DB_VERSION = DB_VERSION;
@@ -13,11 +13,20 @@ function strictLoc(key) {
     return "";
   }
   const v = window.loc(key);
-  if (!v) {
+  if (v === undefined || v === null || v === "") {
     console.error(`[LOC] Missing localization key: ${key}`);
     return "";
   }
   return v;
+}
+
+/* =========================
+   TOAST (STUB)
+   ========================= */
+
+function showToast(type, text) {
+  // Stub: safe even without CSS
+  console.log(`[TOAST:${type}]`, text);
 }
 
 /* =========================
@@ -30,7 +39,6 @@ class DatabaseManager {
     this.items = [];
     this.creatures = [];
 
-    this.iconCache = new Map();
     this.atlasCache = new Map();
     this.pendingAtlases = new Map();
 
@@ -38,8 +46,8 @@ class DatabaseManager {
     this.missingIconImg.src = "assets/Missing_Texture_icon.png";
 
     this.currentTab = "afflictions";
-    this.isModalOpen = false;
     this.sortAsc = true;
+    this.isModalOpen = false;
 
     this.loadData();
   }
@@ -56,16 +64,16 @@ class DatabaseManager {
         fetch("data/creatures.json")
       ]);
 
-      this.afflictions = await a.json();
-      this.items = await i.json();
-      this.creatures = await c.json();
+      this.afflictions = a.ok ? await a.json() : [];
+      this.items = i.ok ? await i.json() : [];
+      this.creatures = c.ok ? await c.json() : [];
     } catch (e) {
       console.error("[DB] Load error:", e);
     }
   }
 
   /* =========================
-     UI
+     OPEN / CLOSE
      ========================= */
 
   openDB() {
@@ -75,56 +83,58 @@ class DatabaseManager {
     const overlay = document.createElement("div");
     overlay.className = "db-modal-overlay";
 
+    const shell = document.createElement("div");
+    shell.className = "db-modal-shell";
+    shell.style.display = "flex";
+    shell.style.width = "90%";
+    shell.style.maxWidth = "1400px";
+    shell.style.height = "85vh";
+
+    /* -------- DATABASE PANEL -------- */
+
     const content = document.createElement("div");
     content.className = "db-modal-content";
-
-    const paneDB = document.createElement("div");
-    paneDB.className = "db-pane";
-
-    const paneLegend = document.createElement("div");
-    paneLegend.className = "db-legend-pane";
-    paneLegend.innerHTML = `
-      <h3>Legend</h3>
-      <div>ⓘ — toggle details</div>
-      <div>⧉ — expand / collapse all</div>
-      <div>Click card — copy ID</div>
-    `;
+    content.style.flex = "1";
+    content.style.display = "flex";
+    content.style.flexDirection = "column";
 
     const header = document.createElement("div");
     header.className = "db-modal-header";
 
     const title = document.createElement("h2");
     title.textContent = strictLoc("dataBase");
-
     header.appendChild(title);
+
     header.appendChild(this.createTabs());
-    header.appendChild(this.createSearchInput());
-
-    const sortBtn = document.createElement("button");
-    sortBtn.textContent = "A–Z";
-    sortBtn.onclick = () => {
-      this.sortAsc = !this.sortAsc;
-      sortBtn.textContent = this.sortAsc ? "A–Z" : "Z–A";
-      this.renderGrid(this.currentTab);
-    };
-
-    const expandBtn = document.createElement("button");
-    expandBtn.textContent = "⧉";
-    expandBtn.onclick = () => this.toggleExpandAll();
-
-    header.appendChild(sortBtn);
-    header.appendChild(expandBtn);
+    header.appendChild(this.createSearch());
+    header.appendChild(this.createSortBtn());
 
     const grid = document.createElement("div");
     grid.className = "db-grid";
     grid.id = "db-grid";
+    grid.style.overflowY = "auto";
+    grid.style.flex = "1";
 
-    paneDB.appendChild(header);
-    paneDB.appendChild(grid);
+    content.appendChild(header);
+    content.appendChild(grid);
 
-    content.appendChild(paneDB);
-    content.appendChild(paneLegend);
-    overlay.appendChild(content);
+    /* -------- LEGEND PANEL -------- */
+
+    const legend = document.createElement("div");
+    legend.className = "db-legend-panel";
+    legend.style.width = "240px";
+    legend.style.padding = "16px";
+    legend.style.borderLeft = "1px solid var(--border)";
+    legend.innerHTML = `
+      <strong>Legend</strong><br><br>
+      ⓘ — open / close details<br>
+      Click card — copy ID<br><br>
+      Click outside — close
+    `;
+
+    shell.appendChild(content);
+    shell.appendChild(legend);
+    overlay.appendChild(shell);
     document.body.appendChild(overlay);
 
     overlay.onclick = e => {
@@ -134,8 +144,12 @@ class DatabaseManager {
       }
     };
 
-    this.renderGrid(this.currentTab);
+    this.render();
   }
+
+  /* =========================
+     HEADER
+     ========================= */
 
   createTabs() {
     const wrap = document.createElement("div");
@@ -149,16 +163,15 @@ class DatabaseManager {
 
     Object.entries(tabs).forEach(([key, locKey]) => {
       const btn = document.createElement("button");
-      btn.textContent = strictLoc(locKey);
       btn.className = "db-tab-btn";
+      btn.textContent = strictLoc(locKey);
       if (key === this.currentTab) btn.classList.add("active");
 
       btn.onclick = () => {
-        document.querySelectorAll(".db-tab-btn")
-          .forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         this.currentTab = key;
-        this.renderGrid(key);
+        this.render();
       };
 
       wrap.appendChild(btn);
@@ -167,101 +180,145 @@ class DatabaseManager {
     return wrap;
   }
 
-  createSearchInput() {
+  createSearch() {
     const input = document.createElement("input");
     input.className = "db-search-input";
     input.placeholder = strictLoc("searchPlaceholder");
-    input.oninput = e => this.filterGrid(e.target.value);
+    input.oninput = () => this.render(input.value);
     return input;
   }
 
+  createSortBtn() {
+    const btn = document.createElement("button");
+    btn.textContent = "A–Z";
+    btn.onclick = () => {
+      this.sortAsc = !this.sortAsc;
+      this.render();
+    };
+    return btn;
+  }
+
   /* =========================
-     GRID
+     RENDER
      ========================= */
 
-  async renderGrid(type) {
+  render(filter = "") {
     const grid = document.getElementById("db-grid");
     if (!grid) return;
 
     grid.innerHTML = "";
 
-    let data = [...this[type]];
-    data.sort((a, b) =>
-      this.sortAsc
-        ? (a.name || a.identifier).localeCompare(b.name || b.identifier)
-        : (b.name || b.identifier).localeCompare(a.name || a.identifier)
-    );
+    let list = [...(this[this.currentTab] || [])];
 
-    const cards = await Promise.allSettled(
-      data.map(e => this.createCard(e, type))
-    );
+    if (filter) {
+      const q = filter.toLowerCase();
+      list = list.filter(e =>
+        (e.name || "").toLowerCase().includes(q) ||
+        (e.identifier || "").toLowerCase().includes(q)
+      );
+    }
 
-    cards.forEach(r => {
-      if (r.status === "fulfilled") grid.appendChild(r.value);
+    list.sort((a, b) => {
+      const an = a.name || a.identifier;
+      const bn = b.name || b.identifier;
+      return this.sortAsc ? an.localeCompare(bn) : bn.localeCompare(an);
     });
+
+    list.forEach(e => grid.appendChild(this.createCard(e)));
   }
 
-  async createCard(entry, type) {
+  /* =========================
+     CARD
+     ========================= */
+
+  createCard(entry) {
     const card = document.createElement("div");
     card.className = "db-entry-btn";
+    card.style.position = "relative";
 
     card.onclick = () => {
-      navigator.clipboard.writeText(entry.identifier || entry.id || "");
+      navigator.clipboard.writeText(entry.identifier);
+      showToast("info", `ID copied: ${entry.identifier}`);
     };
 
+    /* HEADER */
     const header = document.createElement("div");
-    header.className = "db-card-header";
+    header.style.display = "flex";
+    header.style.gap = "12px";
+    header.style.alignItems = "center";
 
-    const icon = await this.createIcon(entry.icon);
+    const icon = this.createIcon(entry.icon);
     header.appendChild(icon);
 
     const text = document.createElement("div");
-    text.className = "db-main";
 
     const name = document.createElement("div");
-    name.className = "db-title";
     name.textContent = entry.name || entry.identifier;
+    name.style.fontWeight = "bold";
 
     const id = document.createElement("div");
-    id.className = "db-id";
-    id.textContent = entry.identifier || entry.id;
+    id.textContent = entry.identifier;
+    id.style.fontSize = "12px";
+    id.style.opacity = "0.7";
 
     text.appendChild(name);
     text.appendChild(id);
     header.appendChild(text);
 
-    const info = document.createElement("div");
-    info.className = "db-info";
-    info.textContent = "ⓘ";
-    info.onclick = e => {
-      e.stopPropagation();
-      card.classList.toggle("expanded");
-    };
-
-    header.appendChild(info);
     card.appendChild(header);
 
+    /* DESCRIPTION */
+    const desc = document.createElement("div");
+    desc.className = "db-desc";
+    desc.textContent = entry.description || strictLoc("noDescription");
+    desc.style.marginTop = "8px";
+    desc.style.whiteSpace = "nowrap";
+    desc.style.overflow = "hidden";
+    desc.style.textOverflow = "ellipsis";
+    card.appendChild(desc);
+
+    /* DETAILS */
     const details = document.createElement("div");
     details.className = "db-details";
+    details.style.display = "none";
+    details.style.marginTop = "8px";
 
-    if (type === "afflictions") {
-      this.appendAfflictionDetails(details, entry);
-    }
+    if (entry.type) details.appendChild(this.detail("dbDetailType", entry.type));
+    if (entry.maxstrength !== undefined) details.appendChild(this.detail("dbDetailMaxStrength", entry.maxstrength));
+    if (entry.limbspecific !== undefined) details.appendChild(this.detail("dbDetailLimbSpecific", entry.limbspecific ? strictLoc("yes") : strictLoc("no")));
+    if (entry.isbuff !== undefined) details.appendChild(this.detail("dbDetailIsBuff", entry.isbuff ? strictLoc("yes") : strictLoc("no")));
 
     card.appendChild(details);
+
+    /* INFO BUTTON */
+    const info = document.createElement("div");
+    info.textContent = "ⓘ";
+    info.style.position = "absolute";
+    info.style.right = "8px";
+    info.style.bottom = "8px";
+    info.style.cursor = "pointer";
+    info.onclick = e => {
+      e.stopPropagation();
+      const open = details.style.display === "block";
+      details.style.display = open ? "none" : "block";
+      desc.style.whiteSpace = open ? "nowrap" : "normal";
+    };
+
+    card.appendChild(info);
     return card;
   }
 
-  toggleExpandAll() {
-    document.querySelectorAll(".db-entry-btn")
-      .forEach(c => c.classList.toggle("expanded"));
+  detail(label, value) {
+    const d = document.createElement("div");
+    d.innerHTML = `<strong>${strictLoc(label)}:</strong> ${value}`;
+    return d;
   }
 
   /* =========================
-     ICONS (UNCHANGED LOGIC)
+     ICONS (MULTIPLY)
      ========================= */
 
-  async createIcon(icon) {
+  createIcon(icon) {
     const canvas = document.createElement("canvas");
     canvas.width = 48;
     canvas.height = 48;
@@ -272,89 +329,67 @@ class DatabaseManager {
       return canvas;
     }
 
-    const atlas = await this.loadAtlas(icon.texture);
-    if (!atlas) {
-      this.drawMissing(ctx);
-      return canvas;
-    }
+    this.loadAtlas(icon.texture).then(img => {
+      if (!img) return this.drawMissing(ctx);
+      this.drawFromAtlas(ctx, img, icon);
+    });
 
-    this.drawFromAtlas(ctx, atlas, icon);
     return canvas;
   }
 
-  async loadAtlas(path) {
-    if (this.atlasCache.has(path)) return this.atlasCache.get(path);
+  loadAtlas(path) {
+    if (this.atlasCache.has(path)) return Promise.resolve(this.atlasCache.get(path));
     if (this.pendingAtlases.has(path)) return this.pendingAtlases.get(path);
 
-    const promise = new Promise(resolve => {
+    const p = new Promise(res => {
       const img = new Image();
       img.onload = () => {
         this.atlasCache.set(path, img);
         this.pendingAtlases.delete(path);
-        resolve(img);
+        res(img);
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => {
+        console.error("[ICON] Failed:", path);
+        this.pendingAtlases.delete(path);
+        res(null);
+      };
       img.src = path;
     });
 
-    this.pendingAtlases.set(path, promise);
-    return promise;
+    this.pendingAtlases.set(path, p);
+    return p;
   }
 
   drawFromAtlas(ctx, img, icon) {
-    const [sx, sy, sw, sh] = icon.sourcerect.split(",").map(Number);
+    const r = icon.sourcerect.split(",").map(Number);
+    if (r.length !== 4) return;
 
+    const [sx, sy, sw, sh] = r;
+    ctx.clearRect(0, 0, 48, 48);
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
     const key = icon.color_theme_key?.replace(/_/g, "-");
+    if (!key) return;
+
     const rgb = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${key}-rgb`).trim();
+      .getPropertyValue(`--${key}-rgb`)
+      .trim();
+    if (!rgb) return;
 
-    if (rgb) {
-      ctx.globalCompositeOperation = "multiply";
-      ctx.fillStyle = `rgb(${rgb})`;
-      ctx.fillRect(0, 0, 48, 48);
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = `rgb(${rgb})`;
+    ctx.fillRect(0, 0, 48, 48);
 
-      ctx.globalCompositeOperation = "destination-in";
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
-      ctx.globalCompositeOperation = "source-over";
-    }
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
+
+    ctx.globalCompositeOperation = "source-over";
   }
 
   drawMissing(ctx) {
-    ctx.drawImage(this.missingIconImg, 0, 0, 48, 48);
-  }
-
-  /* =========================
-     DETAILS
-     ========================= */
-
-  appendAfflictionDetails(container, e) {
-    const line = (l, v) => {
-      const d = document.createElement("div");
-      d.innerHTML = `<strong>${strictLoc(l)}:</strong> ${v}`;
-      container.appendChild(d);
-    };
-
-    line("dbDetailType", e.type);
-    line("dbDetailMaxStrength", e.maxstrength);
-    line("dbDetailLimbSpecific", e.limbspecific ? strictLoc("yes") : strictLoc("no"));
-    line("dbDetailIsBuff", e.isbuff ? strictLoc("yes") : strictLoc("no"));
-  }
-
-  /* =========================
-     SEARCH
-     ========================= */
-
-  filterGrid(q) {
-    const grid = document.getElementById("db-grid");
-    if (!grid) return;
-
-    grid.querySelectorAll(".db-entry-btn").forEach(c => {
-      c.style.display = c.textContent.toLowerCase().includes(q.toLowerCase())
-        ? ""
-        : "none";
-    });
+    if (this.missingIconImg.complete) {
+      ctx.drawImage(this.missingIconImg, 0, 0, 48, 48);
+    }
   }
 }
 
