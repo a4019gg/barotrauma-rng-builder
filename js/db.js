@@ -250,11 +250,23 @@ class DatabaseManager {
       const iconBox = card.querySelector(".db-icon");
       iconBox.innerHTML = "";
 
-      if (this.currentTab === "afflictions" && entry.icon && typeof createRealIcon === "function") {
-        iconBox.appendChild(createRealIcon(entry));
-      } else {
-        iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png">`;
-      }
+     if (this.currentTab === "afflictions" && entry.icon) {
+  const img = document.createElement("img");
+  img.src = entry.icon.texture;
+  img.style.width = "32px";
+  img.style.height = "32px";
+  img.style.objectFit = "none";
+
+  // sourcerect: "x,y,w,h"
+  const [x, y, w, h] = entry.icon.sourcerect.split(",").map(Number);
+  img.style.objectPosition = `-${x}px -${y}px`;
+  img.style.clipPath = `inset(${y}px ${x + w}px ${y + h}px ${x}px)`;
+
+  iconBox.appendChild(img);
+} else {
+  iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png">`;
+}
+
     });
   }
 
