@@ -829,3 +829,24 @@ body.dragging {
     border-top: 1px solid var(--border);
   }
 }
+
+/* === FIX LAYOUT: MASONRY COLUMNS === */
+
+.db-grid {
+  display: block;              /* отключаем grid */
+  column-count: 3;
+  column-gap: 16px;
+}
+
+@media (max-width: 1400px) {
+  .db-grid { column-count: 2; }
+}
+
+@media (max-width: 800px) {
+  .db-grid { column-count: 1; }
+}
+
+.db-entry {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
