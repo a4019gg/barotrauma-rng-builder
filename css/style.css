@@ -629,3 +629,31 @@ body.dragging {
   height: auto;
   display: block;
 }
+
+.db-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.db-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-modal-content {
+  display: flex;
+  align-items: stretch;
+}
+
+.db-pane {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-legend-pane {
+  width: 240px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  padding: 16px;
+}
+
