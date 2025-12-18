@@ -611,7 +611,7 @@ body.dragging {
 }
 
 /* =========================
-   DATABASE — CORE LAYOUT
+   DATABASE MODAL
    ========================= */
 
 .db-modal-overlay {
@@ -628,26 +628,31 @@ body.dragging {
   background: var(--panel);
   border-radius: 12px;
   box-shadow: var(--shadow-high);
+  width: 90%;
+  max-width: 1400px;
+  height: 85vh;
+  display: flex;
   overflow: hidden;
 }
 
-.db-modal-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 /* =========================
-   HEADER
+   MAIN DB PANEL
    ========================= */
 
+.db-modal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .db-modal-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
 
 .db-modal-header h2 {
@@ -656,44 +661,44 @@ body.dragging {
   white-space: nowrap;
 }
 
-.db-expand-all-btn {
-  padding: 6px 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
 /* =========================
-   GRID
+   GRID (MASONRY)
    ========================= */
 
 .db-grid {
   flex: 1;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
-  align-items: start;
   overflow-y: auto;
+  padding: 16px;
+
+  column-count: 3;
+  column-gap: 16px;
 }
 
-/* =========================
-   CARD
-   ========================= */
+@media (max-width: 1400px) {
+  .db-grid { column-count: 2; }
+}
+@media (max-width: 900px) {
+  .db-grid { column-count: 1; }
+}
 
 .db-entry {
+  break-inside: avoid;
   background: var(--node-bg);
   border-radius: 8px;
   padding: 12px;
+  margin-bottom: 16px;
   cursor: pointer;
+
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: background 0.15s, outline 0.15s;
-  min-height: 120px;
+
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .db-entry:hover {
   background: #363636;
+  box-shadow: var(--shadow-low);
 }
 
 /* =========================
@@ -755,7 +760,7 @@ body.dragging {
 
 .db-card-desc {
   font-size: 13px;
-  line-height: 1.3;
+  line-height: 1.35;
   opacity: 0.85;
 
   display: -webkit-box;
@@ -764,8 +769,12 @@ body.dragging {
   overflow: hidden;
 }
 
+.db-entry.expanded .db-card-desc {
+  -webkit-line-clamp: unset;
+}
+
 /* =========================
-   TAGS
+   TAGS (THEME-DRIVEN COLORS)
    ========================= */
 
 .db-card-tags {
@@ -775,32 +784,36 @@ body.dragging {
 }
 
 .db-tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #444;
-  opacity: 0.85;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #fff;
+
+  background: rgb(var(--icon-status-gray-rgb));
 }
 
+/* semantic mapping via theme vars */
+.db-tag.damage  { background: rgb(var(--icon-damage-red-rgb)); }
+.db-tag.poison  { background: rgb(var(--icon-poison-darkred-rgb)); }
+.db-tag.buff    { background: rgb(var(--icon-buff-green-rgb)); }
+.db-tag.debuff  { background: rgb(var(--icon-debuff-purple-rgb)); }
+.db-tag.status  { background: rgb(var(--icon-status-orange-rgb)); }
+
 /* =========================
-   DETAILS (EXPANDED)
+   DETAILS
    ========================= */
 
 .db-card-details {
   display: none;
-  font-size: 13px;
   border-top: 1px solid var(--border);
   padding-top: 8px;
-  gap: 4px;
-  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .db-entry.expanded .db-card-details {
-  display: flex;
-}
-
-.db-entry.expanded .db-card-desc {
-  -webkit-line-clamp: unset;
+  display: block;
 }
 
 /* =========================
@@ -808,10 +821,12 @@ body.dragging {
    ========================= */
 
 .db-legend-panel {
+  width: 240px;
+  padding: 16px;
+  border-left: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.6;
   background: var(--panel);
-  color: var(--text);
-  font-size: 13px;
-  line-height: 1.4;
 }
 
 /* =========================
@@ -828,25 +843,4 @@ body.dragging {
     border-left: none;
     border-top: 1px solid var(--border);
   }
-}
-
-/* === FIX LAYOUT: MASONRY COLUMNS === */
-
-.db-grid {
-  display: block;              /* отключаем grid */
-  column-count: 3;
-  column-gap: 16px;
-}
-
-@media (max-width: 1400px) {
-  .db-grid { column-count: 2; }
-}
-
-@media (max-width: 800px) {
-  .db-grid { column-count: 1; }
-}
-
-.db-entry {
-  break-inside: avoid;
-  margin-bottom: 16px;
 }
