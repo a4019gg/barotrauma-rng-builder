@@ -379,10 +379,17 @@ card.appendChild(tags);
     card.appendChild(details);
 
     // Info toggle
-    info.onclick = e => {
-      e.stopPropagation();
-      card.classList.toggle("expanded");
-    };
+info.onclick = e => {
+  e.stopPropagation();
+
+  // закрываем все остальные
+  document.querySelectorAll(".db-entry.expanded").forEach(c => {
+    if (c !== card) c.classList.remove("expanded");
+  });
+
+  card.classList.toggle("expanded");
+};
+
 
     return card;
   }
