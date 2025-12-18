@@ -200,20 +200,24 @@ class DatabaseManager {
 
     // ВСТАВКА ИКОНОК КАК DOM
     grid.querySelectorAll(".db-entry").forEach((card, i) => {
-      const entry = list[i];
-      const iconBox = card.querySelector(".db-icon");
-      if (!iconBox) return;
+  const entry = list[i];
+  const iconBox = card.querySelector(".db-icon");
+  if (!iconBox) return;
 
-      if (typeof createRealIcon === "function" && this.currentTab === "afflictions") {
-        try {
-          iconBox.appendChild(createRealIcon(entry));
-        } catch (e) {
-          console.warn("[DB] Icon error", e);
-        }
-      } else {
-        iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png" alt="">`;
-      }
-    });
+  iconBox.innerHTML = "";
+
+  if (this.currentTab === "afflictions" && typeof createRealIcon === "function") {
+    try {
+      iconBox.appendChild(createRealIcon(entry));
+      return;
+    } catch (e) {
+      console.warn("[DB] real icon failed, fallback", e);
+    }
+  }
+
+  // fallback ТОЛЬКО если не affliction или ошибка
+  iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png" alt="">`;
+});
   }
 
   /* =========================
