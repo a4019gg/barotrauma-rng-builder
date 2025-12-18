@@ -1,4 +1,4 @@
-// js/db.js — v0.9.434 — DATABASE (FINAL, NO REGRESSIONS)
+// js/db.js — v0.9.434 — DATABASE (STABLE CARD MODEL)
 
 const DB_VERSION = "v0.9.434";
 window.DB_VERSION = DB_VERSION;
@@ -13,7 +13,7 @@ function strictLoc(key) {
     return "";
   }
   const v = window.loc(key);
-  if (v === undefined || v === null || v === "") {
+  if (v === undefined || v === null) {
     console.error(`[LOC] Missing localization key: ${key}`);
     return "";
   }
@@ -21,12 +21,12 @@ function strictLoc(key) {
 }
 
 /* =========================
-   TOAST (STUB)
+   TOAST STUB (SAFE)
    ========================= */
 
 function showToast(type, text) {
-  // Stub: safe even without CSS
-  console.log(`[TOAST:${type}]`, text);
+  // заделка под нормальные попапы
+  console.log(`[TOAST:${type}] ${text}`);
 }
 
 /* =========================
@@ -90,7 +90,7 @@ class DatabaseManager {
     shell.style.maxWidth = "1400px";
     shell.style.height = "85vh";
 
-    /* -------- DATABASE PANEL -------- */
+    /* ---------- DATABASE PANEL ---------- */
 
     const content = document.createElement("div");
     content.className = "db-modal-content";
@@ -112,13 +112,13 @@ class DatabaseManager {
     const grid = document.createElement("div");
     grid.className = "db-grid";
     grid.id = "db-grid";
-    grid.style.overflowY = "auto";
     grid.style.flex = "1";
+    grid.style.overflowY = "auto";
 
     content.appendChild(header);
     content.appendChild(grid);
 
-    /* -------- LEGEND PANEL -------- */
+    /* ---------- LEGEND PANEL ---------- */
 
     const legend = document.createElement("div");
     legend.className = "db-legend-panel";
@@ -148,7 +148,7 @@ class DatabaseManager {
   }
 
   /* =========================
-     HEADER
+     HEADER CONTROLS
      ========================= */
 
   createTabs() {
@@ -199,7 +199,7 @@ class DatabaseManager {
   }
 
   /* =========================
-     RENDER
+     RENDER GRID
      ========================= */
 
   render(filter = "") {
@@ -224,64 +224,83 @@ class DatabaseManager {
       return this.sortAsc ? an.localeCompare(bn) : bn.localeCompare(an);
     });
 
-    list.forEach(e => grid.appendChild(this.createCard(e)));
+    list.forEach(entry => {
+      grid.appendChild(this.createCard(entry));
+    });
   }
 
   /* =========================
-     CARD
+     CARD (FIXED MODEL)
      ========================= */
 
   createCard(entry) {
     const card = document.createElement("div");
-    card.className = "db-entry-btn";
-    card.style.position = "relative";
+    card.className = "db-entry";
 
+    /* COPY ID */
     card.onclick = () => {
-      navigator.clipboard.writeText(entry.identifier);
-      showToast("info", `ID copied: ${entry.identifier}`);
+      if (entry.identifier) {
+        navigator.clipboard.writeText(entry.identifier);
+        showToast("info", `ID copied: ${entry.identifier}`);
+      }
     };
 
-    /* HEADER */
+    /* ---------- HEADER ---------- */
+
     const header = document.createElement("div");
-    header.style.display = "flex";
-    header.style.gap = "12px";
-    header.style.alignItems = "center";
+    header.className = "db-card-header";
 
-    const icon = this.createIcon(entry.icon);
-    header.appendChild(icon);
+    const iconWrap = document.createElement("div");
+    iconWrap.className = "db-icon";
+    iconWrap.appendChild(this.createIcon(entry.icon));
 
-    const text = document.createElement("div");
+    const main = document.createElement("div");
+    main.className = "db-main";
 
-    const name = document.createElement("div");
-    name.textContent = entry.name || entry.identifier;
-    name.style.fontWeight = "bold";
+    const title = document.createElement("div");
+    title.className = "db-title";
+    title.textContent = entry.name || entry.identifier || "";
 
     const id = document.createElement("div");
-    id.textContent = entry.identifier;
-    id.style.fontSize = "12px";
-    id.style.opacity = "0.7";
+    id.className = "db-id";
+    id.textContent = entry.identifier || "";
 
-    text.appendChild(name);
-    text.appendChild(id);
-    header.appendChild(text);
+    main.appendChild(title);
+    main.appendChild(id);
+
+    const info = document.createElement("div");
+    info.className = "db-info";
+    info.textContent = "ⓘ";
+
+    header.appendChild(iconWrap);
+    header.appendChild(main);
+    header.appendChild(info);
 
     card.appendChild(header);
 
-    /* DESCRIPTION */
+    /* ---------- DESCRIPTION ---------- */
+
     const desc = document.createElement("div");
-    desc.className = "db-desc";
-    desc.textContent = entry.description || strictLoc("noDescription");
-    desc.style.marginTop = "8px";
-    desc.style.whiteSpace = "nowrap";
-    desc.style.overflow = "hidden";
-    desc.style.textOverflow = "ellipsis";
+    desc.className = "db-card-desc";
+    desc.textContent = entry.description || "";
     card.appendChild(desc);
 
-    /* DETAILS */
+    /* ---------- TAGS ---------- */
+
+    const tags = document.createElement("div");
+    tags.className = "db-card-tags";
+
+    if (entry.type) tags.appendChild(this.makeTag(entry.type));
+    if (entry.isbuff) tags.appendChild(this.makeTag("buff"));
+    if (entry.limbspecific) tags.appendChild(this.makeTag("limb"));
+    if (entry.category) tags.appendChild(this.makeTag(entry.category));
+
+    card.appendChild(tags);
+
+    /* ---------- DETAILS ---------- */
+
     const details = document.createElement("div");
-    details.className = "db-details";
-    details.style.display = "none";
-    details.style.marginTop = "8px";
+    details.className = "db-card-details";
 
     if (entry.type) details.appendChild(this.detail("dbDetailType", entry.type));
     if (entry.maxstrength !== undefined) details.appendChild(this.detail("dbDetailMaxStrength", entry.maxstrength));
@@ -290,22 +309,20 @@ class DatabaseManager {
 
     card.appendChild(details);
 
-    /* INFO BUTTON */
-    const info = document.createElement("div");
-    info.textContent = "ⓘ";
-    info.style.position = "absolute";
-    info.style.right = "8px";
-    info.style.bottom = "8px";
-    info.style.cursor = "pointer";
+    /* INFO TOGGLE */
     info.onclick = e => {
       e.stopPropagation();
-      const open = details.style.display === "block";
-      details.style.display = open ? "none" : "block";
-      desc.style.whiteSpace = open ? "nowrap" : "normal";
+      card.classList.toggle("expanded");
     };
 
-    card.appendChild(info);
     return card;
+  }
+
+  makeTag(text) {
+    const t = document.createElement("span");
+    t.className = "db-tag";
+    t.textContent = text;
+    return t;
   }
 
   detail(label, value) {
@@ -349,7 +366,7 @@ class DatabaseManager {
         res(img);
       };
       img.onerror = () => {
-        console.error("[ICON] Failed:", path);
+        console.error("[ICON] Failed to load:", path);
         this.pendingAtlases.delete(path);
         res(null);
       };
@@ -365,6 +382,7 @@ class DatabaseManager {
     if (r.length !== 4) return;
 
     const [sx, sy, sw, sh] = r;
+
     ctx.clearRect(0, 0, 48, 48);
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
 
@@ -382,7 +400,6 @@ class DatabaseManager {
 
     ctx.globalCompositeOperation = "destination-in";
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 48, 48);
-
     ctx.globalCompositeOperation = "source-over";
   }
 
