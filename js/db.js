@@ -360,12 +360,18 @@ class DatabaseManager {
     return card;
   }
 
-  makeTag(text) {
-    const t = document.createElement("span");
-    t.className = "db-tag";
+makeTag(text) {
+  const t = document.createElement("span");
+  t.className = "db-tag";
+
+  if (typeof text === "string") {
+    t.classList.add(text.toLowerCase());
     t.textContent = text;
-    return t;
   }
+
+  return t;
+}
+
 
   detail(label, value) {
     const d = document.createElement("div");
