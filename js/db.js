@@ -1,18 +1,74 @@
-// js/db.js — v0.9.435 — DB FINAL STABLE
+// js/db.js — v0.9.436 — DB (AFFLICTION ADAPTER FINAL)
 
-const DB_VERSION = "v0.9.435";
+const DB_VERSION = "v0.9.436";
 window.DB_VERSION = DB_VERSION;
+
+/* =========================
+   ADAPTERS
+   ========================= */
+
+function adaptAffliction(raw) {
+  return {
+    id: raw.identifier,
+    identifier: raw.identifier,
+    name: raw.name || raw.identifier,
+    description: raw.description || "",
+
+    // gameplay
+    type: raw.type || "unknown",
+    maxstrength: Number(raw.maxstrength) || 0,
+    limbspecific: raw.limbspecific === true || raw.limbspecific === "true",
+    isbuff: raw.isbuff === true || raw.isbuff === "true",
+
+    // icon (DB understands this format)
+    icon: raw.icon || null,
+
+    // tags
+    category: "Affliction",
+
+    _raw: raw
+  };
+}
+
+function adaptItem(raw) {
+  return {
+    id: raw.id,
+    name: raw.name || raw.id,
+    category: raw.category || "Item",
+    tags: raw.tags || [],
+    description: "",
+    icon: null
+  };
+}
+
+function adaptCreature(raw) {
+  return {
+    id: raw.id,
+    name: raw.name || raw.id,
+    category: raw.category || "Creature",
+    description: "",
+    icon: null
+  };
+}
+
+/* =========================
+   DATABASE MANAGER
+   ========================= */
 
 class DatabaseManager {
   constructor() {
-    this.domReady = false;
     this.initialized = false;
+    this.domReady = false;
 
     this.currentTab = "afflictions";
     this.sortAsc = true;
     this.expandedCard = null;
 
-    this.data = null;
+    this.data = {
+      afflictions: [],
+      items: [],
+      creatures: []
+    };
   }
 
   /* =========================
@@ -22,15 +78,14 @@ class DatabaseManager {
   async openDB() {
     this.createModal();
     await this.init();
-    const overlay = document.querySelector(".db-modal-overlay");
-    if (overlay) overlay.style.display = "flex";
+    document.querySelector(".db-modal-overlay").style.display = "flex";
   }
 
   closeDB() {
     const overlay = document.querySelector(".db-modal-overlay");
     if (overlay) overlay.remove();
-    this.domReady = false;
     this.initialized = false;
+    this.domReady = false;
     this.expandedCard = null;
   }
 
@@ -77,7 +132,7 @@ class DatabaseManager {
 
     <div class="db-legend-pane">
       <h3>Legend</h3>
-      <div>ⓘ — open / close details</div>
+      <div>ⓘ — open details</div>
       <div>Click card — copy ID</div>
       <div>⧉ — expand / collapse all</div>
     </div>
@@ -107,10 +162,11 @@ class DatabaseManager {
         load("data/creatures.json")
       ]);
 
-      this.data = { afflictions: aff, items, creatures };
+      this.data.afflictions = aff.map(adaptAffliction);
+      this.data.items = items.map(adaptItem);
+      this.data.creatures = creatures.map(adaptCreature);
     } catch (e) {
       console.error("[DB] load error", e);
-      this.toast("error", loc("dbError"));
     }
   }
 
@@ -132,16 +188,8 @@ class DatabaseManager {
 
     overlay.querySelector(".db-expand-all-btn").onclick = () => {
       const cards = [...overlay.querySelectorAll(".db-entry")];
-      if (!cards.length) return;
-
-      const expand = !cards.every(c =>
-        c.querySelector(".db-details").style.display === "block"
-      );
-
-      cards.forEach(c => {
-        c.querySelector(".db-details").style.display = expand ? "block" : "none";
-      });
-
+      const expand = !cards.every(c => c.querySelector(".db-details").style.display === "block");
+      cards.forEach(c => c.querySelector(".db-details").style.display = expand ? "block" : "none");
       this.expandedCard = null;
     };
 
@@ -170,11 +218,7 @@ class DatabaseManager {
         return;
       }
 
-      const id = card.dataset.id;
-      if (id) {
-        navigator.clipboard.writeText(id);
-        this.toast("success", `ID copied: ${id}`);
-      }
+      navigator.clipboard.writeText(card.dataset.id);
     });
   }
 
@@ -184,45 +228,33 @@ class DatabaseManager {
 
   render() {
     const grid = document.querySelector(".db-grid");
-    if (!grid || !this.data) return;
-
     const search = document.querySelector(".db-search-input").value.toLowerCase();
-    let list = [...(this.data[this.currentTab] || [])];
+    let list = [...this.data[this.currentTab]];
 
     if (search) {
       list = list.filter(e =>
-        (e.name || "").toLowerCase().includes(search) ||
-        (e.identifier || e.id || "").toLowerCase().includes(search)
+        e.name.toLowerCase().includes(search) ||
+        e.id.toLowerCase().includes(search)
       );
     }
 
     list.sort((a, b) => {
-      const r = (a.name || "").localeCompare(b.name || "");
+      const r = a.name.localeCompare(b.name);
       return this.sortAsc ? r : -r;
     });
 
-    grid.innerHTML = list.length
-      ? list.map(e => this.createCard(e)).join("")
-      : `<div class="db-empty">${loc("nothingFound")}</div>`;
+    grid.innerHTML = list.map(e => this.createCard(e)).join("");
 
-    // ICON INSERT (DOM)
     grid.querySelectorAll(".db-entry").forEach((card, i) => {
       const entry = list[i];
       const iconBox = card.querySelector(".db-icon");
-      if (!iconBox) return;
-
       iconBox.innerHTML = "";
 
-      if (this.currentTab === "afflictions" && typeof createRealIcon === "function") {
-        try {
-          iconBox.appendChild(createRealIcon(entry));
-          return;
-        } catch (e) {
-          console.warn("[DB] icon error", e);
-        }
+      if (this.currentTab === "afflictions" && entry.icon && typeof createRealIcon === "function") {
+        iconBox.appendChild(createRealIcon(entry));
+      } else {
+        iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png">`;
       }
-
-      iconBox.innerHTML = `<img src="assets/Missing_Texture_icon.png" alt="">`;
     });
   }
 
@@ -230,26 +262,23 @@ class DatabaseManager {
      CARDS
      ========================= */
 
-  createCard(entry) {
-    const id = entry.identifier || entry.id;
-    const name = entry.name || id;
-
+  createCard(e) {
     return `
-<div class="db-entry" data-id="${id}">
+<div class="db-entry" data-id="${e.id}">
   <div class="db-card-header">
     <div class="db-icon"></div>
 
     <div class="db-main">
-      <div class="db-title">${name}</div>
-      <div class="db-id">${id}</div>
-      <div class="db-desc">${entry.description || loc("noDescription")}</div>
+      <div class="db-title">${e.name}</div>
+      <div class="db-id">${e.id}</div>
+      <div class="db-desc">${e.description}</div>
     </div>
 
     <div class="db-info">ⓘ</div>
   </div>
 
-  <div class="db-tags">${this.renderTags(entry)}</div>
-  <div class="db-details" style="display:none">${this.renderDetails(entry)}</div>
+  <div class="db-tags">${this.renderTags(e)}</div>
+  <div class="db-details" style="display:none">${this.renderDetails(e)}</div>
 </div>`;
   }
 
@@ -257,7 +286,6 @@ class DatabaseManager {
     if (this.expandedCard && this.expandedCard !== card) {
       this.expandedCard.querySelector(".db-details").style.display = "none";
     }
-
     const box = card.querySelector(".db-details");
     const open = box.style.display === "block";
     box.style.display = open ? "none" : "block";
@@ -269,19 +297,13 @@ class DatabaseManager {
      ========================= */
 
   renderDetails(e) {
-    const rows = [];
-
-    const id = e.identifier || e.id;
-    if (id) rows.push(`<div><strong>ID:</strong> ${id}</div>`);
-
-    if (e.type) rows.push(`<div><strong>Type:</strong> ${e.type}</div>`);
-    if (e.maxstrength) rows.push(`<div><strong>Max strength:</strong> ${e.maxstrength}</div>`);
-    if (typeof e.limbspecific === "boolean")
-      rows.push(`<div><strong>Limb:</strong> ${e.limbspecific ? "yes" : "no"}</div>`);
-    if (typeof e.isbuff === "boolean")
-      rows.push(`<div><strong>Buff:</strong> ${e.isbuff ? "yes" : "no"}</div>`);
-
-    return rows.join("");
+    return `
+<div><strong>ID:</strong> ${e.id}</div>
+<div><strong>Type:</strong> ${e.type}</div>
+<div><strong>Max strength:</strong> ${e.maxstrength}</div>
+<div><strong>Limb:</strong> ${e.limbspecific ? "yes" : "no"}</div>
+<div><strong>Buff:</strong> ${e.isbuff ? "yes" : "no"}</div>
+    `;
   }
 
   /* =========================
@@ -290,25 +312,16 @@ class DatabaseManager {
 
   renderTags(e) {
     const tags = [];
-
     if (e.category) tags.push(`<span class="db-tag">${e.category}</span>`);
-    if (Array.isArray(e.tags)) e.tags.forEach(t => tags.push(`<span class="db-tag">${t}</span>`));
-
-    if (e.type === "damage") tags.push(`<span class="db-tag db-tag-red">Damage</span>`);
     if (e.isbuff) tags.push(`<span class="db-tag db-tag-green">Buff</span>`);
-
+    if (e.type === "damage") tags.push(`<span class="db-tag db-tag-red">Damage</span>`);
     return tags.join("");
   }
-
-  /* =========================
-     TOAST
-     ========================= */
-
-  toast(type, msg) {
-    if (typeof uiToast === "function") uiToast(type, msg);
-    else console.warn("[Toast]", type, msg);
-  }
 }
+
+/* =========================
+   GLOBAL
+   ========================= */
 
 if (!window.dbManager) {
   window.dbManager = new DatabaseManager();
