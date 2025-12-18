@@ -1,6 +1,6 @@
-// js/db.js — v0.9.434 — DATABASE (STABLE CARD MODEL)
+// js/db.js — v0.9.435 — DATABASE (FINAL JS)
 
-const DB_VERSION = "v0.9.434";
+const DB_VERSION = "v0.9.435";
 window.DB_VERSION = DB_VERSION;
 
 /* =========================
@@ -21,11 +21,11 @@ function strictLoc(key) {
 }
 
 /* =========================
-   TOAST STUB (SAFE)
+   TOAST STUB
    ========================= */
 
 function showToast(type, text) {
-  // заделка под нормальные попапы
+  // заделка под будущие попапы
   console.log(`[TOAST:${type}] ${text}`);
 }
 
@@ -109,6 +109,14 @@ class DatabaseManager {
     header.appendChild(this.createSearch());
     header.appendChild(this.createSortBtn());
 
+    // Expand / Collapse all
+    const expandBtn = document.createElement("button");
+    expandBtn.className = "db-expand-all-btn";
+    expandBtn.textContent = "⧉";
+    expandBtn.title = "Expand / Collapse all";
+    expandBtn.onclick = () => this.toggleExpandAll();
+    header.appendChild(expandBtn);
+
     const grid = document.createElement("div");
     grid.className = "db-grid";
     grid.id = "db-grid";
@@ -127,7 +135,8 @@ class DatabaseManager {
     legend.style.borderLeft = "1px solid var(--border)";
     legend.innerHTML = `
       <strong>Legend</strong><br><br>
-      ⓘ — open / close details<br>
+      ⧉ — expand / collapse all<br>
+      ⓘ — toggle details<br>
       Click card — copy ID<br><br>
       Click outside — close
     `;
@@ -168,7 +177,9 @@ class DatabaseManager {
       if (key === this.currentTab) btn.classList.add("active");
 
       btn.onclick = () => {
-        document.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
+        document
+          .querySelectorAll(".db-tab-btn")
+          .forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         this.currentTab = key;
         this.render();
@@ -214,13 +225,13 @@ class DatabaseManager {
       const q = filter.toLowerCase();
       list = list.filter(e =>
         (e.name || "").toLowerCase().includes(q) ||
-        (e.identifier || "").toLowerCase().includes(q)
+        (e.id || "").toLowerCase().includes(q)
       );
     }
 
     list.sort((a, b) => {
-      const an = a.name || a.identifier;
-      const bn = b.name || b.identifier;
+      const an = a.name || a.id;
+      const bn = b.name || b.id;
       return this.sortAsc ? an.localeCompare(bn) : bn.localeCompare(an);
     });
 
@@ -230,19 +241,35 @@ class DatabaseManager {
   }
 
   /* =========================
-     CARD (FIXED MODEL)
+     EXPAND ALL
+     ========================= */
+
+  toggleExpandAll() {
+    const cards = document.querySelectorAll(".db-entry");
+    if (!cards.length) return;
+
+    const allExpanded = [...cards].every(c =>
+      c.classList.contains("expanded")
+    );
+
+    cards.forEach(card => {
+      card.classList.toggle("expanded", !allExpanded);
+    });
+  }
+
+  /* =========================
+     CARD
      ========================= */
 
   createCard(entry) {
     const card = document.createElement("div");
     card.className = "db-entry";
 
-    /* COPY ID */
+    // Copy ID
     card.onclick = () => {
-      if (entry.identifier) {
-        navigator.clipboard.writeText(entry.identifier);
-        showToast("info", `ID copied: ${entry.identifier}`);
-      }
+      if (!entry.id) return;
+      navigator.clipboard.writeText(entry.id);
+      showToast("info", `ID copied: ${entry.id}`);
     };
 
     /* ---------- HEADER ---------- */
@@ -259,11 +286,11 @@ class DatabaseManager {
 
     const title = document.createElement("div");
     title.className = "db-title";
-    title.textContent = entry.name || entry.identifier || "";
+    title.textContent = entry.name || entry.id || "";
 
     const id = document.createElement("div");
     id.className = "db-id";
-    id.textContent = entry.identifier || "";
+    id.textContent = entry.id || "";
 
     main.appendChild(title);
     main.appendChild(id);
@@ -275,7 +302,6 @@ class DatabaseManager {
     header.appendChild(iconWrap);
     header.appendChild(main);
     header.appendChild(info);
-
     card.appendChild(header);
 
     /* ---------- DESCRIPTION ---------- */
@@ -302,14 +328,30 @@ class DatabaseManager {
     const details = document.createElement("div");
     details.className = "db-card-details";
 
-    if (entry.type) details.appendChild(this.detail("dbDetailType", entry.type));
-    if (entry.maxstrength !== undefined) details.appendChild(this.detail("dbDetailMaxStrength", entry.maxstrength));
-    if (entry.limbspecific !== undefined) details.appendChild(this.detail("dbDetailLimbSpecific", entry.limbspecific ? strictLoc("yes") : strictLoc("no")));
-    if (entry.isbuff !== undefined) details.appendChild(this.detail("dbDetailIsBuff", entry.isbuff ? strictLoc("yes") : strictLoc("no")));
+    if (entry.type)
+      details.appendChild(this.detail("dbDetailType", entry.type));
+    if (entry.maxstrength !== undefined)
+      details.appendChild(
+        this.detail("dbDetailMaxStrength", entry.maxstrength)
+      );
+    if (entry.limbspecific !== undefined)
+      details.appendChild(
+        this.detail(
+          "dbDetailLimbSpecific",
+          entry.limbspecific ? strictLoc("yes") : strictLoc("no")
+        )
+      );
+    if (entry.isbuff !== undefined)
+      details.appendChild(
+        this.detail(
+          "dbDetailIsBuff",
+          entry.isbuff ? strictLoc("yes") : strictLoc("no")
+        )
+      );
 
     card.appendChild(details);
 
-    /* INFO TOGGLE */
+    // Info toggle
     info.onclick = e => {
       e.stopPropagation();
       card.classList.toggle("expanded");
@@ -355,8 +397,10 @@ class DatabaseManager {
   }
 
   loadAtlas(path) {
-    if (this.atlasCache.has(path)) return Promise.resolve(this.atlasCache.get(path));
-    if (this.pendingAtlases.has(path)) return this.pendingAtlases.get(path);
+    if (this.atlasCache.has(path))
+      return Promise.resolve(this.atlasCache.get(path));
+    if (this.pendingAtlases.has(path))
+      return this.pendingAtlases.get(path);
 
     const p = new Promise(res => {
       const img = new Image();
