@@ -246,7 +246,7 @@ button.danger { background: var(--red); }
 }
 
 .db-tag[data-tag="POISON"] {
-  border-left: 3px solid rgb(var(--icon-poison-darkred-rgb));
+  border-left: 3px solid rgb(var(‎--icon-buff-lightgreen-rgb));
 }
 
 .db-tag[data-tag="LIMB"] {
