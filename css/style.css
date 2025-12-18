@@ -774,7 +774,7 @@ body.dragging {
 }
 
 /* =========================
-   TAGS (THEME-DRIVEN COLORS)
+   TAGS — BASE (NO COLORS)
    ========================= */
 
 .db-card-tags {
@@ -788,17 +788,11 @@ body.dragging {
   padding: 4px 8px;
   border-radius: 6px;
   font-weight: 500;
-  color: #fff;
 
-  background: rgb(var(--icon-status-gray-rgb));
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
 }
 
-/* semantic mapping via theme vars */
-.db-tag.damage  { background: rgb(var(--icon-damage-red-rgb)); }
-.db-tag.poison  { background: rgb(var(--icon-poison-darkred-rgb)); }
-.db-tag.buff    { background: rgb(var(--icon-buff-green-rgb)); }
-.db-tag.debuff  { background: rgb(var(--icon-debuff-purple-rgb)); }
-.db-tag.status  { background: rgb(var(--icon-status-orange-rgb)); }
 
 /* =========================
    DETAILS
