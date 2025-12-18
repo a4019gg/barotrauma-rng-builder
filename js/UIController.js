@@ -1,7 +1,5 @@
 // js/UIController.js — v0.9.430 — UI CONTROLLER (MULTISELECT + HOTKEYS)
-
-const UI_VERSION = "v0.9.430";
-window.UI_VERSION = UI_VERSION;
+window.UI_VERSION = "v0.9.430;
 
 class UIController {
   constructor() {
@@ -201,10 +199,10 @@ class UIController {
 
   addRootNode(type) {
     const map = {
-      rng: () => nodeFactory.createModelRNG(),
-      spawn: () => nodeFactory.createModelSpawn(),
-      creature: () => nodeFactory.createModelCreature(),
-      affliction: () => nodeFactory.createModelAffliction()
+      rng: () => window.nodeFactory.createModelRNG(),
+      spawn: () => window.nodeFactory.createModelSpawn(),
+      creature: () => window.nodeFactory.createModelCreature(),
+      affliction: () => window.nodeFactory.createModelAffliction()
     };
     const fn = map[type];
     if (!fn) return;
