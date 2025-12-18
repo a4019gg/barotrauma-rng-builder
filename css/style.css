@@ -850,3 +850,10 @@ body.dragging {
   opacity: 1;
   filter: none;
 }
+
+.info-toggle {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
