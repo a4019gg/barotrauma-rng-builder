@@ -1,31 +1,300 @@
-/* css/themes/light.css — v0.9.401 — СВЕТЛАЯ ТЕМА (читаемая, не ослепляющая) */
+/* css/themes/light.css — v0.9.434 — СВЕТЛАЯ ТЕМА */
+
+/* =========================
+   ROOT VARIABLES
+   ========================= */
 
 :root {
-  --bg: #f8f9fa;
-  --panel: #e9ecef;
-  --text: #212529;
-  --accent: #0d6efd;
-  --green: #198754;
-  --red: #dc3545;
-  --border: #dee2e6;
-  --node-bg: #ffffff;
-  --grid-color: rgba(0,0,0,0.05);
-  --shadow-low: 0 1px 3px rgba(0,0,0,0.12);
-  --shadow-high: 0 4px 6px rgba(0,0,0,0.1);
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --text: #1f2937;
+  --accent: #2563eb;
+  --green: #059669;
+  --red: #dc2626;
+  --border: #d1d5db;
+  --node-bg: #f9fafb;
+  --grid-color: rgba(0,0,0,0.06);
+  --shadow-low: 0 2px 6px rgba(0,0,0,0.08);
+  --shadow-high: 0 8px 24px rgba(0,0,0,0.16);
 
-  /* Цвета иконок — чуть темнее, чтобы хорошо читались на светлом фоне */
-  --icon-damage-red-rgb: 180, 30, 30;
-  --icon-buff-green-rgb: 0, 150, 80;
-  --icon-status-orange-rgb: 200, 120, 30;
-    --icon-damage-orange-rgb: 195, 136, 60;
-  --icon-debuff-red-orange-rgb: 180, 80, 30;
-  --icon-poison-darkred-rgb: 130, 15, 15;
-  --icon-status-yellow-rgb: 180, 160, 30;
-  --icon-status-brown-rgb: 120, 50, 25;
-  --icon-status-gray-rgb: 90, 90, 90;
-  --icon-debuff-purple-rgb: 130, 100, 140;
-  --icon-status-tan-rgb: 170, 140, 100;
-  --icon-debuff-blue-rgb: 40, 90, 170;
-  --icon-buff-lightgreen-rgb: 70, 140, 60;
-  --icon-debuff-violet-rgb: 100, 10, 130;
+  /* =========================
+     AFFLICTION ICON COLORS (RGB)
+     ========================= */
+
+  --icon-damage-red-rgb: 185, 28, 28;
+  --icon-damage-orange-rgb: 217, 119, 6;
+  --icon-buff-green-rgb: 5, 150, 105;
+  --icon-status-orange-rgb: 217, 119, 6;
+  --icon-debuff-red-orange-rgb: 220, 38, 38;
+  --icon-poison-darkred-rgb: 153, 27, 27;
+  --icon-status-yellow-rgb: 202, 138, 4;
+  --icon-status-brown-rgb: 120, 53, 15;
+  --icon-status-gray-rgb: 107, 114, 128;
+  --icon-debuff-purple-rgb: 126, 34, 206;
+  --icon-status-tan-rgb: 180, 83, 9;
+  --icon-debuff-blue-rgb: 37, 99, 235;
+  --icon-buff-lightgreen-rgb: 34, 197, 94;
+  --icon-debuff-violet-rgb: 109, 40, 217;
+}
+
+/* =========================
+   GLOBAL
+   ========================= */
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Panels */
+.top-bar,
+.action-bar,
+#events-panel,
+.event-id-bar,
+textarea#output,
+.db-modal-content {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+/* =========================
+   LEFT PANEL / EVENTS
+   ========================= */
+
+.event-tab {
+  background: var(--node-bg);
+}
+
+.event-tab:hover {
+  background: #e5e7eb;
+}
+
+.event-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.delete-tab {
+  background: var(--red);
+  color: #fff;
+}
+
+/* =========================
+   EDITOR GRID
+   ========================= */
+
+#editor-area::before {
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+}
+
+/* =========================
+   NODES
+   ========================= */
+
+.node {
+  background: var(--node-bg);
+  box-shadow: var(--shadow-low);
+}
+
+.node.rng        { border-left-color: var(--accent); }
+.node.spawn      { border-left-color: #3b82f6; }
+.node.creature   { border-left-color: #ef4444; }
+.node.affliction { border-left-color: #f59e0b; }
+
+body[data-node-shadows="high"] .node {
+  box-shadow: var(--shadow-high);
+}
+
+body[data-node-shadows="off"] .node {
+  box-shadow: none;
+}
+
+/* =========================
+   BUTTONS
+   ========================= */
+
+button {
+  background: var(--accent);
+  color: #fff;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+button.green  { background: var(--green); }
+button.danger { background: var(--red); }
+
+/* =========================
+   DROPDOWN
+   ========================= */
+
+.dropdown-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-high);
+}
+
+.dropdown-content strong {
+  color: var(--accent);
+}
+
+.dropdown-content hr {
+  border-top: 1px solid var(--border);
+}
+
+/* =========================
+   DB MODAL
+   ========================= */
+
+.db-modal-overlay {
+  background: rgba(0,0,0,0.35);
+}
+
+.db-modal-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.db-tab-btn {
+  background: #e5e7eb;
+  color: var(--text);
+}
+
+.db-tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.db-search-input {
+  background: #f9fafb;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* =========================
+   DB CARDS
+   ========================= */
+
+.db-entry {
+  background: var(--node-bg);
+  border: 1px solid var(--border);
+}
+
+.db-entry:hover {
+  background: #eef2ff;
+}
+
+.db-entry.expanded {
+  border-color: var(--accent);
+}
+
+.db-id {
+  color: var(--text);
+  opacity: 0.65;
+}
+
+.db-summary {
+  color: var(--text);
+  opacity: 0.9;
+}
+
+.db-details {
+  color: var(--text);
+}
+
+.info-toggle {
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.info-toggle:hover {
+  opacity: 1;
+}
+
+/* =========================
+   DB TAGS — BASE
+   ========================= */
+
+.db-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.db-tag {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(0,0,0,0.05);
+}
+
+/* =========================
+   DB TAGS — SEMANTIC COLORS
+   ========================= */
+
+.db-tag[data-tag="DAMAGE"] {
+  border-left: 3px solid rgb(var(--icon-damage-red-rgb));
+}
+
+.db-tag[data-tag="STATUS"] {
+  border-left: 3px solid rgb(var(--icon-status-orange-rgb));
+}
+
+.db-tag[data-tag="BUFF"] {
+  border-left: 3px solid rgb(var(--icon-buff-green-rgb));
+}
+
+.db-tag[data-tag="DEBUFF"] {
+  border-left: 3px solid rgb(var(--icon-debuff-red-orange-rgb));
+}
+
+.db-tag[data-tag="POISON"] {
+  border-left: 3px solid rgb(var(--icon-buff-lightgreen-rgb));
+}
+
+.db-tag[data-tag="LIMB"] {
+  border-left: 3px solid rgb(var(--icon-status-yellow-rgb));
+}
+
+/* =========================
+   DB EMPTY STATE
+   ========================= */
+
+.db-empty {
+  color: #6b7280;
+}
+
+/* =========================
+   UI TOASTS — BASE
+   ========================= */
+
+.ui-toast {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-high);
+}
+
+/* =========================
+   UI TOASTS — TYPES
+   ========================= */
+
+.ui-toast-info {
+  border-left: 4px solid var(--accent);
+}
+
+.ui-toast-success {
+  border-left: 4px solid var(--green);
+}
+
+.ui-toast-warning {
+  border-left: 4px solid rgb(var(--icon-status-orange-rgb));
+}
+
+.ui-toast-error {
+  border-left: 4px solid var(--red);
 }
