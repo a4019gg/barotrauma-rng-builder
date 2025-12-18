@@ -1,7 +1,6 @@
 // js/tree.js — v0.9.403 — TREE VIEW НА D3.JS (ФИКС viewBox)
 
-const TREE_VERSION = "v0.9.403";
-window.TREE_VERSION = TREE_VERSION;
+window.TREE_VERSION = "v0.9.403";
 
 class TreeView {
   constructor() {
