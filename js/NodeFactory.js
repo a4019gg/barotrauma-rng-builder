@@ -1,7 +1,5 @@
 // js/EditorState.js — v0.9.500 — STATE CORE (STABLE + PREPARED)
-
-const MAIN_VERSION = "v0.9.500";
-window.MAIN_VERSION = MAIN_VERSION;
+window.MAIN_VERSION = "v0.9.500";
 
 class EditorState {
   constructor() {
