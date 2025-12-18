@@ -1,7 +1,6 @@
 // js/xml.js — v0.9.401 — ГЕНЕРАЦИЯ И ИМПОРТ XML
 
-const XML_VERSION = "v0.9.401";
-window.XML_VERSION = XML_VERSION;
+window.XML_VERSION = "v0.9.401";
 
 // === ГЕНЕРАЦИЯ XML ===
 function generateXML() {
