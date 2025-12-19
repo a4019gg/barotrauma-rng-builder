@@ -88,13 +88,4 @@ document.addEventListener('DOMContentLoaded', () => {
   populateDatalist();
   showScriptVersions();
 
-  // Debug
-  console.log(
-    '[MAIN] Ready',
-    {
-window.MAIN_VERSION,
-window.UI_VERSION,
-window.DB_VERSION
-    }
-  );
-});
+
