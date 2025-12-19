@@ -1,17 +1,12 @@
-// js/NodeFactory.js — v0.9.600 — NODE FACTORY (FULL FIX)
+// js/NodeFactory.js — v0.9.610 — NODE FACTORY (STABLE DND + UX FIX)
 
-window.NODES_VERSION = "v0.9.600";
+window.NODES_VERSION = "v0.9.610";
 
 (function () {
 
-  if (window.nodeFactory) {
-    console.warn("[NodeFactory] Already initialized");
-    return;
-  }
+  if (window.nodeFactory) return;
 
   const GRID_SIZE = 30;
-  const AUTO_SCROLL_MARGIN = 80;
-  const AUTO_SCROLL_SPEED = 20;
 
   class NodeFactory {
     constructor() {
@@ -31,12 +26,10 @@ window.NODES_VERSION = "v0.9.600";
     createModel(type, params) {
       const base = {
         id: this.generateId(),
-        type: type,
+        type,
         params: JSON.parse(JSON.stringify(params || {}))
       };
-      if (type === "rng") {
-        base.children = { success: [], failure: [] };
-      }
+      if (type === "rng") base.children = { success: [], failure: [] };
       return base;
     }
 
@@ -71,7 +64,7 @@ window.NODES_VERSION = "v0.9.600";
 
     createFromModel(model) {
       const node = document.createElement("div");
-      node.className = "node " + model.type + " node-" + model.type + " draggable";
+      node.className = `node ${model.type} draggable`;
       node.dataset.id = model.id;
 
       const header = document.createElement("div");
@@ -85,7 +78,6 @@ window.NODES_VERSION = "v0.9.600";
           : this.getTitle(model);
 
       header.appendChild(title);
-      this.appendParams(header, model);
 
       const del = document.createElement("button");
       del.className = "danger small";
@@ -95,6 +87,11 @@ window.NODES_VERSION = "v0.9.600";
       header.appendChild(del);
 
       node.appendChild(header);
+
+      const params = document.createElement("div");
+      params.className = "node-params";
+      this.appendParams(params, model);
+      node.appendChild(params);
 
       if (model.type === "rng") {
         node.appendChild(this.createBranch(model, "success"));
@@ -106,44 +103,36 @@ window.NODES_VERSION = "v0.9.600";
     }
 
     getTitle(model) {
-      const map = {
+      return {
         spawn: loc("spawnItem"),
         creature: loc("spawnCreature"),
         affliction: loc("applyAffliction")
-      };
-      return map[model.type] || loc("unknownNode");
+      }[model.type] || loc("unknownNode");
     }
 
     /* =========================
-       PARAMS + DB DROPDOWNS
+       PARAMS
        ========================= */
 
     appendParams(container, model) {
       const p = model.params;
 
       const bind = (el, key) => {
-        el.dataset.action = "updateParam";
-        el.dataset.id = model.id;
         el.onchange = () => {
           p[key] =
             el.type === "checkbox" ? el.checked :
             el.type === "number" ? Number(el.value) :
             el.value;
-          if (window.updateAll) updateAll();
+          updateAll();
         };
         return el;
       };
 
-      const makeSelect = (list, value) => {
-        const s = document.createElement("select");
-        list.forEach(id => {
-          const o = document.createElement("option");
-          o.value = id;
-          o.textContent = id;
-          s.appendChild(o);
-        });
-        s.value = value;
-        return s;
+      const row = (...els) => {
+        const r = document.createElement("div");
+        r.className = "param-row";
+        els.forEach(e => r.appendChild(e));
+        container.appendChild(r);
       };
 
       if (model.type === "rng") {
@@ -153,30 +142,18 @@ window.NODES_VERSION = "v0.9.600";
         i.min = 0;
         i.max = 1;
         i.value = p.chance;
-        container.appendChild(i);
+        row(i);
       }
 
       if (model.type === "spawn") {
-        let el;
-        if (window.db && db.items) {
-          el = makeSelect(db.items.map(x => x.id), p.item);
-        } else {
-          el = document.createElement("input");
-          el.value = p.item;
-        }
-        bind(el, "item");
-        container.appendChild(el);
+        const i = bind(document.createElement("input"), "item");
+        i.value = p.item;
+        row(i);
       }
 
       if (model.type === "creature") {
-        let c;
-        if (window.db && db.creatures) {
-          c = makeSelect(db.creatures.map(x => x.id), p.creature);
-        } else {
-          c = document.createElement("input");
-          c.value = p.creature;
-        }
-        bind(c, "creature");
+        const c = bind(document.createElement("input"), "creature");
+        c.value = p.creature;
 
         const n = bind(document.createElement("input"), "count");
         n.type = "number";
@@ -185,41 +162,38 @@ window.NODES_VERSION = "v0.9.600";
 
         const r = bind(document.createElement("input"), "randomize");
         r.type = "checkbox";
-        r.checked = p.randomize;
+
+        const rl = document.createElement("label");
+        rl.textContent = " Randomize";
+        rl.prepend(r);
 
         const i = bind(document.createElement("input"), "inside");
         i.type = "checkbox";
-        i.checked = p.inside;
 
-        container.append(c, n, r, i);
+        const il = document.createElement("label");
+        il.textContent = " Inside";
+        il.prepend(i);
+
+        row(c);
+        row(n);
+        row(rl, il);
       }
 
       if (model.type === "affliction") {
-        let a;
-        if (window.db && db.afflictions) {
-          a = makeSelect(db.afflictions.map(x => x.id), p.affliction);
-        } else {
-          a = document.createElement("input");
-          a.value = p.affliction;
-        }
-        bind(a, "affliction");
+        const a = bind(document.createElement("input"), "affliction");
+        a.value = p.affliction;
 
         const s = bind(document.createElement("input"), "strength");
         s.type = "number";
         s.value = p.strength;
 
-        const t = bind(document.createElement("select"), "target");
-        ["character", "limb", "self"].forEach(v => {
-          const o = document.createElement("option");
-          o.value = v;
-          o.textContent = v;
-          t.appendChild(o);
-        });
-        t.value = p.target;
-
-        container.append(a, s, t);
+        row(a, s);
       }
     }
+
+    /* =========================
+       BRANCHES
+       ========================= */
 
     createBranch(model, branch) {
       const wrap = document.createElement("div");
@@ -248,23 +222,17 @@ window.NODES_VERSION = "v0.9.600";
 
     makeDraggable(node, handle) {
       handle.addEventListener("mousedown", e => {
-        if (["INPUT", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
+        if (["INPUT", "SELECT", "BUTTON", "LABEL"].includes(e.target.tagName)) return;
 
-        const container = document.getElementById("classic-view");
         const rect = node.getBoundingClientRect();
-        const cRect = container.getBoundingClientRect();
-
         this.dragState = {
           node,
           id: Number(node.dataset.id),
           offsetX: e.clientX - rect.left,
-          offsetY: e.clientY - rect.top,
-          container
+          offsetY: e.clientY - rect.top
         };
 
         node.classList.add("dragging");
-        document.body.classList.add("dragging");
-
         document.addEventListener("mousemove", this.onDrag);
         document.addEventListener("mouseup", this.onDrop);
       });
@@ -273,22 +241,11 @@ window.NODES_VERSION = "v0.9.600";
     onDrag = e => {
       if (!this.dragState) return;
 
-      const { node, offsetX, offsetY, container } = this.dragState;
-      const cRect = container.getBoundingClientRect();
+      const n = this.dragState.node;
+      n.style.position = "absolute";
+      n.style.left = e.clientX - this.dragState.offsetX + "px";
+      n.style.top = e.clientY - this.dragState.offsetY + "px";
 
-      let x = e.clientX - cRect.left - offsetX + container.scrollLeft;
-      let y = e.clientY - cRect.top - offsetY + container.scrollTop;
-
-      if (localStorage.getItem("snapToGrid") === "true") {
-        x = Math.round(x / GRID_SIZE) * GRID_SIZE;
-        y = Math.round(y / GRID_SIZE) * GRID_SIZE;
-      }
-
-      node.style.position = "absolute";
-      node.style.left = x + "px";
-      node.style.top = y + "px";
-
-      this.autoScroll(e);
       this.highlightDropZones(e);
     };
 
@@ -297,34 +254,33 @@ window.NODES_VERSION = "v0.9.600";
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
       const branch = el ? el.closest(".node-branch") : null;
-      const root = el ? el.closest("#root-children") : null;
 
       document.querySelectorAll(".node-branch.highlight")
         .forEach(z => z.classList.remove("highlight"));
 
-      const { id } = this.dragState;
-      this.dragState.node.classList.remove("dragging");
-      document.body.classList.remove("dragging");
-
-      if (branch) {
-        window.editorState.attachNode(
-          id,
+      if (branch && this.canAttach(this.dragState.id, branch)) {
+        editorState.attachNode(
+          this.dragState.id,
           Number(branch.dataset.parentId),
           branch.dataset.branch
         );
-      } else if (root) {
-        window.editorState.removeNodeById(id);
-        const model = window.editorState.findNodeById(id);
-        window.editorState.events[
-          window.editorState.currentEventIndex
-        ].model.push(model);
-        window.editorState.commit();
       }
 
+      this.dragState.node.classList.remove("dragging");
       this.dragState = null;
       document.removeEventListener("mousemove", this.onDrag);
       document.removeEventListener("mouseup", this.onDrop);
     };
+
+    canAttach(childId, zone) {
+      const parentId = Number(zone.dataset.parentId);
+      if (childId === parentId) return false;
+
+      const parent = editorState.findNodeById(parentId);
+      if (!parent || parent.type !== "rng") return false;
+
+      return true;
+    }
 
     highlightDropZones(e) {
       document.querySelectorAll(".node-branch")
@@ -332,18 +288,9 @@ window.NODES_VERSION = "v0.9.600";
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
       const z = el ? el.closest(".node-branch") : null;
-      if (z) z.classList.add("highlight");
-    }
 
-    autoScroll(e) {
-      const c = document.getElementById("classic-view");
-      if (!c) return;
-
-      const r = c.getBoundingClientRect();
-      if (e.clientY < r.top + AUTO_SCROLL_MARGIN) {
-        c.scrollTop -= AUTO_SCROLL_SPEED;
-      } else if (e.clientY > r.bottom - AUTO_SCROLL_MARGIN) {
-        c.scrollTop += AUTO_SCROLL_SPEED;
+      if (z && this.canAttach(this.dragState.id, z)) {
+        z.classList.add("highlight");
       }
     }
 
@@ -351,7 +298,6 @@ window.NODES_VERSION = "v0.9.600";
       document.addEventListener("keydown", e => {
         if (e.key === "Escape" && this.dragState) {
           this.dragState.node.classList.remove("dragging");
-          document.body.classList.remove("dragging");
           this.dragState = null;
         }
       });
