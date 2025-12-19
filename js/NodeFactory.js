@@ -1,324 +1,294 @@
-// js/EditorState.js — v0.9.500 — STATE CORE (FIXED)
+// js/NodeFactory.js — v0.9.500 — NODE FACTORY (STATE SAFE)
 
-window.MAIN_VERSION = "v0.9.500";
+window.NODES_VERSION = "v0.9.500";
 
 (function () {
 
-  if (window.editorState) {
-    console.warn("[EditorState] Already initialized, skipping redeclare");
+  if (window.nodeFactory) {
+    console.warn("[NodeFactory] Already initialized, skipping redeclare");
     return;
   }
 
-  class EditorState {
+  const GRID_SIZE = 30;
+  const AUTO_SCROLL_MARGIN = 80;
+  const AUTO_SCROLL_SPEED = 20;
+
+  class NodeFactory {
     constructor() {
-      this.currentEventIndex = 0;
-      this.events = [{ model: [] }];
-
-      this.undoStack = [];
-      this.redoStack = [];
-      this.maxHistory = 50;
-
-      this.lastActionLabel = "";
+      this.idCounter = 0;
+      this.dragState = null;
+      this.bindGlobalHotkeys();
     }
 
     /* =========================
-       HISTORY
+       MODEL
        ========================= */
 
-    saveState(label) {
-      const snapshot = {
-        events: this.deepCopy(this.events),
-        currentEventIndex: this.currentEventIndex,
-        label: label || ""
+    generateId() {
+      return this.idCounter++;
+    }
+
+    createModel(type, params) {
+      const base = {
+        id: this.generateId(),
+        type: type,
+        params: JSON.parse(JSON.stringify(params || {}))
       };
-
-      this.undoStack.push(JSON.stringify(snapshot));
-      if (this.undoStack.length > this.maxHistory) {
-        this.undoStack.shift();
+      if (type === "rng") {
+        base.children = { success: [], failure: [] };
       }
-      this.redoStack.length = 0;
-      this.lastActionLabel = label || "";
+      return base;
     }
 
-    undo() {
-      if (!this.undoStack.length) return false;
-
-      const current = {
-        events: this.deepCopy(this.events),
-        currentEventIndex: this.currentEventIndex,
-        label: this.lastActionLabel
-      };
-      this.redoStack.push(JSON.stringify(current));
-
-      const prev = JSON.parse(this.undoStack.pop());
-      this.events = prev.events;
-      this.currentEventIndex = prev.currentEventIndex;
-      this.lastActionLabel = prev.label || "";
-
-      this.rebuildIdCounter();
-      this.commit();
-      return true;
+    createModelRNG() {
+      return this.createModel("rng", { chance: 0.5 });
     }
-
-    redo() {
-      if (!this.redoStack.length) return false;
-
-      const current = {
-        events: this.deepCopy(this.events),
-        currentEventIndex: this.currentEventIndex,
-        label: this.lastActionLabel
-      };
-      this.undoStack.push(JSON.stringify(current));
-
-      const next = JSON.parse(this.redoStack.pop());
-      this.events = next.events;
-      this.currentEventIndex = next.currentEventIndex;
-      this.lastActionLabel = next.label || "";
-
-      this.rebuildIdCounter();
-      this.commit();
-      return true;
+    createModelSpawn() {
+      return this.createModel("spawn", { item: "revolver" });
     }
-
-    /* =========================
-       CORE
-       ========================= */
-
-    deepCopy(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    commit() {
-      this.renderCurrentEvent();
-      if (window.updateAll) window.updateAll();
-    }
-
-    rebuildIdCounter() {
-      let maxId = -1;
-
-      const walk = nodes => {
-        nodes.forEach(n => {
-          if (typeof n.id === "number") {
-            maxId = Math.max(maxId, n.id);
-          }
-          if (n.type === "rng" && n.children) {
-            walk(n.children.success || []);
-            walk(n.children.failure || []);
-          }
-        });
-      };
-
-      this.events.forEach(e => walk(e.model));
-
-      if (window.nodeFactory) {
-        window.nodeFactory.idCounter = maxId + 1;
-      }
-    }
-
-    /* =========================
-       EVENTS
-       ========================= */
-
-    addEvent() {
-      this.saveState("Add event");
-      this.events.push({ model: [] });
-      this.currentEventIndex = this.events.length - 1;
-      this.commit();
-      this.rebuildTabs();
-    }
-
-    deleteEvent(index) {
-      if (this.events.length <= 1) {
-        alert(loc("lastEventWarning"));
-        return false;
-      }
-      if (!confirm(loc("deleteEventConfirm"))) return false;
-
-      this.saveState("Delete event");
-      this.events.splice(index, 1);
-
-      if (this.currentEventIndex >= this.events.length) {
-        this.currentEventIndex = this.events.length - 1;
-      }
-
-      this.commit();
-      this.rebuildTabs();
-      return true;
-    }
-
-    switchToEvent(index) {
-      if (index < 0 || index >= this.events.length) return;
-      this.saveState("Switch event");
-      this.currentEventIndex = index;
-      this.commit();
-      this.rebuildTabs();
-    }
-
-    /* =========================
-       RENDER
-       ========================= */
-
-    renderCurrentEvent() {
-      const container = document.getElementById("root-children");
-      if (!container) return;
-
-      container.innerHTML = "";
-      const model = this.events[this.currentEventIndex].model || [];
-
-      model.forEach(nodeModel => {
-        if (window.nodeFactory) {
-          container.appendChild(
-            window.nodeFactory.createFromModel(nodeModel)
-          );
-        }
+    createModelCreature() {
+      return this.createModel("creature", {
+        creature: "crawler",
+        count: 1,
+        randomize: true,
+        inside: true
       });
     }
-
-    rebuildTabs() {
-      const list = document.getElementById("events-list");
-      if (!list) return;
-
-      list.innerHTML = "";
-
-      this.events.forEach((_, i) => {
-        const tab = document.createElement("div");
-        tab.className =
-          "event-tab" + (i === this.currentEventIndex ? " active" : "");
-
-        const name = document.createElement("span");
-        name.textContent = "event_" + (i + 1);
-
-        const del = document.createElement("span");
-        del.className = "delete-tab";
-        del.textContent = "×";
-        del.onclick = e => {
-          e.stopPropagation();
-          this.deleteEvent(i);
-        };
-
-        tab.append(name, del);
-        tab.onclick = () => this.switchToEvent(i);
-        list.appendChild(tab);
+    createModelAffliction() {
+      return this.createModel("affliction", {
+        affliction: "bleeding",
+        strength: 15,
+        target: "character"
       });
     }
 
     /* =========================
-       NODES
+       DOM
        ========================= */
 
-    findNodeById(id, nodes) {
-      nodes = nodes || this.events[this.currentEventIndex].model;
+    createFromModel(model) {
+      const node = document.createElement("div");
+      node.className = "node " + model.type + " draggable";
+      node.dataset.id = model.id;
 
-      for (const node of nodes) {
-        if (node.id === id) return node;
-        if (node.type === "rng" && node.children) {
-          return (
-            this.findNodeById(id, node.children.success) ||
-            this.findNodeById(id, node.children.failure)
-          );
-        }
+      const header = document.createElement("div");
+      header.className = "node-header";
+
+      const title = document.createElement("span");
+      title.className = "node-title";
+      title.textContent = this.getTitle(model);
+      header.appendChild(title);
+
+      this.appendParams(header, model);
+
+      const del = document.createElement("button");
+      del.className = "danger small";
+      del.textContent = "×";
+      del.dataset.action = "removeNode";
+      del.dataset.id = model.id;
+      header.appendChild(del);
+
+      node.appendChild(header);
+
+      if (model.type === "rng") {
+        node.appendChild(this.createBranch(model, "success"));
+        node.appendChild(this.createBranch(model, "failure"));
       }
-      return null;
+
+      this.makeDraggable(node, header);
+      return node;
     }
 
-    removeNodeById(id) {
-      this.saveState("Remove node");
-      const removed = this._removeNodeRecursive(
-        id,
-        this.events[this.currentEventIndex].model
-      );
-      if (removed) this.commit();
-      return removed;
+    getTitle(model) {
+      const map = {
+        rng: loc("rngAction"),
+        spawn: loc("spawnItem"),
+        creature: loc("spawnCreature"),
+        affliction: loc("applyAffliction")
+      };
+      return map[model.type] || loc("unknownNode");
     }
 
-    _removeNodeRecursive(id, nodes) {
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        if (node.id === id) {
-          nodes.splice(i, 1);
-          return true;
-        }
-        if (node.type === "rng" && node.children) {
-          if (
-            this._removeNodeRecursive(id, node.children.success) ||
-            this._removeNodeRecursive(id, node.children.failure)
-          ) {
-            return true;
-          }
-        }
+    appendParams(container, model) {
+      const bind = (el, key) => {
+        el.dataset.action = "updateParam";
+        el.dataset.id = model.id;
+        el.dataset.key = key;
+        return el;
+      };
+
+      const p = model.params;
+
+      if (model.type === "rng") {
+        const i = bind(document.createElement("input"), "chance");
+        i.type = "number";
+        i.step = "0.001";
+        i.min = 0;
+        i.max = 1;
+        i.value = p.chance;
+        container.appendChild(i);
       }
-      return false;
+
+      if (model.type === "spawn") {
+        const i = bind(document.createElement("input"), "item");
+        i.value = p.item;
+        i.placeholder = loc("itemPlaceholder");
+        container.appendChild(i);
+      }
+
+      if (model.type === "creature") {
+        const c = bind(document.createElement("input"), "creature");
+        c.value = p.creature;
+        c.placeholder = loc("creaturePlaceholder");
+
+        const n = bind(document.createElement("input"), "count");
+        n.type = "number";
+        n.min = 1;
+        n.value = p.count;
+
+        container.appendChild(c);
+        container.appendChild(n);
+      }
+
+      if (model.type === "affliction") {
+        const a = bind(document.createElement("input"), "affliction");
+        a.value = p.affliction;
+        a.placeholder = loc("afflictionPlaceholder");
+
+        const s = bind(document.createElement("input"), "strength");
+        s.type = "number";
+        s.value = p.strength;
+
+        container.appendChild(a);
+        container.appendChild(s);
+      }
     }
 
-    attachNode(childId, parentId, branch) {
-      const parent = this.findNodeById(parentId);
-      const child = this.findNodeById(childId);
-      if (!parent || !child || parent.type !== "rng") return false;
+    createBranch(model, branch) {
+      const wrap = document.createElement("div");
+      wrap.className = "node-branch";
+      wrap.dataset.branch = branch;
+      wrap.dataset.parentId = model.id;
 
-      this.saveState("Attach node");
-      this._removeNodeRecursive(
-        childId,
-        this.events[this.currentEventIndex].model
+      const title = document.createElement("div");
+      title.className = "node-branch-title";
+      title.textContent = loc(
+        branch === "success" ? "successLabel" : "failureLabel"
       );
-      parent.children[branch].push(child);
-      this.commit();
-      return true;
+
+      const children = document.createElement("div");
+      children.className = "node-children";
+
+      model.children[branch].forEach(c => {
+        children.appendChild(this.createFromModel(c));
+      });
+
+      wrap.appendChild(title);
+      wrap.appendChild(children);
+      return wrap;
     }
 
     /* =========================
-       UTIL
+       DRAG → ATTACH (STATE SAFE)
        ========================= */
 
-    clearAll() {
-      if (!confirm(loc("clearAllConfirm"))) return;
-      this.saveState("Clear all nodes");
-      this.events[this.currentEventIndex].model = [];
-      this.commit();
-      alert(loc("clearAllDone"));
+    makeDraggable(node, handle) {
+      handle.addEventListener("mousedown", e => {
+        if (["INPUT", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
+        this.startDrag(e, node);
+      });
     }
 
-    autoBalance() {
-      this.saveState("Auto balance");
-
-      const balance = nodes => {
-        nodes.forEach(node => {
-          if (node.type === "rng") {
-            const s = node.children.success.length;
-            const f = node.children.failure.length;
-            const t = s + f;
-            if (t > 0) {
-              node.params.chance = +(s / t).toFixed(3);
-            }
-            balance(node.children.success);
-            balance(node.children.failure);
-          }
-        });
+    startDrag(e, node) {
+      const rect = node.getBoundingClientRect();
+      this.dragState = {
+        node: node,
+        id: Number(node.dataset.id),
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top
       };
 
-      balance(this.events[this.currentEventIndex].model);
-      this.commit();
-      alert(loc("autoBalanceDone"));
+      node.classList.add("dragging");
+      document.addEventListener("mousemove", this.onDrag);
+      document.addEventListener("mouseup", this.onDrop);
     }
 
-    exportData() {
-      return {
-        version: window.MAIN_VERSION,
-        events: this.deepCopy(this.events)
-      };
+    onDrag = e => {
+      if (!this.dragState) return;
+
+      let x = e.clientX - this.dragState.offsetX;
+      let y = e.clientY - this.dragState.offsetY;
+
+      if (localStorage.getItem("snapToGrid") === "true") {
+        x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+        y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+      }
+
+      const node = this.dragState.node;
+      node.style.position = "absolute";
+      node.style.left = x + "px";
+      node.style.top = y + "px";
+
+      this.autoScroll(e);
+      this.highlightDropZones(e);
+    };
+
+    onDrop = e => {
+      if (!this.dragState) return;
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const dropZone = el ? el.closest(".node-branch") : null;
+
+      document.querySelectorAll(".node-branch.highlight")
+        .forEach(z => z.classList.remove("highlight"));
+
+      this.dragState.node.classList.remove("dragging");
+
+      if (dropZone) {
+        window.editorState.attachNode(
+          this.dragState.id,
+          Number(dropZone.dataset.parentId),
+          dropZone.dataset.branch
+        );
+      }
+
+      this.dragState = null;
+      document.removeEventListener("mousemove", this.onDrag);
+      document.removeEventListener("mouseup", this.onDrop);
+    };
+
+    highlightDropZones(e) {
+      document.querySelectorAll(".node-branch")
+        .forEach(z => z.classList.remove("highlight"));
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const z = el ? el.closest(".node-branch") : null;
+
+      if (z) z.classList.add("highlight");
     }
 
-    importData(data) {
-      if (!data || !Array.isArray(data.events)) return false;
-      this.saveState("Import data");
-      this.events = this.deepCopy(data.events);
-      this.currentEventIndex = 0;
-      this.rebuildIdCounter();
-      this.commit();
-      this.rebuildTabs();
-      return true;
+    autoScroll(e) {
+      const c = document.getElementById("classic-view");
+      if (!c) return;
+
+      const r = c.getBoundingClientRect();
+      if (e.clientY < r.top + AUTO_SCROLL_MARGIN) {
+        c.scrollTop -= AUTO_SCROLL_SPEED;
+      } else if (e.clientY > r.bottom - AUTO_SCROLL_MARGIN) {
+        c.scrollTop += AUTO_SCROLL_SPEED;
+      }
+    }
+
+    bindGlobalHotkeys() {
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && this.dragState) {
+          this.dragState.node.classList.remove("dragging");
+          this.dragState = null;
+        }
+      });
     }
   }
 
-  window.editorState = new EditorState();
+  window.nodeFactory = new NodeFactory();
 
 })();
