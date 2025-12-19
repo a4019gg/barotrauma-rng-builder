@@ -1,11 +1,11 @@
-// js/NodeFactory.js — v0.9.500 — NODE FACTORY (STATE SAFE)
+// js/NodeFactory.js — v0.9.600 — NODE FACTORY (FULL FIX)
 
-window.NODES_VERSION = "v0.9.500";
+window.NODES_VERSION = "v0.9.600";
 
 (function () {
 
   if (window.nodeFactory) {
-    console.warn("[NodeFactory] Already initialized, skipping redeclare");
+    console.warn("[NodeFactory] Already initialized");
     return;
   }
 
@@ -43,9 +43,11 @@ window.NODES_VERSION = "v0.9.500";
     createModelRNG() {
       return this.createModel("rng", { chance: 0.5 });
     }
+
     createModelSpawn() {
       return this.createModel("spawn", { item: "revolver" });
     }
+
     createModelCreature() {
       return this.createModel("creature", {
         creature: "crawler",
@@ -54,6 +56,7 @@ window.NODES_VERSION = "v0.9.500";
         inside: true
       });
     }
+
     createModelAffliction() {
       return this.createModel("affliction", {
         affliction: "bleeding",
@@ -68,7 +71,7 @@ window.NODES_VERSION = "v0.9.500";
 
     createFromModel(model) {
       const node = document.createElement("div");
-      node.className = "node " + model.type + " draggable";
+      node.className = "node " + model.type + " node-" + model.type + " draggable";
       node.dataset.id = model.id;
 
       const header = document.createElement("div");
@@ -76,9 +79,12 @@ window.NODES_VERSION = "v0.9.500";
 
       const title = document.createElement("span");
       title.className = "node-title";
-      title.textContent = this.getTitle(model);
-      header.appendChild(title);
+      title.textContent =
+        model.type === "rng"
+          ? "≋ " + loc("rngAction")
+          : this.getTitle(model);
 
+      header.appendChild(title);
       this.appendParams(header, model);
 
       const del = document.createElement("button");
@@ -101,7 +107,6 @@ window.NODES_VERSION = "v0.9.500";
 
     getTitle(model) {
       const map = {
-        rng: loc("rngAction"),
         spawn: loc("spawnItem"),
         creature: loc("spawnCreature"),
         affliction: loc("applyAffliction")
@@ -109,15 +114,37 @@ window.NODES_VERSION = "v0.9.500";
       return map[model.type] || loc("unknownNode");
     }
 
+    /* =========================
+       PARAMS + DB DROPDOWNS
+       ========================= */
+
     appendParams(container, model) {
+      const p = model.params;
+
       const bind = (el, key) => {
         el.dataset.action = "updateParam";
         el.dataset.id = model.id;
-        el.dataset.key = key;
+        el.onchange = () => {
+          p[key] =
+            el.type === "checkbox" ? el.checked :
+            el.type === "number" ? Number(el.value) :
+            el.value;
+          if (window.updateAll) updateAll();
+        };
         return el;
       };
 
-      const p = model.params;
+      const makeSelect = (list, value) => {
+        const s = document.createElement("select");
+        list.forEach(id => {
+          const o = document.createElement("option");
+          o.value = id;
+          o.textContent = id;
+          s.appendChild(o);
+        });
+        s.value = value;
+        return s;
+      };
 
       if (model.type === "rng") {
         const i = bind(document.createElement("input"), "chance");
@@ -130,37 +157,67 @@ window.NODES_VERSION = "v0.9.500";
       }
 
       if (model.type === "spawn") {
-        const i = bind(document.createElement("input"), "item");
-        i.value = p.item;
-        i.placeholder = loc("itemPlaceholder");
-        container.appendChild(i);
+        let el;
+        if (window.db && db.items) {
+          el = makeSelect(db.items.map(x => x.id), p.item);
+        } else {
+          el = document.createElement("input");
+          el.value = p.item;
+        }
+        bind(el, "item");
+        container.appendChild(el);
       }
 
       if (model.type === "creature") {
-        const c = bind(document.createElement("input"), "creature");
-        c.value = p.creature;
-        c.placeholder = loc("creaturePlaceholder");
+        let c;
+        if (window.db && db.creatures) {
+          c = makeSelect(db.creatures.map(x => x.id), p.creature);
+        } else {
+          c = document.createElement("input");
+          c.value = p.creature;
+        }
+        bind(c, "creature");
 
         const n = bind(document.createElement("input"), "count");
         n.type = "number";
         n.min = 1;
         n.value = p.count;
 
-        container.appendChild(c);
-        container.appendChild(n);
+        const r = bind(document.createElement("input"), "randomize");
+        r.type = "checkbox";
+        r.checked = p.randomize;
+
+        const i = bind(document.createElement("input"), "inside");
+        i.type = "checkbox";
+        i.checked = p.inside;
+
+        container.append(c, n, r, i);
       }
 
       if (model.type === "affliction") {
-        const a = bind(document.createElement("input"), "affliction");
-        a.value = p.affliction;
-        a.placeholder = loc("afflictionPlaceholder");
+        let a;
+        if (window.db && db.afflictions) {
+          a = makeSelect(db.afflictions.map(x => x.id), p.affliction);
+        } else {
+          a = document.createElement("input");
+          a.value = p.affliction;
+        }
+        bind(a, "affliction");
 
         const s = bind(document.createElement("input"), "strength");
         s.type = "number";
         s.value = p.strength;
 
-        container.appendChild(a);
-        container.appendChild(s);
+        const t = bind(document.createElement("select"), "target");
+        ["character", "limb", "self"].forEach(v => {
+          const o = document.createElement("option");
+          o.value = v;
+          o.textContent = v;
+          t.appendChild(o);
+        });
+        t.value = p.target;
+
+        container.append(a, s, t);
       }
     }
 
@@ -172,9 +229,7 @@ window.NODES_VERSION = "v0.9.500";
 
       const title = document.createElement("div");
       title.className = "node-branch-title";
-      title.textContent = loc(
-        branch === "success" ? "successLabel" : "failureLabel"
-      );
+      title.textContent = loc(branch === "success" ? "successLabel" : "failureLabel");
 
       const children = document.createElement("div");
       children.className = "node-children";
@@ -183,48 +238,52 @@ window.NODES_VERSION = "v0.9.500";
         children.appendChild(this.createFromModel(c));
       });
 
-      wrap.appendChild(title);
-      wrap.appendChild(children);
+      wrap.append(title, children);
       return wrap;
     }
 
     /* =========================
-       DRAG → ATTACH (STATE SAFE)
+       DRAG & DROP (FIXED)
        ========================= */
 
     makeDraggable(node, handle) {
       handle.addEventListener("mousedown", e => {
         if (["INPUT", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
-        this.startDrag(e, node);
+
+        const container = document.getElementById("classic-view");
+        const rect = node.getBoundingClientRect();
+        const cRect = container.getBoundingClientRect();
+
+        this.dragState = {
+          node,
+          id: Number(node.dataset.id),
+          offsetX: e.clientX - rect.left,
+          offsetY: e.clientY - rect.top,
+          container
+        };
+
+        node.classList.add("dragging");
+        document.body.classList.add("dragging");
+
+        document.addEventListener("mousemove", this.onDrag);
+        document.addEventListener("mouseup", this.onDrop);
       });
-    }
-
-    startDrag(e, node) {
-      const rect = node.getBoundingClientRect();
-      this.dragState = {
-        node: node,
-        id: Number(node.dataset.id),
-        offsetX: e.clientX - rect.left,
-        offsetY: e.clientY - rect.top
-      };
-
-      node.classList.add("dragging");
-      document.addEventListener("mousemove", this.onDrag);
-      document.addEventListener("mouseup", this.onDrop);
     }
 
     onDrag = e => {
       if (!this.dragState) return;
 
-      let x = e.clientX - this.dragState.offsetX;
-      let y = e.clientY - this.dragState.offsetY;
+      const { node, offsetX, offsetY, container } = this.dragState;
+      const cRect = container.getBoundingClientRect();
+
+      let x = e.clientX - cRect.left - offsetX + container.scrollLeft;
+      let y = e.clientY - cRect.top - offsetY + container.scrollTop;
 
       if (localStorage.getItem("snapToGrid") === "true") {
         x = Math.round(x / GRID_SIZE) * GRID_SIZE;
         y = Math.round(y / GRID_SIZE) * GRID_SIZE;
       }
 
-      const node = this.dragState.node;
       node.style.position = "absolute";
       node.style.left = x + "px";
       node.style.top = y + "px";
@@ -237,19 +296,29 @@ window.NODES_VERSION = "v0.9.500";
       if (!this.dragState) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      const dropZone = el ? el.closest(".node-branch") : null;
+      const branch = el ? el.closest(".node-branch") : null;
+      const root = el ? el.closest("#root-children") : null;
 
       document.querySelectorAll(".node-branch.highlight")
         .forEach(z => z.classList.remove("highlight"));
 
+      const { id } = this.dragState;
       this.dragState.node.classList.remove("dragging");
+      document.body.classList.remove("dragging");
 
-      if (dropZone) {
+      if (branch) {
         window.editorState.attachNode(
-          this.dragState.id,
-          Number(dropZone.dataset.parentId),
-          dropZone.dataset.branch
+          id,
+          Number(branch.dataset.parentId),
+          branch.dataset.branch
         );
+      } else if (root) {
+        window.editorState.removeNodeById(id);
+        const model = window.editorState.findNodeById(id);
+        window.editorState.events[
+          window.editorState.currentEventIndex
+        ].model.push(model);
+        window.editorState.commit();
       }
 
       this.dragState = null;
@@ -263,7 +332,6 @@ window.NODES_VERSION = "v0.9.500";
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
       const z = el ? el.closest(".node-branch") : null;
-
       if (z) z.classList.add("highlight");
     }
 
@@ -283,6 +351,7 @@ window.NODES_VERSION = "v0.9.500";
       document.addEventListener("keydown", e => {
         if (e.key === "Escape" && this.dragState) {
           this.dragState.node.classList.remove("dragging");
+          document.body.classList.remove("dragging");
           this.dragState = null;
         }
       });
