@@ -1,8 +1,13 @@
-// js/EditorState.js — v0.9.500 — STATE CORE (FIXED & SAFE)
+// js/EditorState.js — v0.9.500 — STATE CORE (FIXED)
 
 window.MAIN_VERSION = "v0.9.500";
 
 (function () {
+
+  if (window.editorState) {
+    console.warn("[EditorState] Already initialized, skipping redeclare");
+    return;
+  }
 
   class EditorState {
     constructor() {
@@ -20,11 +25,11 @@ window.MAIN_VERSION = "v0.9.500";
        HISTORY
        ========================= */
 
-    saveState(label = "") {
+    saveState(label) {
       const snapshot = {
         events: this.deepCopy(this.events),
         currentEventIndex: this.currentEventIndex,
-        label
+        label: label || ""
       };
 
       this.undoStack.push(JSON.stringify(snapshot));
@@ -32,7 +37,7 @@ window.MAIN_VERSION = "v0.9.500";
         this.undoStack.shift();
       }
       this.redoStack.length = 0;
-      this.lastActionLabel = label;
+      this.lastActionLabel = label || "";
     }
 
     undo() {
@@ -161,9 +166,11 @@ window.MAIN_VERSION = "v0.9.500";
       const model = this.events[this.currentEventIndex].model || [];
 
       model.forEach(nodeModel => {
-        container.appendChild(
-          window.nodeFactory.createFromModel(nodeModel)
-        );
+        if (window.nodeFactory) {
+          container.appendChild(
+            window.nodeFactory.createFromModel(nodeModel)
+          );
+        }
       });
     }
 
@@ -179,7 +186,7 @@ window.MAIN_VERSION = "v0.9.500";
           "event-tab" + (i === this.currentEventIndex ? " active" : "");
 
         const name = document.createElement("span");
-        name.textContent = `event_${i + 1}`;
+        name.textContent = "event_" + (i + 1);
 
         const del = document.createElement("span");
         del.className = "delete-tab";
