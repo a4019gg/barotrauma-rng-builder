@@ -1,38 +1,29 @@
 // js/main.js — v0.9.430 — ENTRY POINT (CLEAN)
 
-// Этот файл — ТОЛЬКО точка входа.
-// Он не создаёт core-классы и не управляет логикой редактора.
-
 document.addEventListener('DOMContentLoaded', () => {
+
   // Проверка наличия ключевых модулей
   if (!window.nodeFactory || !window.editorState || !window.uiController) {
-    console.error(
-      '[MAIN] Core modules not initialized:',
-      {
-        nodeFactory: window.nodeFactory,
-        editorState: window.editorState,
-        uiController: window.uiController
-      }
-    );
+    console.error('[MAIN] Core modules not initialized:', {
+      nodeFactory: window.nodeFactory,
+      editorState: window.editorState,
+      uiController: window.uiController
+    });
     return;
   }
 
   // Начальный рендер текущего события
-  editorState.renderCurrentEvent();
-  editorState.rebuildTabs();
+  window.editorState.renderCurrentEvent();
+  window.editorState.rebuildTabs();
 
   // =========================
   // Глобальные утилиты
   // =========================
 
-  // Единая точка updateAll (вызывается EditorState / UIController)
   window.updateAll = () => {
-    // Здесь позже будет расчёт вероятностей RNG
-    if (
-      document.getElementById('tree-container') &&
-      document.getElementById('tree-container').style.display === 'block'
-    ) {
-      treeView.render();
+    const tree = document.getElementById('tree-container');
+    if (tree && tree.style.display === 'block' && window.treeView) {
+      window.treeView.render();
     }
   };
 
@@ -52,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onload = (ev) => {
         try {
           const data = JSON.parse(ev.target.result);
-          editorState.importData(data);
+          window.editorState.importData(data);
           alert(loc('presetLoaded'));
         } catch (err) {
           console.error(err);
@@ -66,18 +57,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.exportJSON = () => {
-    const data = editorState.exportData();
+    const data = window.editorState.exportData();
     const blob = new Blob(
       [JSON.stringify(data, null, 2)],
       { type: 'application/json' }
     );
-    const url = URL.createObjectURL(blob);
 
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'rng-builder-event.json';
     a.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -85,7 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Вспомогательная инициализация
   // =========================
 
-  populateDatalist();
-  showScriptVersions();
+  if (window.populateDatalist) populateDatalist();
+  if (window.showScriptVersions) showScriptVersions();
 
+  console.log('[MAIN] Ready', {
+    MAIN_VERSION: window.MAIN_VERSION,
+    UI_VERSION: window.UI_VERSION,
+    DB_VERSION: window.DB_VERSION
+  });
 
+});
