@@ -1,12 +1,10 @@
-// js/db.js — 0A2.0.706
-window.DB_VERSION = "0A2.0.706";
+// js/db.js — 0A2.0.710 — DATABASE UI (STATIC VIEW, NO LOGIC)
 
-/*
-  DB = DATA + VISUAL OVERVIEW
-  - визуал ЕСТЬ
-  - расчёта силы НЕТ
-  - Node-логики НЕТ
-*/
+window.DB_VERSION = "0A2.0.710";
+
+/* =========================
+   DB MANAGER
+   ========================= */
 
 class DBManager {
   constructor() {
@@ -16,69 +14,36 @@ class DBManager {
       creatures: []
     };
 
-    this.isLoaded = false;
     this.activeTab = "afflictions";
+    this.searchQuery = "";
+
     this.init();
   }
-
-  /* =========================
-     LOAD
-     ========================= */
 
   async init() {
     try {
       const [aff, items, creatures] = await Promise.all([
-        this.loadJSON("data/afflictions.json"),
-        this.loadJSON("data/items.json"),
-        this.loadJSON("data/creatures.json")
+        fetch("data/afflictions.json").then(r => r.json()),
+        fetch("data/items.json").then(r => r.json()),
+        fetch("data/creatures.json").then(r => r.json())
       ]);
 
       this.data.afflictions = aff || [];
       this.data.items = items || [];
       this.data.creatures = creatures || [];
-
-      this.isLoaded = true;
-      console.log("[DB] Loaded", {
-        afflictions: aff.length,
-        items: items.length,
-        creatures: creatures.length
-      });
     } catch (e) {
       console.error("[DB] Load error", e);
       alert(loc("dbError"));
     }
   }
 
-  async loadJSON(path) {
-    const r = await fetch(path);
-    if (!r.ok) throw new Error(path);
-    return r.json();
-  }
-
   /* =========================
-     OPEN / API
+     OPEN / CLOSE
      ========================= */
 
   openDB() {
-    if (!this.isLoaded) {
-      alert(loc("dbError"));
-      return;
-    }
     if (document.querySelector(".db-modal-overlay")) return;
 
-    document.body.appendChild(this.createModal());
-    this.renderTab(this.activeTab);
-  }
-
-  getById(type, id) {
-    return this.data[type]?.find(e => e.id === id) || null;
-  }
-
-  /* =========================
-     MODAL
-     ========================= */
-
-  createModal() {
     const overlay = document.createElement("div");
     overlay.className = "db-modal-overlay";
 
@@ -86,10 +51,10 @@ class DBManager {
     modal.className = "db-modal-content";
 
     modal.append(
-      this.createHeader(),
-      this.createTabs(),
-      this.createSearch(),
-      this.createList()
+      this.renderHeader(),
+      this.renderTabs(),
+      this.renderSearch(),
+      this.renderList()
     );
 
     overlay.appendChild(modal);
@@ -97,164 +62,162 @@ class DBManager {
       if (e.target === overlay) overlay.remove();
     };
 
-    return overlay;
+    document.body.appendChild(overlay);
   }
 
-  createHeader() {
+  /* =========================
+     RENDER PARTS
+     ========================= */
+
+  renderHeader() {
     const h = document.createElement("div");
     h.className = "db-modal-header";
     h.textContent = loc("dataBase");
     return h;
   }
 
-  createTabs() {
-    const wrap = document.createElement("div");
-    wrap.className = "db-tabs";
+  renderTabs() {
+    const tabs = document.createElement("div");
+    tabs.className = "db-tabs";
 
-    [
-      ["afflictions", loc("tabAfflictions")],
-      ["items", loc("tabItems")],
-      ["creatures", loc("tabCreatures")]
-    ].forEach(([key, label]) => {
+    const makeTab = (id, labelKey) => {
       const b = document.createElement("button");
-      b.className = "db-tab-btn" + (this.activeTab === key ? " active" : "");
-      b.textContent = label;
+      b.className = "db-tab-btn" + (this.activeTab === id ? " active" : "");
+      b.textContent = loc(labelKey);
       b.onclick = () => {
-        this.activeTab = key;
-        this.renderTab(key);
-        wrap.querySelectorAll(".db-tab-btn")
-          .forEach(x => x.classList.toggle("active", x === b));
+        this.activeTab = id;
+        this.refresh();
       };
-      wrap.appendChild(b);
-    });
+      return b;
+    };
 
-    return wrap;
+    tabs.append(
+      makeTab("afflictions", "tabAfflictions"),
+      makeTab("items", "tabItems"),
+      makeTab("creatures", "tabCreatures")
+    );
+
+    return tabs;
   }
 
-  createSearch() {
+  renderSearch() {
+    const wrap = document.createElement("div");
+    wrap.className = "db-search";
+
     const input = document.createElement("input");
     input.className = "db-search-input";
     input.placeholder = loc("searchPlaceholder");
-    input.oninput = () => {
-      this.renderTab(this.activeTab, input.value.trim().toLowerCase());
+    input.oninput = e => {
+      this.searchQuery = e.target.value.toLowerCase();
+      this.refreshList();
     };
-    return input;
+
+    wrap.appendChild(input);
+    return wrap;
   }
 
-  createList() {
-    const d = document.createElement("div");
-    d.id = "db-list";
-    d.className = "db-list";
-    return d;
+  renderList() {
+    const list = document.createElement("div");
+    list.className = "db-list";
+    this.listEl = list;
+    this.refreshList();
+    return list;
   }
 
-  /* =========================
-     RENDER
-     ========================= */
+  refresh() {
+    const modal = document.querySelector(".db-modal-content");
+    if (!modal) return;
+    modal.querySelector(".db-list").replaceWith(this.renderList());
+    modal.querySelectorAll(".db-tab-btn").forEach(b => b.classList.remove("active"));
+    modal.querySelectorAll(".db-tab-btn")[["afflictions","items","creatures"].indexOf(this.activeTab)]
+      ?.classList.add("active");
+  }
 
-  renderTab(type, query = "") {
-    const list = document.getElementById("db-list");
-    if (!list) return;
+  refreshList() {
+    if (!this.listEl) return;
+    this.listEl.innerHTML = "";
 
-    list.innerHTML = "";
-    const entries = this.data[type] || [];
-
-    const filtered = query
-      ? entries.filter(e =>
-          e.id.toLowerCase().includes(query) ||
-          e.name?.toLowerCase().includes(query)
-        )
-      : entries;
+    const entries = this.data[this.activeTab] || [];
+    const filtered = entries.filter(e =>
+      !this.searchQuery ||
+      e.id?.toLowerCase().includes(this.searchQuery) ||
+      e.name?.toLowerCase().includes(this.searchQuery)
+    );
 
     if (!filtered.length) {
       const empty = document.createElement("div");
       empty.className = "db-empty";
       empty.textContent = loc("nothingFound");
-      list.appendChild(empty);
+      this.listEl.appendChild(empty);
       return;
     }
 
-    filtered.forEach(e => {
-      list.appendChild(this.createEntry(type, e));
-    });
+    filtered.forEach(e => this.listEl.appendChild(this.renderEntry(e)));
   }
 
   /* =========================
-     ENTRY
+     ENTRY RENDER
      ========================= */
 
-  createEntry(type, entry) {
+  renderEntry(entry) {
     const card = document.createElement("div");
     card.className = "db-entry";
 
-    const summary = document.createElement("div");
-    summary.className = "db-summary";
+    const header = document.createElement("div");
+    header.className = "db-summary";
 
-    if (type === "afflictions") {
-      summary.appendChild(this.createIcon(entry));
+    if (entry.icon) {
+      header.appendChild(this.renderIcon(entry.icon));
     }
 
-    const title = document.createElement("strong");
+    const title = document.createElement("span");
     title.textContent = entry.name || entry.id;
+    header.appendChild(title);
 
     const id = document.createElement("span");
     id.className = "db-id";
     id.textContent = entry.id;
+    header.appendChild(id);
 
-    summary.append(title, " ", id);
-    card.appendChild(summary);
+    const toggle = document.createElement("span");
+    toggle.className = "info-toggle";
+    toggle.textContent = "ℹ";
+    header.appendChild(toggle);
 
     const details = document.createElement("div");
     details.className = "db-details";
+    details.appendChild(this.renderDetails(entry));
 
-    if (type === "afflictions") {
-      details.append(
-        this.detail("dbDetailMaxStrength", entry.maxstrength),
-        this.detail("dbDetailLimbSpecific", entry.limbspecific ? loc("yes") : loc("no")),
-        this.detail("dbDetailIsBuff", entry.isbuff ? loc("yes") : loc("no"))
-      );
-    }
-
-    card.appendChild(details);
-
-    summary.onclick = () => {
+    header.onclick = () => {
       card.classList.toggle("expanded");
     };
 
-    summary.ondblclick = () => {
-      navigator.clipboard.writeText(entry.id);
-    };
-
+    card.append(header, details);
     return card;
   }
 
-  /* =========================
-     ICON (SEMANTIC ONLY)
-     ========================= */
-
-  createIcon(entry) {
-    const icon = document.createElement("div");
-    icon.className = "db-icon";
-
-    const role = entry.icon?.role || "status";
-    const mode = entry.icon?.colorMode || "fixed";
-
-    icon.classList.add(role);
-
-    if (mode === "dynamic") {
-      icon.classList.add("dynamic");
-    } else if (entry.icon?.fixedColorKey) {
-      icon.dataset.color = entry.icon.fixedColorKey;
-    }
-
-    icon.textContent = "●"; // placeholder, canvas позже
-    return icon;
+  renderIcon(icon) {
+    const el = document.createElement("span");
+    el.className = `db-icon ${icon.role} ${icon.colorMode}`;
+    return el;
   }
 
-  detail(labelKey, value) {
-    const row = document.createElement("div");
-    row.textContent = `${loc(labelKey)}: ${value}`;
-    return row;
+  renderDetails(entry) {
+    const d = document.createElement("div");
+
+    const add = (k, v) => {
+      const row = document.createElement("div");
+      row.innerHTML = `<strong>${loc(k)}:</strong> ${v}`;
+      d.appendChild(row);
+    };
+
+    add("dbDetailID", entry.id);
+    if (entry.type) add("dbDetailType", entry.type);
+    if (entry.maxstrength != null) add("dbDetailMaxStrength", entry.maxstrength);
+    if (entry.limbspecific != null) add("dbDetailLimbSpecific", entry.limbspecific ? loc("yes") : loc("no"));
+    if (entry.isbuff != null) add("dbDetailIsBuff", entry.isbuff ? loc("yes") : loc("no"));
+
+    return d;
   }
 }
 
