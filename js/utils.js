@@ -1,6 +1,7 @@
-// js/utils.js — 0A2.0.701 — UTILITIES + LOCALIZATION + TOOLTIPS (CLEAN)
+// js/utils.js — 0A2.0.702 — UTILITIES + LOCALIZATION + UI SETTINGS + TOOLTIPS
+// NOTE: utils — ЧИСТЫЙ СЛОЙ. НИКАКОЙ ЛОГИКИ НОД / DnD / XML.
 
-window.UTILS_VERSION = "0A2.0.701";
+window.UTILS_VERSION = "0A2.0.702";
 
 /* =========================
    LOCALIZATION
@@ -11,7 +12,7 @@ const L = {};
 
 function loc(key, fallback = "") {
   if (L[key]) return L[key];
-  console.warn(`MISSING LOC KEY: "${key}"`);
+  console.error(`[i18n] MISSING LOC KEY: "${key}"`);
   return fallback || `‹${key}›`;
 }
 
@@ -24,15 +25,23 @@ function applyLocalization() {
   });
 }
 
-// NEW: setLang() function
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem("lang", lang);
+
   const dict = lang === "ru" ? window.LANG_RU : window.LANG_EN;
+  if (!dict) {
+    console.error("[i18n] Language pack not found:", lang);
+    return;
+  }
+
+  Object.keys(L).forEach(k => delete L[k]);
   Object.assign(L, dict);
 
   applyLocalization();
 
+  const sel = document.getElementById("lang-select");
+  if (sel) sel.value = lang;
 }
 
 /* =========================
@@ -44,7 +53,10 @@ function setTheme(theme) {
   localStorage.setItem("theme", theme);
 
   const s = document.getElementById("theme-style");
-  if (!s) return;
+  if (!s) {
+    console.error("[theme] <link id='theme-style'> not found");
+    return;
+  }
 
   const themes = {
     dark: "css/themes/dark.css",
@@ -52,15 +64,62 @@ function setTheme(theme) {
     "flopstyle-dark": "css/themes/flopstyle-dark.css",
     "turbo-vision-dark": "css/themes/turbo-vision-dark.css"
   };
+
+  if (!themes[theme]) {
+    console.error("[theme] Unknown theme:", theme);
+  }
+
   s.href = themes[theme] || themes.dark;
 
   const sel = document.getElementById("theme-select");
   if (sel) sel.value = theme;
 }
 
-// NEW: setLang and setTheme - now available globally
-window.setLang = setLang;
-window.setTheme = setTheme;
+function setUIScale(val) {
+  document.body.dataset.uiScale = val;
+  localStorage.setItem("uiScale", val);
+
+  const sel = document.getElementById("scale-select");
+  if (sel) sel.value = val;
+}
+
+function setNodeDensity(val) {
+  document.body.dataset.nodeDensity = val;
+  localStorage.setItem("nodeDensity", val);
+
+  const sel = document.getElementById("density-select");
+  if (sel) sel.value = val;
+}
+
+function toggleShadows(on) {
+  document.body.dataset.nodeShadows = on ? "high" : "off";
+  localStorage.setItem("nodeShadows", on.toString());
+}
+
+function toggleGrid(on) {
+  document.body.dataset.bgGrid = on ? "visible" : "off";
+  localStorage.setItem("bgGrid", on.toString());
+}
+
+function toggleSnap(on) {
+  localStorage.setItem("snapToGrid", on.toString());
+}
+
+/* =========================
+   XML / BEHAVIOR
+   ========================= */
+
+function setXMLFormat(val) {
+  localStorage.setItem("xmlFormat", val);
+}
+
+function toggleValidation(on) {
+  localStorage.setItem("validateXML", on.toString());
+}
+
+function toggleCheckDuplicateIDs(on) {
+  localStorage.setItem("checkDuplicateIDs", on.toString());
+}
 
 /* =========================
    SCRIPT VERSIONS
@@ -83,7 +142,43 @@ function showScriptVersions() {
 }
 
 /* =========================
-   TOOLTIP SYSTEM (SMART)
+   DATALIST (NO FALLBACKS)
+   ========================= */
+/*
+  IMPORTANT:
+  utils НЕ содержит fallback-данных.
+  populateDatalist должен вызываться ТОЛЬКО после готовности DB.
+*/
+
+function populateDatalist() {
+  const datalist = document.getElementById("item-datalist");
+  if (!datalist) {
+    console.error("[datalist] #item-datalist not found");
+    return;
+  }
+
+  if (!window.dbManager || !window.dbManager.isReady) {
+    console.error("[datalist] DB not ready. No fallback will be used.");
+    return;
+  }
+
+  datalist.innerHTML = "";
+
+  const ids = window.dbManager.getAllIds?.();
+  if (!Array.isArray(ids)) {
+    console.error("[datalist] DB returned invalid ID list");
+    return;
+  }
+
+  ids.forEach(id => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    datalist.appendChild(opt);
+  });
+}
+
+/* =========================
+   TOOLTIP SYSTEM
    ========================= */
 
 let tooltipEl = null;
@@ -98,6 +193,7 @@ function ensureTooltip() {
   tooltipEl.style.zIndex = 9999;
   tooltipEl.style.pointerEvents = "none";
   tooltipEl.style.opacity = "0";
+
   document.body.appendChild(tooltipEl);
   return tooltipEl;
 }
@@ -146,10 +242,6 @@ function positionTooltip() {
   tooltipEl.style.left = `${left}px`;
 }
 
-/* =========================
-   TOOLTIP EVENTS
-   ========================= */
-
 document.addEventListener("mouseover", e => {
   const t = e.target.closest("[data-tooltip]");
   if (t) showTooltip(t);
@@ -166,15 +258,12 @@ document.addEventListener("focusin", e => {
   if (t) showTooltip(t);
 });
 
-document.addEventListener("focusout", () => {
-  hideTooltip();
-});
-
+document.addEventListener("focusout", hideTooltip);
 window.addEventListener("scroll", positionTooltip);
 window.addEventListener("resize", positionTooltip);
 
 /* =========================
-   GLOBAL INIT
+   EXPORTS
    ========================= */
 
 window.loc = loc;
@@ -182,7 +271,6 @@ window.applyLocalization = applyLocalization;
 
 window.setLang = setLang;
 window.setTheme = setTheme;
-
 window.setUIScale = setUIScale;
 window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
@@ -195,4 +283,3 @@ window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
 
 window.showScriptVersions = showScriptVersions;
 window.populateDatalist = populateDatalist;
-
