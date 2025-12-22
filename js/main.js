@@ -25,6 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tree && tree.style.display === 'block' && window.treeView) {
       window.treeView.render();
     }
+
+    // === UI INIT ===
+setTheme(localStorage.getItem("theme") || "dark");
+setLang(localStorage.getItem("lang") || "en");
+setUIScale(localStorage.getItem("uiScale") || "100");
+setNodeDensity(localStorage.getItem("nodeDensity") || "normal");
+toggleShadows(localStorage.getItem("nodeShadows") !== "false");
+toggleGrid(localStorage.getItem("bgGrid") !== "false");
+toggleSnap(localStorage.getItem("snapToGrid") === "true");
+
+applyLocalization();
+showScriptVersions();
+
   };
 
   // =========================
