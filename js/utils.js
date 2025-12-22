@@ -32,7 +32,7 @@ function setLang(lang) {
   Object.assign(L, dict);
 
   applyLocalization();
-  window.updateAll?.();
+
 }
 
 /* =========================
