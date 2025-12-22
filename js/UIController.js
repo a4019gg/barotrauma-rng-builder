@@ -1,60 +1,12 @@
-// js/UIController.js — 0A2.0.700 — UI CONTROLLER (ROUTER + STUBS)
-
-window.UI_VERSION = "0A2.0.700";
+// js/UIController.js — 0A2.0.702
+window.UI_VERSION = "0A2.0.702";
 
 class UIController {
   constructor() {
-    this.initialized = false;
+    if (window.uiController) return;
     this.selectedNodeIds = new Set();
-
-    // ===== ACTION ROUTER =====
-    this.actions = {
-      // View / panels
-      toggleView: () => this.toggleView(),
-      openDB: () => window.dbManager?.openDB(),
-      loadExample: () => window.uiAlert("notImplementedYet"),
-
-      // Events
-      addEvent: () => window.editorState.addEvent(),
-
-      // Nodes
-      addNode: (el) => this.addRootNode(el.dataset.type),
-      removeNode: (el) => this.removeNodes(
-        el.dataset.id ? Number(el.dataset.id) : null
-      ),
-
-      clearAll: () =>
-        window.uiConfirm("clearAllConfirm", () => {
-          window.editorState.clearAll();
-          this.clearSelection();
-        }),
-
-      autoBalance: () => window.editorState.autoBalance(),
-
-      // XML
-      generateXML: () => window.generateXML(),
-      copyXML: () => this.copyXML(),
-      downloadXML: () => this.downloadXML(),
-      importFromXML: () => window.importFromXML?.(),
-
-      // Settings (delegated)
-      setTheme: (el) => window.setTheme(el.value),
-      setLang: (el) => {
-        window.setLang(el.value);
-        window.updateAll?.();
-      },
-      setUIScale: (el) => window.setUIScale(el.value),
-      setNodeDensity: (el) => window.setNodeDensity(el.value),
-      toggleShadows: (el) => window.toggleShadows(el.checked),
-      toggleGrid: (el) => window.toggleGrid(el.checked),
-      toggleSnap: (el) => window.toggleSnap(el.checked),
-      setXMLFormat: (el) => window.setXMLFormat(el.value),
-      toggleValidation: (el) => window.toggleValidation(el.checked),
-      toggleCheckDuplicateIDs: (el) =>
-        window.toggleCheckDuplicateIDs(el.checked)
-    };
-
     this.init();
+    window.uiController = this;
   }
 
   /* =========================
@@ -62,12 +14,9 @@ class UIController {
      ========================= */
 
   init() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    document.addEventListener("click", (e) => this.handleClick(e));
-    document.addEventListener("change", (e) => this.handleChange(e));
-    document.addEventListener("keydown", (e) => this.handleKeyDown(e));
+    document.addEventListener("click", e => this.handleClick(e));
+    document.addEventListener("change", e => this.handleChange(e));
+    document.addEventListener("keydown", e => this.handleKeyDown(e));
   }
 
   /* =========================
@@ -93,17 +42,61 @@ class UIController {
     }
 
     if (!actionEl) return;
-
     e.stopPropagation();
+
     const action = actionEl.dataset.action;
-    const handler = this.actions[action];
+    const type = actionEl.dataset.type;
+    const id = actionEl.dataset.id ? Number(actionEl.dataset.id) : null;
 
-    if (!handler) {
-      console.warn("[UI] Unknown action:", action);
-      return;
+    switch (action) {
+      case "toggleView":
+        this.toggleView();
+        break;
+
+      case "openDB":
+        window.dbManager?.openDB();
+        break;
+
+      case "addEvent":
+        window.editorState?.addEvent();
+        break;
+
+      case "addNode":
+        this.addRootNode(type);
+        break;
+
+      case "removeNode":
+        if (id !== null) this.removeNodes(id);
+        break;
+
+      case "clearAll":
+        window.editorState?.clearAll();
+        this.clearSelection();
+        break;
+
+      case "autoBalance":
+        window.editorState?.autoBalance();
+        break;
+
+      case "generateXML":
+        window.generateXML?.();
+        break;
+
+      case "copyXML":
+        this.copyXML();
+        break;
+
+      case "downloadXML":
+        this.downloadXML();
+        break;
+
+      case "importFromXML":
+        window.importFromXML?.();
+        break;
+
+      default:
+        console.warn("[UI] Unknown action:", action);
     }
-
-    handler(actionEl);
   }
 
   /* =========================
@@ -115,19 +108,25 @@ class UIController {
     const action = el.dataset?.action;
     if (!action) return;
 
-    // Param update — NodeFactory already changed model
-    if (action === "updateParam") {
-      window.updateAll?.();
-      return;
-    }
+    switch (action) {
+      case "setTheme": window.setTheme(el.value); break;
+      case "setLang": window.setLang(el.value); break;
+      case "setUIScale": window.setUIScale(el.value); break;
+      case "setNodeDensity": window.setNodeDensity(el.value); break;
+      case "toggleShadows": window.toggleShadows(el.checked); break;
+      case "toggleGrid": window.toggleGrid(el.checked); break;
+      case "toggleSnap": window.toggleSnap(el.checked); break;
+      case "setXMLFormat": window.setXMLFormat(el.value); break;
+      case "toggleValidation": window.toggleValidation(el.checked); break;
+      case "toggleCheckDuplicateIDs": window.toggleCheckDuplicateIDs(el.checked); break;
 
-    const handler = this.actions[action];
-    if (!handler) {
-      console.warn("[UI] Unknown change action:", action);
-      return;
-    }
+      case "updateParam":
+        window.updateAll?.();
+        break;
 
-    handler(el);
+      default:
+        console.warn("[UI] Unknown change action:", action);
+    }
   }
 
   /* =========================
@@ -135,27 +134,12 @@ class UIController {
      ========================= */
 
   handleKeyDown(e) {
-    // ESC — clear selection
     if (e.key === "Escape") {
       this.clearSelection();
-      return;
     }
 
-    // DELETE — remove selected
-    if (e.key === "Delete" && this.selectedNodeIds.size > 0) {
-      window.uiConfirm("deleteNodeConfirm", () => {
-        this.removeNodes();
-      });
-      return;
-    }
-
-    // UNDO / REDO
-    if (e.ctrlKey && e.key.toLowerCase() === "z") {
-      window.editorState.undo();
-    }
-
-    if (e.ctrlKey && e.key.toLowerCase() === "y") {
-      window.editorState.redo();
+    if (e.key === "Delete" && this.selectedNodeIds.size) {
+      this.removeNodes();
     }
   }
 
@@ -185,32 +169,6 @@ class UIController {
     this.selectedNodeIds.clear();
   }
 
-  /* =========================
-     NODE OPERATIONS
-     ========================= */
-
-  addRootNode(type) {
-    const factory = window.nodeFactory;
-    if (!factory) return;
-
-    const map = {
-      rng: () => factory.createModelRNG(),
-      spawn: () => factory.createModelSpawn(),
-      creature: () => factory.createModelCreature(),
-      affliction: () => factory.createModelAffliction()
-    };
-
-    const create = map[type];
-    if (!create) return;
-
-    window.editorState.saveState("Add root node");
-    window.editorState.events[
-      window.editorState.currentEventIndex
-    ].model.push(create());
-
-    window.editorState.commit();
-  }
-
   removeNodes(singleId = null) {
     const ids = singleId !== null
       ? [singleId]
@@ -218,21 +176,36 @@ class UIController {
 
     if (!ids.length) return;
 
-    window.editorState.saveState(
+    window.editorState?.saveState(
       ids.length > 1 ? "Delete multiple nodes" : "Delete node"
     );
 
-    ids.forEach(id =>
-      window.editorState.removeNodeById(id, true)
-    );
-
-    window.editorState.commit();
+    ids.forEach(id => window.editorState?.removeNodeById(id, true));
+    window.editorState?.commit();
     this.clearSelection();
   }
 
   /* =========================
-     VIEW
+     HELPERS
      ========================= */
+
+  addRootNode(type) {
+    if (!window.nodeFactory || !window.editorState) return;
+
+    const map = {
+      rng: () => window.nodeFactory.createModelRNG(),
+      spawn: () => window.nodeFactory.createModelSpawn(),
+      creature: () => window.nodeFactory.createModelCreature(),
+      affliction: () => window.nodeFactory.createModelAffliction()
+    };
+
+    const fn = map[type];
+    if (!fn) return;
+
+    window.editorState.saveState("Add root node");
+    window.editorState.events[window.editorState.currentEventIndex].model.push(fn());
+    window.editorState.commit();
+  }
 
   toggleView() {
     const classic = document.getElementById("classic-view");
@@ -243,26 +216,21 @@ class UIController {
     const treeVisible = tree.style.display === "block";
     tree.style.display = treeVisible ? "none" : "block";
     classic.style.display = treeVisible ? "block" : "none";
-    btn.textContent = window.loc(treeVisible ? "treeView" : "classicView");
+    btn.textContent = loc(treeVisible ? "treeView" : "classicView");
 
     if (!treeVisible) window.treeView?.render();
   }
 
-  /* =========================
-     XML HELPERS
-     ========================= */
-
   copyXML() {
     const out = document.getElementById("output");
     if (!out) return;
-
     out.select();
     document.execCommand("copy");
-    window.uiAlert("copyXML");
+    alert(loc("copyXML"));
   }
 
   downloadXML() {
-    window.generateXML();
+    window.generateXML?.();
     const data = document.getElementById("output")?.value;
     if (!data) return;
 
@@ -279,25 +247,7 @@ class UIController {
 }
 
 /* =========================
-   UI POPUPS — BASE STUBS
+   INIT
    ========================= */
 
-window.uiAlert = function (locKey) {
-  // TEMP fallback
-  alert(window.loc(locKey));
-};
-
-window.uiConfirm = function (locKey, onYes) {
-  // TEMP fallback
-  if (confirm(window.loc(locKey))) {
-    onYes?.();
-  }
-};
-
-/* =========================
-   GLOBAL INIT
-   ========================= */
-
-if (!window.uiController) {
-  window.uiController = new UIController();
-}
+new UIController();
