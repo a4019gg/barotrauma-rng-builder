@@ -1,20 +1,73 @@
-// js/UIController.js — v0.9.430 — UI CONTROLLER (MULTISELECT + HOTKEYS)
-window.UI_VERSION = "v0.9.430";
+// js/UIController.js — 0A2.0.700 — UI CONTROLLER (ROUTER + STUBS)
+
+window.UI_VERSION = "0A2.0.700";
 
 class UIController {
   constructor() {
-    this.isInitialized = false;
+    this.initialized = false;
     this.selectedNodeIds = new Set();
+
+    // ===== ACTION ROUTER =====
+    this.actions = {
+      // View / panels
+      toggleView: () => this.toggleView(),
+      openDB: () => window.dbManager?.openDB(),
+      loadExample: () => window.uiAlert("notImplementedYet"),
+
+      // Events
+      addEvent: () => window.editorState.addEvent(),
+
+      // Nodes
+      addNode: (el) => this.addRootNode(el.dataset.type),
+      removeNode: (el) => this.removeNodes(
+        el.dataset.id ? Number(el.dataset.id) : null
+      ),
+
+      clearAll: () =>
+        window.uiConfirm("clearAllConfirm", () => {
+          window.editorState.clearAll();
+          this.clearSelection();
+        }),
+
+      autoBalance: () => window.editorState.autoBalance(),
+
+      // XML
+      generateXML: () => window.generateXML(),
+      copyXML: () => this.copyXML(),
+      downloadXML: () => this.downloadXML(),
+      importFromXML: () => window.importFromXML?.(),
+
+      // Settings (delegated)
+      setTheme: (el) => window.setTheme(el.value),
+      setLang: (el) => {
+        window.setLang(el.value);
+        window.updateAll?.();
+      },
+      setUIScale: (el) => window.setUIScale(el.value),
+      setNodeDensity: (el) => window.setNodeDensity(el.value),
+      toggleShadows: (el) => window.toggleShadows(el.checked),
+      toggleGrid: (el) => window.toggleGrid(el.checked),
+      toggleSnap: (el) => window.toggleSnap(el.checked),
+      setXMLFormat: (el) => window.setXMLFormat(el.value),
+      toggleValidation: (el) => window.toggleValidation(el.checked),
+      toggleCheckDuplicateIDs: (el) =>
+        window.toggleCheckDuplicateIDs(el.checked)
+    };
+
     this.init();
   }
 
-  init() {
-    if (this.isInitialized) return;
-    this.isInitialized = true;
+  /* =========================
+     INIT
+     ========================= */
 
-    document.addEventListener("click", this.handleClick.bind(this));
-    document.addEventListener("change", this.handleChange.bind(this));
-    document.addEventListener("keydown", this.handleKeyDown.bind(this));
+  init() {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    document.addEventListener("click", (e) => this.handleClick(e));
+    document.addEventListener("change", (e) => this.handleChange(e));
+    document.addEventListener("keydown", (e) => this.handleKeyDown(e));
   }
 
   /* =========================
@@ -22,12 +75,14 @@ class UIController {
      ========================= */
 
   handleClick(e) {
-    const nodeEl = e.target.closest(".node");
     const actionEl = e.target.closest("[data-action]");
+    const nodeEl = e.target.closest(".node");
 
     // --- NODE SELECTION ---
     if (nodeEl && !actionEl) {
       const id = Number(nodeEl.dataset.id);
+      if (Number.isNaN(id)) return;
+
       if (e.shiftKey) {
         this.toggleSelection(id, nodeEl);
       } else {
@@ -37,73 +92,18 @@ class UIController {
       return;
     }
 
-    // --- ACTIONS ---
     if (!actionEl) return;
+
     e.stopPropagation();
-
     const action = actionEl.dataset.action;
-    const id = actionEl.dataset.id ? Number(actionEl.dataset.id) : null;
-    const type = actionEl.dataset.type || actionEl.dataset.nodeType;
-    const parentId = actionEl.dataset.parentId ? Number(actionEl.dataset.parentId) : null;
-    const branch = actionEl.dataset.branch;
+    const handler = this.actions[action];
 
-    switch (action) {
-      case "toggleView":
-        this.toggleView();
-        break;
-
-      case "openDB":
-        if (!document.querySelector(".db-modal-overlay")) {
-          dbManager.openDB();
-        }
-        break;
-
-      case "addEvent":
-        editorState.addEvent();
-        break;
-
-      case "removeNode":
-        this.removeNodes(id);
-        break;
-
-      case "addNode":
-        this.addRootNode(type);
-        break;
-
-      case "addNodeToBranch":
-        if (parentId !== null && branch && type) {
-          editorState.addNodeToBranch(parentId, branch, type);
-        }
-        break;
-
-      case "clearAll":
-        editorState.clearAll();
-        this.clearSelection();
-        break;
-
-      case "autoBalance":
-        editorState.autoBalance();
-        break;
-
-      case "generateXML":
-        generateXML();
-        break;
-
-      case "copyXML":
-        this.copyXML();
-        break;
-
-      case "downloadXML":
-        this.downloadXML();
-        break;
-
-      case "importFromXML":
-        importFromXML();
-        break;
-
-      default:
-        console.warn("[UI] Unknown action:", action);
+    if (!handler) {
+      console.warn("[UI] Unknown action:", action);
+      return;
     }
+
+    handler(actionEl);
   }
 
   /* =========================
@@ -112,27 +112,22 @@ class UIController {
 
   handleChange(e) {
     const el = e.target;
-    if (!el.dataset?.action) return;
+    const action = el.dataset?.action;
+    if (!action) return;
 
-    if (el.dataset.action === "updateParam") {
-      updateAll();
+    // Param update — NodeFactory already changed model
+    if (action === "updateParam") {
+      window.updateAll?.();
       return;
     }
 
-    switch (el.dataset.action) {
-      case "setTheme": setTheme(el.value); break;
-      case "setLang": setLang(el.value); break;
-      case "setUIScale": setUIScale(el.value); break;
-      case "setNodeDensity": setNodeDensity(el.value); break;
-      case "toggleShadows": toggleShadows(el.checked); break;
-      case "toggleGrid": toggleGrid(el.checked); break;
-      case "toggleSnap": toggleSnap(el.checked); break;
-      case "setXMLFormat": setXMLFormat(el.value); break;
-      case "toggleValidation": toggleValidation(el.checked); break;
-      case "toggleCheckDuplicateIDs": toggleCheckDuplicateIDs(el.checked); break;
-      default:
-        console.warn("[UI] Unknown change action:", el.dataset.action);
+    const handler = this.actions[action];
+    if (!handler) {
+      console.warn("[UI] Unknown change action:", action);
+      return;
     }
+
+    handler(el);
   }
 
   /* =========================
@@ -140,14 +135,27 @@ class UIController {
      ========================= */
 
   handleKeyDown(e) {
+    // ESC — clear selection
     if (e.key === "Escape") {
       this.clearSelection();
+      return;
     }
 
-    if (e.key === "Delete") {
-      if (this.selectedNodeIds.size > 0) {
+    // DELETE — remove selected
+    if (e.key === "Delete" && this.selectedNodeIds.size > 0) {
+      window.uiConfirm("deleteNodeConfirm", () => {
         this.removeNodes();
-      }
+      });
+      return;
+    }
+
+    // UNDO / REDO
+    if (e.ctrlKey && e.key.toLowerCase() === "z") {
+      window.editorState.undo();
+    }
+
+    if (e.ctrlKey && e.key.toLowerCase() === "y") {
+      window.editorState.redo();
     }
   }
 
@@ -177,6 +185,32 @@ class UIController {
     this.selectedNodeIds.clear();
   }
 
+  /* =========================
+     NODE OPERATIONS
+     ========================= */
+
+  addRootNode(type) {
+    const factory = window.nodeFactory;
+    if (!factory) return;
+
+    const map = {
+      rng: () => factory.createModelRNG(),
+      spawn: () => factory.createModelSpawn(),
+      creature: () => factory.createModelCreature(),
+      affliction: () => factory.createModelAffliction()
+    };
+
+    const create = map[type];
+    if (!create) return;
+
+    window.editorState.saveState("Add root node");
+    window.editorState.events[
+      window.editorState.currentEventIndex
+    ].model.push(create());
+
+    window.editorState.commit();
+  }
+
   removeNodes(singleId = null) {
     const ids = singleId !== null
       ? [singleId]
@@ -184,33 +218,21 @@ class UIController {
 
     if (!ids.length) return;
 
-    editorState.saveState(
+    window.editorState.saveState(
       ids.length > 1 ? "Delete multiple nodes" : "Delete node"
     );
 
-    ids.forEach(id => editorState.removeNodeById(id, true));
-    editorState.commit();
+    ids.forEach(id =>
+      window.editorState.removeNodeById(id, true)
+    );
+
+    window.editorState.commit();
     this.clearSelection();
   }
 
   /* =========================
-     HELPERS
+     VIEW
      ========================= */
-
-  addRootNode(type) {
-    const map = {
-      rng: () => window.nodeFactory.createModelRNG(),
-      spawn: () => window.nodeFactory.createModelSpawn(),
-      creature: () => window.nodeFactory.createModelCreature(),
-      affliction: () => window.nodeFactory.createModelAffliction()
-    };
-    const fn = map[type];
-    if (!fn) return;
-
-    editorState.saveState("Add root node");
-    editorState.events[editorState.currentEventIndex].model.push(fn());
-    editorState.commit();
-  }
 
   toggleView() {
     const classic = document.getElementById("classic-view");
@@ -221,31 +243,56 @@ class UIController {
     const treeVisible = tree.style.display === "block";
     tree.style.display = treeVisible ? "none" : "block";
     classic.style.display = treeVisible ? "block" : "none";
-    btn.textContent = loc(treeVisible ? "treeView" : "classicView");
+    btn.textContent = window.loc(treeVisible ? "treeView" : "classicView");
 
-    if (!treeVisible) treeView.render();
+    if (!treeVisible) window.treeView?.render();
   }
+
+  /* =========================
+     XML HELPERS
+     ========================= */
 
   copyXML() {
     const out = document.getElementById("output");
     if (!out) return;
+
     out.select();
     document.execCommand("copy");
-    alert(loc("copyXML"));
+    window.uiAlert("copyXML");
   }
 
   downloadXML() {
-    generateXML();
-    const data = document.getElementById("output").value;
+    window.generateXML();
+    const data = document.getElementById("output")?.value;
+    if (!data) return;
+
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
     a.download = "barotrauma-event.xml";
     a.click();
+
     URL.revokeObjectURL(url);
   }
 }
+
+/* =========================
+   UI POPUPS — BASE STUBS
+   ========================= */
+
+window.uiAlert = function (locKey) {
+  // TEMP fallback
+  alert(window.loc(locKey));
+};
+
+window.uiConfirm = function (locKey, onYes) {
+  // TEMP fallback
+  if (confirm(window.loc(locKey))) {
+    onYes?.();
+  }
+};
 
 /* =========================
    GLOBAL INIT
