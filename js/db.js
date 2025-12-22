@@ -1,13 +1,11 @@
-// js/db.js — 0A2.0.705
-window.DB_VERSION = "0A2.0.705";
+// js/db.js — 0A2.0.706
+window.DB_VERSION = "0A2.0.706";
 
 /*
-  DB MANAGER RESPONSIBILITY:
-  - загрузка JSON
-  - поиск / фильтрация
-  - отдача данных по ID
-  - рендер карточек
-  - НИКАКОЙ визуальной логики силы / цветов
+  DB = DATA + VISUAL OVERVIEW
+  - визуал ЕСТЬ
+  - расчёта силы НЕТ
+  - Node-логики НЕТ
 */
 
 class DBManager {
@@ -20,19 +18,14 @@ class DBManager {
 
     this.isLoaded = false;
     this.activeTab = "afflictions";
-
     this.init();
   }
 
   /* =========================
-     INIT
+     LOAD
      ========================= */
 
-  init() {
-    this.loadAll();
-  }
-
-  async loadAll() {
+  async init() {
     try {
       const [aff, items, creatures] = await Promise.all([
         this.loadJSON("data/afflictions.json"),
@@ -45,25 +38,25 @@ class DBManager {
       this.data.creatures = creatures || [];
 
       this.isLoaded = true;
-      console.log("[DB] Loaded:", {
+      console.log("[DB] Loaded", {
         afflictions: aff.length,
         items: items.length,
         creatures: creatures.length
       });
-    } catch (err) {
-      console.error("[DB] Load error", err);
+    } catch (e) {
+      console.error("[DB] Load error", e);
       alert(loc("dbError"));
     }
   }
 
   async loadJSON(path) {
-    const res = await fetch(path);
-    if (!res.ok) throw new Error(path);
-    return res.json();
+    const r = await fetch(path);
+    if (!r.ok) throw new Error(path);
+    return r.json();
   }
 
   /* =========================
-     PUBLIC API
+     OPEN / API
      ========================= */
 
   openDB() {
@@ -71,7 +64,6 @@ class DBManager {
       alert(loc("dbError"));
       return;
     }
-
     if (document.querySelector(".db-modal-overlay")) return;
 
     document.body.appendChild(this.createModal());
@@ -93,15 +85,17 @@ class DBManager {
     const modal = document.createElement("div");
     modal.className = "db-modal-content";
 
-    modal.appendChild(this.createHeader());
-    modal.appendChild(this.createTabs());
-    modal.appendChild(this.createSearch());
-    modal.appendChild(this.createList());
+    modal.append(
+      this.createHeader(),
+      this.createTabs(),
+      this.createSearch(),
+      this.createList()
+    );
 
     overlay.appendChild(modal);
-    overlay.addEventListener("click", e => {
+    overlay.onclick = e => {
       if (e.target === overlay) overlay.remove();
-    });
+    };
 
     return overlay;
   }
@@ -128,6 +122,8 @@ class DBManager {
       b.onclick = () => {
         this.activeTab = key;
         this.renderTab(key);
+        wrap.querySelectorAll(".db-tab-btn")
+          .forEach(x => x.classList.toggle("active", x === b));
       };
       wrap.appendChild(b);
     });
@@ -139,19 +135,17 @@ class DBManager {
     const input = document.createElement("input");
     input.className = "db-search-input";
     input.placeholder = loc("searchPlaceholder");
-
-    input.addEventListener("input", () => {
+    input.oninput = () => {
       this.renderTab(this.activeTab, input.value.trim().toLowerCase());
-    });
-
+    };
     return input;
   }
 
   createList() {
-    const list = document.createElement("div");
-    list.className = "db-list";
-    list.id = "db-list";
-    return list;
+    const d = document.createElement("div");
+    d.id = "db-list";
+    d.className = "db-list";
+    return d;
   }
 
   /* =========================
@@ -163,8 +157,8 @@ class DBManager {
     if (!list) return;
 
     list.innerHTML = "";
-
     const entries = this.data[type] || [];
+
     const filtered = query
       ? entries.filter(e =>
           e.id.toLowerCase().includes(query) ||
@@ -180,10 +174,14 @@ class DBManager {
       return;
     }
 
-    filtered.forEach(entry => {
-      list.appendChild(this.createEntry(type, entry));
+    filtered.forEach(e => {
+      list.appendChild(this.createEntry(type, e));
     });
   }
+
+  /* =========================
+     ENTRY
+     ========================= */
 
   createEntry(type, entry) {
     const card = document.createElement("div");
@@ -192,25 +190,29 @@ class DBManager {
     const summary = document.createElement("div");
     summary.className = "db-summary";
 
+    if (type === "afflictions") {
+      summary.appendChild(this.createIcon(entry));
+    }
+
+    const title = document.createElement("strong");
+    title.textContent = entry.name || entry.id;
+
     const id = document.createElement("span");
     id.className = "db-id";
     id.textContent = entry.id;
 
-    const name = document.createElement("strong");
-    name.textContent = entry.name || entry.id;
-
-    summary.append(id, " ", name);
+    summary.append(title, " ", id);
     card.appendChild(summary);
 
     const details = document.createElement("div");
     details.className = "db-details";
 
-    details.appendChild(this.detail("dbDetailID", entry.id));
-
     if (type === "afflictions") {
-      details.appendChild(this.detail("dbDetailMaxStrength", entry.maxstrength));
-      details.appendChild(this.detail("dbDetailLimbSpecific", entry.limbspecific));
-      details.appendChild(this.detail("dbDetailIsBuff", entry.isbuff));
+      details.append(
+        this.detail("dbDetailMaxStrength", entry.maxstrength),
+        this.detail("dbDetailLimbSpecific", entry.limbspecific ? loc("yes") : loc("no")),
+        this.detail("dbDetailIsBuff", entry.isbuff ? loc("yes") : loc("no"))
+      );
     }
 
     card.appendChild(details);
@@ -220,20 +222,39 @@ class DBManager {
     };
 
     summary.ondblclick = () => {
-      this.copyId(entry.id);
+      navigator.clipboard.writeText(entry.id);
     };
 
     return card;
+  }
+
+  /* =========================
+     ICON (SEMANTIC ONLY)
+     ========================= */
+
+  createIcon(entry) {
+    const icon = document.createElement("div");
+    icon.className = "db-icon";
+
+    const role = entry.icon?.role || "status";
+    const mode = entry.icon?.colorMode || "fixed";
+
+    icon.classList.add(role);
+
+    if (mode === "dynamic") {
+      icon.classList.add("dynamic");
+    } else if (entry.icon?.fixedColorKey) {
+      icon.dataset.color = entry.icon.fixedColorKey;
+    }
+
+    icon.textContent = "●"; // placeholder, canvas позже
+    return icon;
   }
 
   detail(labelKey, value) {
     const row = document.createElement("div");
     row.textContent = `${loc(labelKey)}: ${value}`;
     return row;
-  }
-
-  copyId(id) {
-    navigator.clipboard.writeText(id);
   }
 }
 
