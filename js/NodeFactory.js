@@ -1,9 +1,8 @@
-// js/NodeFactory.js — v0.9.610 — NODE FACTORY (STABLE DND + UX FIX)
+// js/NodeFactory.js — v0A2.0.700 — NODE FACTORY (FINAL UX + DB + PROBABILITY HOOKS)
 
-window.NODES_VERSION = "v0.9.610";
+window.NODES_VERSION = "v0A2.0.700";
 
 (function () {
-
   if (window.nodeFactory) return;
 
   const GRID_SIZE = 30;
@@ -38,23 +37,26 @@ window.NODES_VERSION = "v0.9.610";
     }
 
     createModelSpawn() {
-      return this.createModel("spawn", { item: "revolver" });
+      return this.createModel("spawn", {
+        item: "",
+        amount: 1,
+        quality: "N"
+      });
     }
 
     createModelCreature() {
       return this.createModel("creature", {
-        creature: "crawler",
-        count: 1,
-        randomize: true,
-        inside: true
+        creature: "",
+        amount: 1,
+        spawnLocation: "inside",
+        randomize: true
       });
     }
 
     createModelAffliction() {
       return this.createModel("affliction", {
-        affliction: "bleeding",
-        strength: 15,
-        target: "character"
+        affliction: "",
+        strength: 15
       });
     }
 
@@ -75,9 +77,14 @@ window.NODES_VERSION = "v0.9.610";
       title.textContent =
         model.type === "rng"
           ? "≋ " + loc("rngAction")
-          : this.getTitle(model);
+          : loc(this.getTitleKey(model.type));
 
-      header.appendChild(title);
+      const chance = document.createElement("span");
+      chance.className = "node-chance";
+      chance.textContent = "◌ --%";
+      chance.dataset.tooltip = "chanceTooltip";
+
+      header.append(title, chance);
 
       const del = document.createElement("button");
       del.className = "danger small";
@@ -102,20 +109,27 @@ window.NODES_VERSION = "v0.9.610";
       return node;
     }
 
-    getTitle(model) {
+    getTitleKey(type) {
       return {
-        spawn: loc("spawnItem"),
-        creature: loc("spawnCreature"),
-        affliction: loc("applyAffliction")
-      }[model.type] || loc("unknownNode");
+        spawn: "spawnItem",
+        creature: "spawnCreature",
+        affliction: "applyAffliction"
+      }[type] || "unknownNode";
     }
 
     /* =========================
-       PARAMS
+       PARAMS / UI
        ========================= */
 
     appendParams(container, model) {
       const p = model.params;
+
+      const row = (...els) => {
+        const r = document.createElement("div");
+        r.className = "param-row";
+        els.forEach(e => r.appendChild(e));
+        container.appendChild(r);
+      };
 
       const bind = (el, key) => {
         el.onchange = () => {
@@ -128,12 +142,125 @@ window.NODES_VERSION = "v0.9.610";
         return el;
       };
 
-      const row = (...els) => {
-        const r = document.createElement("div");
-        r.className = "param-row";
-        els.forEach(e => r.appendChild(e));
-        container.appendChild(r);
+      const dbInput = (list, value, key) => {
+        const input = document.createElement("input");
+        input.value = value || "";
+        input.oninput = () => {
+          p[key] = input.value;
+          updateAll();
+        };
+        if (list && list.length) {
+          input.setAttribute("list", key + "-list");
+          let dl = document.getElementById(key + "-list");
+          if (!dl) {
+            dl = document.createElement("datalist");
+            dl.id = key + "-list";
+            list.forEach(e => {
+              const o = document.createElement("option");
+              o.value = e.id;
+              dl.appendChild(o);
+            });
+            document.body.appendChild(dl);
+          }
+        }
+        return input;
       };
+
+      if (model.type === "spawn") {
+        const item = bind(
+          dbInput(window.db?.items, p.item, "item"),
+          "item"
+        );
+        const amount = bind(document.createElement("input"), "amount");
+        amount.type = "number";
+        amount.min = 1;
+        amount.value = p.amount;
+
+        const quality = bind(document.createElement("select"), "quality");
+        ["N", "G", "E", "M"].forEach(q => {
+          const o = document.createElement("option");
+          o.value = q;
+          o.textContent = q;
+          o.className = "quality-" + q.toLowerCase();
+          quality.appendChild(o);
+        });
+        quality.value = p.quality;
+        quality.dataset.tooltip = "qualityTooltip";
+
+        row(item, document.createTextNode("×"), amount);
+        row(document.createTextNode(loc("qualityLabel")), quality);
+      }
+
+      if (model.type === "creature") {
+        const c = bind(
+          dbInput(window.db?.creatures, p.creature, "creature"),
+          "creature"
+        );
+
+        const amount = bind(document.createElement("input"), "amount");
+        amount.type = "number";
+        amount.min = 1;
+        amount.value = p.amount;
+
+        const locSel = bind(document.createElement("select"), "spawnLocation");
+        ["inside", "outside", "near"].forEach(v => {
+          const o = document.createElement("option");
+          o.value = v;
+          o.textContent = loc("spawnLocation_" + v);
+          locSel.appendChild(o);
+        });
+        locSel.value = p.spawnLocation;
+        locSel.dataset.tooltip = "spawnLocationTooltip";
+
+        const rand = bind(document.createElement("input"), "randomize");
+        rand.type = "checkbox";
+        rand.checked = p.randomize;
+
+        const randLabel = document.createElement("label");
+        randLabel.append(rand, document.createTextNode(" " + loc("randomizeLabel")));
+
+        row(c, document.createTextNode("×"), amount);
+        row(locSel, randLabel);
+      }
+
+      if (model.type === "affliction") {
+        const wrap = document.createElement("div");
+        wrap.className = "affliction-row";
+
+        const iconHolder = document.createElement("span");
+        iconHolder.className = "affliction-icon";
+
+        const idInput = bind(
+          dbInput(window.db?.afflictions, p.affliction, "affliction"),
+          "affliction"
+        );
+        idInput.onchange = () => {
+          p.affliction = idInput.value;
+          iconHolder.innerHTML = "";
+          if (window.db?.renderAfflictionIcon) {
+            iconHolder.appendChild(
+              db.renderAfflictionIcon(p.affliction || "concealed", 16)
+            );
+          }
+          updateAll();
+        };
+
+        if (window.db?.renderAfflictionIcon) {
+          iconHolder.appendChild(
+            db.renderAfflictionIcon(p.affliction || "concealed", 16)
+          );
+        }
+
+        wrap.append(iconHolder, idInput);
+        row(wrap);
+
+        const s = bind(document.createElement("input"), "strength");
+        s.type = "number";
+        s.value = p.strength;
+        s.dataset.tooltip = "strengthTooltip";
+
+        row(document.createTextNode(loc("strengthLabel")), s);
+      }
 
       if (model.type === "rng") {
         const i = bind(document.createElement("input"), "chance");
@@ -142,52 +269,8 @@ window.NODES_VERSION = "v0.9.610";
         i.min = 0;
         i.max = 1;
         i.value = p.chance;
+        i.dataset.tooltip = "rngChanceTooltip";
         row(i);
-      }
-
-      if (model.type === "spawn") {
-        const i = bind(document.createElement("input"), "item");
-        i.value = p.item;
-        row(i);
-      }
-
-      if (model.type === "creature") {
-        const c = bind(document.createElement("input"), "creature");
-        c.value = p.creature;
-
-        const n = bind(document.createElement("input"), "count");
-        n.type = "number";
-        n.min = 1;
-        n.value = p.count;
-
-        const r = bind(document.createElement("input"), "randomize");
-        r.type = "checkbox";
-
-        const rl = document.createElement("label");
-        rl.textContent = " Randomize";
-        rl.prepend(r);
-
-        const i = bind(document.createElement("input"), "inside");
-        i.type = "checkbox";
-
-        const il = document.createElement("label");
-        il.textContent = " Inside";
-        il.prepend(i);
-
-        row(c);
-        row(n);
-        row(rl, il);
-      }
-
-      if (model.type === "affliction") {
-        const a = bind(document.createElement("input"), "affliction");
-        a.value = p.affliction;
-
-        const s = bind(document.createElement("input"), "strength");
-        s.type = "number";
-        s.value = p.strength;
-
-        row(a, s);
       }
     }
 
@@ -208,30 +291,28 @@ window.NODES_VERSION = "v0.9.610";
       const children = document.createElement("div");
       children.className = "node-children";
 
-      model.children[branch].forEach(c => {
-        children.appendChild(this.createFromModel(c));
-      });
+      model.children[branch].forEach(c =>
+        children.appendChild(this.createFromModel(c))
+      );
 
       wrap.append(title, children);
       return wrap;
     }
 
     /* =========================
-       DRAG & DROP (FIXED)
+       DRAG & DROP
        ========================= */
 
     makeDraggable(node, handle) {
       handle.addEventListener("mousedown", e => {
         if (["INPUT", "SELECT", "BUTTON", "LABEL"].includes(e.target.tagName)) return;
-
-        const rect = node.getBoundingClientRect();
+        const r = node.getBoundingClientRect();
         this.dragState = {
           node,
           id: Number(node.dataset.id),
-          offsetX: e.clientX - rect.left,
-          offsetY: e.clientY - rect.top
+          ox: e.clientX - r.left,
+          oy: e.clientY - r.top
         };
-
         node.classList.add("dragging");
         document.addEventListener("mousemove", this.onDrag);
         document.addEventListener("mouseup", this.onDrop);
@@ -240,25 +321,18 @@ window.NODES_VERSION = "v0.9.610";
 
     onDrag = e => {
       if (!this.dragState) return;
-
       const n = this.dragState.node;
       n.style.position = "absolute";
-      n.style.left = e.clientX - this.dragState.offsetX + "px";
-      n.style.top = e.clientY - this.dragState.offsetY + "px";
-
-      this.highlightDropZones(e);
+      n.style.left = e.clientX - this.dragState.ox + "px";
+      n.style.top = e.clientY - this.dragState.oy + "px";
     };
 
     onDrop = e => {
       if (!this.dragState) return;
-
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      const branch = el ? el.closest(".node-branch") : null;
+      const branch = el?.closest(".node-branch");
 
-      document.querySelectorAll(".node-branch.highlight")
-        .forEach(z => z.classList.remove("highlight"));
-
-      if (branch && this.canAttach(this.dragState.id, branch)) {
+      if (branch) {
         editorState.attachNode(
           this.dragState.id,
           Number(branch.dataset.parentId),
@@ -271,28 +345,6 @@ window.NODES_VERSION = "v0.9.610";
       document.removeEventListener("mousemove", this.onDrag);
       document.removeEventListener("mouseup", this.onDrop);
     };
-
-    canAttach(childId, zone) {
-      const parentId = Number(zone.dataset.parentId);
-      if (childId === parentId) return false;
-
-      const parent = editorState.findNodeById(parentId);
-      if (!parent || parent.type !== "rng") return false;
-
-      return true;
-    }
-
-    highlightDropZones(e) {
-      document.querySelectorAll(".node-branch")
-        .forEach(z => z.classList.remove("highlight"));
-
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      const z = el ? el.closest(".node-branch") : null;
-
-      if (z && this.canAttach(this.dragState.id, z)) {
-        z.classList.add("highlight");
-      }
-    }
 
     bindGlobalHotkeys() {
       document.addEventListener("keydown", e => {
