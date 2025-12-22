@@ -24,27 +24,6 @@ function applyLocalization() {
   });
 }
 
-function setLang(lang) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
-  const dict = lang === "ru" ? window.LANG_RU : window.LANG_EN;
-  Object.assign(L, dict);
-
-  applyLocalization();
-
-  const viewBtn = document.getElementById("view-btn");
-  if (viewBtn && document.getElementById("tree-container")) {
-    const isTree =
-      document.getElementById("tree-container").style.display === "block";
-    viewBtn.textContent = isTree ? loc("classicView") : loc("treeView");
-  }
-
-  const sel = document.getElementById("lang-select");
-  if (sel) sel.value = lang;
-
-  if (window.updateAll) updateAll();
-}
-
 /* =========================
    THEMES / UI SETTINGS
    ========================= */
