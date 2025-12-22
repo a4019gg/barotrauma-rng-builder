@@ -178,7 +178,21 @@ window.addEventListener("resize", positionTooltip);
    ========================= */
 
 window.loc = loc;
+window.applyLocalization = applyLocalization;
+
 window.setLang = setLang;
 window.setTheme = setTheme;
-window.applyLocalization = applyLocalization;
+
+window.setUIScale = setUIScale;
+window.setNodeDensity = setNodeDensity;
+window.toggleShadows = toggleShadows;
+window.toggleGrid = toggleGrid;
+window.toggleSnap = toggleSnap;
+
+window.setXMLFormat = setXMLFormat;
+window.toggleValidation = toggleValidation;
+window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
+
 window.showScriptVersions = showScriptVersions;
+window.populateDatalist = populateDatalist;
+
