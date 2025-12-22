@@ -1,7 +1,5 @@
-// js/EditorState.js — v0.9.700 → 0A2.0.700
-// STATE CORE + PROBABILITY ENGINE
-
-window.MAIN_VERSION = "0A2.0.700";
+// js/EditorState.js — 0A2.0.704
+window.MAIN_VERSION = "0A2.0.704";
 
 class EditorState {
   constructor() {
@@ -83,9 +81,8 @@ class EditorState {
   }
 
   commit() {
-    this.calculateProbabilities();
     this.renderCurrentEvent();
-    if (window.updateAll) updateAll();
+    window.updateAll?.();
   }
 
   rebuildIdCounter() {
@@ -97,8 +94,8 @@ class EditorState {
           maxId = Math.max(maxId, n.id);
         }
         if (n.type === "rng" && n.children) {
-          walk(n.children.success || []);
-          walk(n.children.failure || []);
+          walk(n.children.success);
+          walk(n.children.failure);
         }
       });
     };
@@ -107,30 +104,6 @@ class EditorState {
     if (window.nodeFactory) {
       window.nodeFactory.idCounter = maxId + 1;
     }
-  }
-
-  /* =========================
-     PROBABILITY ENGINE
-     ========================= */
-
-  calculateProbabilities() {
-    const rootChance = 1.0;
-    const model = this.events[this.currentEventIndex].model;
-
-    const walk = (nodes, chance) => {
-      nodes.forEach(node => {
-        node._chance = chance;
-
-        if (node.type === "rng" && node.children) {
-          const p = Number(node.params?.chance ?? 0);
-
-          walk(node.children.success || [], chance * p);
-          walk(node.children.failure || [], chance * (1 - p));
-        }
-      });
-    };
-
-    walk(model, rootChance);
   }
 
   /* =========================
@@ -154,9 +127,10 @@ class EditorState {
 
     this.saveState("Delete event");
     this.events.splice(index, 1);
-    if (this.currentEventIndex >= this.events.length) {
-      this.currentEventIndex = this.events.length - 1;
-    }
+    this.currentEventIndex = Math.min(
+      this.currentEventIndex,
+      this.events.length - 1
+    );
     this.commit();
     this.rebuildTabs();
     return true;
@@ -179,12 +153,11 @@ class EditorState {
     if (!container) return;
 
     container.innerHTML = "";
-    const model = this.events[this.currentEventIndex].model || [];
-    model.forEach(nodeModel => {
-      container.appendChild(
-        window.nodeFactory.createFromModel(nodeModel)
-      );
-    });
+    const model = this.events[this.currentEventIndex].model;
+
+    model.forEach(node =>
+      container.appendChild(window.nodeFactory.createFromModel(node))
+    );
   }
 
   rebuildTabs() {
@@ -215,13 +188,13 @@ class EditorState {
   }
 
   /* =========================
-     NODE OPS
+     NODE TREE OPS
      ========================= */
 
   findNodeById(id, nodes = this.events[this.currentEventIndex].model) {
     for (const node of nodes) {
       if (node.id === id) return node;
-      if (node.type === "rng" && node.children) {
+      if (node.type === "rng") {
         return (
           this.findNodeById(id, node.children.success) ||
           this.findNodeById(id, node.children.failure)
@@ -231,46 +204,44 @@ class EditorState {
     return null;
   }
 
-  removeNodeById(id) {
-    this.saveState("Remove node");
-    const removed = this._removeNodeRecursive(
-      id,
-      this.events[this.currentEventIndex].model
-    );
-    if (removed) this.commit();
-    return removed;
-  }
-
   _removeNodeRecursive(id, nodes) {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       if (node.id === id) {
         nodes.splice(i, 1);
-        return true;
+        return node;
       }
-      if (node.type === "rng" && node.children) {
-        if (
+      if (node.type === "rng") {
+        const r =
           this._removeNodeRecursive(id, node.children.success) ||
-          this._removeNodeRecursive(id, node.children.failure)
-        ) {
-          return true;
-        }
+          this._removeNodeRecursive(id, node.children.failure);
+        if (r) return r;
       }
     }
-    return false;
+    return null;
+  }
+
+  removeNodeById(id, silent = false) {
+    if (!silent) this.saveState("Remove node");
+    const removed = this._removeNodeRecursive(
+      id,
+      this.events[this.currentEventIndex].model
+    );
+    if (removed && !silent) this.commit();
+    return removed;
   }
 
   attachNode(childId, parentId, branch) {
     const parent = this.findNodeById(parentId);
-    const child = this.findNodeById(childId);
-    if (!parent || !child || parent.type !== "rng") return false;
+    if (!parent || parent.type !== "rng") return false;
 
     this.saveState("Attach node");
 
-    this._removeNodeRecursive(
+    const child = this._removeNodeRecursive(
       childId,
       this.events[this.currentEventIndex].model
     );
+    if (!child) return false;
 
     parent.children[branch].push(child);
     this.commit();
@@ -278,18 +249,74 @@ class EditorState {
   }
 
   /* =========================
-     IMPORT / EXPORT
+     PROBABILITY CALC
      ========================= */
+
+  computeProbabilities() {
+    const result = new Map();
+
+    const walk = (nodes, parentChance = 1) => {
+      nodes.forEach(node => {
+        let chance = parentChance;
+
+        if (node.type === "rng") {
+          const c = Number(node.params.chance) || 0;
+          walk(node.children.success, chance * c);
+          walk(node.children.failure, chance * (1 - c));
+        }
+
+        result.set(node.id, chance);
+      });
+    };
+
+    walk(this.events[this.currentEventIndex].model);
+    return result;
+  }
+
+  /* =========================
+     UTILITIES
+     ========================= */
+
+  clearAll() {
+    if (!confirm(loc("clearAllConfirm"))) return;
+    this.saveState("Clear all");
+    this.events[this.currentEventIndex].model = [];
+    this.commit();
+    alert(loc("clearAllDone"));
+  }
+
+  autoBalance() {
+    this.saveState("Auto balance");
+
+    const balance = nodes => {
+      nodes.forEach(node => {
+        if (node.type === "rng") {
+          const s = node.children.success.length;
+          const f = node.children.failure.length;
+          const t = s + f;
+          if (t > 0) {
+            node.params.chance = +(s / t).toFixed(3);
+          }
+          balance(node.children.success);
+          balance(node.children.failure);
+        }
+      });
+    };
+
+    balance(this.events[this.currentEventIndex].model);
+    this.commit();
+    alert(loc("autoBalanceDone"));
+  }
 
   exportData() {
     return {
-      version: MAIN_VERSION,
+      version: window.MAIN_VERSION,
       events: this.deepCopy(this.events)
     };
   }
 
   importData(data) {
-    if (!data?.events || !Array.isArray(data.events)) return false;
+    if (!data?.events) return false;
     this.saveState("Import data");
     this.events = this.deepCopy(data.events);
     this.currentEventIndex = 0;
