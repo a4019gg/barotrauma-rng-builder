@@ -24,6 +24,17 @@ function applyLocalization() {
   });
 }
 
+// NEW: setLang() function
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  const dict = lang === "ru" ? window.LANG_RU : window.LANG_EN;
+  Object.assign(L, dict);
+
+  applyLocalization();
+  window.updateAll?.();
+}
+
 /* =========================
    THEMES / UI SETTINGS
    ========================= */
@@ -47,45 +58,9 @@ function setTheme(theme) {
   if (sel) sel.value = theme;
 }
 
-function setUIScale(val) {
-  document.body.dataset.uiScale = val;
-  localStorage.setItem("uiScale", val);
-  const sel = document.getElementById("scale-select");
-  if (sel) sel.value = val;
-}
-
-function setNodeDensity(val) {
-  document.body.dataset.nodeDensity = val;
-  localStorage.setItem("nodeDensity", val);
-  const sel = document.getElementById("density-select");
-  if (sel) sel.value = val;
-}
-
-function toggleShadows(on) {
-  document.body.dataset.nodeShadows = on ? "high" : "off";
-  localStorage.setItem("nodeShadows", on.toString());
-}
-
-function toggleGrid(on) {
-  document.body.dataset.bgGrid = on ? "visible" : "off";
-  localStorage.setItem("bgGrid", on.toString());
-}
-
-function toggleSnap(on) {
-  localStorage.setItem("snapToGrid", on.toString());
-}
-
-function setXMLFormat(val) {
-  localStorage.setItem("xmlFormat", val);
-}
-
-function toggleValidation(on) {
-  localStorage.setItem("validateXML", on.toString());
-}
-
-function toggleCheckDuplicateIDs(on) {
-  localStorage.setItem("checkDuplicateIDs", on.toString());
-}
+// NEW: setLang and setTheme - now available globally
+window.setLang = setLang;
+window.setTheme = setTheme;
 
 /* =========================
    SCRIPT VERSIONS
@@ -199,19 +174,11 @@ window.addEventListener("scroll", positionTooltip);
 window.addEventListener("resize", positionTooltip);
 
 /* =========================
-   GLOBAL EXPORT
+   GLOBAL INIT
    ========================= */
 
 window.loc = loc;
 window.setLang = setLang;
 window.setTheme = setTheme;
-window.setUIScale = setUIScale;
-window.setNodeDensity = setNodeDensity;
-window.toggleShadows = toggleShadows;
-window.toggleGrid = toggleGrid;
-window.toggleSnap = toggleSnap;
-window.setXMLFormat = setXMLFormat;
-window.toggleValidation = toggleValidation;
-window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
 window.applyLocalization = applyLocalization;
 window.showScriptVersions = showScriptVersions;
