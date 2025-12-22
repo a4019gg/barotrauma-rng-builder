@@ -1,115 +1,182 @@
-// js/lang/ru.js — v0.9.401 — РУССКАЯ ЛОКАЛИЗАЦИЯ
+// js/lang/ru.js — 0A2.0.701 — RUSSIAN LOCALIZATION
 
 const LANG_RU = {
-  // Root
-  rootLabel: "Корневое событие",
+  /* =========================
+     ROOT / TREE
+     ========================= */
 
-  // Branches
+  rootLabel: "Корневое событие",
   successLabel: "Успех",
   failureLabel: "Провал",
 
-  // Buttons
+  /* =========================
+     BUTTONS
+     ========================= */
+
   generateXML: "Сгенерировать XML",
-copyXMLButton: "Копировать XML",
-copyXML: "XML скопирован в буфер обмена",
+  copyXMLButton: "Копировать XML",
+  copyXML: "XML скопирован в буфер",
   downloadXML: "Скачать XML",
   export: "Экспорт",
   import: "Импорт",
+  importXML: "Импорт из XML",
+
   dataBase: "База данных",
+  presets: "Шаблоны и примеры",
+
   addRNG: "+ ГСЧ",
   addItem: "+ Предмет",
   addCreature: "+ Существо",
-  addAffliction: "+ Аффикшен",
+  addAffliction: "+ Эффект",
+
   clearAll: "Очистить",
   autoBalance: "Автобаланс",
-  presets: "Пресеты и примеры",
-  addEvent: "+ Добавить ивент",
-// DB short badges
-dbDetailLimbSpecificShort: "Конечность",
-dbDetailIsBuffShort: "Бафф",
-  // Node titles
-  rngAction: "ГСЧ-событие",
-  spawnItem: "Спавн предмета",
-  spawnCreature: "Спавн существа",
-  applyAffliction: "Применить аффикшен",
-  unknownNode: "Неизвестный узел",
+  addEvent: "+ Добавить событие",
 
-  // Notifications / toasts
-clearAllDone: "Все узлы удалены",
-addEventDone: "Ивент добавлен",
-xmlGenerated: "XML сгенерирован",
+  /* =========================
+     NODE TITLES
+     ========================= */
 
-  // Parameters
+  rngAction: "ГСЧ",
+  spawnItem: "Создать предмет",
+  spawnCreature: "Создать существо",
+  applyAffliction: "Применить эффект",
+  unknownNode: "Неизвестная нода",
+
+  /* =========================
+     COMMON PARAMETERS
+     ========================= */
+
   chance: "Шанс",
-  count: "Количество",
-  randomizePosition: "Случайная позиция",
-  insideSub: "Внутри подлодки",
-  outsideSub: "Снаружи подлодки",
-  targetCharacter: "Цель: Персонаж",
-  targetRandomCrew: "Цель: Случайный член экипажа",
-  targetAllCrew: "Цель: Весь экипаж",
+  chanceTooltip: "Вероятность выполнения этой ноды",
 
-  // Placeholders
+  count: "Количество",
+
+  strength: "Сила",
+  strengthTooltip: "Сила эффекта (не длительность)",
+
+  /* =========================
+     ITEM NODE
+     ========================= */
+
   itemPlaceholder: "revolver",
+
+  itemQuality: "Качество",
+  itemQualityTooltip: "Модификатор качества предмета",
+
+  qualityNormal: "Обычное",
+  qualityGood: "Хорошее",
+  qualityExcellent: "Отличное",
+  qualityMasterwork: "Мастерское",
+  qualityLegendary: "Легендарное",
+
+  /* =========================
+     CREATURE NODE
+     ========================= */
+
   creaturePlaceholder: "crawler",
+
+  spawnLocation: "Место спавна",
+  spawnLocationTooltip: "Где появится существо",
+
+  spawnNear: "Рядом",
+  spawnInside: "Внутри",
+  spawnOutside: "Снаружи",
+
+  randomizePosition: "Случайная позиция",
+
+  /* =========================
+     AFFLICTION NODE
+     ========================= */
+
   afflictionPlaceholder: "bleeding",
 
-  // DB tabs
-  tabAfflictions: "Аффикшены",
+  /* =========================
+     DB / SEARCH
+     ========================= */
+
+  tabAfflictions: "Эффекты",
   tabItems: "Предметы",
   tabCreatures: "Существа",
 
-  // Search
   searchPlaceholder: "Поиск...",
+  nothingFound: "Ничего не найдено",
 
-  // Settings
+  dbError: "База данных не загружена (проверь data/*.json)",
+
+  /* =========================
+     SETTINGS
+     ========================= */
+
   settings: "Настройки",
   settingsTheme: "Тема",
   settingsLanguage: "Язык",
-  settingsUIScale: "Масштаб интерфейса",
+  settingsUIScale: "Масштаб UI",
   settingsNodeDensity: "Плотность нод",
   settingsNodeStyle: "Стиль нод",
+
   settingsShadows: "Тени",
   settingsGrid: "Фоновая сетка",
   settingsSnap: "Привязка к сетке",
-  settingsXMLBehavior: "XML и поведение",
-  settingsValidateXML: "Валидация XML",
-  settingsCheckDuplicates: "Проверка дубликатов ID",
 
-  // View modes
-  treeView: "Режим древа",
+  settingsXMLBehavior: "XML и поведение",
+  settingsValidateXML: "Проверять XML",
+  settingsCheckDuplicates: "Проверять дубликаты ID",
+
+  /* =========================
+     VIEW MODES
+     ========================= */
+
+  treeView: "Древо",
   classicView: "Классический вид",
 
-  // Messages
-  clearAllConfirm: "Очистить всё?",
-  deleteEventConfirm: "Удалить ивент?",
-  lastEventWarning: "Нельзя удалить последний ивент!",
-  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder v0.9.401",
-  importXML: "Импорт из XML",
-  importXMLHint: "Вставьте XML в поле ниже и нажмите Импорт из XML",
-  nothingFound: "Ничего не найдено",
-  presetLoaded: "Пресет загружен",
-  presetError: "Ошибка загрузки пресета",
-  dbError: "База данных не загружена (проверьте файлы data/*.json)",
+  /* =========================
+     EVENTS / WARNINGS
+     ========================= */
+
+  clearAllConfirm: "Очистить все ноды?",
+  clearAllDone: "Все ноды удалены",
+
+  deleteEventConfirm: "Удалить событие?",
+  lastEventWarning: "Нельзя удалить последнее событие",
+
+  addEventDone: "Событие добавлено",
+
+  presetLoaded: "Шаблон загружен",
+  presetError: "Ошибка загрузки шаблона",
+
   autoBalanceDone: "Автобаланс завершён",
 
+  xmlGenerated: "XML сгенерирован",
+  xmlGeneratedBy: "Сгенерировано Barotrauma RNG Builder",
 
-  // DB details
+  /* =========================
+     DB DETAILS
+     ========================= */
+
   dbDetailID: "ID",
   dbDetailType: "Тип",
   dbDetailMaxStrength: "Макс. сила",
-  dbDetailLimbSpecific: "Локально",
+  dbDetailLimbSpecific: "Привязка к конечности",
   dbDetailIsBuff: "Бафф",
+
+  dbDetailLimbSpecificShort: "Конечность",
+  dbDetailIsBuffShort: "Бафф",
+
   noDescription: "Нет описания",
 
-  // Yes/No
+  /* =========================
+     YES / NO
+     ========================= */
+
   yes: "да",
   no: "нет",
 
-  clearAllDone: "Все узлы удалены",
+  /* =========================
+     EVENT ID
+     ========================= */
 
-  // Event ID
-  eventIdLabel: "Event ID:"
+  eventIdLabel: "ID события:"
 };
 
 window.LANG_RU = LANG_RU;
