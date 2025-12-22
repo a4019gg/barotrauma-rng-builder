@@ -1,5 +1,3 @@
-/* css/themes/dark.css — 0A2.0.703 — DARK THEME (NEW DB + SEMANTIC ICON MODEL ONLY) */
-
 /* =========================
    ROOT VARIABLES
    ========================= */
@@ -8,52 +6,64 @@
   /* Base UI */
   --bg: #1e1e1e;
   --panel: #252526;
+  --panel-soft: #2a2a2d;
   --text: #ddd;
+  --text-dim: #aaa;
+
   --accent: #007acc;
-  --border: #444;
+  --accent-soft: rgba(0,122,204,0.25);
+
+  --border: #3f3f46;
 
   --green: #6a9955;
   --red: #f44747;
 
-  --node-bg: #2d2d30;
+  --node-bg: linear-gradient(
+    to bottom,
+    #2f2f33,
+    #262629
+  );
 
-  --grid-color: rgba(100, 100, 100, 0.12);
+  --grid-color: rgba(255,255,255,0.06);
 
-  --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
-  --shadow-high: 0 8px 24px rgba(0,0,0,0.4);
+  /* Depth */
+  --shadow-low: 0 2px 6px rgba(0,0,0,0.35);
+  --shadow-high: 0 10px 28px rgba(0,0,0,0.45);
 
-  /* =========================
-     SEMANTIC ICON COLORS (FIXED)
-     ========================= */
-
-  --icon-status-gray-rgb: 106, 106, 106;
-  --icon-status-yellow-rgb: 195, 180, 60;
-  --icon-status-brown-rgb: 139, 60, 42;
-  --icon-status-tan-rgb: 193, 162, 122;
-
-  --icon-buff-green-rgb: 10, 193, 114;
-  --icon-buff-lightgreen-rgb: 84, 171, 90;
-
-  --icon-debuff-red-rgb: 195, 60, 60;
-  --icon-debuff-red-orange-rgb: 195, 104, 60;
-  --icon-damage-orange-rgb: 195, 136, 60;
-  --icon-poison-darkred-rgb: 150, 26, 26;
-
-  --icon-debuff-purple-rgb: 143, 111, 160;
-  --icon-debuff-violet-rgb: 120, 23, 157;
-  --icon-debuff-blue-rgb: 60, 107, 195;
+  --radius-s: 4px;
+  --radius-m: 6px;
 
   /* =========================
-     DYNAMIC INTENSITY (BAROTRAUMA UI)
+     SEMANTIC ICON COLORS
      ========================= */
 
-  --buff-low-rgb: 66, 170, 73;
-  --buff-medium-rgb: 110, 168, 118;
-  --buff-high-rgb: 154, 213, 163;
+  --icon-status-gray-rgb: 106,106,106;
+  --icon-status-yellow-rgb: 195,180,60;
+  --icon-status-brown-rgb: 139,60,42;
+  --icon-status-tan-rgb: 193,162,122;
 
-  --debuff-low-rgb: 243, 162, 50;
-  --debuff-medium-rgb: 155, 55, 55;
-  --debuff-high-rgb: 228, 27, 27;
+  --icon-buff-green-rgb: 10,193,114;
+  --icon-buff-lightgreen-rgb: 84,171,90;
+
+  --icon-debuff-red-rgb: 195,60,60;
+  --icon-debuff-red-orange-rgb: 195,104,60;
+  --icon-damage-orange-rgb: 195,136,60;
+  --icon-poison-darkred-rgb: 150,26,26;
+
+  --icon-debuff-purple-rgb: 143,111,160;
+  --icon-debuff-blue-rgb: 60,107,195;
+
+  /* =========================
+     DYNAMIC INTENSITY
+     ========================= */
+
+  --buff-low-rgb: 66,170,73;
+  --buff-medium-rgb: 110,168,118;
+  --buff-high-rgb: 154,213,163;
+
+  --debuff-low-rgb: 243,162,50;
+  --debuff-medium-rgb: 155,55,55;
+  --debuff-high-rgb: 228,27,27;
 }
 
 /* =========================
@@ -65,15 +75,23 @@ body {
   color: var(--text);
 }
 
-/* Panels */
+/* =========================
+   PANELS
+   ========================= */
+
 .top-bar,
 .action-bar,
 #events-panel,
 .event-id-bar,
 textarea#output,
 .db-modal-content {
-  background: var(--panel);
+  background: linear-gradient(
+    to bottom,
+    var(--panel),
+    var(--panel-soft)
+  );
   border-color: var(--border);
+  box-shadow: var(--shadow-low);
 }
 
 /* =========================
@@ -81,25 +99,31 @@ textarea#output,
    ========================= */
 
 .event-tab {
-  background: var(--node-bg);
+  background: var(--panel-soft);
+  border-radius: var(--radius-s);
 }
 
 .event-tab:hover {
-  background: #363636;
+  background: #323236;
 }
 
 .event-tab.active {
-  background: var(--accent);
+  background: linear-gradient(
+    to bottom,
+    var(--accent),
+    #0063a8
+  );
   color: #fff;
 }
 
 .delete-tab {
   background: var(--red);
   color: #fff;
+  border-radius: var(--radius-s);
 }
 
 /* =========================
-   EDITOR GRID
+   GRID
    ========================= */
 
 #editor-area::before {
@@ -114,54 +138,97 @@ textarea#output,
 
 .node {
   background: var(--node-bg);
+  border-radius: var(--radius-m);
   box-shadow: var(--shadow-low);
 }
 
+.node.selected {
+  outline: 2px solid var(--accent-soft);
+}
+
+.node-header {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Node types */
 .node.rng        { border-left-color: var(--accent); }
 .node.spawn      { border-left-color: rgb(var(--icon-buff-lightgreen-rgb)); }
 .node.creature   { border-left-color: rgb(var(--icon-debuff-red-rgb)); }
 .node.affliction { border-left-color: rgb(var(--icon-status-yellow-rgb)); }
 
-body[data-node-shadows="high"] .node {
-  box-shadow: var(--shadow-high);
+/* =========================
+   NODE PREFIXES / CHANCE
+   ========================= */
+
+.node-prefix {
+  opacity: 0.8;
+  font-weight: bold;
 }
 
-body[data-node-shadows="off"] .node {
-  box-shadow: none;
+.node-chance-slot {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
 /* =========================
-   BUTTONS
+   INPUTS
+   ========================= */
+
+input,
+select,
+textarea {
+  background: #1f1f22;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* =========================
+   BUTTONS (PSEUDO-MATERIAL)
    ========================= */
 
 button {
-  background: var(--accent);
+  background: linear-gradient(
+    to bottom,
+    #3a3a3f,
+    #2c2c30
+  );
   color: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+              var(--shadow-low);
 }
 
 button:hover {
-  filter: brightness(1.15);
+  background: linear-gradient(
+    to bottom,
+    #44444a,
+    #323236
+  );
 }
 
-button.green  { background: var(--green); }
-button.danger { background: var(--red); }
-
-/* =========================
-   DROPDOWN
-   ========================= */
-
-.dropdown-content {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-high);
+button.green {
+  background: linear-gradient(
+    to bottom,
+    #7fb06a,
+    var(--green)
+  );
 }
 
-.dropdown-content strong {
-  color: var(--accent);
-}
-
-.dropdown-content hr {
-  border-top: 1px solid var(--border);
+button.danger {
+  background: linear-gradient(
+    to bottom,
+    #ff6b6b,
+    var(--red)
+  );
 }
 
 /* =========================
@@ -169,77 +236,34 @@ button.danger { background: var(--red); }
    ========================= */
 
 .db-modal-overlay {
-  background: rgba(0,0,0,0.9);
+  background: rgba(0,0,0,0.85);
 }
-
-.db-modal-header {
-  border-bottom: 1px solid var(--border);
-}
-
-.db-tab-btn {
-  background: #333;
-  color: #fff;
-}
-
-.db-tab-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.db-search-input {
-  background: #333;
-  color: #fff;
-  border: 1px solid #555;
-}
-
-/* =========================
-   DB CARDS
-   ========================= */
 
 .db-entry {
-  background: var(--node-bg);
-  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-low);
 }
 
 .db-entry:hover {
-  background: #363636;
+  background: #333338;
 }
 
 .db-entry.expanded {
-  border-color: var(--accent);
-}
-
-.db-id {
-  color: var(--text);
-  opacity: 0.7;
-}
-
-.db-summary {
-  color: var(--text);
-  opacity: 0.85;
-}
-
-.db-details {
-  color: var(--text);
-  opacity: 0;
-}
-
-.db-entry.expanded .db-details {
-  opacity: 1;
+  box-shadow: var(--shadow-high);
 }
 
 /* =========================
-   SEMANTIC ICONS (NEW MODEL)
+   SEMANTIC ICONS
    ========================= */
 
-/* Fixed roles */
 .icon.status   { color: rgb(var(--icon-status-gray-rgb)); }
 .icon.buff     { color: rgb(var(--icon-buff-green-rgb)); }
 .icon.debuff   { color: rgb(var(--icon-debuff-red-rgb)); }
 .icon.mental   { color: rgb(var(--icon-debuff-purple-rgb)); }
 .icon.electric { color: rgb(var(--icon-debuff-blue-rgb)); }
 
-/* Dynamic intensity */
+/* Dynamic */
 .icon.buff.low    { color: rgb(var(--buff-low-rgb)); }
 .icon.buff.medium { color: rgb(var(--buff-medium-rgb)); }
 .icon.buff.high   { color: rgb(var(--buff-high-rgb)); }
@@ -249,28 +273,17 @@ button.danger { background: var(--red); }
 .icon.debuff.high   { color: rgb(var(--debuff-high-rgb)); }
 
 /* =========================
-   UI TOASTS
+   TOOLTIP
    ========================= */
 
-.ui-toast {
-  background: rgba(40, 40, 40, 0.95);
-  color: var(--text);
+.ui-tooltip {
+  background: linear-gradient(
+    to bottom,
+    #3a3a3f,
+    #2b2b2f
+  );
   border: 1px solid var(--border);
+  border-radius: var(--radius-s);
   box-shadow: var(--shadow-high);
-}
-
-.ui-toast-info {
-  border-left: 4px solid var(--accent);
-}
-
-.ui-toast-success {
-  border-left: 4px solid var(--green);
-}
-
-.ui-toast-warning {
-  border-left: 4px solid rgb(var(--icon-status-yellow-rgb));
-}
-
-.ui-toast-error {
-  border-left: 4px solid var(--red);
+  color: var(--text);
 }
