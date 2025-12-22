@@ -1,81 +1,81 @@
-// js/utils.js — 0A2.0.702 — UTILITIES + LOCALIZATION + UI SETTINGS + TOOLTIPS
-// NOTE: utils — ЧИСТЫЙ СЛОЙ. НИКАКОЙ ЛОГИКИ НОД / DnD / XML.
-
+// js/utils.js — 0A2.0.702
 window.UTILS_VERSION = "0A2.0.702";
 
 /* =========================
-   LOCALIZATION
+   LOCALIZATION CORE
    ========================= */
 
 let currentLang = "en";
-const L = {};
+const L = Object.create(null);
 
 function loc(key, fallback = "") {
-  if (L[key]) return L[key];
-  console.error(`[i18n] MISSING LOC KEY: "${key}"`);
+  if (key in L) return L[key];
+  console.warn(`[LOC] Missing key: ${key}`);
   return fallback || `‹${key}›`;
 }
 
 function applyLocalization() {
   document.querySelectorAll("[data-l10n]").forEach(el => {
     const key = el.dataset.l10n;
-    if (key && L[key]) {
-      el.textContent = L[key];
-    }
+    if (!key) return;
+    if (key in L) el.textContent = L[key];
   });
 }
 
 function setLang(lang) {
-  currentLang = lang;
-  localStorage.setItem("lang", lang);
+  if (!lang || lang === currentLang) return;
 
-  const dict = lang === "ru" ? window.LANG_RU : window.LANG_EN;
+  const dict =
+    lang === "ru" ? window.LANG_RU :
+    lang === "en" ? window.LANG_EN :
+    null;
+
   if (!dict) {
-    console.error("[i18n] Language pack not found:", lang);
+    console.error("[LOC] Language pack not found:", lang);
     return;
   }
 
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+
+  // чисто обновляем словарь
   Object.keys(L).forEach(k => delete L[k]);
   Object.assign(L, dict);
 
   applyLocalization();
 
+  // синхронизация селекта
   const sel = document.getElementById("lang-select");
   if (sel) sel.value = lang;
 }
 
 /* =========================
-   THEMES / UI SETTINGS
+   THEME / UI SETTINGS
    ========================= */
 
 function setTheme(theme) {
+  if (!theme) return;
+
   document.body.dataset.theme = theme;
   localStorage.setItem("theme", theme);
 
-  const s = document.getElementById("theme-style");
-  if (!s) {
-    console.error("[theme] <link id='theme-style'> not found");
-    return;
+  const link = document.getElementById("theme-style");
+  if (link) {
+    const map = {
+      dark: "css/themes/dark.css",
+      light: "css/themes/light.css",
+      "flopstyle-dark": "css/themes/flopstyle-dark.css",
+      "turbo-vision-dark": "css/themes/turbo-vision-dark.css"
+    };
+    link.href = map[theme] || map.dark;
   }
-
-  const themes = {
-    dark: "css/themes/dark.css",
-    light: "css/themes/light.css",
-    "flopstyle-dark": "css/themes/flopstyle-dark.css",
-    "turbo-vision-dark": "css/themes/turbo-vision-dark.css"
-  };
-
-  if (!themes[theme]) {
-    console.error("[theme] Unknown theme:", theme);
-  }
-
-  s.href = themes[theme] || themes.dark;
 
   const sel = document.getElementById("theme-select");
   if (sel) sel.value = theme;
 }
 
 function setUIScale(val) {
+  if (!val) return;
   document.body.dataset.uiScale = val;
   localStorage.setItem("uiScale", val);
 
@@ -84,6 +84,7 @@ function setUIScale(val) {
 }
 
 function setNodeDensity(val) {
+  if (!val) return;
   document.body.dataset.nodeDensity = val;
   localStorage.setItem("nodeDensity", val);
 
@@ -93,32 +94,28 @@ function setNodeDensity(val) {
 
 function toggleShadows(on) {
   document.body.dataset.nodeShadows = on ? "high" : "off";
-  localStorage.setItem("nodeShadows", on.toString());
+  localStorage.setItem("nodeShadows", String(on));
 }
 
 function toggleGrid(on) {
   document.body.dataset.bgGrid = on ? "visible" : "off";
-  localStorage.setItem("bgGrid", on.toString());
+  localStorage.setItem("bgGrid", String(on));
 }
 
 function toggleSnap(on) {
-  localStorage.setItem("snapToGrid", on.toString());
+  localStorage.setItem("snapToGrid", String(on));
 }
-
-/* =========================
-   XML / BEHAVIOR
-   ========================= */
 
 function setXMLFormat(val) {
   localStorage.setItem("xmlFormat", val);
 }
 
 function toggleValidation(on) {
-  localStorage.setItem("validateXML", on.toString());
+  localStorage.setItem("validateXML", String(on));
 }
 
 function toggleCheckDuplicateIDs(on) {
-  localStorage.setItem("checkDuplicateIDs", on.toString());
+  localStorage.setItem("checkDuplicateIDs", String(on));
 }
 
 /* =========================
@@ -129,148 +126,51 @@ function showScriptVersions() {
   const c = document.getElementById("script-versions");
   if (!c) return;
 
-  const v = [
-    { n: "main.js", v: window.MAIN_VERSION || "—" },
-    { n: "db.js", v: window.DB_VERSION || "—" },
-    { n: "utils.js", v: window.UTILS_VERSION || "—" },
-    { n: "NodeFactory.js", v: window.NODES_VERSION || "—" },
-    { n: "tree.js", v: window.TREE_VERSION || "—" },
-    { n: "xml.js", v: window.XML_VERSION || "—" }
+  const rows = [
+    ["main.js", window.MAIN_VERSION],
+    ["utils.js", window.UTILS_VERSION],
+    ["NodeFactory.js", window.NODES_VERSION],
+    ["EditorState.js", window.MAIN_VERSION],
+    ["UIController.js", window.UI_VERSION],
+    ["db.js", window.DB_VERSION],
+    ["tree.js", window.TREE_VERSION],
+    ["xml.js", window.XML_VERSION]
   ];
 
-  c.innerHTML = v.map(x => `${x.n} → ${x.v}`).join("<br>");
+  c.innerHTML = rows
+    .map(([n, v]) => `${n} → ${v || "—"}`)
+    .join("<br>");
 }
 
 /* =========================
-   DATALIST (NO FALLBACKS)
-   ========================= */
-/*
-  IMPORTANT:
-  utils НЕ содержит fallback-данных.
-  populateDatalist должен вызываться ТОЛЬКО после готовности DB.
-*/
-
-function populateDatalist() {
-  const datalist = document.getElementById("item-datalist");
-  if (!datalist) {
-    console.error("[datalist] #item-datalist not found");
-    return;
-  }
-
-  if (!window.dbManager || !window.dbManager.isReady) {
-    console.error("[datalist] DB not ready. No fallback will be used.");
-    return;
-  }
-
-  datalist.innerHTML = "";
-
-  const ids = window.dbManager.getAllIds?.();
-  if (!Array.isArray(ids)) {
-    console.error("[datalist] DB returned invalid ID list");
-    return;
-  }
-
-  ids.forEach(id => {
-    const opt = document.createElement("option");
-    opt.value = id;
-    datalist.appendChild(opt);
-  });
-}
-
-/* =========================
-   TOOLTIP SYSTEM
+   INIT (ONE TIME ONLY)
    ========================= */
 
-let tooltipEl = null;
-let tooltipTarget = null;
+document.addEventListener("DOMContentLoaded", () => {
+  // тема
+  setTheme(localStorage.getItem("theme") || "dark");
 
-function ensureTooltip() {
-  if (tooltipEl) return tooltipEl;
+  // язык
+  setLang(localStorage.getItem("lang") || "en");
 
-  tooltipEl = document.createElement("div");
-  tooltipEl.className = "ui-tooltip";
-  tooltipEl.style.position = "fixed";
-  tooltipEl.style.zIndex = 9999;
-  tooltipEl.style.pointerEvents = "none";
-  tooltipEl.style.opacity = "0";
+  // ui настройки
+  setUIScale(localStorage.getItem("uiScale") || "100");
+  setNodeDensity(localStorage.getItem("nodeDensity") || "normal");
+  toggleShadows(localStorage.getItem("nodeShadows") !== "false");
+  toggleGrid(localStorage.getItem("bgGrid") !== "false");
+  toggleSnap(localStorage.getItem("snapToGrid") === "true");
 
-  document.body.appendChild(tooltipEl);
-  return tooltipEl;
-}
-
-function showTooltip(target) {
-  const key = target.dataset.tooltip;
-  if (!key) return;
-
-  const text = loc(key);
-  if (!text) return;
-
-  const tip = ensureTooltip();
-  tip.textContent = text;
-  tip.style.opacity = "1";
-
-  tooltipTarget = target;
-  positionTooltip();
-}
-
-function hideTooltip() {
-  if (!tooltipEl) return;
-  tooltipEl.style.opacity = "0";
-  tooltipTarget = null;
-}
-
-function positionTooltip() {
-  if (!tooltipEl || !tooltipTarget) return;
-
-  const margin = 8;
-  const rect = tooltipTarget.getBoundingClientRect();
-  const tipRect = tooltipEl.getBoundingClientRect();
-
-  let top = rect.bottom + margin;
-  let left = rect.left;
-
-  if (top + tipRect.height > window.innerHeight) {
-    top = rect.top - tipRect.height - margin;
-  }
-  if (left + tipRect.width > window.innerWidth) {
-    left = window.innerWidth - tipRect.width - margin;
-  }
-  if (left < margin) left = margin;
-  if (top < margin) top = margin;
-
-  tooltipEl.style.top = `${top}px`;
-  tooltipEl.style.left = `${left}px`;
-}
-
-document.addEventListener("mouseover", e => {
-  const t = e.target.closest("[data-tooltip]");
-  if (t) showTooltip(t);
+  showScriptVersions();
 });
-
-document.addEventListener("mouseout", e => {
-  if (tooltipTarget && !e.relatedTarget?.closest("[data-tooltip]")) {
-    hideTooltip();
-  }
-});
-
-document.addEventListener("focusin", e => {
-  const t = e.target.closest("[data-tooltip]");
-  if (t) showTooltip(t);
-});
-
-document.addEventListener("focusout", hideTooltip);
-window.addEventListener("scroll", positionTooltip);
-window.addEventListener("resize", positionTooltip);
 
 /* =========================
-   EXPORTS
+   GLOBAL EXPORT
    ========================= */
 
 window.loc = loc;
-window.applyLocalization = applyLocalization;
-
 window.setLang = setLang;
 window.setTheme = setTheme;
+
 window.setUIScale = setUIScale;
 window.setNodeDensity = setNodeDensity;
 window.toggleShadows = toggleShadows;
@@ -281,5 +181,5 @@ window.setXMLFormat = setXMLFormat;
 window.toggleValidation = toggleValidation;
 window.toggleCheckDuplicateIDs = toggleCheckDuplicateIDs;
 
+window.applyLocalization = applyLocalization;
 window.showScriptVersions = showScriptVersions;
-window.populateDatalist = populateDatalist;
