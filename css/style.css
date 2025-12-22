@@ -1,74 +1,57 @@
-/* =========================================================
-   Barotrauma RNG Builder — FULL UI CSS
-   Architecture-safe, no legacy, no JS logic
-   ========================================================= */
-
-/* =========================
-   ROOT / SEMANTIC VARIABLES
-   ========================= */
-
-:root {
-  /* UI base */
-  --bg: #1e1e1e;
-  --panel: #252526;
-  --panel-soft: #2a2a2a;
-  --text: #ddd;
-  --muted: #aaa;
-  --border: #444;
-  --accent: #007acc;
-  --danger: #f44747;
-
-  /* Node */
-  --node-bg: #2d2d30;
-  --node-border: #3a3a3a;
-
-  /* Grid */
-  --grid-color: rgba(120,120,120,0.12);
-
-  /* Shadows */
-  --shadow-low: 0 2px 8px rgba(0,0,0,0.25);
-  --shadow-high: 0 10px 28px rgba(0,0,0,0.45);
-
-  /* ===== ICON SEMANTICS ===== */
-
-  /* Fixed semantic */
-  --icon-status-gray-rgb: 106,106,106;
-  --icon-status-yellow-rgb: 195,180,60;
-  --icon-status-brown-rgb: 139,60,42;
-  --icon-status-tan-rgb: 193,162,122;
-
-  --icon-buff-green-rgb: 10,193,114;
-  --icon-buff-lightgreen-rgb: 84,171,90;
-
-  --icon-debuff-red-rgb: 195,60,60;
-  --icon-debuff-red-orange-rgb: 195,104,60;
-  --icon-debuff-blue-rgb: 60,107,195;
-  --icon-debuff-purple-rgb: 143,111,160;
-
-  /* Dynamic intensity (HUD truth) */
-  --buff-low-rgb: 66,170,73;
-  --buff-medium-rgb: 110,168,118;
-  --buff-high-rgb: 154,213,163;
-
-  --debuff-low-rgb: 243,162,50;
-  --debuff-medium-rgb: 155,55,55;
-  --debuff-high-rgb: 228,27,27;
-}
+/* css/style.css — CORE LAYOUT — 0A2.x
+   PURPOSE:
+   - layout
+   - structure
+   - spacing
+   - behavior
+   NO COLORS
+   NO THEMES
+*/
 
 /* =========================
    RESET / BASE
    ========================= */
 
-* { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* =========================
+   APP LAYOUT
+   ========================= */
 
 body {
-  margin: 0;
-  height: 100vh;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
   display: flex;
   flex-direction: column;
+}
+
+.top-bar,
+.action-bar,
+.event-id-bar {
+  flex-shrink: 0;
+}
+
+#main-container {
+  flex: 1;
+  display: flex;
   overflow: hidden;
 }
 
@@ -78,149 +61,212 @@ body {
 
 .top-bar,
 .action-bar {
-  height: 50px;
-  padding: 0 16px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+  align-items: center;
+  padding: 6px 10px;
+  gap: 8px;
 }
 
-/* =========================
-   MAIN LAYOUT
-   ========================= */
-
-#main-container {
-  flex: 1;
+.top-left,
+.top-right,
+.action-left,
+.action-right {
   display: flex;
-  position: relative;
-  overflow: hidden;
+  gap: 6px;
+  align-items: center;
 }
 
 /* =========================
-   EVENTS PANEL
+   EVENTS PANEL (LEFT)
    ========================= */
 
 #events-panel {
-  width: 240px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
+  width: 220px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 6px;
+  flex-shrink: 0;
 }
 
 #events-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 4px;
 }
 
 .event-tab {
-  padding: 10px 12px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  background: var(--node-bg);
-  border: 1px solid var(--node-border);
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  margin-bottom: 4px;
   cursor: pointer;
-}
-
-.event-tab.active {
-  background: var(--accent);
-  color: #fff;
+  user-select: none;
 }
 
 .delete-tab {
-  background: var(--danger);
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  cursor: pointer;
+  padding: 0 4px;
 }
 
 /* =========================
-   EDITOR AREA + GRID
+   EDITOR AREA
    ========================= */
 
 #editor-area {
-  position: absolute;
-  left: 240px;
-  right: 0;
-  top: 0;
-  bottom: 200px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
 }
+
+#classic-view,
+#tree-container {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+/* =========================
+   GRID (STRUCTURE ONLY)
+   ========================= */
 
 #editor-area::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 30px 30px;
   pointer-events: none;
-}
-
-body[data-bg-grid="off"] #editor-area::before {
-  display: none;
+  background-size: 30px 30px;
+  z-index: 0;
 }
 
 /* =========================
-   NODES
+   ROOT NODE
+   ========================= */
+
+#tree-root {
+  margin: 20px;
+}
+
+#root-children {
+  position: relative;
+  min-height: 200px;
+}
+
+/* =========================
+   NODE CORE
    ========================= */
 
 .node {
-  background: var(--node-bg);
-  border: 1px solid var(--node-border);
-  border-left: 4px solid var(--accent);
-  border-radius: 8px;
-  padding: 12px;
-  margin: 12px;
-  box-shadow: var(--shadow-low);
+  position: relative;
+  display: inline-block;
+  min-width: 220px;
+  margin: 8px;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.node.dragging {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.node.selected {
+  outline: 2px dashed currentColor;
 }
 
 .node-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 6px;
 }
 
 .node-title {
+  flex: 1;
   font-weight: 600;
-  cursor: grab;
+  white-space: nowrap;
 }
 
-.node.selected {
-  outline: 2px solid var(--accent);
-}
-
-/* Drag */
-.node.dragging {
-  opacity: 0.85;
-  box-shadow: var(--shadow-high);
-  cursor: grabbing;
-  pointer-events: none;
+.node-header input,
+.node-header select {
+  min-width: 0;
 }
 
 /* =========================
-   RNG BRANCHES
+   NODE BRANCHES (RNG)
    ========================= */
 
 .node-branch {
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px dashed var(--border);
-  border-radius: 6px;
+  margin-top: 6px;
+  padding: 4px;
+  border-top-width: 1px;
+  border-top-style: solid;
 }
 
+.node-branch-title {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.node-children {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Drop highlight */
 .node-branch.highlight {
-  border-color: var(--accent);
-  background: rgba(0,0,0,0.2);
+  outline: 2px dashed currentColor;
+}
+
+/* =========================
+   BUTTONS (STRUCTURE)
+   ========================= */
+
+button {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-width: 1px;
+  border-style: solid;
+  background: none;
+}
+
+button.small {
+  padding: 2px 6px;
+}
+
+/* =========================
+   DROPDOWN (SETTINGS)
+   ========================= */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 220px;
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 100;
+}
+
+.dropdown:hover .dropdown-content {
+  display: flex;
+}
+
+.dropdown-content select,
+.dropdown-content label {
+  width: 100%;
 }
 
 /* =========================
@@ -230,114 +276,129 @@ body[data-bg-grid="off"] #editor-area::before {
 .db-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.9);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 10000;
+  align-items: center;
+  z-index: 200;
 }
 
 .db-modal-content {
-  width: 90%;
-  max-width: 1400px;
-  height: 85vh;
-  background: var(--panel);
-  border-radius: 12px;
-  box-shadow: var(--shadow-high);
+  width: 80vw;
+  max-width: 1000px;
+  height: 80vh;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* =========================
-   DB GRID
-   ========================= */
-
-.db-grid {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  column-count: 3;
-  column-gap: 16px;
+.db-modal-header {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  flex-shrink: 0;
 }
 
-.db-entry {
-  break-inside: avoid;
-  background: var(--node-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
+.db-search-input {
+  flex: 1;
+}
+
+.db-tabs {
   display: flex;
-  gap: 12px;
+  gap: 4px;
+}
+
+.db-tab-btn {
+  padding: 4px 8px;
   cursor: pointer;
 }
 
-.db-entry:hover {
-  box-shadow: var(--shadow-low);
-}
-
 /* =========================
-   DB ICONS
+   DB BODY
    ========================= */
 
-.db-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.db-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
 }
 
-/* Placeholder */
-.db-icon::before {
-  content: "◌";
-  opacity: 0.35;
+.db-entry {
+  padding: 6px;
+  border-width: 1px;
+  border-style: solid;
+  cursor: pointer;
 }
 
-/* =========================
-   ICON COLORS
-   ========================= */
-
-.icon.buff.low    { color: rgb(var(--buff-low-rgb)); }
-.icon.buff.medium { color: rgb(var(--buff-medium-rgb)); }
-.icon.buff.high   { color: rgb(var(--buff-high-rgb)); }
-
-.icon.debuff.low    { color: rgb(var(--debuff-low-rgb)); }
-.icon.debuff.medium { color: rgb(var(--debuff-medium-rgb)); }
-.icon.debuff.high   { color: rgb(var(--debuff-high-rgb)); }
-
-.icon.status  { color: rgb(var(--icon-status-gray-rgb)); }
-.icon.mental  { color: rgb(var(--icon-debuff-purple-rgb)); }
-.icon.electric{ color: rgb(var(--icon-debuff-blue-rgb)); }
-
-/* =========================
-   DB TEXT
-   ========================= */
-
-.db-title {
-  font-weight: 600;
+.db-entry.expanded {
+  grid-column: span 2;
 }
 
 .db-id {
   font-size: 12px;
-  color: var(--muted);
+  opacity: 0.7;
+}
+
+.db-summary {
+  margin-top: 4px;
+}
+
+.db-details {
+  margin-top: 6px;
+  display: none;
+}
+
+.db-entry.expanded .db-details {
+  display: block;
 }
 
 /* =========================
-   OUTPUT
+   DB TAGS
+   ========================= */
+
+.db-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.db-tag {
+  padding: 2px 6px;
+  font-size: 11px;
+  border-left-width: 3px;
+  border-left-style: solid;
+}
+
+/* =========================
+   OUTPUT / XML
    ========================= */
 
 textarea#output {
-  position: absolute;
-  left: 240px;
-  right: 0;
-  bottom: 0;
-  height: 160px;
-  background: var(--panel);
-  color: var(--text);
-  border-top: 1px solid var(--border);
-  font-family: Consolas, monospace;
-  padding: 10px;
+  width: 100%;
+  height: 140px;
+  resize: none;
+  padding: 6px;
+}
+
+/* =========================
+   TOOLTIP (CORE)
+   ========================= */
+
+.ui-tooltip {
+  max-width: 260px;
+  padding: 6px 8px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* =========================
+   TREE VIEW SVG
+   ========================= */
+
+#tree-svg {
+  width: 100%;
+  height: 100%;
 }
