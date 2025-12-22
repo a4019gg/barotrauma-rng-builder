@@ -1,377 +1,15 @@
 [
   {
-    "id": "bleeding",
-    "name": "Bleeding",
-    "description": "The patient is losing blood. If left untreated, this will eventually lead to death.",
-    "type": "bleeding",
-    "maxstrength": "100",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,768,128,128",
-      "color_theme_key": "icon_damage_red",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "burn",
-    "name": "Burn",
-    "description": "The area is blistered and red, and skin is already beginning to peel away in sheets. The patient is in a great deal of pain.",
-    "type": "burn",
-    "maxstrength": "200",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "896,0,128,128",
-      "color_theme_key": "icon_damage_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "electricshock",
-    "name": "Zapped",
-    "description": "",
-    "type": "stun",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "512,768,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "explosiondamage",
-    "name": "Deep tissue injury",
+    "id": "concussion",
+    "name": "Concussion",
     "description": "",
     "type": "damage",
-    "maxstrength": "200",
-    "limbspecific": "true",
+    "maxstrength": 10,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "896,0,128,128",
-      "color_theme_key": "icon_damage_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "nausea",
-    "name": "Nausea",
-    "description": "The skin is clammy and the patient is vomiting periodically.",
-    "type": "nausea",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "128,384,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "stun",
-    "name": "Stun",
-    "description": "",
-    "type": "stun",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "blunttrauma",
-    "name": "Blunt trauma",
-    "description": "",
-    "type": "damage",
-    "maxstrength": "200",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "768,896,128,128",
-      "color_theme_key": "icon_damage_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "lacerations",
-    "name": "Lacerations",
-    "description": "",
-    "type": "damage",
-    "maxstrength": "200",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "768,896,128,128",
-      "color_theme_key": "icon_damage_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "bloodloss",
-    "name": "Blood loss",
-    "description": "",
-    "type": "damage",
-    "maxstrength": "200",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "384,768,128,128",
-      "color_theme_key": "icon_status_brown",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "morbusinepoisoning",
-    "name": "Morbusine Poisoning",
-    "description": "Patient is hallucinating and exhibits paranoia.",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "cyanidepoisoning",
-    "name": "Cyanide poisoning",
-    "description": "",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "sufforinpoisoning",
-    "name": "Sufforin Poisoning",
-    "description": "Sneaky, slowly progressing poisoning that eventually leads to death.",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "deliriuminepoisoning",
-    "name": "Deliriumine Poisoning",
-    "description": "Patient is hallucinating and exhibits paranoia.",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "hallucinating_mindsunraveled",
-    "name": "Hallucinating (Mind's Unraveled)",
-    "description": "",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "radiationsickness",
-    "name": "Radiation sickness",
-    "description": "Burns and sores can be seen on patient's skin. They seem to be spreading.",
-    "type": "radiationsickness",
-    "maxstrength": "200",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "384,768,128,128",
-      "color_theme_key": "icon_status_yellow",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "jovianradiation",
-    "name": "Jovian Radiation",
-    "description": "",
-    "type": "radiationsickness",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "0,640,128,128",
-      "color_theme_key": "icon_debuff_blue",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "acidburn",
-    "name": "Acid Burn",
-    "description": "",
-    "type": "burn",
-    "maxstrength": "200",
-    "limbspecific": "true",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/CommandUIBackground.png",
-      "sourcerect": "640,768,128,128",
-      "color_theme_key": "icon_buff_lightgreen",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "infection",
-    "name": "Infection",
-    "description": "",
-    "type": "infection",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/TalentsIcons4.png",
-      "sourcerect": "0,384,128,128",
-      "color_theme_key": "icon_buff_lightgreen",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "drunkweakness",
-    "name": "Drunk Vulnerability",
-    "description": "",
-    "type": "debuff",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/TalentsIcons4.png",
-      "sourcerect": "128,384,128,128",
-      "color_theme_key": "icon_buff_lightgreen",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "huskroulette",
-    "name": "Husk Roulette Participation",
-    "description": "",
-    "type": "resistance",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/TalentsIcons4.png",
-      "sourcerect": "768,256,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "mindsense",
-    "name": "Mind Sense",
-    "description": "",
-    "type": "visionbuff",
-    "maxstrength": "600",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "huskinfectionresistance",
-    "name": "Husk Infection Resistance",
-    "description": "Husk be gone.",
-    "type": "resistance",
-    "maxstrength": "600",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "384,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "psychosisresistance",
-    "name": "Psychosis Resistance",
-    "description": "",
-    "type": "resistance",
-    "maxstrength": "600",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "strengthen",
-    "name": "Vigor",
-    "description": "Damage be gone.",
-    "type": "strengthbuff",
-    "maxstrength": "600",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "512,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "huskdisguise",
-    "name": "Husk Disguise",
-    "description": "",
-    "type": "disguiseashusk",
-    "maxstrength": "1",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/CommandUIAtlas.png",
-      "sourcerect": "896,768,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
@@ -379,29 +17,142 @@
     "name": "Disoriented",
     "description": "",
     "type": "invertcontrols",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "0,384,128,128",
-      "color_theme_key": "icon_status_tan",
-      "origin": "0,0"
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
-    "id": "spaceherpes",
-    "name": "Space herpes",
+    "id": "drunk",
+    "name": "drunk",
     "description": "",
-    "type": "spaceherpes",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "0,384,128,128",
-      "color_theme_key": "icon_status_tan",
-      "origin": "0,0"
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "drunknodebuffs",
+    "name": "drunknodebuffs",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "opiatewithdrawal",
+    "name": "Opiate withdrawal",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "opiateoverdose",
+    "name": "Opiate overdose",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "opiateaddiction",
+    "name": "Opiate addiction",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "radiationsickness",
+    "name": "Radiation sickness",
+    "description": "",
+    "type": null,
+    "maxstrength": 200,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "morbusinepoisoning",
+    "name": "Morbusine poisoning",
+    "description": "",
+    "type": "poison",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "sufforinpoisoning",
+    "name": "Sufforin Poisoning",
+    "description": "",
+    "type": "poison",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "deliriuminepoisoning",
+    "name": "Deliriumine Poisoning",
+    "description": "",
+    "type": "poison",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "cyanidepoisoning",
+    "name": "Cyanide poisoning",
+    "description": "",
+    "type": "poison",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
@@ -409,14 +160,54 @@
     "name": "Paralysis",
     "description": "",
     "type": "paralysis",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_gray",
-      "origin": "0,0"
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
+    }
+  },
+  {
+    "id": "slowparalysis",
+    "name": "Paralysis",
+    "description": "",
+    "type": "paralysis",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
+    }
+  },
+  {
+    "id": "electricshock",
+    "name": "Zapped",
+    "description": "",
+    "type": "stun",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "electric",
+      "colorMode": "fixed",
+      "fixedColorKey": "electric-blue"
+    }
+  },
+  {
+    "id": "electricshockwearoff",
+    "name": "Woozy",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 10,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
@@ -424,164 +215,41 @@
     "name": "IncrementalStun",
     "description": "",
     "type": "stun",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "drag",
-    "name": "Drag",
-    "description": "",
-    "type": "drag",
-    "maxstrength": "1",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/CommandUIAtlas.png",
-      "sourcerect": "768,768,128,128",
-      "color_theme_key": "icon_debuff_purple",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "acidreaction",
-    "name": "Acid Reaction",
-    "description": "",
-    "type": "debuff",
-    "maxstrength": "120",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "0,768,128,128",
-      "color_theme_key": "icon_debuff_violet",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "drunk",
-    "name": "Drunk",
-    "description": "",
-    "type": "buff",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
     }
   },
   {
     "id": "progressivestun",
-    "name": "Zapped",
+    "name": "ProgressiveStun",
     "description": "",
     "type": "stun",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
     }
   },
   {
-    "id": "stabilozine",
-    "name": "Stabilozine Effects",
+    "id": "nausea",
+    "name": "Nausea",
     "description": "",
-    "type": "buff",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": true,
-    "icon": {
-      "texture": "assets/textures/TalentsIcons4.png",
-      "sourcerect": "768,256,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "concussion",
-    "name": "Concussion",
-    "description": "",
-    "type": "concussion",
-    "maxstrength": "10",
-    "limbspecific": "false",
+    "type": "nausea",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "hallucinating",
-    "name": "Hallucinating",
-    "description": "",
-    "type": "poison",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,640,128,128",
-      "color_theme_key": "icon_poison_darkred",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "blind_hard",
-    "name": "Blinded",
-    "description": "",
-    "type": "none",
-    "maxstrength": "10",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "huskinfection",
-    "name": "Husk Infection",
-    "description": "",
-    "type": "huskinfection",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "896,640,128,128",
-      "color_theme_key": "icon_debuff_red_orange",
-      "origin": "0,0"
-    }
-  },
-  {
-    "id": "psychosis",
-    "name": "Psychosis",
-    "description": "",
-    "type": "psychosis",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
-    "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
     }
   },
   {
@@ -589,59 +257,143 @@
     "name": "Watcher's Gaze",
     "description": "",
     "type": "gaze",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/CommandUIAtlas.png",
-      "sourcerect": "896,896,128,128",
-      "color_theme_key": "icon_damage_red",
-      "origin": "0,0"
+      "role": "mental",
+      "colorMode": "fixed",
+      "fixedColorKey": "mental-purple"
     }
   },
   {
-    "id": "drunknodebuffs",
-    "name": "Drunk (No Debuffs)",
+    "id": "hallucinating",
+    "name": "Hallucinating",
     "description": "",
-    "type": "debuff",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "type": null,
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "384,640,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
-    "id": "mantiscamouflage",
-    "name": "",
+    "id": "hallucinatingshortduration",
+    "name": "Hallucinating (short)",
     "description": "",
-    "type": "disguise",
-    "maxstrength": "10",
-    "limbspecific": "false",
+    "type": "invertcontrols",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "reaperstax",
+    "name": "Reaper's Tax",
+    "description": "",
+    "type": "respawnpenalty",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "drag",
+    "name": "Drag",
+    "description": "",
+    "type": "drag",
+    "maxstrength": 1,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "haste",
+    "name": "Hyperactivity",
+    "description": "",
+    "type": "haste",
+    "maxstrength": 600,
+    "limbspecific": false,
     "isbuff": true,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "128,768,128,128",
-      "color_theme_key": "icon_status_orange",
-      "origin": "0,0"
+      "role": "buff",
+      "colorMode": "dynamic"
     }
   },
   {
-    "id": "concealed",
-    "name": "Concealed",
+    "id": "huskinfectionresistance",
+    "name": "Husk Infection Resistance",
     "description": "",
-    "type": "concealed",
-    "maxstrength": "1",
-    "limbspecific": "false",
-    "isbuff": false,
+    "type": "resistance",
+    "maxstrength": 600,
+    "limbspecific": false,
+    "isbuff": true,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "psychosisresistance",
+    "name": "Psychosis Resistance",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": 600,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "psychosisimmunity",
+    "name": "psychosisimmunity",
+    "description": "",
+    "type": "immunity",
+    "maxstrength": 60,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "pressureresistance",
+    "name": "Pressure Resistance",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "strengthen",
+    "name": "Vigor",
+    "description": "",
+    "type": "strengthbuff",
+    "maxstrength": 600,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
     }
   },
   {
@@ -649,59 +401,313 @@
     "name": "Paralysis Resistance",
     "description": "",
     "type": "resistance",
-    "maxstrength": "800",
-    "limbspecific": "false",
+    "maxstrength": 800,
+    "limbspecific": false,
     "isbuff": true,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "256,896,128,128",
-      "color_theme_key": "icon_buff_green",
-      "origin": "0,0"
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "disguised",
+    "name": "Disguised",
+    "description": "",
+    "type": "disguiseasanother",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "disguisedashusk",
+    "name": "disguisedashusk",
+    "description": "",
+    "type": "disguiseashusk",
+    "maxstrength": 1,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "chemaddiction",
+    "name": "Chem Addiction",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
     "id": "chemwithdrawal",
-    "name": "Chem Withdrawal",
+    "name": "Chem withdrawal",
     "description": "",
     "type": "debuff",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "maxstrength": 100,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,768,128,128",
-      "color_theme_key": "icon_status_gray",
-      "origin": "0,0"
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   },
   {
-    "id": "opiatewithdrawal",
-    "name": "Opiate Withdrawal",
+    "id": "damageimmunity",
+    "name": "Damage immunity",
     "description": "",
-    "type": "debuff",
-    "maxstrength": "100",
-    "limbspecific": "false",
-    "isbuff": false,
+    "type": "immunity",
+    "maxstrength": 1,
+    "limbspecific": false,
+    "isbuff": true,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "640,768,128,128",
-      "color_theme_key": "icon_status_gray",
-      "origin": "0,0"
+      "role": "buff",
+      "colorMode": "dynamic"
     }
   },
   {
-    "id": "AfflictionSpaceHerpes",
-    "name": "Space Herpes",
+    "id": "concealed",
+    "name": "Concealed",
     "description": "",
-    "type": "spaceherpes",
-    "maxstrength": "100",
-    "limbspecific": "false",
+    "type": "concealed",
+    "maxstrength": 1,
+    "limbspecific": false,
     "isbuff": false,
     "icon": {
-      "texture": "assets/textures/MainIconsAtlas.png",
-      "sourcerect": "0,384,128,128",
-      "color_theme_key": "icon_status_tan",
-      "origin": "0,0"
+      "role": "status",
+      "colorMode": "fixed",
+      "fixedColorKey": "status-gray"
+    }
+  },
+  {
+    "id": "doomofjove",
+    "name": "Doom of Jove",
+    "description": "",
+    "type": "doomofjove",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "acidreaction",
+    "name": "Europabrew's effects",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 120,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "recoilstabilized",
+    "name": "recoilstabilized",
+    "description": "",
+    "type": "recoilstabilized",
+    "maxstrength": 1,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "emp",
+    "name": "EMP",
+    "description": "",
+    "type": "emp",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "electric",
+      "colorMode": "fixed",
+      "fixedColorKey": "electric-blue"
+    }
+  },
+  {
+    "id": "psychoclown",
+    "name": "psychoclown",
+    "description": "",
+    "type": "psychoclown",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "drunkweakness",
+    "name": "Drunk Vulnerability",
+    "description": "",
+    "type": "debuff",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "stabilozineeffect",
+    "name": "Stabilozine Effects",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": 120,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "adrenalinerush",
+    "name": "adrenalinerush",
+    "description": "",
+    "type": "adrenaline",
+    "maxstrength": 8,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "huskroulette",
+    "name": "Husk Roulette Participation",
+    "description": "",
+    "type": "resistance",
+    "maxstrength": 120,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "burning",
+    "name": "Burning",
+    "description": "",
+    "type": "burn",
+    "maxstrength": 15,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "sensoryoverload",
+    "name": "Sensory Overload",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 30,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "blind_hard",
+    "name": "Blinded",
+    "description": "",
+    "type": "none",
+    "maxstrength": 10,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "blind",
+    "name": "Blinded",
+    "description": "",
+    "type": "none",
+    "maxstrength": 30,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "mantiscamouflage",
+    "name": "",
+    "description": "",
+    "type": null,
+    "maxstrength": 10,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "hallucinating_mindsunraveled",
+    "name": "hallucinating_mindsunraveled",
+    "description": "",
+    "type": null,
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "mindsense",
+    "name": "Mind Sense",
+    "description": "",
+    "type": "visionbuff",
+    "maxstrength": 600,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "role": "buff",
+      "colorMode": "dynamic"
+    }
+  },
+  {
+    "id": "jovianradiation",
+    "name": "Jovian Radiation",
+    "description": "",
+    "type": null,
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "role": "debuff",
+      "colorMode": "dynamic"
     }
   }
 ]
