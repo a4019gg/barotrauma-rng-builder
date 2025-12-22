@@ -1,37 +1,59 @@
-/* css/themes/dark.css — v0.9.421 — ТЁМНАЯ ТЕМА */
+/* css/themes/dark.css — 0A2.0.703 — DARK THEME (NEW DB + SEMANTIC ICON MODEL ONLY) */
 
 /* =========================
    ROOT VARIABLES
    ========================= */
 
 :root {
+  /* Base UI */
   --bg: #1e1e1e;
   --panel: #252526;
   --text: #ddd;
   --accent: #007acc;
+  --border: #444;
+
   --green: #6a9955;
   --red: #f44747;
-  --border: #444;
+
   --node-bg: #2d2d30;
-  --grid-color: rgba(100,100,100,0.12);
+
+  --grid-color: rgba(100, 100, 100, 0.12);
+
   --shadow-low: 0 2px 8px rgba(0,0,0,0.2);
   --shadow-high: 0 8px 24px rgba(0,0,0,0.4);
 
-  /* Цвета иконок аффликшенов (vanilla Barotrauma) */
-  --icon-damage-red-rgb: 195, 60, 60;
-  --icon-damage-orange-rgb: 195, 136, 60;
-  --icon-buff-green-rgb: 10, 193, 114;
-  --icon-status-orange-rgb: 195, 136, 60;
-  --icon-debuff-red-orange-rgb: 195, 104, 60;
-  --icon-poison-darkred-rgb: 150, 26, 26;
+  /* =========================
+     SEMANTIC ICON COLORS (FIXED)
+     ========================= */
+
+  --icon-status-gray-rgb: 106, 106, 106;
   --icon-status-yellow-rgb: 195, 180, 60;
   --icon-status-brown-rgb: 139, 60, 42;
-  --icon-status-gray-rgb: 106, 106, 106;
-  --icon-debuff-purple-rgb: 143, 111, 160;
   --icon-status-tan-rgb: 193, 162, 122;
-  --icon-debuff-blue-rgb: 60, 107, 195;
+
+  --icon-buff-green-rgb: 10, 193, 114;
   --icon-buff-lightgreen-rgb: 84, 171, 90;
+
+  --icon-debuff-red-rgb: 195, 60, 60;
+  --icon-debuff-red-orange-rgb: 195, 104, 60;
+  --icon-damage-orange-rgb: 195, 136, 60;
+  --icon-poison-darkred-rgb: 150, 26, 26;
+
+  --icon-debuff-purple-rgb: 143, 111, 160;
   --icon-debuff-violet-rgb: 120, 23, 157;
+  --icon-debuff-blue-rgb: 60, 107, 195;
+
+  /* =========================
+     DYNAMIC INTENSITY (BAROTRAUMA UI)
+     ========================= */
+
+  --buff-low-rgb: 66, 170, 73;
+  --buff-medium-rgb: 110, 168, 118;
+  --buff-high-rgb: 154, 213, 163;
+
+  --debuff-low-rgb: 243, 162, 50;
+  --debuff-medium-rgb: 155, 55, 55;
+  --debuff-high-rgb: 228, 27, 27;
 }
 
 /* =========================
@@ -55,7 +77,7 @@ textarea#output,
 }
 
 /* =========================
-   LEFT PANEL / EVENTS
+   EVENTS PANEL
    ========================= */
 
 .event-tab {
@@ -96,9 +118,9 @@ textarea#output,
 }
 
 .node.rng        { border-left-color: var(--accent); }
-.node.spawn      { border-left-color: #61afef; }
-.node.creature   { border-left-color: #f44336; }
-.node.affliction { border-left-color: #ff9800; }
+.node.spawn      { border-left-color: rgb(var(--icon-buff-lightgreen-rgb)); }
+.node.creature   { border-left-color: rgb(var(--icon-debuff-red-rgb)); }
+.node.affliction { border-left-color: rgb(var(--icon-status-yellow-rgb)); }
 
 body[data-node-shadows="high"] .node {
   box-shadow: var(--shadow-high);
@@ -118,7 +140,7 @@ button {
 }
 
 button:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.15);
 }
 
 button.green  { background: var(--green); }
@@ -206,63 +228,28 @@ button.danger { background: var(--red); }
   opacity: 1;
 }
 
-.info-toggle {
-  color: var(--text);
-  opacity: 0.6;
-}
-
-.info-toggle:hover {
-  opacity: 1;
-}
-
 /* =========================
-   DB TAGS — NEUTRAL
+   SEMANTIC ICONS (NEW MODEL)
    ========================= */
 
-.db-tag {
-  background: rgba(255,255,255,0.08);
-  color: var(--text);
-  opacity: 0.85;
-}
+/* Fixed roles */
+.icon.status   { color: rgb(var(--icon-status-gray-rgb)); }
+.icon.buff     { color: rgb(var(--icon-buff-green-rgb)); }
+.icon.debuff   { color: rgb(var(--icon-debuff-red-rgb)); }
+.icon.mental   { color: rgb(var(--icon-debuff-purple-rgb)); }
+.icon.electric { color: rgb(var(--icon-debuff-blue-rgb)); }
+
+/* Dynamic intensity */
+.icon.buff.low    { color: rgb(var(--buff-low-rgb)); }
+.icon.buff.medium { color: rgb(var(--buff-medium-rgb)); }
+.icon.buff.high   { color: rgb(var(--buff-high-rgb)); }
+
+.icon.debuff.low    { color: rgb(var(--debuff-low-rgb)); }
+.icon.debuff.medium { color: rgb(var(--debuff-medium-rgb)); }
+.icon.debuff.high   { color: rgb(var(--debuff-high-rgb)); }
 
 /* =========================
-   DB TAGS — AFFLICTIONS (SEMANTIC)
-   ========================= */
-
-.db-tag[data-tag="DAMAGE"] {
-  border-left: 3px solid rgb(var(--icon-damage-red-rgb));
-}
-
-.db-tag[data-tag="STATUS"] {
-  border-left: 3px solid rgb(var(--icon-status-orange-rgb));
-}
-
-.db-tag[data-tag="BUFF"] {
-  border-left: 3px solid rgb(var(--icon-buff-green-rgb));
-}
-
-.db-tag[data-tag="DEBUFF"] {
-  border-left: 3px solid rgb(var(--icon-debuff-red-orange-rgb));
-}
-
-.db-tag[data-tag="POISON"] {
-  border-left: 3px solid rgb(var(‎--icon-buff-lightgreen-rgb));
-}
-
-.db-tag[data-tag="LIMB"] {
-  border-left: 3px solid rgb(var(--icon-status-yellow-rgb));
-}
-
-/* =========================
-   DB EMPTY STATE
-   ========================= */
-
-.db-empty {
-  color: #888;
-}
-
-/* =========================
-   UI TOASTS — BASE (THEME)
+   UI TOASTS
    ========================= */
 
 .ui-toast {
@@ -271,10 +258,6 @@ button.danger { background: var(--red); }
   border: 1px solid var(--border);
   box-shadow: var(--shadow-high);
 }
-
-/* =========================
-   UI TOASTS — TYPES
-   ========================= */
 
 .ui-toast-info {
   border-left: 4px solid var(--accent);
@@ -285,7 +268,7 @@ button.danger { background: var(--red); }
 }
 
 .ui-toast-warning {
-  border-left: 4px solid rgb(var(--icon-status-orange-rgb));
+  border-left: 4px solid rgb(var(--icon-status-yellow-rgb));
 }
 
 .ui-toast-error {
