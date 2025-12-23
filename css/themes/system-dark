@@ -1,0 +1,177 @@
+/* =========================================
+   SYSTEM DARK THEME — VISUAL RESTORE
+   ========================================= */
+
+:root {
+  --bg: #1e1e1e;
+  --panel: #252526;
+  --panel-soft: #2b2b2f;
+  --text: #ddd;
+
+  --accent: #007acc;
+  --border: #3c3c3c;
+
+  --green: #6a9955;
+  --red: #f44747;
+
+  --node-bg: #2d2d30;
+
+  --shadow-soft: 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-strong: 0 8px 24px rgba(0,0,0,0.45);
+}
+
+/* ===== GLOBAL ===== */
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== PANELS ===== */
+
+.top-bar,
+.action-bar,
+#events-panel,
+.event-id-bar,
+textarea#output,
+.db-modal-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  border-radius: 6px;
+}
+
+/* убираем “плоский” эффект */
+.top-bar,
+.action-bar {
+  margin: 4px;
+}
+
+/* ===== BUTTONS ===== */
+
+button {
+  background: linear-gradient(
+    to bottom,
+    #3a3a3f,
+    #2a2a2e
+  );
+  color: #fff;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+              0 2px 6px rgba(0,0,0,0.4);
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+button:active {
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+}
+
+button.green {
+  background: linear-gradient(#6fa86b, #5b8f57);
+}
+
+button.danger {
+  background: linear-gradient(#f06060, #d64545);
+}
+
+/* ===== DROPDOWN (SETTINGS) ===== */
+
+.dropdown-content {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-strong);
+}
+
+/* ===== EVENTS ===== */
+
+.event-tab {
+  background: var(--node-bg);
+  border-radius: 4px;
+  margin: 4px;
+}
+
+.event-tab:hover {
+  background: #36363b;
+}
+
+.event-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ===== NODES ===== */
+
+.node {
+  background: linear-gradient(
+    to bottom,
+    #303035,
+    #26262a
+  );
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* типы */
+.node.rng        { border-left-color: var(--accent); }
+.node.spawn      { border-left-color: #61afef; }
+.node.creature   { border-left-color: #f44747; }
+.node.affliction { border-left-color: #ff9800; }
+
+/* ===== RNG BRANCHES ===== */
+
+.node-branch {
+  background: rgba(255,255,255,0.02);
+  border-radius: 4px;
+  padding: 6px;
+}
+
+/* ===== PROBABILITY ===== */
+
+.prob {
+  color: #ccc;
+}
+
+/* ===== DB ===== */
+
+.db-entry {
+  background: linear-gradient(
+    to bottom,
+    #2f2f34,
+    #26262a
+  );
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-soft);
+}
+
+.db-entry:hover {
+  background: #36363b;
+}
+
+.db-entry.expanded {
+  border-color: var(--accent);
+}
+
+/* ===== INPUTS ===== */
+
+input,
+select,
+textarea {
+  background: #1f1f22;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* ===== GRID (НЕ ПРОСВЕЧИВАЕТ ЧЕРЕЗ НОДЫ) ===== */
+
+#editor-area::before {
+  opacity: 0.4;
+}
