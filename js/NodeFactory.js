@@ -1,13 +1,10 @@
-// js/NodeFactory.js — 0A2.0.703
-window.NODES_VERSION = "0A2.0.703";
+// js/NodeFactory.js — 0A2.0.710 — NODE FACTORY (LEGACY SAFE + ICONS)
 
-const GRID_SIZE = 30;
+window.NODES_VERSION = "0A2.0.710";
 
 class NodeFactory {
   constructor() {
     this.idCounter = 0;
-    this.dragState = null;
-    this.bindGlobalHotkeys();
   }
 
   /* =========================
@@ -19,14 +16,8 @@ class NodeFactory {
   }
 
   createModel(type, params = {}) {
-    const base = {
-      id: this.generateId(),
-      type,
-      params: { ...params }
-    };
-    if (type === "rng") {
-      base.children = { success: [], failure: [] };
-    }
+    const base = { id: this.generateId(), type, params };
+    if (type === "rng") base.children = { success: [], failure: [] };
     return base;
   }
 
@@ -38,16 +29,15 @@ class NodeFactory {
     return this.createModel("spawn", {
       item: "",
       amount: 1,
-      quality: "N"
+      quality: 0
     });
   }
 
   createModelCreature() {
     return this.createModel("creature", {
       creature: "",
-      amount: 1,
-      spawnLocation: "inside", // inside | outside | near
-      randomize: true
+      count: 1,
+      spawnLocation: "inside" // inside | outside | near
     });
   }
 
@@ -70,12 +60,8 @@ class NodeFactory {
     const header = document.createElement("div");
     header.className = "node-header";
 
-    const title = document.createElement("span");
-    title.className = "node-title";
-    title.textContent = this.getTitle(model);
-
-    header.appendChild(title);
-    this.appendParams(header, model);
+    header.appendChild(this.buildTitle(model));
+    header.appendChild(this.buildProbability(model));
 
     const del = document.createElement("button");
     del.className = "danger small";
@@ -86,108 +72,156 @@ class NodeFactory {
     header.appendChild(del);
     node.appendChild(header);
 
+    node.appendChild(this.buildContent(model));
+
     if (model.type === "rng") {
       node.appendChild(this.createBranch(model, "success"));
       node.appendChild(this.createBranch(model, "failure"));
     }
 
-    this.makeDraggable(node, header);
     return node;
   }
 
-  getTitle(model) {
-    const map = {
-      rng: "≋ " + loc("rngAction"),
-      spawn: "◌ " + loc("spawnItem"),
-      creature: "◌ " + loc("spawnCreature"),
-      affliction: "◌ " + loc("applyAffliction")
-    };
-    return map[model.type] || loc("unknownNode");
+  /* =========================
+     HEADER PARTS
+     ========================= */
+
+  buildTitle(model) {
+    const span = document.createElement("span");
+    span.className = "node-title";
+    span.textContent = {
+      rng: loc("rngAction"),
+      spawn: loc("spawnItem"),
+      creature: loc("spawnCreature"),
+      affliction: loc("applyAffliction")
+    }[model.type] || loc("unknownNode");
+    return span;
   }
 
-  appendParams(container, model) {
-    const bind = (el, key) => {
-      el.dataset.action = "updateParam";
-      el.dataset.id = model.id;
-      el.dataset.key = key;
-      return el;
-    };
+  buildProbability(model) {
+    const wrap = document.createElement("span");
+    wrap.className = "probability";
 
-    const p = model.params;
-
+    let chance = 1;
     if (model.type === "rng") {
-      const i = bind(document.createElement("input"), "chance");
-      i.type = "number";
-      i.min = 0;
-      i.max = 1;
-      i.step = 0.001;
-      i.value = p.chance;
-      container.appendChild(i);
+      chance = model.params.chance ?? 1;
     }
 
+    wrap.textContent = `${(chance * 100).toFixed(1)}%`;
+    wrap.dataset.tooltip = "chanceHint";
+    return wrap;
+  }
+
+  /* =========================
+     CONTENT
+     ========================= */
+
+  buildContent(model) {
+    const wrap = document.createElement("div");
+    wrap.className = "node-content";
+
     if (model.type === "spawn") {
-      const item = bind(document.createElement("input"), "item");
-      item.placeholder = loc("itemPlaceholder");
-      item.value = p.item;
-
-      const amt = bind(document.createElement("input"), "amount");
-      amt.type = "number";
-      amt.min = 1;
-      amt.value = p.amount;
-
-      const q = bind(document.createElement("select"), "quality");
-      ["N", "G", "E", "M"].forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent = v;
-        q.appendChild(o);
-      });
-      q.value = p.quality;
-
-      container.append(item, document.createTextNode(" × "), amt, q);
+      wrap.append(
+        this.input("item", model, "item", "itemPlaceholder"),
+        this.text("×"),
+        this.input("number", model, "amount"),
+        this.qualitySelect(model)
+      );
     }
 
     if (model.type === "creature") {
-      const c = bind(document.createElement("input"), "creature");
-      c.placeholder = loc("creaturePlaceholder");
-      c.value = p.creature;
-
-      const amt = bind(document.createElement("input"), "amount");
-      amt.type = "number";
-      amt.min = 1;
-      amt.value = p.amount;
-
-      const locSel = bind(document.createElement("select"), "spawnLocation");
-      ["inside", "outside", "near"].forEach(v => {
-        const o = document.createElement("option");
-        o.value = v;
-        o.textContent = v;
-        locSel.appendChild(o);
-      });
-      locSel.value = p.spawnLocation;
-
-      container.append(c, document.createTextNode(" × "), amt, locSel);
+      wrap.append(
+        this.input("creature", model, "creature", "creaturePlaceholder"),
+        this.text("×"),
+        this.input("number", model, "count"),
+        this.spawnLocationSelect(model)
+      );
     }
 
     if (model.type === "affliction") {
-      const a = bind(document.createElement("input"), "affliction");
-      a.placeholder = loc("afflictionPlaceholder");
-      a.value = p.affliction;
-
-      const s = bind(document.createElement("input"), "strength");
-      s.type = "number";
-      s.min = 0;
-      s.value = p.strength;
-
-      container.append(a, document.createTextNode(" "), loc("strength") + ":", s);
+      wrap.append(
+        this.afflictionIcon(model),
+        this.input("affliction", model, "affliction", "afflictionPlaceholder"),
+        this.text(loc("strength") + ":"),
+        this.input("number", model, "strength")
+      );
     }
+
+    return wrap;
   }
+
+  /* =========================
+     HELPERS
+     ========================= */
+
+  input(type, model, key, placeholderKey) {
+    const i = document.createElement("input");
+    i.type = type === "number" ? "number" : "text";
+    i.value = model.params[key] ?? "";
+    if (placeholderKey) i.placeholder = loc(placeholderKey);
+
+    i.dataset.action = "updateParam";
+    i.dataset.id = model.id;
+    i.dataset.key = key;
+    return i;
+  }
+
+  text(t) {
+    const s = document.createElement("span");
+    s.textContent = t;
+    return s;
+  }
+
+  /* =========================
+     QUALITY
+     ========================= */
+
+  qualitySelect(model) {
+    const wrap = document.createElement("span");
+    wrap.className = "item-quality Q" + (model.params.quality ?? 0);
+    wrap.textContent = ["N", "G", "E", "M", "L"][model.params.quality ?? 0];
+    wrap.dataset.tooltip = "itemQualityHint";
+    return wrap;
+  }
+
+  /* =========================
+     CREATURE LOCATION
+     ========================= */
+
+  spawnLocationSelect(model) {
+    const s = document.createElement("select");
+    ["inside", "outside", "near"].forEach(v => {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = v;
+      if (model.params.spawnLocation === v) o.selected = true;
+      s.appendChild(o);
+    });
+
+    s.dataset.action = "updateParam";
+    s.dataset.id = model.id;
+    s.dataset.key = "spawnLocation";
+    return s;
+  }
+
+  /* =========================
+     AFFLICTION ICON
+     ========================= */
+
+  afflictionIcon(model) {
+    const span = document.createElement("span");
+    span.className = "affliction-icon debuff medium";
+    span.textContent = "●"; // placeholder glyph
+    return span;
+  }
+
+  /* =========================
+     RNG BRANCHES
+     ========================= */
 
   createBranch(model, branch) {
     const wrap = document.createElement("div");
     wrap.className = "node-branch";
-    wrap.dataset.branch = branch;
-    wrap.dataset.parentId = model.id;
 
     const title = document.createElement("div");
     title.className = "node-branch-title";
@@ -203,88 +237,6 @@ class NodeFactory {
     wrap.append(title, children);
     return wrap;
   }
-
-  /* =========================
-     DRAG & DROP (FIXED OFFSET)
-     ========================= */
-
-  makeDraggable(node, handle) {
-    handle.addEventListener("mousedown", e => {
-      if (["INPUT", "SELECT", "BUTTON"].includes(e.target.tagName)) return;
-      this.startDrag(e, node);
-    });
-  }
-
-  startDrag(e, node) {
-    const rect = node.getBoundingClientRect();
-
-    this.dragState = {
-      node,
-      id: Number(node.dataset.id),
-      offsetX: e.clientX - rect.left,
-      offsetY: e.clientY - rect.top
-    };
-
-    node.classList.add("dragging");
-    node.style.position = "absolute";
-    node.style.zIndex = 999;
-
-    document.addEventListener("mousemove", this.onDrag);
-    document.addEventListener("mouseup", this.onDrop);
-  }
-
-  onDrag = e => {
-    if (!this.dragState) return;
-    let x = e.clientX - this.dragState.offsetX;
-    let y = e.clientY - this.dragState.offsetY;
-
-    if (localStorage.getItem("snapToGrid") === "true") {
-      x = Math.round(x / GRID_SIZE) * GRID_SIZE;
-      y = Math.round(y / GRID_SIZE) * GRID_SIZE;
-    }
-
-    this.dragState.node.style.left = `${x}px`;
-    this.dragState.node.style.top = `${y}px`;
-  };
-
-  onDrop = e => {
-    const drag = this.dragState;
-    if (!drag) return;
-
-    const dropBranch =
-      document.elementFromPoint(e.clientX, e.clientY)
-        ?.closest(".node-branch");
-
-    drag.node.classList.remove("dragging");
-    drag.node.style.zIndex = "";
-
-    if (dropBranch) {
-      const parentId = Number(dropBranch.dataset.parentId);
-      const branch = dropBranch.dataset.branch;
-      editorState.attachNode(drag.id, parentId, branch);
-    }
-
-    this.dragState = null;
-    document.removeEventListener("mousemove", this.onDrag);
-    document.removeEventListener("mouseup", this.onDrop);
-  };
-
-  /* =========================
-     HOTKEYS
-     ========================= */
-
-  bindGlobalHotkeys() {
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape" && this.dragState) {
-        this.dragState.node.classList.remove("dragging");
-        this.dragState = null;
-      }
-    });
-  }
 }
-
-/* =========================
-   GLOBAL
-   ========================= */
 
 window.nodeFactory = new NodeFactory();
