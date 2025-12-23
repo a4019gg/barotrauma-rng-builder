@@ -1,83 +1,34 @@
-/* =========================
-   ROOT VARIABLES
-   ========================= */
+/* =========================================
+   DARK THEME — VISUAL RESTORE
+   НЕ МЕНЯЕТ LAYOUT
+   ========================================= */
 
 :root {
-  /* Base UI */
   --bg: #1e1e1e;
   --panel: #252526;
-  --panel-soft: #2a2a2d;
+  --panel-soft: #2b2b2f;
   --text: #ddd;
-  --text-dim: #aaa;
 
   --accent: #007acc;
-  --accent-soft: rgba(0,122,204,0.25);
-
-  --border: #3f3f46;
+  --border: #3c3c3c;
 
   --green: #6a9955;
   --red: #f44747;
 
-  --node-bg: linear-gradient(
-    to bottom,
-    #2f2f33,
-    #262629
-  );
+  --node-bg: #2d2d30;
 
-  --grid-color: rgba(255,255,255,0.06);
-
-  /* Depth */
-  --shadow-low: 0 2px 6px rgba(0,0,0,0.35);
-  --shadow-high: 0 10px 28px rgba(0,0,0,0.45);
-
-  --radius-s: 4px;
-  --radius-m: 6px;
-
-  /* =========================
-     SEMANTIC ICON COLORS
-     ========================= */
-
-  --icon-status-gray-rgb: 106,106,106;
-  --icon-status-yellow-rgb: 195,180,60;
-  --icon-status-brown-rgb: 139,60,42;
-  --icon-status-tan-rgb: 193,162,122;
-
-  --icon-buff-green-rgb: 10,193,114;
-  --icon-buff-lightgreen-rgb: 84,171,90;
-
-  --icon-debuff-red-rgb: 195,60,60;
-  --icon-debuff-red-orange-rgb: 195,104,60;
-  --icon-damage-orange-rgb: 195,136,60;
-  --icon-poison-darkred-rgb: 150,26,26;
-
-  --icon-debuff-purple-rgb: 143,111,160;
-  --icon-debuff-blue-rgb: 60,107,195;
-
-  /* =========================
-     DYNAMIC INTENSITY
-     ========================= */
-
-  --buff-low-rgb: 66,170,73;
-  --buff-medium-rgb: 110,168,118;
-  --buff-high-rgb: 154,213,163;
-
-  --debuff-low-rgb: 243,162,50;
-  --debuff-medium-rgb: 155,55,55;
-  --debuff-high-rgb: 228,27,27;
+  --shadow-soft: 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-strong: 0 8px 24px rgba(0,0,0,0.45);
 }
 
-/* =========================
-   GLOBAL
-   ========================= */
+/* ===== GLOBAL ===== */
 
 body {
   background: var(--bg);
   color: var(--text);
 }
 
-/* =========================
-   PANELS
-   ========================= */
+/* ===== PANELS ===== */
 
 .top-bar,
 .action-bar,
@@ -85,94 +36,131 @@ body {
 .event-id-bar,
 textarea#output,
 .db-modal-content {
-  background: linear-gradient(
-    to bottom,
-    var(--panel),
-    var(--panel-soft)
-  );
-  border-color: var(--border);
-  box-shadow: var(--shadow-low);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  border-radius: 6px;
 }
 
-/* =========================
-   EVENTS PANEL
-   ========================= */
+/* убираем “плоский” эффект */
+.top-bar,
+.action-bar {
+  margin: 4px;
+}
+
+/* ===== BUTTONS ===== */
+
+button {
+  background: linear-gradient(
+    to bottom,
+    #3a3a3f,
+    #2a2a2e
+  );
+  color: #fff;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
+              0 2px 6px rgba(0,0,0,0.4);
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+button:active {
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+}
+
+button.green {
+  background: linear-gradient(#6fa86b, #5b8f57);
+}
+
+button.danger {
+  background: linear-gradient(#f06060, #d64545);
+}
+
+/* ===== DROPDOWN (SETTINGS) ===== */
+
+.dropdown-content {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-strong);
+}
+
+/* ===== EVENTS ===== */
 
 .event-tab {
-  background: var(--panel-soft);
-  border-radius: var(--radius-s);
+  background: var(--node-bg);
+  border-radius: 4px;
+  margin: 4px;
 }
 
 .event-tab:hover {
-  background: #323236;
+  background: #36363b;
 }
 
 .event-tab.active {
-  background: linear-gradient(
-    to bottom,
-    var(--accent),
-    #0063a8
-  );
+  background: var(--accent);
   color: #fff;
 }
 
-.delete-tab {
-  background: var(--red);
-  color: #fff;
-  border-radius: var(--radius-s);
-}
-
-/* =========================
-   GRID
-   ========================= */
-
-#editor-area::before {
-  background-image:
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-}
-
-/* =========================
-   NODES
-   ========================= */
+/* ===== NODES ===== */
 
 .node {
-  background: var(--node-bg);
-  border-radius: var(--radius-m);
-  box-shadow: var(--shadow-low);
+  background: linear-gradient(
+    to bottom,
+    #303035,
+    #26262a
+  );
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  box-shadow: var(--shadow-soft);
 }
 
-.node.selected {
-  outline: 2px solid var(--accent-soft);
-}
-
-.node-header {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-/* Node types */
+/* типы */
 .node.rng        { border-left-color: var(--accent); }
-.node.spawn      { border-left-color: rgb(var(--icon-buff-lightgreen-rgb)); }
-.node.creature   { border-left-color: rgb(var(--icon-debuff-red-rgb)); }
-.node.affliction { border-left-color: rgb(var(--icon-status-yellow-rgb)); }
+.node.spawn      { border-left-color: #61afef; }
+.node.creature   { border-left-color: #f44747; }
+.node.affliction { border-left-color: #ff9800; }
 
-/* =========================
-   NODE PREFIXES / CHANCE
-   ========================= */
+/* ===== RNG BRANCHES ===== */
 
-.node-prefix {
-  opacity: 0.8;
-  font-weight: bold;
+.node-branch {
+  background: rgba(255,255,255,0.02);
+  border-radius: 4px;
+  padding: 6px;
 }
 
-.node-chance-slot {
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
+/* ===== PROBABILITY ===== */
+
+.prob {
+  color: #ccc;
 }
 
-/* =========================
-   INPUTS
-   ========================= */
+/* ===== DB ===== */
+
+.db-entry {
+  background: linear-gradient(
+    to bottom,
+    #2f2f34,
+    #26262a
+  );
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-soft);
+}
+
+.db-entry:hover {
+  background: #36363b;
+}
+
+.db-entry.expanded {
+  border-color: var(--accent);
+}
+
+/* ===== INPUTS ===== */
 
 input,
 select,
@@ -180,110 +168,11 @@ textarea {
   background: #1f1f22;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: var(--radius-s);
+  border-radius: 4px;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-}
+/* ===== GRID (НЕ ПРОСВЕЧИВАЕТ ЧЕРЕЗ НОДЫ) ===== */
 
-/* =========================
-   BUTTONS (PSEUDO-MATERIAL)
-   ========================= */
-
-button {
-  background: linear-gradient(
-    to bottom,
-    #3a3a3f,
-    #2c2c30
-  );
-  color: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06),
-              var(--shadow-low);
-}
-
-button:hover {
-  background: linear-gradient(
-    to bottom,
-    #44444a,
-    #323236
-  );
-}
-
-button.green {
-  background: linear-gradient(
-    to bottom,
-    #7fb06a,
-    var(--green)
-  );
-}
-
-button.danger {
-  background: linear-gradient(
-    to bottom,
-    #ff6b6b,
-    var(--red)
-  );
-}
-
-/* =========================
-   DB MODAL
-   ========================= */
-
-.db-modal-overlay {
-  background: rgba(0,0,0,0.85);
-}
-
-.db-entry {
-  background: var(--panel-soft);
-  border-radius: var(--radius-s);
-  box-shadow: var(--shadow-low);
-}
-
-.db-entry:hover {
-  background: #333338;
-}
-
-.db-entry.expanded {
-  box-shadow: var(--shadow-high);
-}
-
-/* =========================
-   SEMANTIC ICONS
-   ========================= */
-
-.icon.status   { color: rgb(var(--icon-status-gray-rgb)); }
-.icon.buff     { color: rgb(var(--icon-buff-green-rgb)); }
-.icon.debuff   { color: rgb(var(--icon-debuff-red-rgb)); }
-.icon.mental   { color: rgb(var(--icon-debuff-purple-rgb)); }
-.icon.electric { color: rgb(var(--icon-debuff-blue-rgb)); }
-
-/* Dynamic */
-.icon.buff.low    { color: rgb(var(--buff-low-rgb)); }
-.icon.buff.medium { color: rgb(var(--buff-medium-rgb)); }
-.icon.buff.high   { color: rgb(var(--buff-high-rgb)); }
-
-.icon.debuff.low    { color: rgb(var(--debuff-low-rgb)); }
-.icon.debuff.medium { color: rgb(var(--debuff-medium-rgb)); }
-.icon.debuff.high   { color: rgb(var(--debuff-high-rgb)); }
-
-/* =========================
-   TOOLTIP
-   ========================= */
-
-.ui-tooltip {
-  background: linear-gradient(
-    to bottom,
-    #3a3a3f,
-    #2b2b2f
-  );
-  border: 1px solid var(--border);
-  border-radius: var(--radius-s);
-  box-shadow: var(--shadow-high);
-  color: var(--text);
+#editor-area::before {
+  opacity: 0.4;
 }
