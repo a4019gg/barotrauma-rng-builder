@@ -1,72 +1,88 @@
-// js/main.js — 0A2.0.700 — ENTRY POINT (STABLE, CLEAN)
+// js/main.js — 0A2.0.721 — ENTRY POINT (EDITOR CORE)
 
-window.MAIN_VERSION = "0A2.0.700";
+window.MAIN_VERSION = "0A2.0.721";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // =========================
-  // CORE MODULE CHECK
-  // =========================
+  /* =========================
+     CORE CHECK
+     ========================= */
+
   if (
-    !window.editorState ||
-    !window.nodeFactory ||
-    !window.uiController
+    !window.editorCore ||
+    !window.uiController ||
+    !window.loc
   ) {
-    console.error("[MAIN] Core modules not initialized", {
-      editorState: window.editorState,
-      nodeFactory: window.nodeFactory,
-      uiController: window.uiController
+    console.error("[MAIN] Required modules missing", {
+      editorCore: window.editorCore,
+      uiController: window.uiController,
+      loc: window.loc
     });
     return;
   }
 
-  // =========================
-  // UI INITIALIZATION
-  // =========================
+  // alias for legacy compatibility
+  window.editorState = window.editorCore;
+
+  /* =========================
+     UI INIT
+     ========================= */
 
   // Theme & language
-  window.setTheme(localStorage.getItem("theme") || "dark");
-  window.setLang(localStorage.getItem("lang") || "en");
+  if (window.setTheme) {
+    window.setTheme(localStorage.getItem("theme") || "dark");
+  }
 
-  // UI preferences
-  window.setUIScale(localStorage.getItem("uiScale") || "100");
-  window.setNodeDensity(localStorage.getItem("nodeDensity") || "normal");
-  window.toggleShadows(localStorage.getItem("nodeShadows") !== "false");
-  window.toggleGrid(localStorage.getItem("bgGrid") !== "false");
-  window.toggleSnap(localStorage.getItem("snapToGrid") === "true");
+  if (window.setLang) {
+    window.setLang(localStorage.getItem("lang") || "en");
+  }
 
-  // Localization pass (AFTER setLang)
-  window.applyLocalization();
+  // UI preferences (safe calls)
+  window.setUIScale?.(localStorage.getItem("uiScale") || "100");
+  window.setNodeDensity?.(localStorage.getItem("nodeDensity") || "normal");
+  window.toggleShadows?.(localStorage.getItem("nodeShadows") !== "false");
+  window.toggleGrid?.(localStorage.getItem("bgGrid") !== "false");
+  window.toggleSnap?.(localStorage.getItem("snapToGrid") === "true");
 
-  // =========================
-  // INITIAL RENDER
-  // =========================
+  // Localization pass (после setLang)
+  window.applyLocalization?.();
 
-  window.editorState.renderCurrentEvent();
-  window.editorState.rebuildTabs();
+  /* =========================
+     INITIAL RENDER
+     ========================= */
 
-  // =========================
-  // GLOBAL UPDATE FUNCTION
-  // =========================
-  // ONLY rendering / recalculation
-  // NO setters, NO state mutation
+  window.editorCore.commit();
+
+  /* =========================
+     GLOBAL UPDATE FUNCTION
+     ========================= */
+
+  // ❗️ВАЖНО:
+  // updateAll НЕ меняет состояние
+  // updateAll НЕ дергает setLang / setTheme
+  // updateAll = визуальный рефреш + tree
+
   window.updateAll = () => {
+    // Classic view уже отрендерен editorCore.commit()
     const treeContainer = document.getElementById("tree-container");
     if (treeContainer && treeContainer.style.display === "block") {
       window.treeView?.render();
     }
   };
 
-  // =========================
-  // AUX INIT
-  // =========================
+  /* =========================
+     AUX INIT
+     ========================= */
+
   window.populateDatalist?.();
   window.showScriptVersions?.();
 
-  // =========================
-  // DEBUG
-  // =========================
+  /* =========================
+     DEBUG
+     ========================= */
+
   console.log("[MAIN] Ready", {
     MAIN_VERSION: window.MAIN_VERSION,
+    EDITOR_CORE_VERSION: window.EDITOR_CORE_VERSION,
     UI_VERSION: window.UI_VERSION,
     DB_VERSION: window.DB_VERSION,
     UTILS_VERSION: window.UTILS_VERSION
