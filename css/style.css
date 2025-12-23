@@ -856,3 +856,30 @@ body.dragging {
   -webkit-user-select: none;
   cursor: pointer;
 }
+
+/* === ITEM QUALITY (CORE) === */
+.item-quality {
+  font-weight: 600;
+  margin-left: 4px;
+}
+/* === AFFLICTION ICON (CORE) === */
+.affliction-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+}
+/* === PROBABILITY MARKER === */
+.probability {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.probability::before {
+  content: "◌";
+  opacity: 0.6;
+}
