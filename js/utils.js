@@ -64,6 +64,7 @@ function setTheme(theme) {
     const map = {
       dark: "css/themes/dark.css",
       light: "css/themes/light.css",
+      "system-dark": "css/themes/system-dark.css",
       "flopstyle-dark": "css/themes/flopstyle-dark.css",
       "turbo-vision-dark": "css/themes/turbo-vision-dark.css"
     };
