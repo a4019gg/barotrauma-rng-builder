@@ -1,46 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barotrauma RNG Builder v0.9.402</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <link rel="stylesheet" href="css/style.css" id="main-style">
-  <link rel="stylesheet" id="theme-style">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
-<body data-theme="dark" data-ui-scale="100" data-node-density="normal" data-node-shadows="high" data-bg-grid="visible">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- ТОП-БАР -->
+  <title>Barotrauma RNG Builder</title>
+
+  <!-- D3 (Tree View) -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- CORE STYLES -->
+  <link rel="stylesheet" href="css/style.css" id="core-style" />
+  <link rel="stylesheet" href="" id="theme-style" />
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+</head>
+
+<body
+  data-theme="dark"
+  data-ui-scale="100"
+  data-node-density="normal"
+  data-node-shadows="high"
+  data-bg-grid="visible"
+>
+
+<!-- =========================
+     TOP BAR
+     ========================= -->
+
 <div class="top-bar">
   <div class="top-left">
-    <button data-action="toggleView" id="view-btn" data-l10n="treeView">Tree View</button>
-    <button data-action="openDB" data-l10n="dataBase">Data Base</button>
-    <button data-action="loadExample" data-l10n="presets">Presets & Examples</button>
+    <button id="view-btn" data-action="toggleView" data-l10n="treeView">
+      Tree View
+    </button>
+    <button data-action="openDB" data-l10n="dataBase">
+      Database
+    </button>
+    <button data-action="loadExample" data-l10n="presets">
+      Presets
+    </button>
   </div>
-  <div class="top-right">
-    <button data-action="importFile" data-l10n="import">Import</button>
-    <button data-action="exportJSON" data-l10n="export">Export</button>
 
+  <div class="top-right">
+    <button data-action="importFile" data-l10n="import">
+      Import
+    </button>
+    <button data-action="exportJSON" data-l10n="export">
+      Export
+    </button>
+
+    <!-- SETTINGS -->
     <div class="dropdown">
       <button data-l10n="settings">Settings</button>
+
       <div class="dropdown-content">
+        <!-- THEME -->
         <strong data-l10n="settingsTheme">Theme</strong>
         <select id="theme-select" data-action="setTheme">
-          <option value="dark">Dark</option>
+          <option value="dark">Dark (Legacy)</option>
+          <option value="system-dark">System Dark</option>
           <option value="light">Light</option>
           <option value="flopstyle-dark">Flopstyle Dark</option>
           <option value="turbo-vision-dark">Turbo Vision Dark</option>
         </select>
 
+        <!-- LANGUAGE -->
         <strong data-l10n="settingsLanguage">Language</strong>
         <select id="lang-select" data-action="setLang">
           <option value="en">English</option>
           <option value="ru">Русский</option>
         </select>
 
-        <hr>
+        <hr />
 
+        <!-- UI SCALE -->
         <strong data-l10n="settingsUIScale">UI Scale</strong>
         <select id="scale-select" data-action="setUIScale">
           <option value="80">80%</option>
@@ -49,6 +82,7 @@
           <option value="150">150%</option>
         </select>
 
+        <!-- NODE DENSITY -->
         <strong data-l10n="settingsNodeDensity">Node Density</strong>
         <select id="density-select" data-action="setNodeDensity">
           <option value="compact">Compact</option>
@@ -56,95 +90,157 @@
           <option value="comfortable">Comfortable</option>
         </select>
 
+        <!-- NODE STYLE -->
         <strong data-l10n="settingsNodeStyle">Node Style</strong>
-        <label><input type="checkbox" data-action="toggleShadows" checked> <span data-l10n="settingsShadows">Shadows</span></label>
-        <label><input type="checkbox" data-action="toggleGrid" checked> <span data-l10n="settingsGrid">Background Grid</span></label>
-        <label><input type="checkbox" data-action="toggleSnap" checked> <span data-l10n="settingsSnap">Snap to Grid</span></label>
+        <label>
+          <input type="checkbox" data-action="toggleShadows" checked />
+          <span data-l10n="settingsShadows">Shadows</span>
+        </label>
+        <label>
+          <input type="checkbox" data-action="toggleGrid" checked />
+          <span data-l10n="settingsGrid">Background Grid</span>
+        </label>
+        <label>
+          <input type="checkbox" data-action="toggleSnap" />
+          <span data-l10n="settingsSnap">Snap to Grid</span>
+        </label>
 
-        <hr>
+        <hr />
 
+        <!-- XML -->
         <strong data-l10n="settingsXMLBehavior">XML & Behavior</strong>
         <select data-action="setXMLFormat">
           <option value="pretty" selected>Pretty</option>
           <option value="minified">Minified</option>
           <option value="comments">With Comments</option>
         </select>
-        <label><input type="checkbox" data-action="toggleValidation" checked> <span data-l10n="settingsValidateXML">Validate XML</span></label>
-        <label><input type="checkbox" data-action="toggleCheckDuplicateIDs" checked> <span data-l10n="settingsCheckDuplicates">Check Duplicate IDs</span></label>
 
-        <hr>
+        <label>
+          <input type="checkbox" data-action="toggleValidation" checked />
+          <span data-l10n="settingsValidateXML">Validate XML</span>
+        </label>
 
-        <div id="script-versions" style="font-size:12px;color:#888;padding:8px">Loading...</div>
+        <label>
+          <input type="checkbox" data-action="toggleCheckDuplicateIDs" checked />
+          <span data-l10n="settingsCheckDuplicates">Check Duplicate IDs</span>
+        </label>
+
+        <hr />
+
+        <div id="script-versions"
+             style="font-size:12px;color:#888;padding:6px">
+          Loading…
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ACTION BAR -->
+<!-- =========================
+     ACTION BAR
+     ========================= -->
+
 <div class="action-bar">
   <div class="action-left">
-    <button data-action="addNode" data-type="rng" data-l10n="addRNG">+ ГСЧ</button>
-    <button data-action="addNode" data-type="spawn" data-l10n="addItem">+ Предмет</button>
-    <button data-action="addNode" data-type="creature" data-l10n="addCreature">+ Существо</button>
-    <button data-action="addNode" data-type="affliction" data-l10n="addAffliction">+ Аффикшен</button>
-    <button data-action="clearAll" data-l10n="clearAll">Очистить</button>
-    <button data-action="autoBalance" data-l10n="autoBalance">Автобаланс</button>
+    <button data-action="addNode" data-type="rng" data-l10n="addRNG">+ RNG</button>
+    <button data-action="addNode" data-type="spawn" data-l10n="addItem">+ Item</button>
+    <button data-action="addNode" data-type="creature" data-l10n="addCreature">+ Creature</button>
+    <button data-action="addNode" data-type="affliction" data-l10n="addAffliction">+ Affliction</button>
+    <button data-action="clearAll" data-l10n="clearAll">Clear</button>
+    <button data-action="autoBalance" data-l10n="autoBalance">Auto Balance</button>
   </div>
+
   <div class="action-right">
-    <button class="green" data-action="generateXML" data-l10n="generateXML">Сгенерировать XML</button>
-    <!-- ФИКС: новый ключ для кнопки -->
-    <button data-action="copyXML" data-l10n="copyXMLButton">Копировать XML</button>
-    <button data-action="downloadXML" data-l10n="downloadXML">Скачать XML</button>
-    <button data-action="importFromXML" data-l10n="importXML">Импорт из XML</button>
+    <button class="green" data-action="generateXML" data-l10n="generateXML">
+      Generate XML
+    </button>
+    <button data-action="copyXML" data-l10n="copyXMLButton">
+      Copy XML
+    </button>
+    <button data-action="downloadXML" data-l10n="downloadXML">
+      Download XML
+    </button>
+    <button data-action="importFromXML" data-l10n="importXML">
+      Import XML
+    </button>
   </div>
 </div>
 
-<!-- ГЛАВНЫЙ КОНТЕЙНЕР -->
+<!-- =========================
+     MAIN LAYOUT
+     ========================= -->
+
 <div id="main-container">
+
+  <!-- EVENTS -->
   <div id="events-panel">
     <div class="panel-header">
-      <button data-action="addEvent" data-l10n="addEvent">+ Добавить ивент</button>
+      <button data-action="addEvent" data-l10n="addEvent">
+        + Add Event
+      </button>
     </div>
     <div id="events-list"></div>
   </div>
 
+  <!-- EDITOR -->
   <div id="editor-area">
+
+    <!-- CLASSIC VIEW -->
     <div id="classic-view">
       <div id="tree-root" class="node root">
         <div class="header-node">
-          <strong id="root-label" data-l10n="rootLabel">Root Event</strong>
-          <span class="prob"><span class="global">100.000%</span><br><small class="local">100.0%</small></span>
+          <strong data-l10n="rootLabel">Root Event</strong>
+          <span class="prob">
+            <span class="global">100%</span><br />
+            <small class="local">100%</small>
+          </span>
         </div>
         <div class="children" id="root-children"></div>
       </div>
     </div>
+
+    <!-- TREE VIEW -->
     <div id="tree-container" style="display:none;">
       <svg id="tree-svg"></svg>
     </div>
+
   </div>
 </div>
 
-<!-- Event ID -->
+<!-- =========================
+     EVENT ID
+     ========================= -->
+
 <div class="event-id-bar">
   <label data-l10n="eventIdLabel">Event ID:</label>
-  <input id="event-id" value="new_event">
+  <input id="event-id" value="new_event" />
 </div>
 
-<textarea id="output" placeholder="XML will appear here..."></textarea>
+<!-- =========================
+     OUTPUT
+     ========================= -->
 
-<input type="file" id="file-input" style="display:none" accept=".json">
+<textarea id="output" placeholder="XML will appear here…"></textarea>
+
+<input type="file" id="file-input" hidden accept=".json" />
 <datalist id="item-datalist"></datalist>
 
-<!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
+<!-- =========================
+     SCRIPTS (ORDER IS CRITICAL)
+     ========================= -->
+
 <script src="js/lang/en.js"></script>
 <script src="js/lang/ru.js"></script>
+
 <script src="js/utils.js"></script>
-<script src="js/NodeFactory.js"></script>
-<script src="js/EditorState.js"></script>
+
+<!-- Editor Core (NF + State + Tree will be merged later) -->
+<script src="js/editor-core.js"></script>
+
 <script src="js/UIController.js"></script>
 <script src="js/db.js"></script>
-<script src="js/tree.js"></script>
 <script src="js/xml.js"></script>
 <script src="js/main.js"></script>
+
 </body>
 </html>
