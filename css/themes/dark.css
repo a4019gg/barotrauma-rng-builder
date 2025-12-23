@@ -292,3 +292,59 @@ button.danger { background: var(--red); }
 .ui-toast-error {
   border-left: 4px solid var(--red);
 }
+
+/* === ITEM QUALITY COLORS === */
+
+.item-quality.Q0 { color: #cfcfcf; } /* Normal */
+.item-quality.Q1 { color: #6fcf97; } /* Good */
+.item-quality.Q2 { color: #56ccf2; } /* Excellent */
+.item-quality.Q3 { color: #bb6bd9; } /* Masterwork */
+.item-quality.Q4 { color: #f2c94c; } /* Legendary */
+
+/* === AFFLICTION ICON ROLES === */
+
+.affliction-icon.status {
+  color: rgb(var(--icon-status-gray-rgb));
+}
+
+.affliction-icon.buff {
+  color: rgb(var(--icon-buff-green-rgb));
+}
+
+.affliction-icon.debuff {
+  color: rgb(var(--icon-debuff-red-rgb));
+}
+
+.affliction-icon.mental {
+  color: rgb(var(--icon-debuff-purple-rgb));
+}
+
+.affliction-icon.electric {
+  color: rgb(var(--icon-debuff-blue-rgb));
+}
+/* === AFFLICTION INTENSITY === */
+
+.affliction-icon.buff.low {
+  color: rgb(var(--buff-low-rgb));
+}
+
+.affliction-icon.buff.medium {
+  color: rgb(var(--buff-medium-rgb));
+}
+
+.affliction-icon.buff.high {
+  color: rgb(var(--buff-high-rgb));
+}
+
+.affliction-icon.debuff.low {
+  color: rgb(var(--debuff-low-rgb));
+}
+
+.affliction-icon.debuff.medium {
+  color: rgb(var(--debuff-medium-rgb));
+}
+
+.affliction-icon.debuff.high {
+  color: rgb(var(--debuff-high-rgb));
+}
+
