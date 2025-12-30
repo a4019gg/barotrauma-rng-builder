@@ -1,17 +1,19 @@
-// js/main.js — 0A2.0.721 — ENTRY POINT (EDITOR CORE)
+// js/main.js — 0A2.0.722 — ENTRY POINT (EDITOR CORE, FINALIZED)
 
-window.MAIN_VERSION = "0A2.0.721";
+window.MAIN_VERSION = "0A2.0.722";
 
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
      CORE CHECK
      ========================= */
 
-  if (
-    !window.editorCore ||
-    !window.uiController ||
-    !window.loc
-  ) {
+  const missing = {
+    editorCore: !window.editorCore,
+    uiController: !window.uiController,
+    loc: !window.loc
+  };
+
+  if (Object.values(missing).some(Boolean)) {
     console.error("[MAIN] Required modules missing", {
       editorCore: window.editorCore,
       uiController: window.uiController,
@@ -20,51 +22,83 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // alias for legacy compatibility
+  /* =========================
+     LEGACY BRIDGE (TEMP)
+     =========================
+     НУЖНО, пока UIController
+     не переведён полностью
+     ========================= */
+
+  // ⚠️ НЕ использовать в новом коде
   window.editorState = window.editorCore;
 
   /* =========================
      UI INIT
      ========================= */
 
-  // Theme & language
-  if (window.setTheme) {
-    window.setTheme(localStorage.getItem("theme") || "dark");
+  // Theme
+  if (typeof window.setTheme === "function") {
+    window.setTheme(
+      localStorage.getItem("theme") || "dark"
+    );
   }
 
-  if (window.setLang) {
-    window.setLang(localStorage.getItem("lang") || "en");
+  // Language
+  if (typeof window.setLang === "function") {
+    window.setLang(
+      localStorage.getItem("lang") || "en"
+    );
   }
 
-  // UI preferences (safe calls)
-  window.setUIScale?.(localStorage.getItem("uiScale") || "100");
-  window.setNodeDensity?.(localStorage.getItem("nodeDensity") || "normal");
-  window.toggleShadows?.(localStorage.getItem("nodeShadows") !== "false");
-  window.toggleGrid?.(localStorage.getItem("bgGrid") !== "false");
-  window.toggleSnap?.(localStorage.getItem("snapToGrid") === "true");
+  // UI preferences (ТОЛЬКО сеттеры, без сайд-эффектов)
+  window.setUIScale?.(
+    localStorage.getItem("uiScale") || "100"
+  );
 
-  // Localization pass (после setLang)
+  window.setNodeDensity?.(
+    localStorage.getItem("nodeDensity") || "normal"
+  );
+
+  window.toggleShadows?.(
+    localStorage.getItem("nodeShadows") !== "false"
+  );
+
+  window.toggleGrid?.(
+    localStorage.getItem("bgGrid") !== "false"
+  );
+
+  window.toggleSnap?.(
+    localStorage.getItem("snapToGrid") === "true"
+  );
+
+  /* =========================
+     LOCALIZATION PASS
+     ========================= */
+
   window.applyLocalization?.();
 
   /* =========================
      INITIAL RENDER
      ========================= */
 
+  // Editor Core сам знает, что и как рендерить
   window.editorCore.commit();
 
   /* =========================
      GLOBAL UPDATE FUNCTION
+     =========================
+     ТОЛЬКО визуал
+     БЕЗ мутаций состояния
      ========================= */
 
-  // ❗️ВАЖНО:
-  // updateAll НЕ меняет состояние
-  // updateAll НЕ дергает setLang / setTheme
-  // updateAll = визуальный рефреш + tree
-
   window.updateAll = () => {
-    // Classic view уже отрендерен editorCore.commit()
+    // Classic View уже обновлён через commit()
+
     const treeContainer = document.getElementById("tree-container");
-    if (treeContainer && treeContainer.style.display === "block") {
+    if (
+      treeContainer &&
+      treeContainer.style.display === "block"
+    ) {
       window.treeView?.render();
     }
   };
