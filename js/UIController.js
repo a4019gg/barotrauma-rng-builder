@@ -1,52 +1,36 @@
-// js/UIController.js — 0A2.0.722 — UI CONTROLLER (EDITOR CORE ONLY)
+// js/UIController.js — 0A2.0.722 — UI CONTROLLER (EDITOR CORE)
 
 window.UI_VERSION = "0A2.0.722";
 
 class UIController {
   constructor() {
-    this.selectedNodeIds = new Set();
-    this._bindEvents();
+    this.init();
   }
 
   /* =========================
-     EVENT BINDING
+     INIT
      ========================= */
 
-  _bindEvents() {
+  init() {
     document.addEventListener("click", e => this.handleClick(e));
     document.addEventListener("change", e => this.handleChange(e));
-    document.addEventListener("keydown", e => this.handleKeyDown(e));
   }
 
   /* =========================
-     CLICK HANDLER
+     CLICK HANDLING
      ========================= */
 
   handleClick(e) {
     const actionEl = e.target.closest("[data-action]");
-    const nodeEl = e.target.closest(".node");
-
-    /* === NODE SELECTION === */
-    if (nodeEl && !actionEl) {
-      const id = Number(nodeEl.dataset.id);
-      if (Number.isNaN(id)) return;
-
-      if (e.shiftKey) {
-        this.toggleSelection(id, nodeEl);
-      } else {
-        this.clearSelection();
-        this.selectNode(id, nodeEl);
-      }
-      return;
-    }
-
     if (!actionEl) return;
-    e.preventDefault();
-    e.stopPropagation();
 
     const action = actionEl.dataset.action;
-    const type = actionEl.dataset.type;
     const id = actionEl.dataset.id ? Number(actionEl.dataset.id) : null;
+    const type = actionEl.dataset.type;
+    const parentId = actionEl.dataset.parentId
+      ? Number(actionEl.dataset.parentId)
+      : null;
+    const branch = actionEl.dataset.branch;
 
     switch (action) {
       /* ===== VIEW ===== */
@@ -59,35 +43,39 @@ class UIController {
         window.editorCore.addEvent();
         break;
 
-      /* ===== NODES ===== */
+      /* ===== ROOT NODES ===== */
       case "addNode":
         this.addRootNode(type);
         break;
 
+      /* ===== REMOVE ===== */
       case "removeNode":
-        if (id !== null) {
+        if (id != null) {
+          window.editorCore.saveState("Remove node");
           window.editorCore.removeNodeById(id);
-          this.clearSelection();
+          window.editorCore.commit();
         }
         break;
 
-      /* ===== GLOBAL OPS ===== */
+      /* ===== CLEAR ===== */
       case "clearAll":
-        window.editorCore.clearAll();
-        this.clearSelection();
+        if (!confirm(loc("clearAllConfirm"))) return;
+        window.editorCore.saveState("Clear all");
+        window.editorCore.model.length = 0;
+        window.editorCore.commit();
         break;
 
-      case "autoBalance":
-        window.editorCore.autoBalance();
+      /* ===== XML ===== */
+      case "generateXML":
+        window.generateXML?.();
         break;
 
-      /* ===== IO ===== */
-      case "exportJSON":
-        this.exportJSON();
+      case "copyXML":
+        this.copyXML();
         break;
 
-      case "importFile":
-        this.importJSON();
+      case "downloadXML":
+        this.downloadXML();
         break;
 
       default:
@@ -96,7 +84,7 @@ class UIController {
   }
 
   /* =========================
-     CHANGE HANDLER
+     CHANGE HANDLING
      ========================= */
 
   handleChange(e) {
@@ -105,11 +93,10 @@ class UIController {
 
     const action = el.dataset.action;
 
-    /* ===== NODE PARAMS ===== */
+    /* ===== PARAM UPDATE ===== */
     if (action === "updateParam") {
       const id = Number(el.dataset.id);
       const key = el.dataset.key;
-      if (!key || Number.isNaN(id)) return;
 
       const node = window.editorCore.findNodeById(id);
       if (!node) return;
@@ -117,80 +104,48 @@ class UIController {
       let value = el.value;
       if (el.type === "number") value = Number(value);
 
+      window.editorCore.saveState("Update param");
       node.params[key] = value;
       window.editorCore.commit();
       return;
     }
 
-    /* ===== UI SETTINGS ===== */
+    /* ===== SETTINGS ===== */
     switch (action) {
-      case "setTheme": window.setTheme?.(el.value); break;
-      case "setLang": window.setLang?.(el.value); break;
-      case "setUIScale": window.setUIScale?.(el.value); break;
-      case "setNodeDensity": window.setNodeDensity?.(el.value); break;
-      case "toggleShadows": window.toggleShadows?.(el.checked); break;
-      case "toggleGrid": window.toggleGrid?.(el.checked); break;
-      case "toggleSnap": window.toggleSnap?.(el.checked); break;
-      case "setXMLFormat": window.setXMLFormat?.(el.value); break;
-      case "toggleValidation": window.toggleValidation?.(el.checked); break;
-      case "toggleCheckDuplicateIDs":
-        window.toggleCheckDuplicateIDs?.(el.checked);
+      case "setTheme":
+        window.setTheme?.(el.value);
         break;
-
+      case "setLang":
+        window.setLang?.(el.value);
+        window.applyLocalization?.();
+        break;
+      case "setUIScale":
+        window.setUIScale?.(el.value);
+        break;
+      case "setNodeDensity":
+        window.setNodeDensity?.(el.value);
+        break;
+      case "toggleShadows":
+        window.toggleShadows?.(el.checked);
+        break;
+      case "toggleGrid":
+        window.toggleGrid?.(el.checked);
+        break;
+      case "toggleSnap":
+        window.toggleSnap?.(el.checked);
+        break;
       default:
         console.warn("[UI] Unknown change action:", action);
     }
   }
 
   /* =========================
-     KEYBOARD
-     ========================= */
-
-  handleKeyDown(e) {
-    if (e.key === "Escape") {
-      this.clearSelection();
-    }
-
-    if (e.key === "Delete" && this.selectedNodeIds.size > 0) {
-      this.selectedNodeIds.forEach(id =>
-        window.editorCore.removeNodeById(id, true)
-      );
-      window.editorCore.commit();
-      this.clearSelection();
-    }
-  }
-
-  /* =========================
-     NODE SELECTION
-     ========================= */
-
-  selectNode(id, el) {
-    this.selectedNodeIds.add(id);
-    el.classList.add("selected");
-  }
-
-  toggleSelection(id, el) {
-    if (this.selectedNodeIds.has(id)) {
-      this.selectedNodeIds.delete(id);
-      el.classList.remove("selected");
-    } else {
-      this.selectNode(id, el);
-    }
-  }
-
-  clearSelection() {
-    this.selectedNodeIds.forEach(id => {
-      const el = document.querySelector(`.node[data-id="${id}"]`);
-      el?.classList.remove("selected");
-    });
-    this.selectedNodeIds.clear();
-  }
-
-  /* =========================
-     NODE CREATION
+     ROOT NODE FACTORY
      ========================= */
 
   addRootNode(type) {
+    if (!window.editorCore) return;
+
     const map = {
       rng: () => window.editorCore.createModelRNG(),
       spawn: () => window.editorCore.createModelSpawn(),
@@ -198,28 +153,26 @@ class UIController {
       affliction: () => window.editorCore.createModelAffliction()
     };
 
-    const fn = map[type];
-    if (!fn) return;
+    const factory = map[type];
+    if (!factory) return;
 
     window.editorCore.saveState("Add root node");
-    window.editorCore.events[
-      window.editorCore.currentEventIndex
-    ].model.push(fn());
-
-    window.editorCore.commit();
+    window.editorCore.addRootNode(factory());
   }
 
   /* =========================
-     VIEW TOGGLE
+     VIEW
      ========================= */
 
   toggleView() {
     const classic = document.getElementById("classic-view");
     const tree = document.getElementById("tree-container");
     const btn = document.getElementById("view-btn");
+
     if (!classic || !tree || !btn) return;
 
     const treeVisible = tree.style.display === "block";
+
     tree.style.display = treeVisible ? "none" : "block";
     classic.style.display = treeVisible ? "block" : "none";
 
@@ -231,48 +184,31 @@ class UIController {
   }
 
   /* =========================
-     IMPORT / EXPORT
+     XML HELPERS
      ========================= */
 
-  exportJSON() {
-    const data = window.editorCore.exportData();
-    const blob = new Blob(
-      [JSON.stringify(data, null, 2)],
-      { type: "application/json" }
-    );
+  copyXML() {
+    const out = document.getElementById("output");
+    if (!out) return;
+
+    out.select();
+    document.execCommand("copy");
+    alert(loc("copyXML"));
+  }
+
+  downloadXML() {
+    const out = document.getElementById("output");
+    if (!out) return;
+
+    const blob = new Blob([out.value], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "rng-builder-event.json";
+    a.download = "barotrauma-event.xml";
     a.click();
 
     URL.revokeObjectURL(url);
-  }
-
-  importJSON() {
-    const input = document.getElementById("file-input");
-    if (!input) return;
-
-    input.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          const data = JSON.parse(ev.target.result);
-          window.editorCore.importData(data);
-          alert(loc("presetLoaded"));
-        } catch (err) {
-          console.error(err);
-          alert(loc("presetError"));
-        }
-      };
-      reader.readAsText(file);
-    };
-
-    input.click();
   }
 }
 
