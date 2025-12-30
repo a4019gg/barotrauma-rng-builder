@@ -408,5 +408,4 @@ class TreeView {
 /* =========================================================
    GLOBAL EXPORT
    ========================================================= */
-
-window.editor = new EditorCore();
+window.editorCore = new EditorCore();
