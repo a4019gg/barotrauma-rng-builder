@@ -1,3 +1,28 @@
+:root {
+  /* roles */
+  --color-buff:    120 200 140;
+  --color-debuff:  220 120 120;
+  --color-damage:  230 80 80;
+  --color-neutral: 180 180 180;
+
+  /* poison palette */
+  --palette-low-r:  80;
+  --palette-low-g:  200;
+  --palette-low-b:  120;
+
+  --palette-high-r: 200;
+  --palette-high-g:  60;
+  --palette-high-b:  60;
+
+  --palette-gradient: linear-gradient(
+    to right,
+    rgb(80 200 120),
+    rgb(255 200 0),
+    rgb(200 60 60)
+  );
+}
+
+
 /* ===== TOAST COLORS ===== */
 
 .toast-neutral {
