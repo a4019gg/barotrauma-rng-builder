@@ -1,46 +1,242 @@
+/* =========================================================
+   BAROTRAUMA RNG BUILDER — DARK THEME (v2)
+   Based on legacy dark.css, cleaned & normalized
+   ========================================================= */
+
+/* =========================================================
+   BASE UI COLORS
+   ========================================================= */
+
 :root {
-  /* roles */
-  --color-buff:    120 200 140;
-  --color-debuff:  220 120 120;
-  --color-damage:  230 80 80;
-  --color-neutral: 180 180 180;
+  --bg-main:        #1e1e1e;
+  --bg-panel:       #252526;
+  --bg-panel-soft:  #2d2d30;
 
-  /* poison palette */
-  --palette-low-r:  80;
-  --palette-low-g:  200;
-  --palette-low-b:  120;
+  --text-main:      #dddddd;
+  --text-muted:     #aaaaaa;
+  --text-dim:       #888888;
 
-  --palette-high-r: 200;
-  --palette-high-g:  60;
-  --palette-high-b:  60;
+  --border-main:    #444444;
+  --accent-main:    #007acc;
 
-  --palette-gradient: linear-gradient(
+  --shadow-low:     0 2px 8px rgba(0,0,0,0.25);
+  --shadow-high:    0 8px 24px rgba(0,0,0,0.45);
+}
+
+/* =========================================================
+   ICON ROLE PALETTES (SEMANTIC)
+   legacy: buff / debuff / damage / status / poison etc.
+   ========================================================= */
+
+:root {
+  /* ---- Neutral / Status ---- */
+  --role-neutral-low:   106 106 106;
+  --role-neutral-mid:   160 160 160;
+  --role-neutral-high:  200 200 200;
+
+  /* ---- Buff ---- */
+  --role-buff-low:      66 170 73;
+  --role-buff-mid:      110 168 118;
+  --role-buff-high:     154 213 163;
+
+  /* ---- Debuff ---- */
+  --role-debuff-low:    243 162 50;
+  --role-debuff-mid:    155 55 55;
+  --role-debuff-high:   228 27 27;
+
+  /* ---- Damage ---- */
+  --role-damage-low:    195 104 60;
+  --role-damage-mid:    195 136 60;
+  --role-damage-high:   195 60 60;
+}
+
+/* =========================================================
+   ICON GRADIENT PALETTES (DB PREVIEW)
+   ========================================================= */
+
+:root {
+  /* Poison / damage-like progression */
+  --palette-poison-gradient: linear-gradient(
     to right,
     rgb(80 200 120),
     rgb(255 200 0),
     rgb(200 60 60)
   );
+
+  /* Generic debuff */
+  --palette-debuff-gradient: linear-gradient(
+    to right,
+    rgb(195 180 60),
+    rgb(195 104 60),
+    rgb(195 60 60)
+  );
+
+  /* Buff */
+  --palette-buff-gradient: linear-gradient(
+    to right,
+    rgb(66 170 73),
+    rgb(110 168 118),
+    rgb(154 213 163)
+  );
 }
 
+/* =========================================================
+   ICON CONTRACT (USED BY UI)
+   ========================================================= */
 
-/* ===== TOAST COLORS ===== */
+/*
+  Expected DOM:
+
+  <div class="icon
+              icon-role-debuff
+              icon-palette-poison
+              icon-mode-dynamic"
+       style="--icon-intensity: 0.37">
+*/
+
+.icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+
+  background-color: rgb(var(--icon-color, var(--role-neutral-mid)));
+  background-repeat: no-repeat;
+
+  /* atlas placeholders */
+  background-image: url("../assets/atlas.png");
+  mask-image: url("../assets/atlas.png");
+  mask-repeat: no-repeat;
+
+  /* performance */
+  will-change: background-color;
+}
+
+/* =========================================================
+   ICON ROLES → BASE COLORS
+   ========================================================= */
+
+.icon-role-neutral {
+  --icon-color: var(--role-neutral-mid);
+}
+
+.icon-role-buff {
+  --icon-color: var(--role-buff-mid);
+}
+
+.icon-role-debuff {
+  --icon-color: var(--role-debuff-mid);
+}
+
+.icon-role-damage {
+  --icon-color: var(--role-damage-mid);
+}
+
+/* =========================================================
+   ICON MODES
+   ========================================================= */
+
+/* ---- DB PREVIEW (GRADIENT) ---- */
+
+.icon-mode-gradient {
+  background: var(--palette-gradient);
+  mask-image: none;
+}
+
+/* ---- NODE RUNTIME (DYNAMIC) ---- */
+/* JS sets: --icon-intensity: 0..1 */
+
+.icon-mode-dynamic {
+  --icon-color: rgb(
+    calc(var(--role-low-r)  + (var(--role-high-r) - var(--role-low-r)) * var(--icon-intensity)),
+    calc(var(--role-low-g)  + (var(--role-high-g) - var(--role-low-g)) * var(--icon-intensity)),
+    calc(var(--role-low-b)  + (var(--role-high-b) - var(--role-low-b)) * var(--icon-intensity))
+  );
+}
+
+/* =========================================================
+   ROLE → INTENSITY CHANNEL BINDING
+   ========================================================= */
+
+.icon-role-buff {
+  --role-low-r:   66;
+  --role-low-g:   170;
+  --role-low-b:   73;
+
+  --role-high-r:  154;
+  --role-high-g:  213;
+  --role-high-b:  163;
+}
+
+.icon-role-debuff {
+  --role-low-r:   243;
+  --role-low-g:   162;
+  --role-low-b:   50;
+
+  --role-high-r:  228;
+  --role-high-g:  27;
+  --role-high-b:  27;
+}
+
+.icon-role-damage {
+  --role-low-r:   195;
+  --role-low-g:   136;
+  --role-low-b:   60;
+
+  --role-high-r:  195;
+  --role-high-g:  60;
+  --role-high-b:  60;
+}
+
+/* =========================================================
+   DB TAG COLORS (SEMANTIC)
+   ========================================================= */
+
+.db-tag {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  border-left: 3px solid transparent;
+}
+
+.db-tag[data-tag="BUFF"] {
+  border-left-color: rgb(var(--role-buff-mid));
+}
+
+.db-tag[data-tag="DEBUFF"] {
+  border-left-color: rgb(var(--role-debuff-mid));
+}
+
+.db-tag[data-tag="DAMAGE"] {
+  border-left-color: rgb(var(--role-damage-mid));
+}
+
+.db-tag[data-tag="STATUS"] {
+  border-left-color: rgb(var(--role-neutral-mid));
+}
+
+/* =========================================================
+   TOASTS (COMPATIBLE WITH popup.js)
+   ========================================================= */
 
 .toast-neutral {
-  background: #2e2e2e;
-  color: #e6e6e6;
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text-main);
+  border-left: 4px solid var(--accent-main);
 }
 
 .toast-success {
-  background: #1f6f43;
-  color: #eafff3;
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text-main);
+  border-left: 4px solid rgb(var(--role-buff-mid));
 }
 
 .toast-warning {
-  background: #8a6d1d;
-  color: #fff4d6;
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text-main);
+  border-left: 4px solid rgb(var(--role-damage-mid));
 }
 
 .toast-error {
-  background: #7a2323;
-  color: #ffecec;
+  background: rgba(40, 40, 40, 0.95);
+  color: var(--text-main);
+  border-left: 4px solid rgb(var(--role-debuff-high));
 }
