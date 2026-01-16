@@ -1,7 +1,11 @@
 <script type="module">
-  import { showSuccess, showError } from "./ui/popup.js";
+  import {
+    showNeutral,
+    showSuccess,
+    showWarning,
+    showError
+  } from "./ui/popup.js";
 
-  // временно для проверки
   window.testToast = () => {
     showSuccess("ID copied: revolver");
     showWarning("Something looks odd");
