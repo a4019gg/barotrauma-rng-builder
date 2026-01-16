@@ -4,60 +4,36 @@
   <meta charset="UTF-8" />
   <title>Barotrauma RNG Builder</title>
 
-  <!-- ===== BASE STYLES ===== -->
+  <!-- =====================
+       STYLES
+       ===================== -->
+
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/themes/dark.css" />
 
   <style>
-    /* минимальный reset, чтобы не мешал */
+    /* Minimal base reset for safety */
     body {
       margin: 0;
-      padding: 0;
+      background: var(--bg-main, #1e1e1e);
+      color: var(--text-main, #dddddd);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #111;
-      color: #eee;
-    }
-
-    .app {
-      padding: 24px;
-    }
-
-    button {
-      padding: 10px 16px;
-      font-size: 14px;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <div class="app">
-    <button id="open-db">Open Database</button>
-  </div>
+  <!-- =====================
+       MAIN SCRIPT
+       ===================== -->
 
-  <!-- ===== MAIN SCRIPT ===== -->
   <script type="module">
-    import {
-      showNeutral,
-      showSuccess,
-      showWarning,
-      showError
-    } from "./ui/popup.js";
+    import { openDatabasePanel } from "./ui/db-panel.js";
 
-    // кнопка просто для теста
-    document.getElementById("open-db").addEventListener("click", () => {
-      showSuccess("ID copied: revolver");
-      showWarning("Something looks odd");
-      showError("Failed to load database");
+    // Open DB immediately on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      openDatabasePanel();
     });
-
-    // для ручного теста из консоли
-    window.testToast = () => {
-      showNeutral("Neutral message");
-      showSuccess("Success message");
-      showWarning("Warning message");
-      showError("Error message");
-    };
   </script>
 
 </body>
