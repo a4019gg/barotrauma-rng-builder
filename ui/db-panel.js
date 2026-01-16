@@ -1,19 +1,20 @@
 // ui/db-panel.js
-// Database Panel UI (v2)
-// - Modal window
-// - Tabs (afflictions / items / creatures)
-// - Search + sort
-// - Expand / collapse cards
-// - Expand All with hard limit + batching
-// - Icon rendering via CSS contract
+// Database Panel UI (v2, renderer-based)
 //
-// UI-only module:
-// NO core
-// NO state
-// NO business logic
-// NO color calculations
+// Uses:
+// - services/database.js (data access)
+// - ui/icon-renderer.js (icon rendering)
+// - ui/popup.js (toasts)
+//
+// This module:
+// - Does NOT render icons itself
+// - Does NOT calculate colors
+// - Does NOT know about nodes or RNG
+//
+// All comments are intentionally ENGLISH ONLY.
 
 import * as DB from "../services/database.js";
+import { createIcon } from "./icon-renderer.js";
 import {
   showSuccess,
   showWarning,
@@ -24,8 +25,8 @@ import {
    CONFIG
    ========================================================= */
 
-const EXPAND_ALL_LIMIT = 100;     // Hard safety limit
-const EXPAND_BATCH_SIZE = 20;     // Cards expanded per frame
+const EXPAND_ALL_LIMIT = 100;
+const EXPAND_BATCH_SIZE = 20;
 
 /* =========================================================
    LOCAL STATE (DB PANEL ONLY)
@@ -33,11 +34,11 @@ const EXPAND_BATCH_SIZE = 20;     // Cards expanded per frame
 
 let isOpen = false;
 
-let currentType = "afflictions";  // persisted between opens
-let currentSort = "name-asc";     // persisted between opens
+let currentType = "afflictions";
+let currentSort = "name-asc";
 let currentQuery = "";
 
-const expandedIds = new Set();    // NOT persisted
+const expandedIds = new Set();
 
 /* Cached DOM references */
 let rootEl = null;
@@ -123,7 +124,6 @@ function buildUI() {
 
   document.body.appendChild(rootEl);
 
-  /* Cache DOM */
   listEl = rootEl.querySelector(".db-list");
   searchInput = rootEl.querySelector(".db-search");
   sortButton = rootEl.querySelector(".db-sort");
@@ -137,38 +137,31 @@ function buildUI() {
    ========================================================= */
 
 function bindEvents() {
-  /* Close on backdrop */
   rootEl.querySelector(".db-backdrop")
     .addEventListener("click", closeDatabasePanel);
 
-  /* Close button */
   rootEl.querySelector(".db-close")
     .addEventListener("click", closeDatabasePanel);
 
-  /* Tabs */
   rootEl.querySelectorAll(".db-tabs button").forEach(btn => {
     btn.addEventListener("click", () => {
       setType(btn.dataset.type);
     });
   });
 
-  /* Search */
   searchInput.addEventListener("input", e => {
     currentQuery = e.target.value;
-    expandedIds.clear();     // reset expanded cards on new search
+    expandedIds.clear();
     render();
   });
 
-  /* Sort */
   sortButton.addEventListener("click", () => {
     toggleSort();
     render();
   });
 
-  /* Expand / Collapse All */
   expandAllButton.addEventListener("click", onExpandAll);
 
-  /* ESC key */
   window.addEventListener("keydown", onKeyDown);
 }
 
@@ -232,18 +225,25 @@ function createEntryCard(entry) {
 
   const isExpanded = expandedIds.has(entry.id);
 
-  /* Header (always visible) */
   const header = document.createElement("div");
   header.className = "db-entry-header";
 
-  const icon = createIcon(entry);
+  /* Icon (DB preview mode = gradient) */
+  if (entry.icon) {
+    const iconEl = createIcon({
+      texture: entry.icon.texture,
+      sourcerect: entry.icon.sourcerect,
+      role: entry.icon.role || "neutral",
+      palette: entry.icon.palette || entry.icon.role,
+      mode: "gradient"
+    });
+
+    header.appendChild(iconEl);
+  }
+
   const title = document.createElement("div");
   title.className = "db-entry-title";
   title.textContent = entry.name || entry.id;
-
-  const idEl = document.createElement("div");
-  idEl.className = "db-entry-id";
-  idEl.textContent = entry.id;
 
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
@@ -254,40 +254,23 @@ function createEntryCard(entry) {
     toggleExpanded(entry.id);
   });
 
-  header.append(icon, title, expandBtn);
-  card.append(header, idEl);
+  header.append(title, expandBtn);
+  card.append(header);
 
-  /* Click on card body copies ID */
+  const idEl = document.createElement("div");
+  idEl.className = "db-entry-id";
+  idEl.textContent = entry.id;
+  card.append(idEl);
+
   card.addEventListener("click", () => {
     copyToClipboard(entry.id);
   });
 
-  /* Expanded details (lazy) */
   if (isExpanded) {
     card.append(createDetails(entry));
   }
 
   return card;
-}
-
-/* =========================================================
-   ICON RENDERING (DB PREVIEW)
-   ========================================================= */
-
-function createIcon(entry) {
-  const icon = document.createElement("div");
-  icon.className = "icon";
-
-  const role = entry.icon?.role || "neutral";
-  const palette = entry.icon?.palette || role;
-
-  icon.classList.add(
-    `icon-role-${role}`,
-    `icon-palette-${palette}`,
-    "icon-mode-gradient"
-  );
-
-  return icon;
 }
 
 /* =========================================================
@@ -334,7 +317,7 @@ function renderCreatureDetails(box, entry) {
    ========================================================= */
 
 function onExpandAll() {
-  let entries = DB.search(currentType, currentQuery);
+  const entries = DB.search(currentType, currentQuery);
 
   if (expandedIds.size > 0) {
     expandedIds.clear();
