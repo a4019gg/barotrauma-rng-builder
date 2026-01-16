@@ -1,4 +1,252 @@
 /* =========================
+   GLOBAL BASE
+   ========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* =========================
+   DATABASE MODAL
+   ========================= */
+
+.db-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}
+
+.db-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.db-window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: min(1000px, 92vw);
+  height: min(700px, 90vh);
+
+  display: flex;
+  flex-direction: column;
+
+  background: #1b1b1b;
+  color: #e6e6e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* =========================
+   HEADER / TABS
+   ========================= */
+
+.db-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #242424;
+}
+
+.db-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.db-tabs button {
+  padding: 6px 10px;
+  background: #2e2e2e;
+  color: #ccc;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.db-tabs button.active {
+  background: #3a3a3a;
+  color: #fff;
+}
+
+.db-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* =========================
+   TOOLBAR
+   ========================= */
+
+.db-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #202020;
+}
+
+.db-search {
+  flex: 1;
+  padding: 6px 8px;
+  background: #2a2a2a;
+  color: #eee;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.db-sort {
+  padding: 6px 10px;
+  background: #2e2e2e;
+  color: #ddd;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* =========================
+   LIST
+   ========================= */
+
+.db-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.db-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #999;
+  padding: 40px;
+}
+
+/* =========================
+   ENTRY CARD (BASE)
+   ========================= */
+
+.db-entry {
+  background: #262626;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.db-entry:hover {
+  background: #2f2f2f;
+}
+
+.db-entry-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.db-entry-id {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.db-entry-category {
+  font-size: 11px;
+  color: #888;
+}
+
+/* =========================
+   ICON SLOT
+   ========================= */
+
+.icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+
+  /* atlas placeholder */
+  background-image: url("../assets/atlas.png");
+  background-repeat: no-repeat;
+
+  /* mask for coloring */
+  mask-image: url("../assets/atlas.png");
+  mask-repeat: no-repeat;
+
+  background-color: rgb(var(--icon-color, 180 180 180));
+}
+
+/* =========================
+   ICON ROLES
+   ========================= */
+
+.icon-role-buff {
+  --icon-color: var(--color-buff);
+}
+
+.icon-role-debuff {
+  --icon-color: var(--color-debuff);
+}
+
+.icon-role-damage {
+  --icon-color: var(--color-damage);
+}
+
+.icon-role-neutral {
+  --icon-color: var(--color-neutral);
+}
+
+/* =========================
+   ICON MODES
+   ========================= */
+
+/* DB preview */
+.icon-mode-gradient {
+  background: var(--palette-gradient);
+  mask-image: none;
+}
+
+/* Node runtime */
+.icon-mode-dynamic {
+  --icon-color: rgb(
+    calc(var(--palette-low-r)   + (var(--palette-high-r)   - var(--palette-low-r))   * var(--icon-intensity)),
+    calc(var(--palette-low-g)   + (var(--palette-high-g)   - var(--palette-low-g))   * var(--icon-intensity)),
+    calc(var(--palette-low-b)   + (var(--palette-high-b)   - var(--palette-low-b))   * var(--icon-intensity))
+  );
+}
+
+/* =========================
+   TAGS (EXPANDED)
+   ========================= */
+
+.db-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.db-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: #333;
+  border-radius: 4px;
+  color: #ccc;
+}
+
+
+/* =========================
    BASE LAYOUT
    ========================= */
 
