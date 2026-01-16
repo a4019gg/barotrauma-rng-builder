@@ -1,5 +1,261 @@
 [
   {
+    "id": "internaldamage",
+    "name": "Internal Damage",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,768,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "blunttrauma",
+    "name": "Blunt force trauma",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "768,896,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "lacerations",
+    "name": "Lacerations",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,896,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "bitewounds",
+    "name": "Bite wounds",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,512,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "gunshotwound",
+    "name": "Gunshot wound",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,768,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "organdamage",
+    "name": "Organ damage",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,384,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "explosiondamage",
+    "name": "Deep tissue injury",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,0,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "bleeding",
+    "name": "bleeding",
+    "description": "",
+    "type": "bleeding",
+    "maxstrength": 100,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,640,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "bleedingnonstop",
+    "name": "Bleeding",
+    "description": "",
+    "type": "bleeding",
+    "maxstrength": 100,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,640,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "burn",
+    "name": "Burn",
+    "description": "",
+    "type": "burn",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "768,640,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "acidburn",
+    "name": "acidburn",
+    "description": "",
+    "type": "burn",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/CommandUIBackground.png",
+      "sourcerect": "640,768,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "oxygenlow",
+    "name": "Oxygen low",
+    "description": "",
+    "type": "oxygenlow",
+    "maxstrength": 200,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "512,640,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "bloodloss",
+    "name": "bloodloss",
+    "description": "",
+    "type": "bloodloss",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,768,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "stun",
+    "name": "Stun",
+    "description": "",
+    "type": "stun",
+    "maxstrength": 30,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,640,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "slow",
+    "name": "Slow",
+    "description": "",
+    "type": "slow",
+    "maxstrength": 80,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,896,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "pressure",
+    "name": "Barotrauma",
+    "description": "",
+    "type": "pressure",
+    "maxstrength": 1,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "768,768,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
     "id": "concussion",
     "name": "Concussion",
     "description": "",
@@ -8,8 +264,59 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,640,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "huskinfection",
+    "name": "Husk infection",
+    "description": "",
+    "type": "alieninfection",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "husksymbiosis",
+    "name": "husksymbiosis",
+    "description": "",
+    "type": "alieninfection",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,640,128,128",
+      "role": "buff",
+      "colorMode": "dynamic",
+      "palette": "buff"
+    }
+  },
+  {
+    "id": "spaceherpes",
+    "name": "Space herpes",
+    "description": "",
+    "type": "spaceherpes",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,384,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -20,9 +327,22 @@
     "maxstrength": 100,
     "limbspecific": false,
     "isbuff": false,
+    "icon": null
+  },
+  {
+    "id": "psychosis",
+    "name": "Psychosis",
+    "description": "",
+    "type": "psychosis",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
     "icon": {
-      "role": "debuff",
-      "colorMode": "dynamic"
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
+      "role": "mental",
+      "colorMode": "static",
+      "palette": "mental-purple"
     }
   },
   {
@@ -34,8 +354,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "384,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -47,8 +370,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "384,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -60,8 +386,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "512,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -73,8 +402,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -86,8 +418,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "384,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -99,8 +434,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -112,8 +450,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -125,8 +466,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -138,8 +482,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -151,8 +498,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -164,9 +514,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -178,9 +530,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -192,9 +546,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/CommandUIBackground.png",
+      "sourcerect": "770,768,128,128",
       "role": "electric",
-      "colorMode": "fixed",
-      "fixedColorKey": "electric-blue"
+      "colorMode": "static",
+      "palette": "electric-blue"
     }
   },
   {
@@ -206,8 +562,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -219,9 +578,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -233,9 +594,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -247,9 +610,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "896,896,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -261,9 +626,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,896,128,128",
       "role": "mental",
-      "colorMode": "fixed",
-      "fixedColorKey": "mental-purple"
+      "colorMode": "static",
+      "palette": "mental-purple"
     }
   },
   {
@@ -275,8 +642,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -288,8 +658,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -301,8 +674,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -314,8 +690,27 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
+    }
+  },
+  {
+    "id": "durationincrease",
+    "name": "Slow metabolism",
+    "description": "",
+    "type": "durationincrease",
+    "maxstrength": 600,
+    "limbspecific": false,
+    "isbuff": true,
+    "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,896,128,128",
+      "role": "buff",
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -327,8 +722,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -340,8 +738,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "384,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -353,8 +754,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -366,8 +770,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -379,8 +786,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "512,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -392,8 +802,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -405,8 +818,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -418,8 +834,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "896,768,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -431,8 +850,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "896,768,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -444,8 +866,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "384,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -457,8 +882,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "512,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -470,8 +898,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -483,9 +914,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,0,128,128",
       "role": "status",
-      "colorMode": "fixed",
-      "fixedColorKey": "status-gray"
+      "colorMode": "static",
+      "palette": "status-gray"
     }
   },
   {
@@ -497,8 +930,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -510,8 +946,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "0,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -523,8 +962,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -536,9 +978,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "640,640,128,128",
       "role": "electric",
-      "colorMode": "fixed",
-      "fixedColorKey": "electric-blue"
+      "colorMode": "static",
+      "palette": "electric-blue"
     }
   },
   {
@@ -550,8 +994,43 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "512,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
+    }
+  },
+  {
+    "id": "mysteryaffliction",
+    "name": "Mystery affliction",
+    "description": "",
+    "type": "damage",
+    "maxstrength": 100,
+    "limbspecific": false,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
+      "role": "damage",
+      "colorMode": "dynamic",
+      "palette": "damage"
+    }
+  },
+  {
+    "id": "infection",
+    "name": "infection",
+    "description": "",
+    "type": "infection",
+    "maxstrength": 200,
+    "limbspecific": true,
+    "isbuff": false,
+    "icon": {
+      "texture": "assets/TalentsIcons4.png",
+      "sourcerect": "0,384,128,128",
+      "role": "debuff",
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -563,8 +1042,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/TalentsIcons4.png",
+      "sourcerect": "128,384,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -575,10 +1057,7 @@
     "maxstrength": 120,
     "limbspecific": false,
     "isbuff": true,
-    "icon": {
-      "role": "buff",
-      "colorMode": "dynamic"
-    }
+    "icon": null
   },
   {
     "id": "adrenalinerush",
@@ -588,10 +1067,7 @@
     "maxstrength": 8,
     "limbspecific": false,
     "isbuff": true,
-    "icon": {
-      "role": "buff",
-      "colorMode": "dynamic"
-    }
+    "icon": null
   },
   {
     "id": "huskroulette",
@@ -602,8 +1078,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "768,768,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -615,8 +1094,11 @@
     "limbspecific": true,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "768,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -627,10 +1109,7 @@
     "maxstrength": 30,
     "limbspecific": false,
     "isbuff": false,
-    "icon": {
-      "role": "debuff",
-      "colorMode": "dynamic"
-    }
+    "icon": null
   },
   {
     "id": "blind_hard",
@@ -641,8 +1120,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -654,8 +1136,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "128,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -667,8 +1152,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/CommandUIAtlas.png",
+      "sourcerect": "896,768,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -680,8 +1168,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,640,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   },
   {
@@ -693,8 +1184,11 @@
     "limbspecific": false,
     "isbuff": true,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "256,896,128,128",
       "role": "buff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "buff"
     }
   },
   {
@@ -706,8 +1200,11 @@
     "limbspecific": false,
     "isbuff": false,
     "icon": {
+      "texture": "assets/MainIconsAtlas.png",
+      "sourcerect": "896,768,128,128",
       "role": "debuff",
-      "colorMode": "dynamic"
+      "colorMode": "dynamic",
+      "palette": "debuff"
     }
   }
 ]
