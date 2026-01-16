@@ -1,6 +1,6 @@
-/* =========================
+/* =========================================================
    GLOBAL BASE
-   ========================= */
+   ========================================================= */
 
 * {
   box-sizing: border-box;
@@ -11,9 +11,9 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* =========================
+/* =========================================================
    DATABASE MODAL
-   ========================= */
+   ========================================================= */
 
 .db-modal {
   position: fixed;
@@ -39,22 +39,22 @@ body {
   display: flex;
   flex-direction: column;
 
-  background: #1b1b1b;
-  color: #e6e6e6;
+  background: var(--bg-panel, #252526);
+  color: var(--text-main, #dddddd);
   border-radius: 8px;
   overflow: hidden;
 }
 
-/* =========================
+/* =========================================================
    HEADER / TABS
-   ========================= */
+   ========================================================= */
 
 .db-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #242424;
+  background: var(--bg-panel-soft, #2d2d30);
 }
 
 .db-tabs {
@@ -84,9 +84,9 @@ body {
   cursor: pointer;
 }
 
-/* =========================
+/* =========================================================
    TOOLBAR
-   ========================= */
+   ========================================================= */
 
 .db-toolbar {
   display: flex;
@@ -104,7 +104,8 @@ body {
   border-radius: 4px;
 }
 
-.db-sort {
+.db-sort,
+.db-expand-all {
   padding: 6px 10px;
   background: #2e2e2e;
   color: #ddd;
@@ -113,9 +114,9 @@ body {
   cursor: pointer;
 }
 
-/* =========================
+/* =========================================================
    LIST
-   ========================= */
+   ========================================================= */
 
 .db-list {
   flex: 1;
@@ -133,26 +134,29 @@ body {
   padding: 40px;
 }
 
-/* =========================
-   ENTRY CARD (BASE)
-   ========================= */
+/* =========================================================
+   ENTRY CARD
+   ========================================================= */
 
 .db-entry {
   background: #262626;
   border-radius: 6px;
   padding: 8px;
   cursor: pointer;
-
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
 }
 
 .db-entry:hover {
   background: #2f2f2f;
 }
 
+.db-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .db-entry-title {
+  flex: 1;
   font-weight: 600;
   font-size: 14px;
 }
@@ -160,109 +164,89 @@ body {
 .db-entry-id {
   font-size: 12px;
   color: #aaa;
+  margin-top: 4px;
 }
 
-.db-entry-category {
-  font-size: 11px;
-  color: #888;
+.db-expand-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-/* =========================
-   ICON SLOT
-   ========================= */
+/* =========================================================
+   ENTRY DETAILS (EXPANDED)
+   ========================================================= */
+
+.db-entry-details {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #333;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.db-row {
+  margin-bottom: 4px;
+}
+
+.db-description {
+  margin-top: 6px;
+  line-height: 1.4;
+  color: #ddd;
+}
+
+/* =========================================================
+   ICON RENDERING (ATLAS-BASED)
+   ========================================================= */
+
+/*
+  This block is REQUIRED by ui/icon-renderer.js
+
+  Expected CSS variables:
+  --icon-atlas
+  --icon-x
+  --icon-y
+  --icon-w
+  --icon-h
+  --icon-intensity (dynamic mode)
+*/
 
 .icon {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
 
-  /* atlas placeholder */
-  background-image: url("../assets/atlas.png");
+  background-image: var(--icon-atlas);
   background-repeat: no-repeat;
+  background-position: var(--icon-x, 0px) var(--icon-y, 0px);
 
-  /* mask for coloring */
-  mask-image: url("../assets/atlas.png");
+  mask-image: var(--icon-atlas);
   mask-repeat: no-repeat;
+  mask-position: var(--icon-x, 0px) var(--icon-y, 0px);
 
   background-color: rgb(var(--icon-color, 180 180 180));
+
+  /* Performance hint */
+  will-change: background-color;
 }
 
-/* =========================
-   ICON ROLES
-   ========================= */
-
-.icon-role-buff {
-  --icon-color: var(--color-buff);
-}
-
-.icon-role-debuff {
-  --icon-color: var(--color-debuff);
-}
-
-.icon-role-damage {
-  --icon-color: var(--color-damage);
-}
-
-.icon-role-neutral {
-  --icon-color: var(--color-neutral);
-}
-
-/* =========================
+/* =========================================================
    ICON MODES
-   ========================= */
+   ========================================================= */
 
-/* DB preview */
+/* DB preview mode */
 .icon-mode-gradient {
   background: var(--palette-gradient);
   mask-image: none;
 }
 
-/* Node runtime */
-.icon-mode-dynamic {
-  --icon-color: rgb(
-    calc(var(--palette-low-r)   + (var(--palette-high-r)   - var(--palette-low-r))   * var(--icon-intensity)),
-    calc(var(--palette-low-g)   + (var(--palette-high-g)   - var(--palette-low-g))   * var(--icon-intensity)),
-    calc(var(--palette-low-b)   + (var(--palette-high-b)   - var(--palette-low-b))   * var(--icon-intensity))
-  );
-}
+/* Dynamic (Node runtime) handled by theme via --icon-intensity */
 
-/* =========================
-   TAGS (EXPANDED)
-   ========================= */
-
-.db-tags {
-  margin-top: 6px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.db-tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  background: #333;
-  border-radius: 4px;
-  color: #ccc;
-}
-
-
-/* =========================
-   BASE LAYOUT
-   ========================= */
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* =========================
+/* =========================================================
    TOAST / POPUP SYSTEM
-   ========================= */
+   ========================================================= */
 
 #toast-container {
   position: fixed;
@@ -276,8 +260,6 @@ body {
   z-index: 9999;
   pointer-events: none;
 }
-
-/* ---- Toast block ---- */
 
 .toast {
   display: flex;
@@ -298,7 +280,6 @@ body {
   cursor: pointer;
   pointer-events: auto;
 
-  /* animation start state */
   opacity: 0;
   transform: translateY(12px);
 
@@ -306,12 +287,9 @@ body {
     opacity 0.2s ease,
     transform 0.2s ease;
 
-  /* ===== TEXT WRAPPING (ВАЖНО) ===== */
-  word-break: break-word;      /* ломает длинные слова */
-  overflow-wrap: anywhere;     /* гарантирует перенос */
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
-
-/* show / hide animation */
 
 .toast-show {
   opacity: 1;
@@ -323,35 +301,15 @@ body {
   transform: translateY(-8px);
 }
 
-/* =========================
-   TOAST ICONS
-   ========================= */
-
+/* Icons inside toasts (emoji-based) */
 .toast::before {
-  flex-shrink: 0;          /* иконка НЕ сжимается */
+  flex-shrink: 0;
   font-size: 16px;
   line-height: 1;
   margin-top: 2px;
 }
 
-/* icon by type */
-
-.toast-neutral::before {
-  content: "ℹ️";
-}
-
-.toast-success::before {
-  content: "✅";
-}
-
-.toast-warning::before {
-  content: "⚠️";
-}
-
-.toast-error::before {
-  content: "❌";
-}
-
-/* =========================
-   (ЦВЕТА — В ТЕМАХ)
-   ========================= */
+.toast-neutral::before { content: "ℹ️"; }
+.toast-success::before { content: "✅"; }
+.toast-warning::before { content: "⚠️"; }
+.toast-error::before   { content: "❌"; }
