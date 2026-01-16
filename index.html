@@ -1,17 +1,64 @@
-<script type="module">
-  import {
-    showNeutral,
-    showSuccess,
-    showWarning,
-    showError
-  } from "./ui/popup.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Barotrauma RNG Builder</title>
 
-  window.testToast = () => {
-    showSuccess("ID copied: revolver");
-    showWarning("Something looks odd");
-    showError("Failed to load database");
-  };
-</script>
+  <!-- ===== BASE STYLES ===== -->
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/themes/dark.css" />
 
-<link rel="stylesheet" href="./css/style.css">
-<link rel="stylesheet" href="./css/themes/dark.css">
+  <style>
+    /* минимальный reset, чтобы не мешал */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+
+    .app {
+      padding: 24px;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <button id="open-db">Open Database</button>
+  </div>
+
+  <!-- ===== MAIN SCRIPT ===== -->
+  <script type="module">
+    import {
+      showNeutral,
+      showSuccess,
+      showWarning,
+      showError
+    } from "./ui/popup.js";
+
+    // кнопка просто для теста
+    document.getElementById("open-db").addEventListener("click", () => {
+      showSuccess("ID copied: revolver");
+      showWarning("Something looks odd");
+      showError("Failed to load database");
+    });
+
+    // для ручного теста из консоли
+    window.testToast = () => {
+      showNeutral("Neutral message");
+      showSuccess("Success message");
+      showWarning("Warning message");
+      showError("Error message");
+    };
+  </script>
+
+</body>
+</html>
