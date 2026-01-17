@@ -67,7 +67,11 @@ export function closeDatabasePanel() {
    ========================================================= */
 
 function cacheFallbackIcon() {
-  const concealed = DB.getById("afflictions", "concealed");
+  // Search concealed affliction via existing DB API
+  const concealed = DB
+    .search("afflictions", "")
+    .find(e => e.id === "concealed");
+
   concealedFallbackIcon = concealed?.icon ?? null;
 }
 
