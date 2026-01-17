@@ -1,10 +1,13 @@
 // ui/db-panel.js
 // Database Panel UI
 //
+// IMPORTANT:
+// This file is a DATA CONSUMER.
+// It must not assume schemas beyond what exists in data/*.json.
+//
 // TODO: Localization
 // All user-facing strings must be moved to external localization files
 // (legacy-style key/value dictionaries).
-// This file should use localization keys only.
 
 import * as DB from "../services/database.js";
 import { createIcon } from "./icon-renderer.js";
@@ -29,8 +32,8 @@ let searchInput;
 let sortButton;
 let expandAllButton;
 
-/* Cached fallback icon (concealed) */
-let concealedFallbackIcon = null;
+/* Fallback icon (afflictions only) */
+let afflictionFallbackIcon = null;
 
 /* =========================================================
    PUBLIC API
@@ -41,7 +44,7 @@ export async function openDatabasePanel() {
 
   try {
     await DB.load();
-    cacheFallbackIcon();
+    cacheAfflictionFallbackIcon();
   } catch (err) {
     console.error(err);
     showError("Failed to load database");
@@ -63,23 +66,25 @@ export function closeDatabasePanel() {
 }
 
 /* =========================================================
-   FALLBACK ICON
+   FALLBACK ICON (AFFLICTIONS ONLY)
    ========================================================= */
 
-function cacheFallbackIcon() {
-  // Search concealed affliction via existing DB API
-  const concealed = DB
-    .search("afflictions", "")
-    .find(e => e.id === "concealed");
-
-  concealedFallbackIcon = concealed?.icon ?? null;
+function cacheAfflictionFallbackIcon() {
+  const list = DB.search("afflictions", "");
+  const concealed = list.find(e => e.id === "concealed");
+  afflictionFallbackIcon = concealed?.icon ?? null;
 }
 
 function resolveIcon(entry) {
   if (entry.icon && entry.icon.texture && entry.icon.sourcerect) {
     return entry.icon;
   }
-  return concealedFallbackIcon;
+
+  if (currentType === "afflictions") {
+    return afflictionFallbackIcon;
+  }
+
+  return null;
 }
 
 /* =========================================================
@@ -195,9 +200,8 @@ function renderList() {
   let entries = DB.search(currentType, currentQuery);
   entries = DB.sort(entries, currentSort);
 
-  if (entries.length === 0) {
-    listEl.innerHTML =
-      `<div class="db-empty">No results</div>`;
+  if (!entries.length) {
+    listEl.innerHTML = `<div class="db-empty">No results</div>`;
     return;
   }
 
@@ -245,7 +249,6 @@ function createEntryCard(entry) {
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
   expandBtn.textContent = "▾";
-  expandBtn.title = "Expand / Collapse";
 
   expandBtn.addEventListener("click", e => {
     e.stopPropagation();
@@ -266,7 +269,7 @@ function createEntryCard(entry) {
 }
 
 /* =========================================================
-   DETAILS
+   DETAILS (TYPE-SPECIFIC, DATA-SAFE)
    ========================================================= */
 
 function createDetails(entry) {
@@ -274,10 +277,10 @@ function createDetails(entry) {
   box.className = "db-entry-details";
 
   if (currentType === "afflictions") {
-    addRow(box, "Type", entry.type);
-    addRow(box, "Max strength", entry.maxstrength);
-    addRow(box, "Limb specific", String(entry.limbspecific));
-    addRow(box, "Is buff", String(entry.isbuff));
+    if ("type" in entry) addRow(box, "Type", entry.type);
+    if ("maxstrength" in entry) addRow(box, "Max strength", entry.maxstrength);
+    if ("limbspecific" in entry) addRow(box, "Limb specific", String(entry.limbspecific));
+    if ("isbuff" in entry) addRow(box, "Is buff", String(entry.isbuff));
   }
 
   if (entry.description) {
@@ -349,7 +352,6 @@ function copyToClipboard(text) {
 }
 
 function addRow(box, label, value) {
-  if (value == null) return;
   const row = document.createElement("div");
   row.className = "db-row";
   row.textContent = `${label}: ${value}`;
