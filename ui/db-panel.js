@@ -1,35 +1,17 @@
 // ui/db-panel.js
-// Database Panel UI (v2, renderer-based)
+// Database Panel UI
 //
-// Uses:
-// - services/database.js (data access)
-// - ui/icon-renderer.js (icon rendering)
-// - ui/popup.js (toasts)
-//
-// This module:
-// - Does NOT render icons itself
-// - Does NOT calculate colors
-// - Does NOT know about nodes or RNG
-//
-// All comments are intentionally ENGLISH ONLY.
+// TODO: Localization
+// All user-facing strings must be moved to external localization files
+// (legacy-style key/value dictionaries).
+// This file should use localization keys only.
 
 import * as DB from "../services/database.js";
 import { createIcon } from "./icon-renderer.js";
-import {
-  showSuccess,
-  showWarning,
-  showError
-} from "./popup.js";
+import { showSuccess, showWarning, showError } from "./popup.js";
 
 /* =========================================================
-   CONFIG
-   ========================================================= */
-
-const EXPAND_ALL_LIMIT = 100;
-const EXPAND_BATCH_SIZE = 20;
-
-/* =========================================================
-   LOCAL STATE (DB PANEL ONLY)
+   STATE
    ========================================================= */
 
 let isOpen = false;
@@ -40,26 +22,26 @@ let currentQuery = "";
 
 const expandedIds = new Set();
 
-/* Cached DOM references */
-let rootEl = null;
-let listEl = null;
-let searchInput = null;
-let sortButton = null;
-let expandAllButton = null;
+/* DOM refs */
+let rootEl;
+let listEl;
+let searchInput;
+let sortButton;
+let expandAllButton;
+
+/* Cached fallback icon (concealed) */
+let concealedFallbackIcon = null;
 
 /* =========================================================
    PUBLIC API
    ========================================================= */
 
-/**
- * Opens the database panel.
- * Database is lazy-loaded on first open.
- */
 export async function openDatabasePanel() {
   if (isOpen) return;
 
   try {
     await DB.load();
+    cacheFallbackIcon();
   } catch (err) {
     console.error(err);
     showError("Failed to load database");
@@ -68,21 +50,32 @@ export async function openDatabasePanel() {
 
   buildUI();
   render();
-
   isOpen = true;
 }
 
-/**
- * Closes the database panel.
- */
 export function closeDatabasePanel() {
   if (!isOpen) return;
 
   rootEl.remove();
   rootEl = null;
   expandedIds.clear();
-
   isOpen = false;
+}
+
+/* =========================================================
+   FALLBACK ICON
+   ========================================================= */
+
+function cacheFallbackIcon() {
+  const concealed = DB.getById("afflictions", "concealed");
+  concealedFallbackIcon = concealed?.icon ?? null;
+}
+
+function resolveIcon(entry) {
+  if (entry.icon && entry.icon.texture && entry.icon.sourcerect) {
+    return entry.icon;
+  }
+  return concealedFallbackIcon;
 }
 
 /* =========================================================
@@ -103,7 +96,6 @@ function buildUI() {
           <button data-type="items">Items</button>
           <button data-type="creatures">Creatures</button>
         </div>
-
         <button class="db-close">✕</button>
       </div>
 
@@ -113,9 +105,11 @@ function buildUI() {
           type="text"
           placeholder="Search by ID or name"
         />
-
         <button class="db-sort">A–Z</button>
-        <button class="db-expand-all">Expand All</button>
+        <button
+          class="db-expand-all"
+          title="Expand / Collapse all"
+        >⧉</button>
       </div>
 
       <div class="db-list"></div>
@@ -144,9 +138,7 @@ function bindEvents() {
     .addEventListener("click", closeDatabasePanel);
 
   rootEl.querySelectorAll(".db-tabs button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      setType(btn.dataset.type);
-    });
+    btn.addEventListener("click", () => setType(btn.dataset.type));
   });
 
   searchInput.addEventListener("input", e => {
@@ -179,7 +171,6 @@ function onKeyDown(e) {
 function render() {
   updateTabs();
   updateSortLabel();
-  updateExpandAllLabel();
   renderList();
 }
 
@@ -194,11 +185,6 @@ function updateSortLabel() {
     currentSort.endsWith("asc") ? "A–Z" : "Z–A";
 }
 
-function updateExpandAllLabel() {
-  expandAllButton.textContent =
-    expandedIds.size > 0 ? "Collapse All" : "Expand All";
-}
-
 function renderList() {
   listEl.innerHTML = "";
 
@@ -206,7 +192,8 @@ function renderList() {
   entries = DB.sort(entries, currentSort);
 
   if (entries.length === 0) {
-    listEl.innerHTML = `<div class="db-empty">No results</div>`;
+    listEl.innerHTML =
+      `<div class="db-empty">No results</div>`;
     return;
   }
 
@@ -228,53 +215,54 @@ function createEntryCard(entry) {
   const header = document.createElement("div");
   header.className = "db-entry-header";
 
-  /* Icon (DB preview mode = gradient) */
-  if (entry.icon) {
-    const iconEl = createIcon({
-      texture: entry.icon.texture,
-      sourcerect: entry.icon.sourcerect,
-      role: entry.icon.role || "neutral",
-      palette: entry.icon.palette || entry.icon.role,
+  const iconData = resolveIcon(entry);
+  if (iconData) {
+    header.appendChild(createIcon({
+      texture: iconData.texture,
+      sourcerect: iconData.sourcerect,
+      role: iconData.role,
+      palette: iconData.palette,
       mode: "gradient"
-    });
-
-    header.appendChild(iconEl);
+    }));
   }
 
   const title = document.createElement("div");
   title.className = "db-entry-title";
   title.textContent = entry.name || entry.id;
 
+  header.appendChild(title);
+  card.appendChild(header);
+
+  const idEl = document.createElement("div");
+  idEl.className = "db-entry-id";
+  idEl.textContent = entry.id;
+  card.appendChild(idEl);
+
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
-  expandBtn.textContent = isExpanded ? "▾" : "▸";
+  expandBtn.textContent = "▾";
+  expandBtn.title = "Expand / Collapse";
 
   expandBtn.addEventListener("click", e => {
     e.stopPropagation();
     toggleExpanded(entry.id);
   });
 
-  header.append(title, expandBtn);
-  card.append(header);
-
-  const idEl = document.createElement("div");
-  idEl.className = "db-entry-id";
-  idEl.textContent = entry.id;
-  card.append(idEl);
+  card.appendChild(expandBtn);
 
   card.addEventListener("click", () => {
     copyToClipboard(entry.id);
   });
 
   if (isExpanded) {
-    card.append(createDetails(entry));
+    card.appendChild(createDetails(entry));
   }
 
   return card;
 }
 
 /* =========================================================
-   DETAILS (TYPE-SPECIFIC)
+   DETAILS
    ========================================================= */
 
 function createDetails(entry) {
@@ -282,38 +270,21 @@ function createDetails(entry) {
   box.className = "db-entry-details";
 
   if (currentType === "afflictions") {
-    renderAfflictionDetails(box, entry);
-  } else if (currentType === "items") {
-    renderItemDetails(box, entry);
-  } else if (currentType === "creatures") {
-    renderCreatureDetails(box, entry);
+    addRow(box, "Type", entry.type);
+    addRow(box, "Max strength", entry.maxstrength);
+    addRow(box, "Limb specific", String(entry.limbspecific));
+    addRow(box, "Is buff", String(entry.isbuff));
+  }
+
+  if (entry.description) {
+    addDescription(box, entry.description);
   }
 
   return box;
 }
 
-function renderAfflictionDetails(box, entry) {
-  addRow(box, "Type", entry.type);
-  addRow(box, "Max strength", entry.maxstrength);
-  addRow(box, "Limb specific", String(entry.limbspecific));
-  addRow(box, "Is buff", String(entry.isbuff));
-
-  if (entry.description) {
-    addDescription(box, entry.description);
-  }
-}
-
-function renderItemDetails(box, entry) {
-  if (entry.category) addRow(box, "Category", entry.category);
-  if (entry.description) addDescription(box, entry.description);
-}
-
-function renderCreatureDetails(box, entry) {
-  if (entry.description) addDescription(box, entry.description);
-}
-
 /* =========================================================
-   EXPAND ALL / COLLAPSE ALL
+   EXPAND ALL
    ========================================================= */
 
 function onExpandAll() {
@@ -325,34 +296,20 @@ function onExpandAll() {
     return;
   }
 
-  if (entries.length > EXPAND_ALL_LIMIT) {
+  if (entries.length > 100) {
     showWarning("Too many entries to expand");
     return;
   }
 
-  expandAllBatched(entries.map(e => e.id));
-}
-
-function expandAllBatched(ids) {
-  let index = 0;
-
-  function step() {
-    for (let i = 0; i < EXPAND_BATCH_SIZE && index < ids.length; i++) {
-      expandedIds.add(ids[index++]);
-    }
-
-    render();
-
-    if (index < ids.length) {
-      requestAnimationFrame(step);
-    }
+  for (const entry of entries) {
+    expandedIds.add(entry.id);
   }
 
-  step();
+  render();
 }
 
 /* =========================================================
-   ACTIONS
+   HELPERS
    ========================================================= */
 
 function setType(type) {
@@ -362,7 +319,6 @@ function setType(type) {
   currentQuery = "";
   expandedIds.clear();
   searchInput.value = "";
-
   render();
 }
 
@@ -376,12 +332,9 @@ function toggleSort() {
 }
 
 function toggleExpanded(id) {
-  if (expandedIds.has(id)) {
-    expandedIds.delete(id);
-  } else {
-    expandedIds.add(id);
-  }
-
+  expandedIds.has(id)
+    ? expandedIds.delete(id)
+    : expandedIds.add(id);
   render();
 }
 
@@ -391,17 +344,11 @@ function copyToClipboard(text) {
     .catch(() => showWarning("Failed to copy ID"));
 }
 
-/* =========================================================
-   SMALL UI HELPERS
-   ========================================================= */
-
 function addRow(box, label, value) {
   if (value == null) return;
-
   const row = document.createElement("div");
   row.className = "db-row";
   row.textContent = `${label}: ${value}`;
-
   box.appendChild(row);
 }
 
@@ -409,6 +356,5 @@ function addDescription(box, text) {
   const desc = document.createElement("div");
   desc.className = "db-description";
   desc.textContent = text;
-
   box.appendChild(desc);
 }
