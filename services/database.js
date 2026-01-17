@@ -1,7 +1,7 @@
 // services/database.js
 // Read-only static database service
 // Loads JSON from /data and provides search & sort utilities
-// NO UI, NO DOM, NO state mutations
+// NO UI, NO DOM, NO schema normalization
 
 const DATA_FILES = {
   items: "data/items.json",
@@ -22,10 +22,6 @@ const _cache = {
    LOAD
    ========================= */
 
-/**
- * Loads all database JSON files.
- * Must be called once before using other methods.
- */
 export async function load() {
   if (_cache.loaded) return;
 
@@ -41,7 +37,7 @@ export async function load() {
         throw new Error(`Invalid format in ${path} (expected array)`);
       }
 
-      return [type, normalizeList(json)];
+      return [type, json.filter(isValidEntry).map(cloneEntry)];
     })
   );
 
@@ -56,22 +52,12 @@ export async function load() {
    PUBLIC READ API
    ========================= */
 
-/**
- * Returns all entries of given type.
- * @param {"items"|"creatures"|"afflictions"} type
- */
 export function getAll(type) {
   ensureLoaded();
   ensureType(type);
-  return cloneArray(_cache.data[type]);
+  return _cache.data[type].map(cloneEntry);
 }
 
-/**
- * Searches entries by id or name (case-insensitive).
- * Empty query returns all entries.
- * @param {"items"|"creatures"|"afflictions"} type
- * @param {string} query
- */
 export function search(type, query) {
   ensureLoaded();
   ensureType(type);
@@ -79,23 +65,21 @@ export function search(type, query) {
   const q = String(query || "").trim().toLowerCase();
   if (!q) return getAll(type);
 
-  return _cache.data[type].filter(entry => {
-    const idMatch = entry.id.toLowerCase().includes(q);
-    const nameMatch =
-      typeof entry.name === "string" &&
-      entry.name.toLowerCase().includes(q);
+  return _cache.data[type]
+    .filter(entry => {
+      const idMatch =
+        typeof entry.id === "string" &&
+        entry.id.toLowerCase().includes(q);
 
-    return idMatch || nameMatch;
-  }).map(cloneEntry);
+      const nameMatch =
+        typeof entry.name === "string" &&
+        entry.name.toLowerCase().includes(q);
+
+      return idMatch || nameMatch;
+    })
+    .map(cloneEntry);
 }
 
-/**
- * Sorts a list of entries by given mode.
- * Does NOT mutate original list.
- *
- * @param {Array} list
- * @param {"name-asc"|"name-desc"|"id-asc"|"id-desc"} mode
- */
 export function sort(list, mode) {
   if (!Array.isArray(list)) return [];
 
@@ -137,32 +121,12 @@ function ensureType(type) {
   }
 }
 
-function normalizeList(list) {
-  return list
-    .filter(e => e && typeof e.id === "string")
-    .map(e => normalizeEntry(e));
-}
-
-function normalizeEntry(entry) {
-  return {
-    id: String(entry.id),
-    name: entry.name ? String(entry.name) : undefined,
-    category: entry.category ? String(entry.category) : undefined,
-    tags: Array.isArray(entry.tags) ? [...entry.tags] : undefined,
-    icon: entry.icon ? entry.icon : undefined,
-    description: entry.description ? String(entry.description) : undefined
-  };
+function isValidEntry(entry) {
+  return entry && typeof entry.id === "string";
 }
 
 function cloneEntry(entry) {
-  return {
-    ...entry,
-    tags: entry.tags ? [...entry.tags] : undefined
-  };
-}
-
-function cloneArray(arr) {
-  return arr.map(cloneEntry);
+  return { ...entry };
 }
 
 function compare(a, b) {
