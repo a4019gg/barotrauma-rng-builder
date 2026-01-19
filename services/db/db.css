@@ -221,15 +221,14 @@
   background-image: var(--icon-atlas);
   background-repeat: no-repeat;
 
-  /* sourcerect positioning */
+  /* atlas size comes from JS */
+  background-size: var(--icon-atlas-w) var(--icon-atlas-h);
+
   background-position: var(--icon-x, 0px) var(--icon-y, 0px);
 
-  /* IMPORTANT: atlas must be rendered at natural size */
-  background-size: auto;
-
-  /* neutral fallback color */
   background-color: rgb(var(--icon-color, 180 180 180));
 }
+
 
 /* Gradient preview mode for DB */
 .icon-mode-gradient {
