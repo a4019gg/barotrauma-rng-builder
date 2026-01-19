@@ -234,3 +234,12 @@
 .icon-mode-gradient {
   background: var(--palette-gradient);
 }
+
+/* =========================================================
+   DB PREVIEW OVERRIDE
+   ========================================================= */
+
+/* DB must NEVER use mask-image */
+.db-modal .icon {
+  mask-image: none !important;
+}
