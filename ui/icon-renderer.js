@@ -18,6 +18,17 @@
 const DEFAULT_ICON_SIZE = 28;
 
 /* =========================================================
+   ATLAS SIZE REGISTRY (DB + NODE SAFE)
+   ========================================================= */
+
+const ATLAS_SIZES = {
+  "MainIconsAtlas.png": [1024, 1024],
+  "CommandUIAtlas.png": [1024, 1024],
+  "CommandUIBackground.png": [1024, 1024],
+  "TalentsIcons4.png": [1024, 512]
+};
+
+/* =========================================================
    PUBLIC API
    ========================================================= */
 
@@ -62,8 +73,8 @@ export function createIcon(options = {}) {
    ========================================================= */
 
 /**
- * Applies atlas image and source rectangle.
- * Uses CSS variables for mask/background positioning.
+ * Applies atlas image, atlas size and source rectangle.
+ * Uses CSS variables for background/mask positioning.
  */
 function applyAtlas(el, texture, sourcerect) {
   if (!texture || !sourcerect) return;
@@ -73,19 +84,38 @@ function applyAtlas(el, texture, sourcerect) {
 
   const { x, y, w, h } = rect;
 
+  const { width: atlasW, height: atlasH } = resolveAtlasSize(texture);
+
   el.style.setProperty("--icon-atlas", `url("${texture}")`);
   el.style.setProperty("--icon-x", `-${x}px`);
   el.style.setProperty("--icon-y", `-${y}px`);
   el.style.setProperty("--icon-w", `${w}px`);
   el.style.setProperty("--icon-h", `${h}px`);
+  el.style.setProperty("--icon-atlas-w", `${atlasW}px`);
+  el.style.setProperty("--icon-atlas-h", `${atlasH}px`);
 
-  // Override default size if source rect differs
+  // Size of the rendered icon equals source rect size
   el.style.width = `${w}px`;
   el.style.height = `${h}px`;
 
-  // These variables are expected by CSS
+  // CSS decides whether to use background-image or mask-image
   el.style.setProperty("background-image", `var(--icon-atlas)`);
   el.style.setProperty("mask-image", `var(--icon-atlas)`);
+}
+
+/**
+ * Resolves atlas size from registry.
+ * Falls back to 1024x1024 if unknown.
+ */
+function resolveAtlasSize(texture) {
+  const file = texture.split("/").pop();
+  const size = ATLAS_SIZES[file];
+
+  if (Array.isArray(size)) {
+    return { width: size[0], height: size[1] };
+  }
+
+  return { width: 1024, height: 1024 };
 }
 
 /**
