@@ -1,4 +1,4 @@
-// ui/db-panel.js
+// services/db/db-panel.js
 // Database Panel UI
 //
 // IMPORTANT:
@@ -6,12 +6,12 @@
 // It must not assume schemas beyond what exists in data/*.json.
 //
 // TODO: Localization
-// All user-facing strings must be moved to external localization files
-// (legacy-style key/value dictionaries).
+// DB localization will be handled by a dedicated DB localization service.
+// This file currently contains ONLY a language selector stub.
 
-import * as DB from "../services/database.js";
-import { createIcon } from "./icon-renderer.js";
-import { showSuccess, showWarning, showError } from "./popup.js";
+import * as DB from "./database.js";
+import { createIcon } from "../../ui/icon-renderer.js";
+import { showSuccess, showWarning, showError } from "../../ui/popup.js";
 
 /* =========================================================
    STATE
@@ -23,6 +23,8 @@ let currentType = "afflictions";
 let currentSort = "name-asc";
 let currentQuery = "";
 
+let currentLanguage = "en"; // stub state
+
 const expandedIds = new Set();
 
 /* DOM refs */
@@ -31,6 +33,7 @@ let listEl;
 let searchInput;
 let sortButton;
 let expandAllButton;
+let languageSelect;
 
 /* Fallback icon (afflictions only) */
 let afflictionFallbackIcon = null;
@@ -105,7 +108,14 @@ function buildUI() {
           <button data-type="items">Items</button>
           <button data-type="creatures">Creatures</button>
         </div>
-        <button class="db-close">✕</button>
+
+        <div class="db-header-controls">
+          <select class="db-language">
+            <option value="en">🇬🇧 EN</option>
+            <option value="ru">🇷🇺 RU</option>
+          </select>
+          <button class="db-close">✕</button>
+        </div>
       </div>
 
       <div class="db-toolbar">
@@ -131,6 +141,7 @@ function buildUI() {
   searchInput = rootEl.querySelector(".db-search");
   sortButton = rootEl.querySelector(".db-sort");
   expandAllButton = rootEl.querySelector(".db-expand-all");
+  languageSelect = rootEl.querySelector(".db-language");
 
   bindEvents();
 }
@@ -162,6 +173,12 @@ function bindEvents() {
   });
 
   expandAllButton.addEventListener("click", onExpandAll);
+
+  languageSelect.addEventListener("change", e => {
+    currentLanguage = e.target.value;
+    console.info(`[DB] Language changed to: ${currentLanguage}`);
+    // TODO: Re-render DB entries using DB localization service
+  });
 
   window.addEventListener("keydown", onKeyDown);
 }
@@ -269,7 +286,7 @@ function createEntryCard(entry) {
 }
 
 /* =========================================================
-   DETAILS (TYPE-SPECIFIC, DATA-SAFE)
+   DETAILS
    ========================================================= */
 
 function createDetails(entry) {
