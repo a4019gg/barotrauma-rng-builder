@@ -37,14 +37,14 @@ const ATLAS_SIZES = {
  * Creates an icon DOM element.
  *
  * @param {Object} options
- * @param {string} options.texture            Path to atlas image
- * @param {string|Array<number>} options.sourcerect  "x,y,w,h" or [x,y,w,h]
- * @param {string} options.role               Semantic role
- * @param {string} options.palette            Palette key
+ * @param {string} options.texture                  Path to atlas image
+ * @param {string|Array<number>} options.sourcerect "x,y,w,h" or [x,y,w,h]
+ * @param {string} options.role                     Semantic role
+ * @param {string} options.palette                  Palette key
  * @param {"static"|"gradient"|"dynamic"} options.mode
  *
- * @param {number} [options.value]             Current value (Node UI)
- * @param {number} [options.max]               Max value (Node UI)
+ * @param {number} [options.value]                  Current value (Node UI)
+ * @param {number} [options.max]                    Max value (Node UI)
  *
  * @returns {HTMLElement}
  */
@@ -75,9 +75,12 @@ export function createIcon(options = {}) {
 
 /**
  * Applies atlas image and correct source rectangle.
- * IMPORTANT:
- * - x,y = offset in atlas
- * - w,h = size of rendered icon
+ *
+ * IMPORTANT (Barotrauma semantics):
+ * - x, y = offset inside atlas
+ * - w, h = size of source rectangle
+ *
+ * Scaling (canvas-equivalent) is handled by CSS, NOT here.
  */
 function applyAtlas(el, texture, sourcerect) {
   if (!texture || !sourcerect) return;
@@ -91,19 +94,25 @@ function applyAtlas(el, texture, sourcerect) {
   /* Atlas reference */
   el.style.setProperty("--icon-atlas", `url("${texture}")`);
 
-  /* Offset inside atlas (NEGATIVE, because background-position) */
+  /* Offset inside atlas (NEGATIVE for background-position) */
   el.style.setProperty("--icon-x", `-${x}px`);
   el.style.setProperty("--icon-y", `-${y}px`);
 
-  /* Atlas size (required for correct DB preview) */
+  /* Source rect size (CRITICAL for DB scaling) */
+  el.style.setProperty("--icon-w", `${w}`);
+  el.style.setProperty("--icon-h", `${h}`);
+
+  /* Atlas size */
   el.style.setProperty("--icon-atlas-w", `${atlasW}px`);
   el.style.setProperty("--icon-atlas-h", `${atlasH}px`);
 
-  /* Rendered icon size = source rect size */
+  /* Raw element size = source rect size
+     (DB-preview will scale via CSS) */
   el.style.width = `${w}px`;
   el.style.height = `${h}px`;
 
-  /* Renderer always sets both — CSS decides what to use */
+  /* Renderer always exposes both.
+     CSS decides which one is actually used. */
   el.style.setProperty("background-image", `var(--icon-atlas)`);
   el.style.setProperty("mask-image", `var(--icon-atlas)`);
 }
