@@ -111,8 +111,8 @@ function buildUI() {
 
         <div class="db-header-controls">
           <select class="db-language">
-            <option value="en">🇬🇧 EN</option>
-            <option value="ru">🇷🇺 RU</option>
+            <option value="en">EN ▾</option>
+            <option value="ru">RU ▾</option>
           </select>
           <button class="db-close">✕</button>
         </div>
