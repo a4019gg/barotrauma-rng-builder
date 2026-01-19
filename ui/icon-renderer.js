@@ -1,141 +1,90 @@
-// ui/icon-renderer.js
-// Unified icon renderer for DB preview and Node UI runtime
+// services/db/db-icon-canvas.js
+// Canvas-based icon renderer for DB preview ONLY
 //
 // Responsibilities:
-// - Create icon DOM element
-// - Apply atlas image and source rect correctly
-// - Expose all geometry via CSS variables
-// - Apply semantic classes (role / palette / mode)
-// - Compute normalized intensity (dynamic mode only)
+// - Render atlas sourcerect to canvas
+// - Scale icon to target size (canvas-equivalent of legacy drawImage)
+// - One-time render, no re-draws
 //
 // NON-responsibilities:
-// - No canvas rendering
-// - No color calculation
+// - No dynamic colors
+// - No intensity
 // - No theme logic
-// - No DB / Node awareness
+// - No Node UI usage
 //
-// All visual behavior is controlled by CSS.
+// This renderer intentionally uses canvas because
+// Barotrauma icons are designed to be scaled.
 
 const DEFAULT_ICON_SIZE = 28;
 
-/* =========================================================
-   ATLAS SIZE REGISTRY
-   ========================================================= */
-
-const ATLAS_SIZES = {
-  "MainIconsAtlas.png": [1024, 1024],
-  "CommandUIAtlas.png": [1024, 1024],
-  "CommandUIBackground.png": [1024, 1024],
-  "TalentsIcons4.png": [1024, 512]
-};
-
-/* =========================================================
-   PUBLIC API
-   ========================================================= */
-
 /**
- * Creates an icon DOM element.
+ * Creates a canvas icon element for DB preview.
  *
  * @param {Object} options
- * @param {string} options.texture                  Path to atlas image
+ * @param {string} options.texture        Path to atlas image
  * @param {string|Array<number>} options.sourcerect "x,y,w,h" or [x,y,w,h]
- * @param {string} options.role                     Semantic role
- * @param {string} options.palette                  Palette key
- * @param {"static"|"gradient"|"dynamic"} options.mode
+ * @param {number} [options.size]         Target render size (px)
  *
- * @param {number} [options.value]                  Current value (Node UI)
- * @param {number} [options.max]                    Max value (Node UI)
- *
- * @returns {HTMLElement}
+ * @returns {HTMLCanvasElement|null}
  */
-export function createIcon(options = {}) {
-  const el = document.createElement("div");
-  el.className = "icon";
+export function createDbIconCanvas(options = {}) {
+  const { texture, sourcerect, size = DEFAULT_ICON_SIZE } = options;
 
-  const {
-    texture,
-    sourcerect,
-    role = "neutral",
-    palette = role,
-    mode = "static",
-    value,
-    max
-  } = options;
+  if (!texture || !sourcerect) {
+    return null;
+  }
 
-  applyAtlas(el, texture, sourcerect);
-  applySemantics(el, role, palette, mode);
-  applyIntensity(el, mode, value, max);
+  const rect = normalizeSourceRect(sourcerect);
+  if (!rect) {
+    return null;
+  }
 
-  return el;
+  const { x, y, w, h } = rect;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  canvas.className = "db-icon-canvas";
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return canvas;
+  }
+
+  const img = new Image();
+  img.src = texture;
+
+  img.onload = () => {
+    // Clear just in case
+    ctx.clearRect(0, 0, size, size);
+
+    // Canvas-equivalent of legacy Barotrauma logic:
+    // drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+    ctx.drawImage(
+      img,
+      x,
+      y,
+      w,
+      h,
+      0,
+      0,
+      size,
+      size
+    );
+  };
+
+  img.onerror = () => {
+    // Fail silently — DB can live without icon
+    console.warn("[DB ICON] Failed to load atlas:", texture);
+  };
+
+  return canvas;
 }
 
 /* =========================================================
-   ATLAS / GEOMETRY
+   HELPERS
    ========================================================= */
 
-/**
- * Applies atlas image and correct source rectangle.
- *
- * IMPORTANT (Barotrauma semantics):
- * - x, y = offset inside atlas
- * - w, h = size of source rectangle
- *
- * Scaling (canvas-equivalent) is handled by CSS, NOT here.
- */
-function applyAtlas(el, texture, sourcerect) {
-  if (!texture || !sourcerect) return;
-
-  const rect = normalizeSourceRect(sourcerect);
-  if (!rect) return;
-
-  const { x, y, w, h } = rect;
-  const { width: atlasW, height: atlasH } = resolveAtlasSize(texture);
-
-  /* Atlas reference */
-  el.style.setProperty("--icon-atlas", `url("${texture}")`);
-
-  /* Offset inside atlas (NEGATIVE for background-position) */
-  el.style.setProperty("--icon-x", `-${x}px`);
-  el.style.setProperty("--icon-y", `-${y}px`);
-
-  /* Source rect size (CRITICAL for DB scaling) */
-  el.style.setProperty("--icon-w", `${w}`);
-  el.style.setProperty("--icon-h", `${h}`);
-
-  /* Atlas size */
-  el.style.setProperty("--icon-atlas-w", `${atlasW}px`);
-  el.style.setProperty("--icon-atlas-h", `${atlasH}px`);
-
-  /* Raw element size = source rect size
-     (DB-preview will scale via CSS) */
-  el.style.width = `${w}px`;
-  el.style.height = `${h}px`;
-
-  /* Renderer always exposes both.
-     CSS decides which one is actually used. */
-  el.style.setProperty("background-image", `var(--icon-atlas)`);
-  el.style.setProperty("mask-image", `var(--icon-atlas)`);
-}
-
-/**
- * Resolves atlas size from known registry.
- * Falls back to 1024x1024 if unknown.
- */
-function resolveAtlasSize(texture) {
-  const file = texture.split("/").pop();
-  const size = ATLAS_SIZES[file];
-
-  if (Array.isArray(size)) {
-    return { width: size[0], height: size[1] };
-  }
-
-  return { width: 1024, height: 1024 };
-}
-
-/**
- * Normalizes sourcerect into numeric object.
- * Expected format: [x, y, w, h]
- */
 function normalizeSourceRect(src) {
   let parts;
 
@@ -151,49 +100,9 @@ function normalizeSourceRect(src) {
 
   const [x, y, w, h] = parts;
 
-  return {
-    x,
-    y,
-    w: w > 0 ? w : DEFAULT_ICON_SIZE,
-    h: h > 0 ? h : DEFAULT_ICON_SIZE
-  };
-}
-
-/* =========================================================
-   SEMANTIC CLASSES
-   ========================================================= */
-
-function applySemantics(el, role, palette, mode) {
-  el.classList.add(
-    `icon-role-${role}`,
-    `icon-palette-${palette}`,
-    `icon-mode-${mode}`
-  );
-}
-
-/* =========================================================
-   INTENSITY (DYNAMIC MODE ONLY)
-   ========================================================= */
-
-function applyIntensity(el, mode, value, max) {
-  if (mode !== "dynamic") return;
-
-  const v = Number(value);
-  const m = Number(max);
-
-  if (!isFinite(v) || !isFinite(m) || m <= 0) {
-    el.style.setProperty("--icon-intensity", "0");
-    return;
+  if (w <= 0 || h <= 0) {
+    return null;
   }
 
-  const intensity = clamp(v / m, 0, 1);
-  el.style.setProperty("--icon-intensity", intensity.toString());
-}
-
-/* =========================================================
-   UTILS
-   ========================================================= */
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
+  return { x, y, w, h };
 }
