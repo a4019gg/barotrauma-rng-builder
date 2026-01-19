@@ -127,9 +127,10 @@
    ========================================================= */
 
 .db-entry {
+  position: relative; /* required for expand button positioning */
   background: #262626;
   border-radius: 6px;
-  padding: 8px;
+  padding: 8px 8px 28px 8px; /* bottom padding for arrow */
   cursor: pointer;
 }
 
@@ -155,12 +156,28 @@
   margin-top: 4px;
 }
 
+/* =========================================================
+   EXPAND BUTTON (PATCH)
+   ========================================================= */
+
 .db-expand-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+
   background: none;
   border: none;
   color: #ccc;
   cursor: pointer;
-  font-size: 14px;
+
+  font-size: 18px; /* slightly larger */
+  line-height: 1;
+
+  opacity: 0.7;
+}
+
+.db-entry:hover .db-expand-btn {
+  opacity: 1;
 }
 
 /* =========================================================
@@ -186,12 +203,14 @@
 }
 
 /* =========================================================
-   ICON PREVIEW (DB ONLY)
+   ICON PREVIEW (DB ONLY, FIXED)
    ========================================================= */
 
 /*
   DB icon preview mode.
-  This is NOT the runtime icon renderer.
+  - NO mask-image
+  - background-image only
+  - every sourcerect must produce a unique shape
 */
 
 .icon {
@@ -201,8 +220,14 @@
 
   background-image: var(--icon-atlas);
   background-repeat: no-repeat;
+
+  /* sourcerect positioning */
   background-position: var(--icon-x, 0px) var(--icon-y, 0px);
 
+  /* IMPORTANT: atlas must be rendered at natural size */
+  background-size: auto;
+
+  /* neutral fallback color */
   background-color: rgb(var(--icon-color, 180 180 180));
 }
 
