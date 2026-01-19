@@ -216,17 +216,11 @@
 .icon {
   width: 28px;
   height: 28px;
-  flex-shrink: 0;
 
-  background-image: var(--icon-atlas);
-  background-repeat: no-repeat;
-
-  /* 🔴 ВОТ ЭТОГО НЕ ХВАТАЛО */
-  background-size: var(--icon-atlas-w) var(--icon-atlas-h);
-
-  background-position: var(--icon-x) var(--icon-y);
+  background-size:
+    calc(var(--icon-atlas-w) * 28 / var(--icon-w))
+    calc(var(--icon-atlas-h) * 28 / var(--icon-h));
 }
-
 
 
 /* Gradient preview mode for DB */
