@@ -1,24 +1,25 @@
 // ui/icon-renderer.js
-// Unified icon renderer for DB and Node UI
+// Unified icon renderer for DB preview and Node UI runtime
 //
 // Responsibilities:
 // - Create icon DOM element
-// - Apply atlas + source rect via CSS variables
+// - Apply atlas image and source rect correctly
+// - Expose all geometry via CSS variables
 // - Apply semantic classes (role / palette / mode)
-// - Compute normalized intensity (for dynamic mode only)
+// - Compute normalized intensity (dynamic mode only)
 //
 // NON-responsibilities:
 // - No canvas rendering
-// - No color calculations
+// - No color calculation
 // - No theme logic
-// - No DB or Node awareness
+// - No DB / Node awareness
 //
-// All visual decisions are delegated to CSS.
+// All visual behavior is controlled by CSS.
 
 const DEFAULT_ICON_SIZE = 28;
 
 /* =========================================================
-   ATLAS SIZE REGISTRY (DB + NODE SAFE)
+   ATLAS SIZE REGISTRY
    ========================================================= */
 
 const ATLAS_SIZES = {
@@ -36,14 +37,14 @@ const ATLAS_SIZES = {
  * Creates an icon DOM element.
  *
  * @param {Object} options
- * @param {string} options.texture      Path to atlas image
- * @param {string|Array} options.sourcerect  "x,y,w,h" or [x,y,w,h]
- * @param {string} options.role          Semantic role (buff, debuff, damage, neutral)
- * @param {string} options.palette       Color palette key (poison, fire, etc.)
- * @param {"static"|"gradient"|"dynamic"} options.mode Rendering mode
+ * @param {string} options.texture            Path to atlas image
+ * @param {string|Array<number>} options.sourcerect  "x,y,w,h" or [x,y,w,h]
+ * @param {string} options.role               Semantic role
+ * @param {string} options.palette            Palette key
+ * @param {"static"|"gradient"|"dynamic"} options.mode
  *
- * @param {number} [options.value]       Current value (Node only)
- * @param {number} [options.max]         Max value (Node only)
+ * @param {number} [options.value]             Current value (Node UI)
+ * @param {number} [options.max]               Max value (Node UI)
  *
  * @returns {HTMLElement}
  */
@@ -69,12 +70,14 @@ export function createIcon(options = {}) {
 }
 
 /* =========================================================
-   ATLAS HANDLING
+   ATLAS / GEOMETRY
    ========================================================= */
 
 /**
- * Applies atlas image, atlas size and source rectangle.
- * Uses CSS variables for background/mask positioning.
+ * Applies atlas image and correct source rectangle.
+ * IMPORTANT:
+ * - x,y = offset in atlas
+ * - w,h = size of rendered icon
  */
 function applyAtlas(el, texture, sourcerect) {
   if (!texture || !sourcerect) return;
@@ -83,28 +86,30 @@ function applyAtlas(el, texture, sourcerect) {
   if (!rect) return;
 
   const { x, y, w, h } = rect;
-
   const { width: atlasW, height: atlasH } = resolveAtlasSize(texture);
 
+  /* Atlas reference */
   el.style.setProperty("--icon-atlas", `url("${texture}")`);
+
+  /* Offset inside atlas (NEGATIVE, because background-position) */
   el.style.setProperty("--icon-x", `-${x}px`);
   el.style.setProperty("--icon-y", `-${y}px`);
-  el.style.setProperty("--icon-w", `${w}px`);
-  el.style.setProperty("--icon-h", `${h}px`);
+
+  /* Atlas size (required for correct DB preview) */
   el.style.setProperty("--icon-atlas-w", `${atlasW}px`);
   el.style.setProperty("--icon-atlas-h", `${atlasH}px`);
 
-  // Size of the rendered icon equals source rect size
+  /* Rendered icon size = source rect size */
   el.style.width = `${w}px`;
   el.style.height = `${h}px`;
 
-  // CSS decides whether to use background-image or mask-image
+  /* Renderer always sets both — CSS decides what to use */
   el.style.setProperty("background-image", `var(--icon-atlas)`);
   el.style.setProperty("mask-image", `var(--icon-atlas)`);
 }
 
 /**
- * Resolves atlas size from registry.
+ * Resolves atlas size from known registry.
  * Falls back to 1024x1024 if unknown.
  */
 function resolveAtlasSize(texture) {
@@ -120,9 +125,10 @@ function resolveAtlasSize(texture) {
 
 /**
  * Normalizes sourcerect into numeric object.
+ * Expected format: [x, y, w, h]
  */
 function normalizeSourceRect(src) {
-  let parts = null;
+  let parts;
 
   if (Array.isArray(src)) {
     parts = src;
@@ -130,15 +136,17 @@ function normalizeSourceRect(src) {
     parts = src.split(",").map(v => Number(v.trim()));
   }
 
-  if (!parts || parts.length !== 4 || parts.some(isNaN)) {
+  if (!parts || parts.length !== 4 || parts.some(n => !isFinite(n))) {
     return null;
   }
 
+  const [x, y, w, h] = parts;
+
   return {
-    x: parts[0],
-    y: parts[1],
-    w: parts[2] || DEFAULT_ICON_SIZE,
-    h: parts[3] || DEFAULT_ICON_SIZE
+    x,
+    y,
+    w: w > 0 ? w : DEFAULT_ICON_SIZE,
+    h: h > 0 ? h : DEFAULT_ICON_SIZE
   };
 }
 
@@ -146,9 +154,6 @@ function normalizeSourceRect(src) {
    SEMANTIC CLASSES
    ========================================================= */
 
-/**
- * Applies role / palette / mode classes.
- */
 function applySemantics(el, role, palette, mode) {
   el.classList.add(
     `icon-role-${role}`,
@@ -161,10 +166,6 @@ function applySemantics(el, role, palette, mode) {
    INTENSITY (DYNAMIC MODE ONLY)
    ========================================================= */
 
-/**
- * Computes normalized intensity (0..1) and applies CSS variable.
- * JS only computes the number, CSS decides the visuals.
- */
 function applyIntensity(el, mode, value, max) {
   if (mode !== "dynamic") return;
 
