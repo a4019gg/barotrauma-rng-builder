@@ -1,21 +1,27 @@
 // services/db/db-panel.js
 // Database panel (DB)
-// Uses canvas-based icon rendering for preview
+// Uses inline canvas-based icon rendering (legacy-equivalent)
 //
-// NOTE:
+// NOTES:
 // - Localization is NOT implemented here (TODO)
-// - Node UI icon renderer is NOT used here by design
+// - Canvas is used intentionally for DB preview
+// - Node UI icon renderer is NOT used here
 
-import { createDbIconCanvas } from "./db-icon-canvas.js";
 import * as DB from "./database.js";
 import { showError } from "../../ui/popup.js";
+
+/* =========================================================
+   STATE
+   ========================================================= */
 
 let modalEl = null;
 let currentType = "afflictions";
 let expandedAll = false;
 
-// Cache fallback icon (concealed)
+// fallback icon (concealed)
 let fallbackIcon = null;
+
+const DEFAULT_ICON_SIZE = 28;
 
 /* =========================================================
    PUBLIC API
@@ -24,7 +30,7 @@ let fallbackIcon = null;
 export async function openDatabasePanel() {
   try {
     if (!modalEl) {
-      await prepareFallbackIcon();
+      prepareFallbackIcon();
       modalEl = buildModal();
       document.body.appendChild(modalEl);
     }
@@ -47,7 +53,7 @@ export function closeDatabasePanel() {
    FALLBACK ICON
    ========================================================= */
 
-async function prepareFallbackIcon() {
+function prepareFallbackIcon() {
   const concealed = DB.getById("afflictions", "concealed");
   if (!concealed || !concealed.icon) return;
 
@@ -93,11 +99,11 @@ function buildModal() {
     </div>
   `;
 
-  // Backdrop / close
+  // backdrop / close
   modal.querySelector(".db-backdrop").onclick = closeDatabasePanel;
   modal.querySelector(".db-close").onclick = closeDatabasePanel;
 
-  // Tabs
+  // tabs
   modal.querySelectorAll(".db-tabs button").forEach(btn => {
     btn.onclick = () => {
       modal.querySelectorAll(".db-tabs button").forEach(b => b.classList.remove("active"));
@@ -108,13 +114,13 @@ function buildModal() {
     };
   });
 
-  // Expand all
+  // expand all
   modal.querySelector(".db-expand-all").onclick = () => {
     expandedAll = !expandedAll;
     renderList();
   };
 
-  // Search
+  // search
   modal.querySelector(".db-search").oninput = () => renderList();
 
   return modal;
@@ -177,14 +183,13 @@ function buildEntryCard(entry) {
 
   titleWrap.appendChild(title);
   titleWrap.appendChild(id);
-
   header.appendChild(titleWrap);
 
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
   expandBtn.textContent = "▾";
-
   header.appendChild(expandBtn);
+
   card.appendChild(header);
 
   const details = document.createElement("div");
@@ -199,20 +204,21 @@ function buildEntryCard(entry) {
 
   expandBtn.onclick = e => {
     e.stopPropagation();
-    details.style.display = details.style.display === "none" ? "block" : "none";
+    toggleDetails(details);
   };
 
-  card.onclick = () => {
-    details.style.display = details.style.display === "none" ? "block" : "none";
-  };
+  card.onclick = () => toggleDetails(details);
 
   card.appendChild(details);
-
   return card;
 }
 
+function toggleDetails(details) {
+  details.style.display = details.style.display === "none" ? "block" : "none";
+}
+
 /* =========================================================
-   ICON HANDLING (DB ONLY)
+   ICON RENDERING (CANVAS, DB ONLY)
    ========================================================= */
 
 function createEntryIcon(entry) {
@@ -222,6 +228,52 @@ function createEntryIcon(entry) {
   return createDbIconCanvas({
     texture: iconData.texture,
     sourcerect: iconData.sourcerect,
-    size: 28
+    size: DEFAULT_ICON_SIZE
   });
+}
+
+function createDbIconCanvas({ texture, sourcerect, size }) {
+  if (!texture || !sourcerect) return null;
+
+  const rect = normalizeSourceRect(sourcerect);
+  if (!rect) return null;
+
+  const { x, y, w, h } = rect;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  canvas.className = "db-icon-canvas";
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const img = new Image();
+  img.src = texture;
+
+  img.onload = () => {
+    ctx.clearRect(0, 0, size, size);
+    ctx.drawImage(img, x, y, w, h, 0, 0, size, size);
+  };
+
+  return canvas;
+}
+
+function normalizeSourceRect(src) {
+  let parts;
+
+  if (Array.isArray(src)) {
+    parts = src;
+  } else if (typeof src === "string") {
+    parts = src.split(",").map(v => Number(v.trim()));
+  }
+
+  if (!parts || parts.length !== 4 || parts.some(n => !isFinite(n))) {
+    return null;
+  }
+
+  const [x, y, w, h] = parts;
+  if (w <= 0 || h <= 0) return null;
+
+  return { x, y, w, h };
 }
