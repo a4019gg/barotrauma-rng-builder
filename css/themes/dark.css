@@ -48,6 +48,16 @@
   --role-damage-low:    195 104 60;
   --role-damage-mid:    195 136 60;
   --role-damage-high:   195 60 60;
+
+  /* ---- Mental ---- */
+  --role-mental-low:    120 90 180;
+  --role-mental-mid:    150 120 210;
+  --role-mental-high:   190 150 240;
+
+  /* ---- Electric ---- */
+  --role-electric-low:  60 120 200;
+  --role-electric-mid:  90 150 230;
+  --role-electric-high: 130 190 255;
 }
 
 /* =========================================================
