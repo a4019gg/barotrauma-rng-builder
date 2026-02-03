@@ -18,21 +18,15 @@ import { showError, showSuccess } from "../../ui/popup.js";
 let modalEl = null;
 let currentType = "afflictions";
 let expandedAll = false;
-let sortMode = "name-asc";
-let legendCollapsed = false;
-let scaleIndex = 1;
-let isCompact = false;
-let searchTimer = null;
-let searchQuery = "";
-let activeRoleFilter = "all";
-let onlyWithIcon = false;
+let sortMode = "id-asc";
+let legendCollapsed = true;
+let scaleIndex = 0;
 
 // fallback icon (concealed)
 let fallbackIcon = null;
 
 const DEFAULT_ICON_SIZE = 36;
-const SCALE_LEVELS = [0.9, 1, 1.1];
-const STORAGE_KEY = "dbPanelPrefs";
+const SCALE_LEVELS = [1, 1.15, 1.3];
 
 /* =========================================================
    PUBLIC API
@@ -69,9 +63,6 @@ export function setDatabaseLanguage(lang) {
     updateLocalizedLabels();
     updateSortButton();
     setScaleLevel(SCALE_LEVELS[scaleIndex]);
-    updateCompactState();
-    updateCount();
-    renderFilters();
     renderList();
   }
 }
@@ -121,7 +112,6 @@ function buildModal() {
         <input class="db-search" placeholder="" data-l10n-placeholder="searchPlaceholder" />
         <button class="db-sort" title="" data-l10n-title="sortLabel"></button>
         <button class="db-scale" title="" data-l10n-title="scaleLabel"></button>
-        <button class="db-compact" title="" data-l10n-title="compactLabel"></button>
         <button class="db-expand-all" title="" data-l10n-title="expandAll">⧉</button>
         <div class="db-count" data-l10n="countLabel"></div>
       </div>
@@ -180,13 +170,6 @@ function buildModal() {
   modal.querySelector(".db-scale").onclick = () => {
     scaleIndex = (scaleIndex + 1) % SCALE_LEVELS.length;
     setScaleLevel(SCALE_LEVELS[scaleIndex]);
-    savePrefs();
-  };
-
-  modal.querySelector(".db-compact").onclick = () => {
-    isCompact = !isCompact;
-    updateCompactState();
-    savePrefs();
   };
 
   // search
@@ -207,17 +190,12 @@ function buildModal() {
   legendToggle.onclick = () => {
     legendCollapsed = !legendCollapsed;
     updateLegendState();
-    savePrefs();
   };
 
-  loadPrefs();
   updateLocalizedLabels(modal);
   updateSortButton(modal);
   setScaleLevel(SCALE_LEVELS[scaleIndex], modal);
   updateLegendState(modal);
-  updateCompactState(modal);
-  renderFilters();
-  updateCount();
 
   return modal;
 }
@@ -348,11 +326,11 @@ function buildBaseCard(entry) {
 
   const title = document.createElement("div");
   title.className = "db-entry-title";
-  applyHighlight(title, entry.name || entry.id);
+  title.textContent = entry.name || entry.id;
 
   const id = document.createElement("div");
   id.className = "db-entry-id";
-  applyHighlight(id, entry.id);
+  id.textContent = entry.id;
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "db-copy-btn";
@@ -462,13 +440,10 @@ function createDbIconCanvas({ texture, sourcerect, size, tint }) {
     ctx.drawImage(img, x, y, w, h, 0, 0, size, size);
 
     if (tint) {
-      ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = buildTintFill(ctx, size, tint);
+      ctx.globalCompositeOperation = "source-in";
+      ctx.fillStyle = tint;
       ctx.fillRect(0, 0, size, size);
       ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = 0.35;
-      ctx.drawImage(img, x, y, w, h, 0, 0, size, size);
-      ctx.globalAlpha = 1;
     }
   };
 
@@ -495,63 +470,34 @@ function normalizeSourceRect(src) {
 }
 
 function resolveIconTint(iconData = {}) {
+  const palette = String(iconData.palette || "").toLowerCase();
   const role = String(iconData.role || iconData.type || "").toLowerCase();
-  const colorMode = String(iconData.colorMode || iconData.colormode || "").toLowerCase();
-  const fixedKey = String(iconData.fixedColorKey || iconData.fixedcolorkey || "").toLowerCase();
-  const isDynamic = colorMode === "dynamic";
 
   const roleMap = {
     buff: "buff",
     debuff: "debuff",
     damage: "damage",
+    poison: "damage",
     status: "neutral",
-    mental: "mental",
-    electric: "electric",
     neutral: "neutral"
   };
 
-  const targetRole = roleMap[fixedKey] || roleMap[role] || "neutral";
+  const targetRole = roleMap[palette] || roleMap[role];
+  if (!targetRole) return null;
 
-  if (isDynamic) {
-    return {
-      type: "gradient",
-      colors: [
-        getCssRgb(`--role-${targetRole}-low`),
-        getCssRgb(`--role-${targetRole}-mid`),
-        getCssRgb(`--role-${targetRole}-high`)
-      ]
-    };
-  }
-
-  return {
-    type: "solid",
-    color: getCssRgb(`--role-${targetRole}-mid`)
-  };
+  return getCssRgb(`--role-${targetRole}-mid`);
 }
 
-function buildTintFill(ctx, size, tint) {
-  if (!tint) return "transparent";
-  if (tint.type === "gradient") {
-    const [low, mid, high] = tint.colors;
-    const gradient = ctx.createLinearGradient(0, 0, size, 0);
-    gradient.addColorStop(0, low || "rgb(160, 160, 160)");
-    gradient.addColorStop(0.5, mid || "rgb(190, 190, 190)");
-    gradient.addColorStop(1, high || "rgb(210, 210, 210)");
-    return gradient;
-  }
-  return tint.color || "transparent";
-}
-
-function getCssRgb(varName, fallback = null) {
+function getCssRgb(varName) {
   const raw = getComputedStyle(document.documentElement)
     .getPropertyValue(varName)
     .trim();
 
-  if (!raw) return fallback;
+  if (!raw) return null;
   if (raw.startsWith("rgb")) return raw;
 
   const parts = raw.split(" ").filter(Boolean);
-  if (parts.length < 3) return fallback;
+  if (parts.length < 3) return null;
 
   return `rgb(${parts.slice(0, 3).join(", ")})`;
 }
@@ -578,8 +524,8 @@ function updateSortButton(root = modalEl) {
   if (!btn) return;
 
   const labelMap = {
-    "name-asc": t("sortNameAsc"),
-    "name-desc": t("sortNameDesc")
+    "id-asc": t("sortIdAsc"),
+    "id-desc": t("sortIdDesc")
   };
 
   btn.textContent = labelMap[sortMode] || t("sortLabel");
@@ -587,11 +533,11 @@ function updateSortButton(root = modalEl) {
 
 function nextSortMode(mode) {
   switch (mode) {
-    case "name-asc":
+    case "id-asc":
     default:
-      return "name-desc";
-    case "name-desc":
-      return "name-asc";
+      return "id-desc";
+    case "id-desc":
+      return "id-asc";
   }
 }
 
@@ -618,156 +564,4 @@ function updateLegendState(root = modalEl) {
   content.classList.toggle("legend-collapsed", legendCollapsed);
   toggle.textContent = legendCollapsed ? "»" : "«";
   toggle.setAttribute("aria-expanded", String(!legendCollapsed));
-}
-
-function updateCompactState(root = modalEl) {
-  if (!root) return;
-  const windowEl = root.querySelector(".db-window");
-  const compactBtn = root.querySelector(".db-compact");
-  if (windowEl) {
-    windowEl.classList.toggle("db-compact", isCompact);
-  }
-  if (compactBtn) {
-    compactBtn.textContent = isCompact ? t("compactOn") : t("compactOff");
-  }
-}
-
-function applyHighlight(element, text) {
-  if (!element) return;
-  const query = searchQuery?.trim();
-  if (!query) {
-    element.textContent = text || "";
-    return;
-  }
-
-  const safeText = text || "";
-  const lower = safeText.toLowerCase();
-  const lowerQuery = query.toLowerCase();
-  const index = lower.indexOf(lowerQuery);
-
-  if (index === -1) {
-    element.textContent = safeText;
-    return;
-  }
-
-  element.textContent = "";
-  const before = document.createTextNode(safeText.slice(0, index));
-  const match = document.createElement("span");
-  match.className = "db-highlight";
-  match.textContent = safeText.slice(index, index + lowerQuery.length);
-  const after = document.createTextNode(safeText.slice(index + lowerQuery.length));
-  element.appendChild(before);
-  element.appendChild(match);
-  element.appendChild(after);
-}
-
-function filterEntries(entries, searchValue) {
-  let filtered = entries.filter(e =>
-    e.name?.toLowerCase().includes(searchValue) ||
-    e.id?.toLowerCase().includes(searchValue)
-  );
-
-  if (currentType === "afflictions" && activeRoleFilter !== "all") {
-    filtered = filtered.filter(entry => entry.icon?.role === activeRoleFilter);
-  }
-
-  if (onlyWithIcon) {
-    filtered = filtered.filter(entry => entry.icon);
-  }
-
-  return filtered;
-}
-
-function updateCount(countOverride = null) {
-  if (!modalEl) return;
-  const countEl = modalEl.querySelector(".db-count");
-  if (!countEl) return;
-
-  let count = countOverride;
-  if (count === null) {
-    try {
-      count = DB.getAll(currentType).length;
-    } catch (err) {
-      count = 0;
-    }
-  }
-  countEl.textContent = t("countValue", `${count}`).replace("{count}", `${count}`);
-}
-
-function renderFilters() {
-  if (!modalEl) return;
-  const filtersEl = modalEl.querySelector(".db-filters");
-  if (!filtersEl) return;
-
-  filtersEl.innerHTML = "";
-  const group = document.createElement("div");
-  group.className = "db-filter-group";
-
-  if (currentType === "afflictions") {
-    ["all", "buff", "debuff", "damage", "status", "mental", "electric"].forEach(role => {
-      const btn = document.createElement("button");
-      btn.className = "db-filter-btn";
-      btn.textContent = t(`filter-${role}`);
-      btn.dataset.role = role;
-      btn.classList.toggle("active", activeRoleFilter === role);
-      btn.onclick = () => {
-        activeRoleFilter = role;
-        savePrefs();
-        renderFilters();
-        renderList();
-      };
-      group.appendChild(btn);
-    });
-  }
-
-  const iconBtn = document.createElement("button");
-  iconBtn.className = "db-filter-btn";
-  iconBtn.textContent = t("filterHasIcon");
-  iconBtn.classList.toggle("active", onlyWithIcon);
-  iconBtn.onclick = () => {
-    onlyWithIcon = !onlyWithIcon;
-    savePrefs();
-    renderFilters();
-    renderList();
-  };
-  group.appendChild(iconBtn);
-
-  filtersEl.appendChild(group);
-}
-
-function showLoadingState(isLoading) {
-  if (!modalEl) return;
-  const windowEl = modalEl.querySelector(".db-window");
-  if (!windowEl) return;
-  windowEl.classList.toggle("db-loading", isLoading);
-}
-
-function savePrefs() {
-  const prefs = {
-    sortMode,
-    legendCollapsed,
-    scaleIndex,
-    isCompact,
-    activeRoleFilter,
-    onlyWithIcon
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-}
-
-function loadPrefs() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const prefs = JSON.parse(raw);
-    if (prefs.sortMode) sortMode = prefs.sortMode;
-    if (typeof prefs.legendCollapsed === "boolean") legendCollapsed = prefs.legendCollapsed;
-    if (typeof prefs.scaleIndex === "number") {
-      scaleIndex = Math.min(Math.max(prefs.scaleIndex, 0), SCALE_LEVELS.length - 1);
-    }
-    if (typeof prefs.isCompact === "boolean") isCompact = prefs.isCompact;
-    if (typeof prefs.activeRoleFilter === "string") activeRoleFilter = prefs.activeRoleFilter;
-    if (typeof prefs.onlyWithIcon === "boolean") onlyWithIcon = prefs.onlyWithIcon;
-  } catch (err) {
-    console.warn("Failed to load DB prefs", err);
-  }
 }

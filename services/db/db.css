@@ -96,7 +96,6 @@
 
 .db-sort,
 .db-scale,
-.db-compact,
 .db-expand-all {
   padding: 6px 10px;
   background: #2e2e2e;
@@ -110,44 +109,6 @@
 .db-scale {
   min-width: 72px;
   text-align: center;
-}
-
-.db-compact {
-  min-width: 92px;
-  text-align: center;
-}
-
-.db-count {
-  margin-left: auto;
-  font-size: 12px;
-  color: #bbb;
-}
-
-.db-filters {
-  padding: 0 12px 8px;
-  background: #202020;
-}
-
-.db-filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.db-filter-btn {
-  padding: 4px 8px;
-  border-radius: 12px;
-  border: 1px solid #333;
-  background: #2a2a2a;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.db-filter-btn.active {
-  background: #3a3a3a;
-  color: #fff;
-  border-color: #4a4a4a;
 }
 
 /* =========================================================
@@ -199,10 +160,9 @@
   border: none;
   color: #ddd;
   border-radius: 4px;
-  padding: 4px 10px;
+  padding: 2px 6px;
   cursor: pointer;
-  font-size: 14px;
-  min-width: 32px;
+  font-size: 12px;
 }
 
 .db-content.legend-collapsed .db-legend-title span,
@@ -283,36 +243,6 @@
 .db-entry-simple {
   padding-bottom: 8px;
   cursor: default;
-}
-
-.db-window.db-compact .db-entry {
-  padding: 6px 6px 22px 6px;
-}
-
-.db-window.db-compact .db-entry-header {
-  min-height: 44px;
-}
-
-.db-window.db-compact .db-entry-title {
-  font-size: 13px;
-}
-
-.db-window.db-compact .db-entry-id {
-  font-size: 11px;
-}
-
-.db-highlight {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  padding: 0 2px;
-}
-
-.db-window.db-loading .db-list::before {
-  content: "Loading...";
-  display: block;
-  text-align: center;
-  color: #999;
-  padding: 24px 0;
 }
 
 /* =========================================================
