@@ -58,6 +58,15 @@ export function getAll(type) {
   return _cache.data[type].map(cloneEntry);
 }
 
+export function getById(type, id) {
+  ensureLoaded();
+  ensureType(type);
+  if (!id) return null;
+  const key = String(id).toLowerCase();
+  const match = _cache.data[type].find(entry => entry.id?.toLowerCase() === key);
+  return match ? cloneEntry(match) : null;
+}
+
 export function search(type, query) {
   ensureLoaded();
   ensureType(type);
