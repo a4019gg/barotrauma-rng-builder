@@ -18,10 +18,11 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--db-scale, 1));
+  transform-origin: center;
 
-  width: min(1180px, 94vw);
-  height: min(720px, 90vh);
+  width: min(calc(1180px / var(--db-scale, 1)), calc(94vw / var(--db-scale, 1)));
+  height: min(calc(720px / var(--db-scale, 1)), calc(90vh / var(--db-scale, 1)));
 
   display: flex;
   flex-direction: column;
@@ -92,6 +93,7 @@
 }
 
 .db-sort,
+.db-scale,
 .db-expand-all {
   padding: 6px 10px;
   background: #2e2e2e;
@@ -99,6 +101,12 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.db-sort,
+.db-scale {
+  min-width: 72px;
+  text-align: center;
 }
 
 /* =========================================================
@@ -114,6 +122,10 @@
   min-height: 0;
 }
 
+.db-content.legend-collapsed {
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+
 .db-list {
   flex: 1;
   overflow-y: auto;
@@ -122,6 +134,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 8px;
+  align-content: start;
+  align-items: start;
 }
 
 .db-legend {
@@ -132,8 +146,34 @@
 }
 
 .db-legend-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-weight: 600;
   margin-bottom: 8px;
+}
+
+.db-legend-toggle {
+  background: #2e2e2e;
+  border: none;
+  color: #ddd;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.db-content.legend-collapsed .db-legend-title span,
+.db-content.legend-collapsed .db-legend-body {
+  display: none;
+}
+
+.db-content.legend-collapsed .db-legend {
+  border-left: none;
+  padding-left: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .db-legend-row {
@@ -157,6 +197,7 @@
   border-radius: 6px;
   padding: 8px 8px 28px 8px; /* bottom padding for arrow */
   cursor: pointer;
+  height: fit-content;
 }
 
 .db-entry:hover {
@@ -190,6 +231,11 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.db-entry-simple {
+  padding-bottom: 8px;
+  cursor: default;
 }
 
 /* =========================================================
@@ -267,7 +313,7 @@
 }
 
 .db-icon-canvas {
-  background: #1c1c1c;
+  background: transparent;
   border-radius: 4px;
 }
 
