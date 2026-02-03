@@ -37,6 +37,8 @@ registerDictionary("en", {
   copyIdError: "Failed to copy ID",
   noEntries: "No entries",
   nothingFound: "Nothing found",
+  countLabel: "Results",
+  countValue: "{count} results",
   typeLabel: "Type",
   maxStrengthLabel: "Max strength",
   limbSpecificLabel: "Limb specific",
@@ -48,5 +50,13 @@ registerDictionary("en", {
   legendToggle: "Toggle legend",
   legendExpand: "⧉ — expand / collapse all",
   legendDetails: "ⓘ — toggle details",
-  legendCopy: "Copy — copy ID"
+  legendCopy: "Copy — copy ID",
+  "filter-all": "All",
+  "filter-buff": "Buff",
+  "filter-debuff": "Debuff",
+  "filter-damage": "Damage",
+  "filter-status": "Status",
+  "filter-mental": "Mental",
+  "filter-electric": "Electric",
+  filterHasIcon: "Has icon"
 });

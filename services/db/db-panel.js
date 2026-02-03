@@ -35,10 +35,12 @@ const SCALE_LEVELS = [1, 1.15, 1.3];
 export async function openDatabasePanel() {
   try {
     if (!modalEl) {
-      await DB.load();
-      prepareFallbackIcon();
       modalEl = buildModal();
       document.body.appendChild(modalEl);
+      showLoadingState(true);
+      await DB.load();
+      prepareFallbackIcon();
+      showLoadingState(false);
     }
 
     modalEl.style.display = "block";
@@ -111,7 +113,10 @@ function buildModal() {
         <button class="db-sort" title="" data-l10n-title="sortLabel"></button>
         <button class="db-scale" title="" data-l10n-title="scaleLabel"></button>
         <button class="db-expand-all" title="" data-l10n-title="expandAll">⧉</button>
+        <div class="db-count" data-l10n="countLabel"></div>
       </div>
+
+      <div class="db-filters"></div>
 
       <div class="db-content">
         <div class="db-list"></div>
@@ -141,6 +146,8 @@ function buildModal() {
       btn.classList.add("active");
       currentType = btn.dataset.type;
       expandedAll = false;
+      renderFilters();
+      updateCount();
       renderList();
     };
   });
@@ -155,6 +162,7 @@ function buildModal() {
   modal.querySelector(".db-sort").onclick = () => {
     sortMode = nextSortMode(sortMode);
     updateSortButton();
+    savePrefs();
     renderList();
   };
 
@@ -165,7 +173,13 @@ function buildModal() {
   };
 
   // search
-  modal.querySelector(".db-search").oninput = () => renderList();
+  modal.querySelector(".db-search").oninput = e => {
+    searchQuery = e.target.value.toLowerCase();
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      renderList();
+    }, 200);
+  };
 
   // language
   const langSelect = modal.querySelector(".db-language");
@@ -192,30 +206,28 @@ function buildModal() {
 
 function renderList() {
   const listEl = modalEl.querySelector(".db-list");
-  const searchValue = modalEl.querySelector(".db-search").value.toLowerCase();
+  const searchValue = searchQuery || "";
 
   listEl.innerHTML = "";
 
   const entries = DB.getAll(currentType);
+  const filteredByType = filterEntries(entries, searchValue);
   if (!entries || entries.length === 0) {
     listEl.innerHTML = `<div class="db-empty">${t("noEntries")}</div>`;
     return;
   }
 
-  const filtered = entries.filter(e =>
-    e.name?.toLowerCase().includes(searchValue) ||
-    e.id?.toLowerCase().includes(searchValue)
-  );
-
-  if (filtered.length === 0) {
+  if (filteredByType.length === 0) {
     listEl.innerHTML = `<div class="db-empty">${t("nothingFound")}</div>`;
+    updateCount(0);
     return;
   }
 
-  const sorted = DB.sort(filtered, sortMode);
+  const sorted = DB.sort(filteredByType, sortMode);
   for (const entry of sorted) {
     listEl.appendChild(buildEntryCard(entry));
   }
+  updateCount(sorted.length);
 }
 
 /* =========================================================
