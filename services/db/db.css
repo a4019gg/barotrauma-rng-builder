@@ -187,6 +187,9 @@
 }
 
 .db-legend-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-weight: 600;
   margin-bottom: 8px;
   text-transform: uppercase;

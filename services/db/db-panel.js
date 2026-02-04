@@ -415,9 +415,8 @@ function buildBaseCard(entry) {
     }
   };
 
-  titleWrap.appendChild(title);
-  titleWrap.appendChild(id);
-  header.appendChild(titleWrap);
+function buildEffectCard(entry) {
+  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
 
   return { card, header, copyBtn, titleWrap };
 }
