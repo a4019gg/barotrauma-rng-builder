@@ -30,10 +30,15 @@
        ===================== -->
 
   <script type="module">
-    import { openDatabasePanel } from "./services/db/db-panel.js";
+    import { showError } from "./ui/popup.js";
 
     window.addEventListener("DOMContentLoaded", () => {
-      openDatabasePanel();
+      import("./services/db/db-panel.js?v=2025-01-11-3")
+        .then(({ openDatabasePanel }) => openDatabasePanel())
+        .catch(err => {
+          console.error(err);
+          showError("Failed to load database panel");
+        });
     });
   </script>
 
