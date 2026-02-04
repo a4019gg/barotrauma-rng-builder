@@ -187,10 +187,37 @@
 }
 
 .db-legend-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-weight: 600;
   margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.db-legend-toggle {
+  background: #2e2e2e;
+  border: none;
+  color: #ddd;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 32px;
+}
+
+.db-content.legend-collapsed .db-legend-title span,
+.db-content.legend-collapsed .db-legend-body {
+  display: none;
+}
+
+.db-content.legend-collapsed .db-legend {
+  border-left: none;
+  padding-left: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .db-legend-row {

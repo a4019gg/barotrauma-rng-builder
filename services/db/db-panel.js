@@ -414,6 +414,63 @@ function buildBaseCard(entry) {
     }
   };
 
+function buildEffectCard(entry) {
+  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
+
+  return { card, header, copyBtn, titleWrap };
+}
+
+function buildItemCard(entry) {
+  const { card, header, copyBtn } = buildBaseCard(entry);
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+  card.classList.add("db-entry-simple");
+  return card;
+}
+
+function buildCreatureCard(entry) {
+  const { card, header, copyBtn } = buildBaseCard(entry);
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+  card.classList.add("db-entry-simple");
+  return card;
+}
+
+function buildBaseCard(entry) {
+  const card = document.createElement("div");
+  card.className = "db-entry";
+
+  const header = document.createElement("div");
+  header.className = "db-entry-header";
+
+  const icon = createEntryIcon(entry);
+  if (icon) header.appendChild(icon);
+
+  const titleWrap = document.createElement("div");
+
+  const title = document.createElement("div");
+  title.className = "db-entry-title";
+  applyHighlight(title, entry.name || entry.id);
+
+  const id = document.createElement("div");
+  id.className = "db-entry-id";
+  applyHighlight(id, entry.id);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "db-copy-btn";
+  copyBtn.textContent = t("copyId");
+  copyBtn.onclick = async e => {
+    e.stopPropagation();
+    if (!entry.id) return;
+    try {
+      await navigator.clipboard?.writeText(entry.id);
+      showSuccess(t("copyIdSuccess"));
+    } catch (err) {
+      console.warn(err);
+      showError(t("copyIdError"));
+    }
+  };
+
   titleWrap.appendChild(title);
   titleWrap.appendChild(id);
   header.appendChild(titleWrap);
