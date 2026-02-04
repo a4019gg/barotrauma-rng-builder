@@ -45,9 +45,19 @@
   --role-debuff-high:   228 27 27;
 
   /* ---- Damage ---- */
-  --role-damage-low:    195 104 60;
-  --role-damage-mid:    195 136 60;
-  --role-damage-high:   195 60 60;
+  --role-damage-low:    170 70 40;
+  --role-damage-mid:    210 70 40;
+  --role-damage-high:   240 40 40;
+
+  /* ---- Mental ---- */
+  --role-mental-low:    120 90 180;
+  --role-mental-mid:    150 120 210;
+  --role-mental-high:   190 150 240;
+
+  /* ---- Electric ---- */
+  --role-electric-low:  60 120 200;
+  --role-electric-mid:  90 150 230;
+  --role-electric-high: 130 190 255;
 }
 
 /* =========================================================
@@ -211,6 +221,22 @@
 
 .db-tag[data-tag="STATUS"] {
   border-left-color: rgb(var(--role-neutral-mid));
+}
+
+.db-tag[data-tag="POISON"] {
+  border-left-color: rgb(80 200 120);
+}
+
+.db-tag[data-tag="LIMB"] {
+  border-left-color: rgb(120 160 200);
+}
+
+.db-tag[data-tag="MENTAL"] {
+  border-left-color: rgb(var(--role-mental-mid));
+}
+
+.db-tag[data-tag="ELECTRIC"] {
+  border-left-color: rgb(var(--role-electric-mid));
 }
 
 /* =========================================================
