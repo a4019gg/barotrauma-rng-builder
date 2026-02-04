@@ -19,13 +19,11 @@ let modalEl = null;
 let currentType = "afflictions";
 let expandedAll = false;
 let sortMode = "name-asc";
-let legendCollapsed = false;
 let scaleIndex = 1;
 let isCompact = false;
 let searchTimer = null;
 let searchQuery = "";
 let activeRoleFilter = "all";
-let onlyWithIcon = false;
 
 // fallback icon (concealed)
 let fallbackIcon = null;
@@ -66,18 +64,6 @@ function renderFilters() {
       group.appendChild(btn);
     });
   }
-
-  const iconBtn = document.createElement("button");
-  iconBtn.className = "db-filter-btn";
-  iconBtn.textContent = t("filterHasIcon");
-  iconBtn.classList.toggle("active", onlyWithIcon);
-  iconBtn.onclick = () => {
-    onlyWithIcon = !onlyWithIcon;
-    savePrefs();
-    renderFilters();
-    renderList();
-  };
-  group.appendChild(iconBtn);
 
   filtersEl.appendChild(group);
 }
@@ -120,7 +106,7 @@ export function setDatabaseLanguage(lang) {
     updateCompactState();
     updateCount();
     renderFilters();
-    renderList();
+    updateCardLocalization();
   }
 }
 
@@ -176,18 +162,17 @@ function buildModal() {
 
       <div class="db-filters"></div>
 
-      <div class="db-content">
-        <div class="db-list"></div>
-        <div class="db-legend" aria-label="Legend">
-          <div class="db-legend-title">
-            <span data-l10n="legendTitle"></span>
-            <button class="db-legend-toggle" title="" data-l10n-title="legendToggle"></button>
-          </div>
-          <div class="db-legend-body">
-            <div class="db-legend-row" data-l10n="legendExpand"></div>
-            <div class="db-legend-row" data-l10n="legendDetails"></div>
-            <div class="db-legend-row" data-l10n="legendCopy"></div>
-          </div>
+      <div class="db-body">
+        <div class="db-legend-panel" aria-label="Controls">
+          <div class="db-legend-title" data-l10n="legendTitle"></div>
+          <div class="db-legend-row" data-l10n="legendSearch"></div>
+          <div class="db-legend-row" data-l10n="legendSort"></div>
+          <div class="db-legend-row" data-l10n="legendScale"></div>
+          <div class="db-legend-row" data-l10n="legendCompact"></div>
+          <div class="db-legend-row" data-l10n="legendCopy"></div>
+        </div>
+        <div class="db-content">
+          <div class="db-list"></div>
         </div>
       </div>
     </div>
@@ -251,18 +236,10 @@ function buildModal() {
   langSelect.value = getLanguage();
   langSelect.onchange = () => setDatabaseLanguage(langSelect.value);
 
-  const legendToggle = modal.querySelector(".db-legend-toggle");
-  legendToggle.onclick = () => {
-    legendCollapsed = !legendCollapsed;
-    updateLegendState();
-    savePrefs();
-  };
-
   loadPrefs();
   updateLocalizedLabels(modal);
   updateSortButton(modal);
   setScaleLevel(SCALE_LEVELS[scaleIndex], modal);
-  updateLegendState(modal);
   updateCompactState(modal);
   renderFilters();
   updateCount();
@@ -332,25 +309,15 @@ function buildEffectCard(entry) {
   details.className = "db-entry-details";
   details.style.display = expandedAll ? "block" : "none";
 
-  details.innerHTML = `
-    <div class="db-row"><strong>${t("typeLabel")}:</strong> ${entry.type ?? "-"}</div>
-    <div class="db-row"><strong>${t("maxStrengthLabel")}:</strong> ${entry.maxstrength ?? "-"}</div>
-    <div class="db-row"><strong>${t("limbSpecificLabel")}:</strong> ${
-      entry.limbspecific === undefined
-        ? "-"
-        : entry.limbspecific
-          ? t("yes")
-          : t("no")
-    }</div>
-    <div class="db-row"><strong>${t("isBuffLabel")}:</strong> ${
-      entry.isbuff === undefined
-        ? "-"
-        : entry.isbuff
-          ? t("yes")
-          : t("no")
-    }</div>
-    <div class="db-description">${entry.description || ""}</div>
-  `;
+  details.appendChild(createDetailRow("typeLabel", entry.type ?? "-"));
+  details.appendChild(createDetailRow("maxStrengthLabel", entry.maxstrength ?? "-"));
+  details.appendChild(createDetailRow("limbSpecificLabel", entry.limbspecific, true));
+  details.appendChild(createDetailRow("isBuffLabel", entry.isbuff, true));
+
+  const desc = document.createElement("div");
+  desc.className = "db-description";
+  desc.textContent = entry.description || "";
+  details.appendChild(desc);
 
   const tags = buildTags(entry);
   if (tags) details.appendChild(tags);
@@ -364,6 +331,93 @@ function buildEffectCard(entry) {
 
   card.appendChild(details);
   return card;
+}
+
+function createDetailRow(labelKey, value, isBoolean = false) {
+  const row = document.createElement("div");
+  row.className = "db-row";
+
+  const label = document.createElement("strong");
+  label.dataset.l10n = labelKey;
+  label.textContent = t(labelKey);
+
+  const spacer = document.createTextNode(": ");
+  const valueSpan = document.createElement("span");
+  valueSpan.className = "db-row-value";
+
+  if (isBoolean) {
+    valueSpan.dataset.value = value === undefined ? "unset" : value ? "true" : "false";
+    valueSpan.textContent = formatBooleanValue(value);
+  } else {
+    valueSpan.textContent = value ?? "-";
+  }
+
+  row.appendChild(label);
+  row.appendChild(spacer);
+  row.appendChild(valueSpan);
+  return row;
+}
+
+function formatBooleanValue(value) {
+  if (value === undefined) return "-";
+  return value ? t("yes") : t("no");
+}
+
+function buildItemCard(entry) {
+  const { card, header, copyBtn } = buildBaseCard(entry);
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+  card.classList.add("db-entry-simple");
+  return card;
+}
+
+function buildCreatureCard(entry) {
+  const { card, header, copyBtn } = buildBaseCard(entry);
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+  card.classList.add("db-entry-simple");
+  return card;
+}
+
+function buildBaseCard(entry) {
+  const card = document.createElement("div");
+  card.className = "db-entry";
+
+  const header = document.createElement("div");
+  header.className = "db-entry-header";
+
+  const icon = createEntryIcon(entry);
+  if (icon) header.appendChild(icon);
+
+  const titleWrap = document.createElement("div");
+
+  const title = document.createElement("div");
+  title.className = "db-entry-title";
+  applyHighlight(title, entry.name || entry.id);
+
+  const id = document.createElement("div");
+  id.className = "db-entry-id";
+  applyHighlight(id, entry.id);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "db-copy-btn";
+  copyBtn.textContent = t("copyId");
+  copyBtn.onclick = async e => {
+    e.stopPropagation();
+    if (!entry.id) return;
+    try {
+      await navigator.clipboard?.writeText(entry.id);
+      showSuccess(t("copyIdSuccess"));
+    } catch (err) {
+      console.warn(err);
+      showError(t("copyIdError"));
+    }
+  };
+
+function buildEffectCard(entry) {
+  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
+
+  return { card, header, copyBtn, titleWrap };
 }
 
 function buildItemCard(entry) {
@@ -657,17 +711,6 @@ function setScaleLevel(scale, root = modalEl) {
   }
 }
 
-function updateLegendState(root = modalEl) {
-  if (!root) return;
-  const content = root.querySelector(".db-content");
-  const toggle = root.querySelector(".db-legend-toggle");
-  if (!content || !toggle) return;
-
-  content.classList.toggle("legend-collapsed", legendCollapsed);
-  toggle.textContent = legendCollapsed ? "»" : "«";
-  toggle.setAttribute("aria-expanded", String(!legendCollapsed));
-}
-
 function updateCompactState(root = modalEl) {
   if (!root) return;
   const windowEl = root.querySelector(".db-window");
@@ -676,8 +719,29 @@ function updateCompactState(root = modalEl) {
     windowEl.classList.toggle("db-compact", isCompact);
   }
   if (compactBtn) {
-    compactBtn.textContent = isCompact ? t("compactOn") : t("compactOff");
+    compactBtn.textContent = t("compactLabel");
+    compactBtn.classList.toggle("active", isCompact);
+    compactBtn.setAttribute("aria-pressed", String(isCompact));
   }
+}
+
+function updateCardLocalization() {
+  if (!modalEl) return;
+  modalEl.querySelectorAll(".db-copy-btn").forEach(btn => {
+    btn.textContent = t("copyId");
+  });
+  modalEl.querySelectorAll(".db-tags-label").forEach(label => {
+    label.textContent = t("tagsLabel");
+  });
+  modalEl.querySelectorAll(".db-row-value").forEach(value => {
+    if (!value.dataset.value) return;
+    const key = value.dataset.value;
+    if (key === "unset") {
+      value.textContent = "-";
+    } else {
+      value.textContent = key === "true" ? t("yes") : t("no");
+    }
+  });
 }
 
 function applyHighlight(element, text) {
@@ -712,18 +776,28 @@ function applyHighlight(element, text) {
 function filterEntries(entries, searchValue) {
   let filtered = entries.filter(e =>
     e.name?.toLowerCase().includes(searchValue) ||
-    e.id?.toLowerCase().includes(searchValue)
+    e.id?.toLowerCase().includes(searchValue) ||
+    entryMatchesTag(e, searchValue)
   );
 
   if (currentType === "afflictions" && activeRoleFilter !== "all") {
     filtered = filtered.filter(entry => entry.icon?.role === activeRoleFilter);
   }
 
-  if (onlyWithIcon) {
-    filtered = filtered.filter(entry => entry.icon);
-  }
-
   return filtered;
+}
+
+function entryMatchesTag(entry, searchValue) {
+  if (!searchValue) return false;
+  const tags = new Set();
+  if (entry.type) tags.add(String(entry.type));
+  if (entry.isbuff) tags.add("buff");
+  if (entry.limbspecific) tags.add("limb");
+  if (Array.isArray(entry.tags)) {
+    entry.tags.forEach(tag => tags.add(String(tag)));
+  }
+  if (entry.category) tags.add(String(entry.category));
+  return [...tags].some(tag => tag.toLowerCase().includes(searchValue));
 }
 
 function updateCount(countOverride = null) {
@@ -745,11 +819,9 @@ function updateCount(countOverride = null) {
 function savePrefs() {
   const prefs = {
     sortMode,
-    legendCollapsed,
     scaleIndex,
     isCompact,
-    activeRoleFilter,
-    onlyWithIcon
+    activeRoleFilter
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
@@ -760,13 +832,11 @@ function loadPrefs() {
     if (!raw) return;
     const prefs = JSON.parse(raw);
     if (prefs.sortMode) sortMode = prefs.sortMode;
-    if (typeof prefs.legendCollapsed === "boolean") legendCollapsed = prefs.legendCollapsed;
     if (typeof prefs.scaleIndex === "number") {
       scaleIndex = Math.min(Math.max(prefs.scaleIndex, 0), SCALE_LEVELS.length - 1);
     }
     if (typeof prefs.isCompact === "boolean") isCompact = prefs.isCompact;
     if (typeof prefs.activeRoleFilter === "string") activeRoleFilter = prefs.activeRoleFilter;
-    if (typeof prefs.onlyWithIcon === "boolean") onlyWithIcon = prefs.onlyWithIcon;
   } catch (err) {
     console.warn("Failed to load DB prefs", err);
   }

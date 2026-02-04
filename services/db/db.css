@@ -151,20 +151,20 @@
 }
 
 /* =========================================================
-   LIST / LEGEND LAYOUT
+   BODY / LEGEND LAYOUT
    ========================================================= */
 
-.db-content {
+.db-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-columns: 200px minmax(0, 1fr);
   gap: 12px;
   padding: 10px 12px 12px;
   flex: 1;
   min-height: 0;
 }
 
-.db-content.legend-collapsed {
-  grid-template-columns: minmax(0, 1fr) 44px;
+.db-content {
+  min-height: 0;
 }
 
 .db-list {
@@ -179,10 +179,10 @@
   align-items: start;
 }
 
-.db-legend {
-  border-left: 1px solid #333;
-  padding-left: 12px;
-  font-size: 13px;
+.db-legend-panel {
+  border-right: 1px solid #333;
+  padding-right: 12px;
+  font-size: 12px;
   color: #bbb;
 }
 
@@ -192,6 +192,8 @@
   justify-content: space-between;
   font-weight: 600;
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .db-legend-toggle {
@@ -395,15 +397,15 @@
 }
 
 @media (max-width: 960px) {
-  .db-content {
+  .db-body {
     grid-template-columns: 1fr;
   }
 
-  .db-legend {
-    border-left: none;
-    border-top: 1px solid #333;
-    padding-left: 0;
-    padding-top: 10px;
+  .db-legend-panel {
+    border-right: none;
+    border-bottom: 1px solid #333;
+    padding-right: 0;
+    padding-bottom: 10px;
   }
 }
 
@@ -440,4 +442,9 @@
 /* DB must NEVER use mask-image */
 .db-modal .icon {
   mask-image: none !important;
+}
+.db-compact.active {
+  background: #3a3a3a;
+  color: #fff;
+  border-color: #4a4a4a;
 }
