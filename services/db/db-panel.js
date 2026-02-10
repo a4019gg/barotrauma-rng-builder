@@ -295,6 +295,9 @@ function buildEffectCard(entry) {
   details.className = "db-entry-details";
   details.style.display = expandedAll ? "block" : "none";
 
+  const previewTags = buildTags(entry, { compact: true });
+  if (previewTags) card.appendChild(previewTags);
+
   details.appendChild(createDetailRow("typeLabel", entry.type ?? "-"));
   details.appendChild(createDetailRow("maxStrengthLabel", entry.maxstrength ?? "-"));
   details.appendChild(createDetailRow("limbSpecificLabel", entry.limbspecific, true));
