@@ -227,6 +227,10 @@
   border-left-color: rgb(80 200 120);
 }
 
+.db-tag[data-tag="BURN"] {
+  border-left-color: rgb(var(--role-damage-high));
+}
+
 .db-tag[data-tag="LIMB"] {
   border-left-color: rgb(120 160 200);
 }

@@ -19,12 +19,13 @@ let isCompact = false;
 let searchTimer = null;
 let searchQuery = "";
 let activeRoleFilter = "all";
+let controlsCollapsed = false;
 let fallbackIcon = null;
 
 const DEFAULT_ICON_SIZE = 36;
 const SCALE_LEVELS = [0.9, 1, 1.1];
 const STORAGE_KEY = "dbPanelPrefs";
-export const DB_PANEL_VERSION = "2025-01-11";
+export const DB_PANEL_VERSION = "2026-02-10";
 
 /* =========================================================
    PUBLIC API
@@ -89,8 +90,8 @@ function buildModal() {
 
         <div style="display:flex; gap:8px; align-items:center">
           <select class="db-language">
-            <option value="en">EN ▾</option>
-            <option value="ru">RU ▾</option>
+            <option value="en">EN</option>
+            <option value="ru">RU</option>
           </select>
           <button class="db-close">✕</button>
         </div>
@@ -109,12 +110,17 @@ function buildModal() {
 
       <div class="db-body">
         <div class="db-legend-panel" aria-label="Controls">
-          <div class="db-legend-title" data-l10n="legendTitle"></div>
-          <div class="db-legend-row" data-l10n="legendSearch"></div>
-          <div class="db-legend-row" data-l10n="legendSort"></div>
-          <div class="db-legend-row" data-l10n="legendScale"></div>
-          <div class="db-legend-row" data-l10n="legendCompact"></div>
-          <div class="db-legend-row" data-l10n="legendCopy"></div>
+          <div class="db-legend-title">
+            <span data-l10n="legendTitle"></span>
+            <button class="db-controls-toggle" type="button" data-l10n-title="legendToggleTitle" aria-pressed="false">⟨⟨</button>
+          </div>
+          <div class="db-legend-content">
+            <div class="db-legend-row" data-l10n="legendSearch"></div>
+            <div class="db-legend-row" data-l10n="legendSort"></div>
+            <div class="db-legend-row" data-l10n="legendScale"></div>
+            <div class="db-legend-row" data-l10n="legendCompact"></div>
+            <div class="db-legend-row" data-l10n="legendCopy"></div>
+          </div>
         </div>
         <div class="db-content">
           <div class="db-list"></div>
@@ -130,6 +136,7 @@ function buildModal() {
   updateSortButton(modal);
   setScaleLevel(SCALE_LEVELS[scaleIndex], modal);
   updateCompactState(modal);
+  updateControlsState(modal);
   renderFilters();
   updateCount();
 
@@ -178,9 +185,15 @@ function bindModalEvents(modal) {
   };
 
   modal.querySelector(".db-search").oninput = e => {
-    searchQuery = String(e.target.value || "").toLowerCase();
+    searchQuery = normalizeQuery(e.target.value);
     if (searchTimer) clearTimeout(searchTimer);
     searchTimer = setTimeout(renderList, 200);
+  };
+
+  modal.querySelector(".db-controls-toggle").onclick = () => {
+    controlsCollapsed = !controlsCollapsed;
+    updateControlsState();
+    savePrefs();
   };
 
   const langSelect = modal.querySelector(".db-language");
@@ -264,6 +277,9 @@ function buildEffectCard(entry) {
   details.className = "db-entry-details";
   details.style.display = expandedAll ? "block" : "none";
 
+  const previewTags = buildTags(entry, { compact: true });
+  if (previewTags) card.appendChild(previewTags);
+
   details.appendChild(createDetailRow("typeLabel", entry.type ?? "-"));
   details.appendChild(createDetailRow("maxStrengthLabel", entry.maxstrength ?? "-"));
   details.appendChild(createDetailRow("limbSpecificLabel", entry.limbspecific, true));
@@ -273,9 +289,6 @@ function buildEffectCard(entry) {
   desc.className = "db-description";
   desc.textContent = entry.description || "";
   details.appendChild(desc);
-
-  const tags = buildTags(entry);
-  if (tags) details.appendChild(tags);
 
   expandBtn.onclick = e => {
     e.stopPropagation();
@@ -363,9 +376,10 @@ function toggleDetails(details) {
   details.style.display = details.style.display === "none" ? "block" : "none";
 }
 
-function buildTags(entry) {
+function buildTags(entry, options = {}) {
+  const { compact = false } = options;
   const tags = new Set();
-  const primary = ["DAMAGE", "STATUS", "BUFF", "DEBUFF", "POISON"];
+  const primary = ["DAMAGE", "BURN", "STATUS", "BUFF", "DEBUFF", "POISON"];
 
   if (entry.type) tags.add(String(entry.type).toUpperCase());
   if (entry.isbuff) tags.add("BUFF");
@@ -378,12 +392,14 @@ function buildTags(entry) {
   if (!tags.size) return null;
 
   const wrap = document.createElement("div");
-  wrap.className = "db-tags";
+  wrap.className = compact ? "db-tags db-tags-compact" : "db-tags";
 
-  const label = document.createElement("div");
-  label.className = "db-tags-label";
-  label.textContent = t("tagsLabel");
-  wrap.appendChild(label);
+  if (!compact) {
+    const label = document.createElement("div");
+    label.className = "db-tags-label";
+    label.textContent = t("tagsLabel");
+    wrap.appendChild(label);
+  }
 
   const list = document.createElement("div");
   list.className = "db-tags-list";
@@ -398,6 +414,10 @@ function buildTags(entry) {
     el.className = "db-tag";
     el.dataset.tag = tag;
     el.textContent = tag;
+    el.onclick = event => {
+      event.stopPropagation();
+      applyTagQuickSearch(tag);
+    };
     list.appendChild(el);
   });
 
@@ -543,6 +563,18 @@ function updateCompactState(root = modalEl) {
   }
 }
 
+function updateControlsState(root = modalEl) {
+  if (!root) return;
+
+  const body = root.querySelector(".db-body");
+  const toggle = root.querySelector(".db-controls-toggle");
+  if (!body || !toggle) return;
+
+  body.classList.toggle("db-controls-collapsed", controlsCollapsed);
+  toggle.setAttribute("aria-pressed", String(controlsCollapsed));
+  toggle.textContent = controlsCollapsed ? "⟩⟩" : "⟨⟨";
+}
+
 function updateCardLocalization() {
   if (!modalEl) return;
 
@@ -594,6 +626,21 @@ function applyHighlight(element, text) {
   element.appendChild(match);
 
   element.appendChild(document.createTextNode(source.slice(idx + q.length)));
+}
+
+function normalizeQuery(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function applyTagQuickSearch(tag) {
+  searchQuery = normalizeQuery(tag);
+
+  const searchInput = modalEl?.querySelector(".db-search");
+  if (searchInput) {
+    searchInput.value = searchQuery;
+  }
+
+  renderList();
 }
 
 function updateCount(countOverride = null) {
@@ -751,7 +798,7 @@ function getCssRgb(varName, fallback = null) {
    ========================================================= */
 
 function savePrefs() {
-  const prefs = { sortMode, scaleIndex, isCompact, activeRoleFilter };
+  const prefs = { sortMode, scaleIndex, isCompact, activeRoleFilter, controlsCollapsed };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
 
@@ -767,6 +814,9 @@ function loadPrefs() {
     }
     if (typeof prefs.isCompact === "boolean") isCompact = prefs.isCompact;
     if (typeof prefs.activeRoleFilter === "string") activeRoleFilter = prefs.activeRoleFilter;
+    if (typeof prefs.controlsCollapsed === "boolean") {
+      controlsCollapsed = prefs.controlsCollapsed;
+    }
   } catch (err) {
     console.warn("Failed to load DB prefs", err);
   }

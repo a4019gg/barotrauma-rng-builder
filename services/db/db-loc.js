@@ -53,6 +53,7 @@ registerDictionary("en", {
   legendScale: "100% — scale cards",
   legendCompact: "Compact — dense layout",
   legendCopy: "⧉ Copy — copy ID",
+  legendToggleTitle: "Collapse / expand controls",
   "filter-all": "All",
   "filter-buff": "Buff",
   "filter-debuff": "Debuff",
