@@ -1,11 +1,6 @@
 // services/db/db-panel.js
 // Database panel (DB)
 // Uses inline canvas-based icon rendering (legacy-equivalent)
-//
-// NOTES:
-// - Uses DB-local localization module for labels and tooltips
-// - Canvas is used intentionally for DB preview
-// - Node UI icon renderer is NOT used here
 
 import * as DB from "./database.js";
 import { getLanguage, setLanguage, t } from "./db-loc.js";
@@ -24,51 +19,12 @@ let isCompact = false;
 let searchTimer = null;
 let searchQuery = "";
 let activeRoleFilter = "all";
-
-// fallback icon (concealed)
 let fallbackIcon = null;
 
 const DEFAULT_ICON_SIZE = 36;
 const SCALE_LEVELS = [0.9, 1, 1.1];
 const STORAGE_KEY = "dbPanelPrefs";
 export const DB_PANEL_VERSION = "2025-01-11";
-// module integrity sentinel
-
-function showLoadingState(isLoading) {
-  if (!modalEl) return;
-  const windowEl = modalEl.querySelector(".db-window");
-  if (!windowEl) return;
-  windowEl.classList.toggle("db-loading", isLoading);
-}
-
-function renderFilters() {
-  if (!modalEl) return;
-  const filtersEl = modalEl.querySelector(".db-filters");
-  if (!filtersEl) return;
-
-  filtersEl.innerHTML = "";
-  const group = document.createElement("div");
-  group.className = "db-filter-group";
-
-  if (currentType === "afflictions") {
-    ["all", "buff", "debuff", "damage", "status", "mental", "electric"].forEach(role => {
-      const btn = document.createElement("button");
-      btn.className = "db-filter-btn";
-      btn.textContent = t(`filter-${role}`);
-      btn.dataset.role = role;
-      btn.classList.toggle("active", activeRoleFilter === role);
-      btn.onclick = () => {
-        activeRoleFilter = role;
-        savePrefs();
-        renderFilters();
-        renderList();
-      };
-      group.appendChild(btn);
-    });
-  }
-
-  filtersEl.appendChild(group);
-}
 
 /* =========================================================
    PUBLIC API
@@ -79,6 +35,7 @@ export async function openDatabasePanel() {
     if (!modalEl) {
       modalEl = buildModal();
       document.body.appendChild(modalEl);
+
       showLoadingState(true);
       await DB.load();
       prepareFallbackIcon();
@@ -101,33 +58,19 @@ export function closeDatabasePanel() {
 
 export function setDatabaseLanguage(lang) {
   setLanguage(lang);
-  if (modalEl) {
-    updateLocalizedLabels();
-    updateSortButton();
-    setScaleLevel(SCALE_LEVELS[scaleIndex]);
-    updateCompactState();
-    updateCount();
-    renderFilters();
-    updateCardLocalization();
-  }
+  if (!modalEl) return;
+
+  updateLocalizedLabels();
+  updateSortButton();
+  setScaleLevel(SCALE_LEVELS[scaleIndex]);
+  updateCompactState();
+  updateCount();
+  renderFilters();
+  updateCardLocalization();
 }
 
 /* =========================================================
-   FALLBACK ICON
-   ========================================================= */
-
-function prepareFallbackIcon() {
-  const concealed = DB.getById("afflictions", "concealed");
-  if (!concealed || !concealed.icon) return;
-
-  fallbackIcon = {
-    texture: concealed.icon.texture,
-    sourcerect: concealed.icon.sourcerect
-  };
-}
-
-/* =========================================================
-   MODAL STRUCTURE
+   UI INIT
    ========================================================= */
 
 function buildModal() {
@@ -180,15 +123,28 @@ function buildModal() {
     </div>
   `;
 
-  // backdrop / close
+  bindModalEvents(modal);
+  loadPrefs();
+
+  updateLocalizedLabels(modal);
+  updateSortButton(modal);
+  setScaleLevel(SCALE_LEVELS[scaleIndex], modal);
+  updateCompactState(modal);
+  renderFilters();
+  updateCount();
+
+  return modal;
+}
+
+function bindModalEvents(modal) {
   modal.querySelector(".db-backdrop").onclick = closeDatabasePanel;
   modal.querySelector(".db-close").onclick = closeDatabasePanel;
 
-  // tabs
   modal.querySelectorAll(".db-tabs button").forEach(btn => {
     btn.onclick = () => {
       modal.querySelectorAll(".db-tabs button").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+
       currentType = btn.dataset.type;
       expandedAll = false;
       renderFilters();
@@ -197,13 +153,11 @@ function buildModal() {
     };
   });
 
-  // expand all
   modal.querySelector(".db-expand-all").onclick = () => {
     expandedAll = !expandedAll;
     renderList();
   };
 
-  // sort
   modal.querySelector(".db-sort").onclick = () => {
     sortMode = nextSortMode(sortMode);
     updateSortButton();
@@ -211,7 +165,6 @@ function buildModal() {
     renderList();
   };
 
-  // scale
   modal.querySelector(".db-scale").onclick = () => {
     scaleIndex = (scaleIndex + 1) % SCALE_LEVELS.length;
     setScaleLevel(SCALE_LEVELS[scaleIndex]);
@@ -224,86 +177,86 @@ function buildModal() {
     savePrefs();
   };
 
-  // search
   modal.querySelector(".db-search").oninput = e => {
-    searchQuery = e.target.value.toLowerCase();
+    searchQuery = String(e.target.value || "").toLowerCase();
     if (searchTimer) clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      renderList();
-    }, 200);
+    searchTimer = setTimeout(renderList, 200);
   };
 
-  // language
   const langSelect = modal.querySelector(".db-language");
   langSelect.value = getLanguage();
   langSelect.onchange = () => setDatabaseLanguage(langSelect.value);
+}
 
-  loadPrefs();
-  updateLocalizedLabels(modal);
-  updateSortButton(modal);
-  setScaleLevel(SCALE_LEVELS[scaleIndex], modal);
-  updateCompactState(modal);
-  renderFilters();
-  updateCount();
+function showLoadingState(isLoading) {
+  if (!modalEl) return;
+  const windowEl = modalEl.querySelector(".db-window");
+  if (!windowEl) return;
+  windowEl.classList.toggle("db-loading", isLoading);
+}
 
-  return modal;
+function prepareFallbackIcon() {
+  const concealed = DB.getById("afflictions", "concealed");
+  if (!concealed || !concealed.icon) return;
+
+  fallbackIcon = {
+    texture: concealed.icon.texture,
+    sourcerect: concealed.icon.sourcerect
+  };
 }
 
 /* =========================================================
-   RENDER LIST
+   RENDERING
    ========================================================= */
 
 function renderList() {
-  const listEl = modalEl.querySelector(".db-list");
-  const searchValue = searchQuery || "";
+  if (!modalEl) return;
 
+  const listEl = modalEl.querySelector(".db-list");
   listEl.innerHTML = "";
 
   const entries = DB.getAll(currentType);
-  const filteredByType = filterEntries(entries, searchValue);
-  if (!entries || entries.length === 0) {
+  if (!entries.length) {
     listEl.innerHTML = `<div class="db-empty">${t("noEntries")}</div>`;
+    updateCount(0);
     return;
   }
 
-  if (filteredByType.length === 0) {
+  const filtered = filterEntries(entries, searchQuery || "");
+  if (!filtered.length) {
     listEl.innerHTML = `<div class="db-empty">${t("nothingFound")}</div>`;
     updateCount(0);
     return;
   }
 
-  const sorted = DB.sort(filteredByType, sortMode);
+  const sorted = DB.sort(filtered, sortMode);
   for (const entry of sorted) {
     listEl.appendChild(buildEntryCard(entry));
   }
   updateCount(sorted.length);
 }
 
-/* =========================================================
-   ENTRY CARD
-   ========================================================= */
-
 function buildEntryCard(entry) {
-  switch (currentType) {
-    case "afflictions":
-      return buildEffectCard(entry);
-    case "items":
-      return buildItemCard(entry);
-    case "creatures":
-      return buildCreatureCard(entry);
-    default:
-      return buildItemCard(entry);
-  }
+  if (currentType === "afflictions") return buildEffectCard(entry);
+  if (currentType === "creatures") return buildSimpleCard(entry);
+  return buildSimpleCard(entry);
+}
+
+function buildSimpleCard(entry) {
+  const { card, header, copyBtn } = buildBaseCard(entry);
+  header.appendChild(copyBtn);
+  card.appendChild(header);
+  card.classList.add("db-entry-simple");
+  return card;
 }
 
 function buildEffectCard(entry) {
-  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
+  const { card, header, copyBtn } = buildBaseCard(entry);
 
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
   expandBtn.textContent = "ⓘ";
   header.appendChild(expandBtn);
-
   header.appendChild(copyBtn);
   card.appendChild(header);
 
@@ -328,59 +281,12 @@ function buildEffectCard(entry) {
     e.stopPropagation();
     toggleDetails(details);
   };
-
   card.onclick = () => toggleDetails(details);
 
   card.appendChild(details);
   return card;
 }
 
-function createDetailRow(labelKey, value, isBoolean = false) {
-  const row = document.createElement("div");
-  row.className = "db-row";
-
-  const label = document.createElement("strong");
-  label.dataset.l10n = labelKey;
-  label.textContent = t(labelKey);
-
-  const spacer = document.createTextNode(": ");
-  const valueSpan = document.createElement("span");
-  valueSpan.className = "db-row-value";
-
-  if (isBoolean) {
-    valueSpan.dataset.value = value === undefined ? "unset" : value ? "true" : "false";
-    valueSpan.textContent = formatBooleanValue(value);
-  } else {
-    valueSpan.textContent = value ?? "-";
-  }
-
-  row.appendChild(label);
-  row.appendChild(spacer);
-  row.appendChild(valueSpan);
-  return row;
-}
-
-function formatBooleanValue(value) {
-  if (value === undefined) return "-";
-  return value ? t("yes") : t("no");
-}
-
-function buildItemCard(entry) {
-  const { card, header, copyBtn } = buildBaseCard(entry);
-  header.appendChild(copyBtn);
-  card.appendChild(header);
-  card.classList.add("db-entry-simple");
-  return card;
-}
-
-function buildCreatureCard(entry) {
-  const { card, header, copyBtn } = buildBaseCard(entry);
-  header.appendChild(copyBtn);
-  card.appendChild(header);
-  card.classList.add("db-entry-simple");
-  return card;
-}
-
 function buildBaseCard(entry) {
   const card = document.createElement("div");
   card.className = "db-entry";
@@ -401,12 +307,17 @@ function buildBaseCard(entry) {
   id.className = "db-entry-id";
   applyHighlight(id, entry.id);
 
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(id);
+  header.appendChild(titleWrap);
+
   const copyBtn = document.createElement("button");
   copyBtn.className = "db-copy-btn";
   copyBtn.textContent = t("copyId");
   copyBtn.onclick = async e => {
     e.stopPropagation();
     if (!entry.id) return;
+
     try {
       await navigator.clipboard?.writeText(entry.id);
       showSuccess(t("copyIdSuccess"));
@@ -416,10 +327,7 @@ function buildBaseCard(entry) {
     }
   };
 
-function buildEffectCard(entry) {
-  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
-
-  return { card, header, copyBtn, titleWrap };
+  return { card, header, copyBtn };
 }
 
 function createDetailRow(labelKey, value, isBoolean = false) {
@@ -430,7 +338,6 @@ function createDetailRow(labelKey, value, isBoolean = false) {
   label.dataset.l10n = labelKey;
   label.textContent = t(labelKey);
 
-  const spacer = document.createTextNode(": ");
   const valueSpan = document.createElement("span");
   valueSpan.className = "db-row-value";
 
@@ -442,7 +349,7 @@ function createDetailRow(labelKey, value, isBoolean = false) {
   }
 
   row.appendChild(label);
-  row.appendChild(spacer);
+  row.appendChild(document.createTextNode(": "));
   row.appendChild(valueSpan);
   return row;
 }
@@ -450,63 +357,6 @@ function createDetailRow(labelKey, value, isBoolean = false) {
 function formatBooleanValue(value) {
   if (value === undefined) return "-";
   return value ? t("yes") : t("no");
-}
-
-function buildItemCard(entry) {
-  const { card, header, copyBtn } = buildBaseCard(entry);
-  header.appendChild(copyBtn);
-  card.appendChild(header);
-  card.classList.add("db-entry-simple");
-  return card;
-}
-
-function buildCreatureCard(entry) {
-  const { card, header, copyBtn } = buildBaseCard(entry);
-  header.appendChild(copyBtn);
-  card.appendChild(header);
-  card.classList.add("db-entry-simple");
-  return card;
-}
-
-function buildBaseCard(entry) {
-  const card = document.createElement("div");
-  card.className = "db-entry";
-
-  const header = document.createElement("div");
-  header.className = "db-entry-header";
-
-  const icon = createEntryIcon(entry);
-  if (icon) header.appendChild(icon);
-
-  const titleWrap = document.createElement("div");
-
-  const title = document.createElement("div");
-  title.className = "db-entry-title";
-  applyHighlight(title, entry.name || entry.id);
-
-  const id = document.createElement("div");
-  id.className = "db-entry-id";
-  applyHighlight(id, entry.id);
-
-  const copyBtn = document.createElement("button");
-  copyBtn.className = "db-copy-btn";
-  copyBtn.textContent = t("copyId");
-  copyBtn.onclick = async e => {
-    e.stopPropagation();
-    if (!entry.id) return;
-    try {
-      await navigator.clipboard?.writeText(entry.id);
-      showSuccess(t("copyIdSuccess"));
-    } catch (err) {
-      console.warn(err);
-      showError(t("copyIdError"));
-    }
-  };
-
-function buildEffectCard(entry) {
-  const { card, header, copyBtn, titleWrap } = buildBaseCard(entry);
-
-  return { card, header, copyBtn, titleWrap };
 }
 
 function toggleDetails(details) {
@@ -525,7 +375,7 @@ function buildTags(entry) {
   }
   if (entry.category) tags.add(String(entry.category).toUpperCase());
 
-  if (tags.size === 0) return null;
+  if (!tags.size) return null;
 
   const wrap = document.createElement("div");
   wrap.className = "db-tags";
@@ -553,6 +403,214 @@ function buildTags(entry) {
 
   wrap.appendChild(list);
   return wrap;
+}
+
+/* =========================================================
+   FILTERS / SORT / LOCALIZATION
+   ========================================================= */
+
+function renderFilters() {
+  if (!modalEl) return;
+
+  const filtersEl = modalEl.querySelector(".db-filters");
+  if (!filtersEl) return;
+
+  filtersEl.innerHTML = "";
+  const group = document.createElement("div");
+  group.className = "db-filter-group";
+
+  if (currentType === "afflictions") {
+    ["all", "buff", "debuff", "damage", "status", "mental", "electric"].forEach(role => {
+      const btn = document.createElement("button");
+      btn.className = "db-filter-btn";
+      btn.textContent = t(`filter-${role}`);
+      btn.dataset.role = role;
+      btn.classList.toggle("active", activeRoleFilter === role);
+      btn.onclick = () => {
+        activeRoleFilter = role;
+        savePrefs();
+        renderFilters();
+        renderList();
+      };
+      group.appendChild(btn);
+    });
+  }
+
+  filtersEl.appendChild(group);
+}
+
+function filterEntries(entries, searchValue) {
+  let filtered = entries;
+
+  if (searchValue) {
+    filtered = filtered.filter(entry => {
+      const name = String(entry.name || "").toLowerCase();
+      const id = String(entry.id || "").toLowerCase();
+      return (
+        name.includes(searchValue) ||
+        id.includes(searchValue) ||
+        entryMatchesTag(entry, searchValue)
+      );
+    });
+  }
+
+  if (currentType === "afflictions" && activeRoleFilter !== "all") {
+    filtered = filtered.filter(entry => entry.icon?.role === activeRoleFilter);
+  }
+
+  return filtered;
+}
+
+function entryMatchesTag(entry, searchValue) {
+  if (!searchValue) return false;
+
+  const tags = new Set();
+  if (entry.type) tags.add(String(entry.type));
+  if (entry.isbuff) tags.add("buff");
+  if (entry.limbspecific) tags.add("limb");
+  if (Array.isArray(entry.tags)) {
+    entry.tags.forEach(tag => tags.add(String(tag)));
+  }
+  if (entry.category) tags.add(String(entry.category));
+
+  return [...tags].some(tag => tag.toLowerCase().includes(searchValue));
+}
+
+function updateLocalizedLabels(root = modalEl) {
+  if (!root) return;
+
+  root.querySelectorAll("[data-l10n]").forEach(el => {
+    const key = el.dataset.l10n;
+    if (key) el.textContent = t(key);
+  });
+
+  root.querySelectorAll("[data-l10n-placeholder]").forEach(el => {
+    const key = el.dataset.l10nPlaceholder;
+    if (key) el.placeholder = t(key);
+  });
+
+  root.querySelectorAll("[data-l10n-title]").forEach(el => {
+    const key = el.dataset.l10nTitle;
+    if (key) el.title = t(key);
+  });
+}
+
+function updateSortButton(root = modalEl) {
+  if (!root) return;
+  const btn = root.querySelector(".db-sort");
+  if (!btn) return;
+
+  const labelMap = {
+    "name-asc": t("sortNameAsc"),
+    "name-desc": t("sortNameDesc")
+  };
+
+  btn.textContent = labelMap[sortMode] || t("sortLabel");
+}
+
+function nextSortMode(mode) {
+  return mode === "name-asc" ? "name-desc" : "name-asc";
+}
+
+function setScaleLevel(scale, root = modalEl) {
+  if (!root) return;
+
+  const windowEl = root.querySelector(".db-window");
+  if (windowEl) {
+    windowEl.style.setProperty("--db-scale", String(scale));
+  }
+
+  const scaleBtn = root.querySelector(".db-scale");
+  if (scaleBtn) {
+    const percent = Math.round(scale * 100);
+    scaleBtn.textContent = t("scaleValue", `${percent}%`).replace("{value}", `${percent}%`);
+  }
+}
+
+function updateCompactState(root = modalEl) {
+  if (!root) return;
+
+  const windowEl = root.querySelector(".db-window");
+  if (windowEl) {
+    windowEl.classList.toggle("db-compact", isCompact);
+  }
+
+  const compactBtn = root.querySelector(".db-compact");
+  if (compactBtn) {
+    compactBtn.textContent = t("compactLabel");
+    compactBtn.classList.toggle("active", isCompact);
+    compactBtn.setAttribute("aria-pressed", String(isCompact));
+  }
+}
+
+function updateCardLocalization() {
+  if (!modalEl) return;
+
+  modalEl.querySelectorAll(".db-copy-btn").forEach(btn => {
+    btn.textContent = t("copyId");
+  });
+
+  modalEl.querySelectorAll(".db-tags-label").forEach(label => {
+    label.textContent = t("tagsLabel");
+  });
+
+  modalEl.querySelectorAll(".db-row-value").forEach(value => {
+    const key = value.dataset.value;
+    if (!key) return;
+
+    if (key === "unset") {
+      value.textContent = "-";
+    } else {
+      value.textContent = key === "true" ? t("yes") : t("no");
+    }
+  });
+}
+
+function applyHighlight(element, text) {
+  if (!element) return;
+
+  const query = searchQuery.trim();
+  const source = String(text || "");
+  if (!query) {
+    element.textContent = source;
+    return;
+  }
+
+  const lower = source.toLowerCase();
+  const q = query.toLowerCase();
+  const idx = lower.indexOf(q);
+
+  if (idx === -1) {
+    element.textContent = source;
+    return;
+  }
+
+  element.textContent = "";
+  element.appendChild(document.createTextNode(source.slice(0, idx)));
+
+  const match = document.createElement("span");
+  match.className = "db-highlight";
+  match.textContent = source.slice(idx, idx + q.length);
+  element.appendChild(match);
+
+  element.appendChild(document.createTextNode(source.slice(idx + q.length)));
+}
+
+function updateCount(countOverride = null) {
+  if (!modalEl) return;
+  const countEl = modalEl.querySelector(".db-count");
+  if (!countEl) return;
+
+  let count = countOverride;
+  if (count === null) {
+    try {
+      count = DB.getAll(currentType).length;
+    } catch {
+      count = 0;
+    }
+  }
+
+  countEl.textContent = t("countValue", `${count}`).replace("{count}", `${count}`);
 }
 
 /* =========================================================
@@ -617,7 +675,7 @@ function normalizeSourceRect(src) {
     parts = src.split(",").map(v => Number(v.trim()));
   }
 
-  if (!parts || parts.length !== 4 || parts.some(n => !isFinite(n))) {
+  if (!parts || parts.length !== 4 || parts.some(n => !Number.isFinite(n))) {
     return null;
   }
 
@@ -664,6 +722,7 @@ function resolveIconTint(iconData = {}) {
 
 function buildTintFill(ctx, size, tint) {
   if (!tint) return "transparent";
+
   if (tint.type === "gradient") {
     const [low, mid, high] = tint.colors;
     const gradient = ctx.createLinearGradient(0, 0, size, 0);
@@ -672,14 +731,12 @@ function buildTintFill(ctx, size, tint) {
     gradient.addColorStop(1, high || "rgb(210, 210, 210)");
     return gradient;
   }
+
   return tint.color || "transparent";
 }
 
 function getCssRgb(varName, fallback = null) {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(varName)
-    .trim();
-
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
   if (!raw) return fallback;
   if (raw.startsWith("rgb")) return raw;
 
@@ -689,171 +746,12 @@ function getCssRgb(varName, fallback = null) {
   return `rgb(${parts.slice(0, 3).join(", ")})`;
 }
 
-function updateLocalizedLabels(root = modalEl) {
-  if (!root) return;
-  root.querySelectorAll("[data-l10n]").forEach(el => {
-    const key = el.dataset.l10n;
-    if (key) el.textContent = t(key);
-  });
-  root.querySelectorAll("[data-l10n-placeholder]").forEach(el => {
-    const key = el.dataset.l10nPlaceholder;
-    if (key) el.placeholder = t(key);
-  });
-  root.querySelectorAll("[data-l10n-title]").forEach(el => {
-    const key = el.dataset.l10nTitle;
-    if (key) el.title = t(key);
-  });
-}
-
-function updateSortButton(root = modalEl) {
-  if (!root) return;
-  const btn = root.querySelector(".db-sort");
-  if (!btn) return;
-
-  const labelMap = {
-    "name-asc": t("sortNameAsc"),
-    "name-desc": t("sortNameDesc")
-  };
-
-  btn.textContent = labelMap[sortMode] || t("sortLabel");
-}
-
-function nextSortMode(mode) {
-  switch (mode) {
-    case "name-asc":
-    default:
-      return "name-desc";
-    case "name-desc":
-      return "name-asc";
-  }
-}
-
-function setScaleLevel(scale, root = modalEl) {
-  if (!root) return;
-  const windowEl = root.querySelector(".db-window");
-  if (!windowEl) return;
-
-  windowEl.style.setProperty("--db-scale", String(scale));
-
-  const scaleBtn = root.querySelector(".db-scale");
-  if (scaleBtn) {
-    const percent = Math.round(scale * 100);
-    scaleBtn.textContent = t("scaleValue", `${percent}%`).replace("{value}", `${percent}%`);
-  }
-}
-
-function updateCompactState(root = modalEl) {
-  if (!root) return;
-  const windowEl = root.querySelector(".db-window");
-  const compactBtn = root.querySelector(".db-compact");
-  if (windowEl) {
-    windowEl.classList.toggle("db-compact", isCompact);
-  }
-  if (compactBtn) {
-    compactBtn.textContent = t("compactLabel");
-    compactBtn.classList.toggle("active", isCompact);
-    compactBtn.setAttribute("aria-pressed", String(isCompact));
-  }
-}
-
-function updateCardLocalization() {
-  if (!modalEl) return;
-  modalEl.querySelectorAll(".db-copy-btn").forEach(btn => {
-    btn.textContent = t("copyId");
-  });
-  modalEl.querySelectorAll(".db-tags-label").forEach(label => {
-    label.textContent = t("tagsLabel");
-  });
-  modalEl.querySelectorAll(".db-row-value").forEach(value => {
-    if (!value.dataset.value) return;
-    const key = value.dataset.value;
-    if (key === "unset") {
-      value.textContent = "-";
-    } else {
-      value.textContent = key === "true" ? t("yes") : t("no");
-    }
-  });
-}
-
-function applyHighlight(element, text) {
-  if (!element) return;
-  const query = searchQuery?.trim();
-  if (!query) {
-    element.textContent = text || "";
-    return;
-  }
-
-  const safeText = text || "";
-  const lower = safeText.toLowerCase();
-  const lowerQuery = query.toLowerCase();
-  const index = lower.indexOf(lowerQuery);
-
-  if (index === -1) {
-    element.textContent = safeText;
-    return;
-  }
-
-  element.textContent = "";
-  const before = document.createTextNode(safeText.slice(0, index));
-  const match = document.createElement("span");
-  match.className = "db-highlight";
-  match.textContent = safeText.slice(index, index + lowerQuery.length);
-  const after = document.createTextNode(safeText.slice(index + lowerQuery.length));
-  element.appendChild(before);
-  element.appendChild(match);
-  element.appendChild(after);
-}
-
-function filterEntries(entries, searchValue) {
-  let filtered = entries.filter(e =>
-    e.name?.toLowerCase().includes(searchValue) ||
-    e.id?.toLowerCase().includes(searchValue) ||
-    entryMatchesTag(e, searchValue)
-  );
-
-  if (currentType === "afflictions" && activeRoleFilter !== "all") {
-    filtered = filtered.filter(entry => entry.icon?.role === activeRoleFilter);
-  }
-
-  return filtered;
-}
-
-function entryMatchesTag(entry, searchValue) {
-  if (!searchValue) return false;
-  const tags = new Set();
-  if (entry.type) tags.add(String(entry.type));
-  if (entry.isbuff) tags.add("buff");
-  if (entry.limbspecific) tags.add("limb");
-  if (Array.isArray(entry.tags)) {
-    entry.tags.forEach(tag => tags.add(String(tag)));
-  }
-  if (entry.category) tags.add(String(entry.category));
-  return [...tags].some(tag => tag.toLowerCase().includes(searchValue));
-}
-
-function updateCount(countOverride = null) {
-  if (!modalEl) return;
-  const countEl = modalEl.querySelector(".db-count");
-  if (!countEl) return;
-
-  let count = countOverride;
-  if (count === null) {
-    try {
-      count = DB.getAll(currentType).length;
-    } catch (err) {
-      count = 0;
-    }
-  }
-  countEl.textContent = t("countValue", `${count}`).replace("{count}", `${count}`);
-}
+/* =========================================================
+   PERSISTENCE
+   ========================================================= */
 
 function savePrefs() {
-  const prefs = {
-    sortMode,
-    scaleIndex,
-    isCompact,
-    activeRoleFilter
-  };
+  const prefs = { sortMode, scaleIndex, isCompact, activeRoleFilter };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
 
@@ -861,6 +759,7 @@ function loadPrefs() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
+
     const prefs = JSON.parse(raw);
     if (prefs.sortMode) sortMode = prefs.sortMode;
     if (typeof prefs.scaleIndex === "number") {
