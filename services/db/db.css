@@ -165,11 +165,16 @@
 
 .db-content {
   min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .db-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 
   display: grid;
@@ -199,6 +204,37 @@
 .db-legend-row {
   margin-bottom: 6px;
 }
+
+.db-controls-toggle {
+  background: #2d2d2d;
+  color: #cfcfcf;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.db-controls-toggle:hover {
+  background: #383838;
+}
+
+.db-legend-content {
+  overflow: hidden;
+}
+
+.db-body.db-controls-collapsed {
+  grid-template-columns: 38px minmax(0, 1fr);
+}
+
+.db-body.db-controls-collapsed .db-legend-panel {
+  padding-right: 6px;
+}
+
+.db-body.db-controls-collapsed .db-legend-content {
+  display: none;
+}
+
 
 .db-empty {
   grid-column: 1 / -1;
@@ -345,6 +381,12 @@
   border-top: 1px dashed #3a3a3a;
 }
 
+.db-tags-compact {
+  margin-top: 6px;
+  padding-top: 0;
+  border-top: none;
+}
+
 .db-tags-label {
   font-size: 11px;
   text-transform: uppercase;
@@ -365,6 +407,12 @@
   padding: 2px 6px;
   border-radius: 10px;
   font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.db-tag:hover {
+  filter: brightness(1.1);
 }
 
 .db-icon-canvas {
@@ -382,6 +430,10 @@
     border-bottom: 1px solid #333;
     padding-right: 0;
     padding-bottom: 10px;
+  }
+
+  .db-body.db-controls-collapsed {
+    grid-template-columns: 1fr;
   }
 }
 
