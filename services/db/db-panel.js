@@ -162,7 +162,9 @@ function bindModalEvents(modal) {
 
   modal.querySelector(".db-expand-all").onclick = () => {
     expandedAll = !expandedAll;
-    renderList();
+    if (!setAllDetailsVisibility(expandedAll)) {
+      renderList();
+    }
   };
 
   modal.querySelector(".db-sort").onclick = () => {
@@ -269,9 +271,25 @@ function buildEffectCard(entry) {
   const expandBtn = document.createElement("button");
   expandBtn.className = "db-expand-btn";
   expandBtn.textContent = "ⓘ";
-  header.appendChild(expandBtn);
+  expandBtn.title = t("expandAll");
+
   header.appendChild(copyBtn);
   card.appendChild(header);
+
+  const footer = document.createElement("div");
+  footer.className = "db-entry-footer";
+
+  const previewTags = buildTags(entry, { compact: true });
+  if (previewTags) {
+    footer.appendChild(previewTags);
+  } else {
+    const spacer = document.createElement("div");
+    spacer.className = "db-tags db-tags-compact db-tags-empty";
+    footer.appendChild(spacer);
+  }
+
+  footer.appendChild(expandBtn);
+  card.appendChild(footer);
 
   const details = document.createElement("div");
   details.className = "db-entry-details";
@@ -521,11 +539,12 @@ function updateSortButton(root = modalEl) {
   if (!btn) return;
 
   const labelMap = {
-    "name-asc": t("sortNameAsc"),
-    "name-desc": t("sortNameDesc")
+    "name-asc": "A-Z",
+    "name-desc": "Z-A"
   };
 
-  btn.textContent = labelMap[sortMode] || t("sortLabel");
+  btn.dataset.sortMode = sortMode;
+  btn.textContent = labelMap[sortMode] || "A-Z";
 }
 
 function nextSortMode(mode) {
@@ -572,7 +591,8 @@ function updateControlsState(root = modalEl) {
 
   body.classList.toggle("db-controls-collapsed", controlsCollapsed);
   toggle.setAttribute("aria-pressed", String(controlsCollapsed));
-  toggle.textContent = controlsCollapsed ? "⟩⟩" : "⟨⟨";
+  toggle.setAttribute("aria-label", controlsCollapsed ? "Expand controls" : "Collapse controls");
+  toggle.textContent = controlsCollapsed ? "⟩" : "⟨";
 }
 
 function updateCardLocalization() {
@@ -626,6 +646,18 @@ function applyHighlight(element, text) {
   element.appendChild(match);
 
   element.appendChild(document.createTextNode(source.slice(idx + q.length)));
+}
+
+function setAllDetailsVisibility(isVisible) {
+  if (!modalEl) return false;
+
+  const details = modalEl.querySelectorAll(".db-entry-details");
+  if (!details.length) return false;
+
+  details.forEach(el => {
+    el.style.display = isVisible ? "block" : "none";
+  });
+  return true;
 }
 
 function normalizeQuery(value) {
