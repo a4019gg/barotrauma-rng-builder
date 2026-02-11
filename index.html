@@ -2,45 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barotrauma RNG Builder</title>
 
-  <!-- =====================
-       STYLES
-       ===================== -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
-<link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/themes/dark.css" />
-<link rel="stylesheet" href="./services/db/db.css" />
-
-
-  <style>
-    /* Minimal base reset for safety */
-    body {
-      margin: 0;
-      background: var(--bg-main, #1e1e1e);
-      color: var(--text-main, #dddddd);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/themes/dark.css" />
+  <link rel="stylesheet" href="./services/tree/tree.css" />
+  <link rel="stylesheet" href="./services/db/db.css" />
 </head>
 <body>
+  <header class="top-bar">
+    <div class="top-left">
+      <button id="view-btn" data-action="toggleView">Tree View</button>
+      <button data-action="openDB">Database</button>
+      <button data-action="undo">Undo</button>
+      <button data-action="redo">Redo</button>
+    </div>
 
-  <!-- =====================
-       MAIN SCRIPT
-       ===================== -->
+    <div class="top-right">
+      <button data-action="generateXML" class="green">Generate XML</button>
+      <button data-action="copyXML">Copy XML</button>
+      <button data-action="downloadXML">Download XML</button>
+      <button data-action="importXML">Import XML</button>
+    </div>
+  </header>
+
+  <section class="action-bar">
+    <button data-action="addNode" data-type="rng">+ RNG</button>
+    <button data-action="addNode" data-type="spawn">+ Item</button>
+    <button data-action="addNode" data-type="creature">+ Creature</button>
+    <button data-action="addNode" data-type="affliction">+ Affliction</button>
+    <button data-action="addEvent">+ Add Event</button>
+    <button data-action="clearAll">Clear Event</button>
+  </section>
+
+  <main id="main-container">
+    <aside id="events-panel">
+      <h3>Events</h3>
+      <div id="events-list"></div>
+    </aside>
+
+    <section id="editor-area">
+      <div id="classic-view">
+        <div id="tree-root" class="node-root">
+          <strong>Root Event</strong>
+          <div id="root-children"></div>
+        </div>
+      </div>
+      <div id="tree-container" style="display:none;">
+        <svg id="tree-svg"></svg>
+      </div>
+    </section>
+  </main>
+
+  <div class="event-id-bar">
+    <label for="event-id">Event ID:</label>
+    <input id="event-id" value="event_1" />
+  </div>
+
+  <textarea id="output" spellcheck="false"></textarea>
 
   <script type="module">
-    import { showError } from "./ui/popup.js";
+    import { initEditorUI } from './ui/ui-controller.js';
 
-    window.addEventListener("DOMContentLoaded", () => {
-      import("./services/db/db-panel.js?v=2026-02-10-2")
-        .then(({ openDatabasePanel }) => openDatabasePanel())
-        .catch(err => {
-          console.error(err);
-          showError("Failed to load database panel");
-        });
+    window.addEventListener('DOMContentLoaded', () => {
+      initEditorUI();
     });
   </script>
-
 </body>
 </html>
