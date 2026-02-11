@@ -1,10 +1,11 @@
 import { t } from '../../ui/localization.js';
+import { createIcon } from '../../ui/icon-component.js';
 
 const NODE_META = {
-  rng: { icon: '🎲', label: 'RNG' },
-  spawn: { icon: '📦', label: 'Item' },
-  creature: { icon: '💀', label: 'Creature' },
-  affliction: { icon: '⚕', label: 'Affliction' }
+  rng: { icon: 'sliders-horizontal', label: 'RNG' },
+  spawn: { icon: 'box', label: 'Item' },
+  creature: { icon: 'hashtag', label: 'Creature' },
+  affliction: { icon: 'alert-triangle', label: 'Affliction' }
 };
 
 const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
@@ -191,7 +192,8 @@ export class TreeService {
     title.className = 'icon-btn node-title';
     title.type = 'button';
     title.title = `${NODE_META[node.type]?.label || node.type} #${node.id}`;
-    title.textContent = `${NODE_META[node.type]?.icon || '•'} ${NODE_META[node.type]?.label || node.type}`;
+    title.append(createIcon(NODE_META[node.type]?.icon || 'tag'));
+    title.append(` ${NODE_META[node.type]?.label || node.type}`);
     title.addEventListener('click', () => {
       this.selectedNodeId = node.id;
       this.render(this.model);
@@ -201,7 +203,7 @@ export class TreeService {
     removeBtn.className = 'icon-btn remove-btn';
     removeBtn.type = 'button';
     removeBtn.title = t('removeNode');
-    removeBtn.textContent = '🗑';
+    removeBtn.append(createIcon('trash'));
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
       this.onRemoveNode(node.id);
@@ -226,7 +228,7 @@ export class TreeService {
           btn.className = `icon-btn add-btn add-${branch}`;
           btn.type = 'button';
           btn.title = `${branch === 'success' ? t('addSuccess') : t('addFailure')} ${NODE_META[type].label}`;
-          btn.textContent = NODE_META[type].icon;
+          btn.append(createIcon(NODE_META[type].icon));
           btn.addEventListener('click', event => {
             event.stopPropagation();
             this.onAddChild(node.id, branch, type);
