@@ -1,4 +1,5 @@
 import { t } from './localization.js';
+import { createIcon } from './icon-component.js';
 
 const TITLES = {
   rng: 'RNG',
@@ -138,8 +139,13 @@ export function renderNode(model) {
   title.textContent = TITLES[model.type] ?? model.type;
 
   const removeBtn = document.createElement('button');
-  removeBtn.className = 'danger';
-  removeBtn.textContent = t('removeNode');
+  removeBtn.className = 'danger button-with-icon';
+  removeBtn.append(createIcon('trash'));
+
+  const removeLabel = document.createElement('span');
+  removeLabel.textContent = t('removeNode');
+  removeBtn.append(removeLabel);
+
   removeBtn.dataset.action = 'removeNode';
   removeBtn.dataset.id = String(model.id);
 

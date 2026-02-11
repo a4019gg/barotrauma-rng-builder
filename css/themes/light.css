@@ -1,1 +1,9 @@
-
+:root {
+  --bg-main: #f5f8ff;
+  --bg-panel: #e8effc;
+  --bg-panel-soft: #dce7fb;
+  --text-main: #1f2a40;
+  --text-muted: #526786;
+  --border-main: #9db3d6;
+  --accent-main: #2a67d0;
+}
