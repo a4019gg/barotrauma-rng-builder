@@ -2,45 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barotrauma RNG Builder</title>
 
-  <!-- =====================
-       STYLES
-       ===================== -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
-<link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/themes/dark.css" />
-<link rel="stylesheet" href="./services/db/db.css" />
-
-
-  <style>
-    /* Minimal base reset for safety */
-    body {
-      margin: 0;
-      background: var(--bg-main, #1e1e1e);
-      color: var(--text-main, #dddddd);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-  </style>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link id="theme-style" rel="stylesheet" href="./css/themes/dark.css" />
+  <link rel="stylesheet" href="./services/tree/tree.css" />
+  <link rel="stylesheet" href="./services/db/db.css" />
+  <style id="custom-theme-style"></style>
 </head>
 <body>
+  <header class="top-bar">
+    <div class="top-left">
+      <button id="view-btn" data-action="toggleView" data-l10n="treeView"></button>
+      <button data-action="openDB" data-l10n="database"></button>
+      <button id="settings-toggle" data-l10n="settings"></button>
+    </div>
 
-  <!-- =====================
-       MAIN SCRIPT
-       ===================== -->
+    <div class="top-right">
+      <button data-action="projectImport" data-l10n="projectImport"></button>
+      <button data-action="projectExport" data-l10n="projectExport"></button>
+      <button data-action="undo">Undo</button>
+      <button data-action="redo">Redo</button>
+    </div>
+  </header>
+
+  <section id="settings-panel" class="settings-panel">
+    <div class="settings-grid">
+      <label><span data-l10n="theme"></span>
+        <select id="theme-select">
+          <option value="dark">dark.css</option>
+          <option value="light">light.css</option>
+        </select>
+      </label>
+      <label><span data-l10n="language"></span>
+        <select id="lang-select">
+          <option value="en">EN</option>
+          <option value="ru">RU</option>
+        </select>
+      </label>
+      <label><span data-l10n="uiScale"></span>
+        <select id="ui-scale-select">
+          <option value="90">90%</option>
+          <option value="100">100%</option>
+          <option value="110">110%</option>
+          <option value="125">125%</option>
+        </select>
+      </label>
+      <label><span data-l10n="nodeDensity"></span>
+        <select id="density-select">
+          <option value="compact">compact</option>
+          <option value="normal">normal</option>
+          <option value="comfortable">comfortable</option>
+        </select>
+      </label>
+      <label class="checkbox-row"><input id="toggle-shadows" type="checkbox" /><span data-l10n="shadows"></span></label>
+      <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
+    </div>
+    <label class="theme-editor-wrap"><span data-l10n="editTheme"></span>
+      <textarea id="theme-editor" spellcheck="false"></textarea>
+    </label>
+    <div class="settings-actions">
+      <button id="save-custom-theme" data-l10n="saveTheme"></button>
+      <button id="reset-custom-theme" data-l10n="resetTheme"></button>
+    </div>
+  </section>
+
+  <section class="action-bar">
+    <button data-action="addNode" data-type="rng" data-l10n="addRng"></button>
+    <button data-action="addNode" data-type="spawn" data-l10n="addItem"></button>
+    <button data-action="addNode" data-type="creature" data-l10n="addCreature"></button>
+    <button data-action="addNode" data-type="affliction" data-l10n="addAffliction"></button>
+    <button data-action="addEvent" data-l10n="addEvent"></button>
+    <button data-action="clearAll" data-l10n="clearEvent"></button>
+    <div class="spacer"></div>
+    <button data-action="generateXML" class="green" data-l10n="generateXML"></button>
+    <button data-action="copyXML" data-l10n="copyXML"></button>
+    <button data-action="downloadXML" data-l10n="downloadXML"></button>
+    <button data-action="importXML" data-l10n="importXML"></button>
+  </section>
+
+  <main id="main-container">
+    <aside id="events-panel">
+      <h3 data-l10n="events"></h3>
+      <div id="events-list"></div>
+    </aside>
+
+    <section id="editor-area">
+      <div id="classic-view">
+        <div id="tree-root" class="node-root">
+          <strong data-l10n="rootEvent"></strong>
+          <div id="root-children"></div>
+        </div>
+      </div>
+      <div id="tree-container" style="display:none;">
+        <div class="tree-layout">
+          <svg id="tree-svg"></svg>
+          <aside id="tree-inspector"></aside>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="event-id-bar">
+    <label for="event-id" data-l10n="eventId"></label>
+    <input id="event-id" value="event_1" />
+  </div>
+
+  <textarea id="output" spellcheck="false"></textarea>
 
   <script type="module">
-    import { showError } from "./ui/popup.js";
-
-    window.addEventListener("DOMContentLoaded", () => {
-      import("./services/db/db-panel.js?v=2026-02-10-2")
-        .then(({ openDatabasePanel }) => openDatabasePanel())
-        .catch(err => {
-          console.error(err);
-          showError("Failed to load database panel");
-        });
-    });
+    import { initEditorUI } from './ui/ui-controller.js';
+    window.addEventListener('DOMContentLoaded', initEditorUI);
   </script>
-
 </body>
 </html>
