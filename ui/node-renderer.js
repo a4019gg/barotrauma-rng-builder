@@ -1,3 +1,5 @@
+import { t } from './localization.js';
+
 const TITLES = {
   rng: 'RNG',
   spawn: 'Item',
@@ -96,7 +98,7 @@ function createNodeControls(model) {
   return body;
 }
 
-function createBranch(model, branch, renderNode) {
+function createBranch(model, branch, renderer) {
   const section = document.createElement('div');
   section.className = `node-branch ${branch}`;
 
@@ -118,7 +120,7 @@ function createBranch(model, branch, renderNode) {
 
   const children = document.createElement('div');
   children.className = 'node-children';
-  model.children[branch].forEach(child => children.appendChild(renderNode(child)));
+  model.children[branch].forEach(child => children.appendChild(renderer(child)));
 
   section.append(title, addButtons, children);
   return section;
@@ -137,17 +139,15 @@ export function renderNode(model) {
 
   const removeBtn = document.createElement('button');
   removeBtn.className = 'danger';
-  removeBtn.textContent = '×';
+  removeBtn.textContent = t('removeNode');
   removeBtn.dataset.action = 'removeNode';
   removeBtn.dataset.id = String(model.id);
 
   header.append(title, removeBtn);
-  node.appendChild(header);
-  node.appendChild(createNodeControls(model));
+  node.append(header, createNodeControls(model));
 
   if (model.type === 'rng') {
-    node.appendChild(createBranch(model, 'success', renderNode));
-    node.appendChild(createBranch(model, 'failure', renderNode));
+    node.append(createBranch(model, 'success', renderNode), createBranch(model, 'failure', renderNode));
   }
 
   return node;

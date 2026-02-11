@@ -4,9 +4,17 @@ import { buildEventXML } from '../io/xml-export.js';
 import { parseEventXML } from '../io/xml-import.js';
 import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
-import { showError, showSuccess } from './popup.js';
+import { showError, showSuccess, showNeutral } from './popup.js';
+import { applyLocalization, onLangChange, t } from './localization.js';
+import { initSettingsController } from './settings-controller.js';
 
-const treeService = new TreeService('#tree-svg');
+const treeService = new TreeService({
+  svgSelector: '#tree-svg',
+  inspectorSelector: '#tree-inspector',
+  onUpdateParam: (id, key, value) => editorStore.updateNodeParam(id, key, value),
+  onRemoveNode: id => editorStore.removeNode(id),
+  onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type)
+});
 
 function renderEvents() {
   const state = editorStore.getState();
@@ -22,8 +30,7 @@ function renderEvents() {
     list.appendChild(btn);
   });
 
-  const eventIdInput = document.getElementById('event-id');
-  eventIdInput.value = state.currentEvent.id;
+  document.getElementById('event-id').value = state.currentEvent.id;
 }
 
 function renderModel() {
@@ -31,44 +38,39 @@ function renderModel() {
   root.innerHTML = '';
 
   const state = editorStore.getState();
-  state.currentEvent.model.forEach(node => {
-    root.appendChild(renderNode(node));
-  });
+  state.currentEvent.model.forEach(node => root.appendChild(renderNode(node)));
 
-  const treeVisible = document.getElementById('tree-container').style.display === 'block';
-  if (treeVisible) {
+  if (document.getElementById('tree-container').style.display === 'block') {
     treeService.render(state.currentEvent.model);
   }
 }
 
 function updateXML() {
-  const state = editorStore.getState();
-  const xml = buildEventXML({
-    eventId: state.currentEvent.id,
-    model: state.currentEvent.model
+  const { currentEvent } = editorStore.getState();
+  document.getElementById('output').value = buildEventXML({
+    eventId: currentEvent.id,
+    model: currentEvent.model
   });
-  document.getElementById('output').value = xml;
 }
 
 function toggleView() {
   const classic = document.getElementById('classic-view');
   const tree = document.getElementById('tree-container');
   const button = document.getElementById('view-btn');
-  const treeVisible = tree.style.display === 'block';
+  const isTree = tree.style.display === 'block';
 
-  if (treeVisible) {
-    tree.style.display = 'none';
-    classic.style.display = 'block';
-    button.textContent = 'Tree View';
-  } else {
-    tree.style.display = 'block';
-    classic.style.display = 'none';
-    button.textContent = 'Classic View';
-    treeService.render(editorStore.getState().currentEvent.model);
-  }
+  tree.style.display = isTree ? 'none' : 'block';
+  classic.style.display = isTree ? 'block' : 'none';
+  button.textContent = isTree ? t('treeView') : t('classicView');
+
+  if (!isTree) treeService.render(editorStore.getState().currentEvent.model);
 }
 
-function onClick(event) {
+function handleProjectStub() {
+  showNeutral(t('projectStub'));
+}
+
+function handleClick(event) {
   const actionEl = event.target.closest('[data-action]');
   if (!actionEl) return;
 
@@ -80,82 +82,78 @@ function onClick(event) {
   if (action === 'addNode') editorStore.addRootNode(actionEl.dataset.type);
   if (action === 'addChildNode') editorStore.addChildNode(Number(actionEl.dataset.parentId), actionEl.dataset.branch, actionEl.dataset.type);
   if (action === 'removeNode') editorStore.removeNode(id);
-
-  if (action === 'clearAll') {
-    editorStore.clearCurrentEvent();
-  }
+  if (action === 'clearAll') editorStore.clearCurrentEvent();
 
   if (action === 'toggleView') toggleView();
-
-  if (action === 'openDB') {
-    openDatabasePanel().catch(err => {
-      console.error(err);
-      showError('Failed to open DB panel');
-    });
-  }
+  if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
 
   if (action === 'generateXML') {
     updateXML();
-    showSuccess('XML generated');
+    showSuccess(t('xmlGenerated'));
   }
 
   if (action === 'copyXML') {
     const out = document.getElementById('output');
     out.select();
     document.execCommand('copy');
-    showSuccess('XML copied');
+    showSuccess(t('xmlCopied'));
   }
 
   if (action === 'downloadXML') {
     const out = document.getElementById('output');
     const blob = new Blob([out.value], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
     link.href = url;
     link.download = `${editorStore.getState().currentEvent.id}.xml`;
     link.click();
-
     URL.revokeObjectURL(url);
-    showSuccess('XML downloaded');
+    showSuccess(t('xmlDownloaded'));
   }
 
   if (action === 'importXML') {
     try {
-      const input = document.getElementById('output').value;
-      const parsed = parseEventXML(input, () => editorStore.idCounter++);
+      const parsed = parseEventXML(document.getElementById('output').value, () => editorStore.idCounter++);
       editorStore.updateCurrentEventId(parsed.eventId);
       editorStore.setModel(parsed.model);
-      showSuccess('XML imported');
+      showSuccess(t('xmlImported'));
     } catch (err) {
       showError(err.message || 'XML import failed');
     }
   }
 
+  if (action === 'projectImport' || action === 'projectExport') handleProjectStub();
+
   if (action === 'undo') editorStore.undo();
   if (action === 'redo') editorStore.redo();
 }
 
-function onChange(event) {
+function handleChange(event) {
   const el = event.target;
-  if (!el.dataset.action) return;
-
   if (el.dataset.action === 'updateParam') {
     editorStore.updateNodeParam(Number(el.dataset.id), el.dataset.key, el.value);
   }
 }
 
-function onInput(event) {
-  const el = event.target;
-  if (el.id === 'event-id') {
-    editorStore.updateCurrentEventId(el.value);
+function handleInput(event) {
+  if (event.target.id === 'event-id') {
+    editorStore.updateCurrentEventId(event.target.value);
   }
 }
 
 export function initEditorUI() {
-  document.addEventListener('click', onClick);
-  document.addEventListener('change', onChange);
-  document.addEventListener('input', onInput);
+  document.addEventListener('click', handleClick);
+  document.addEventListener('change', handleChange);
+  document.addEventListener('input', handleInput);
+
+  initSettingsController();
+  applyLocalization();
+
+  onLangChange(() => {
+    applyLocalization();
+    document.getElementById('view-btn').textContent = document.getElementById('tree-container').style.display === 'block' ? t('classicView') : t('treeView');
+    treeService.render(editorStore.getState().currentEvent.model);
+  });
 
   editorStore.subscribe(() => {
     renderEvents();
