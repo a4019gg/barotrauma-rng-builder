@@ -21,6 +21,7 @@ let searchQuery = "";
 let activeRoleFilter = "all";
 let controlsCollapsed = false;
 let fallbackIcon = null;
+let hasOpenedDatabasePanel = false;
 
 const DEFAULT_ICON_SIZE = 36;
 const SCALE_LEVELS = [0.9, 1, 1.1];
@@ -41,6 +42,12 @@ export async function openDatabasePanel() {
       await DB.load();
       prepareFallbackIcon();
       showLoadingState(false);
+    }
+
+    if (!hasOpenedDatabasePanel) {
+      controlsCollapsed = false;
+      updateControlsState();
+      hasOpenedDatabasePanel = true;
     }
 
     modalEl.style.display = "block";
@@ -244,6 +251,7 @@ function renderList() {
   if (!modalEl) return;
 
   const listEl = modalEl.querySelector(".db-list");
+  if (!listEl) return;
   listEl.innerHTML = "";
 
   const entries = DB.getAll(currentType);
@@ -587,7 +595,7 @@ function updateCompactState(root = modalEl) {
     windowEl.classList.toggle("db-compact", isCompact);
   }
 
-  const compactBtn = root.querySelector(".db-compact");
+  const compactBtn = root.querySelector("button.db-compact");
   if (compactBtn) {
     compactBtn.textContent = t("compactLabel");
     compactBtn.classList.toggle("active", isCompact);
