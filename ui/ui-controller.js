@@ -7,6 +7,7 @@ import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, onLangChange, t } from './localization.js';
 import { initSettingsController } from './settings-controller.js';
+import { appendIconLabel } from './icon-component.js';
 
 const treeService = new TreeService({
   svgSelector: '#tree-svg',
@@ -15,6 +16,34 @@ const treeService = new TreeService({
   onRemoveNode: id => editorStore.removeNode(id),
   onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type)
 });
+
+function initButtonIcons() {
+  const iconMap = [
+    ['#view-btn', 'compass', 'treeView'],
+    ['button[data-action="openDB"]', 'folder', 'database'],
+    ['#settings-toggle', 'gear', 'settings'],
+    ['button[data-action="projectImport"]', 'import', 'projectImport'],
+    ['button[data-action="projectExport"]', 'export', 'projectExport'],
+    ['button[data-action="undo"]', 'minus-circle', null],
+    ['button[data-action="redo"]', 'checkmark-circle', null],
+    ['button[data-action="addNode"][data-type="rng"]', 'sliders-horizontal', 'addRng'],
+    ['button[data-action="addNode"][data-type="spawn"]', 'box', 'addItem'],
+    ['button[data-action="addNode"][data-type="creature"]', 'hashtag', 'addCreature'],
+    ['button[data-action="addNode"][data-type="affliction"]', 'alert-circle', 'addAffliction'],
+    ['button[data-action="addEvent"]', 'plus-square', 'addEvent'],
+    ['button[data-action="clearAll"]', 'trash', 'clearEvent'],
+    ['button[data-action="generateXML"]', 'code', 'generateXML'],
+    ['button[data-action="copyXML"]', 'copy', 'copyXML'],
+    ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
+    ['button[data-action="importXML"]', 'upload-cloud', 'importXML']
+  ];
+
+  iconMap.forEach(([selector, iconName, l10nKey]) => {
+    const button = document.querySelector(selector);
+    if (!button) return;
+    appendIconLabel(button, { icon: iconName, l10nKey });
+  });
+}
 
 function renderEvents() {
   const state = editorStore.getState();
@@ -61,7 +90,11 @@ function toggleView() {
 
   tree.style.display = isTree ? 'none' : 'block';
   classic.style.display = isTree ? 'block' : 'none';
-  button.textContent = isTree ? t('treeView') : t('classicView');
+  const label = button.querySelector('[data-l10n]');
+  if (label) {
+    label.dataset.l10n = isTree ? 'treeView' : 'classicView';
+    label.textContent = t(label.dataset.l10n);
+  }
 
   if (!isTree) treeService.render(editorStore.getState().currentEvent.model);
 }
@@ -147,11 +180,15 @@ export function initEditorUI() {
   document.addEventListener('input', handleInput);
 
   initSettingsController();
+  initButtonIcons();
   applyLocalization();
 
   onLangChange(() => {
     applyLocalization();
-    document.getElementById('view-btn').textContent = document.getElementById('tree-container').style.display === 'block' ? t('classicView') : t('treeView');
+    const viewLabel = document.querySelector('#view-btn [data-l10n]');
+    if (viewLabel) {
+      viewLabel.textContent = document.getElementById('tree-container').style.display === 'block' ? t('classicView') : t('treeView');
+    }
     treeService.render(editorStore.getState().currentEvent.model);
   });
 

@@ -118,6 +118,15 @@
   background: #1c2e4b;
 }
 
+.icon-btn .ui-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.node-title .ui-icon {
+  margin-right: 4px;
+}
+
 .node-title {
   font-size: 12px;
   font-weight: 700;

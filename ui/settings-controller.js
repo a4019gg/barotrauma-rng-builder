@@ -46,7 +46,8 @@ export function initSettingsController() {
 
   onLangChange(() => {
     applyLocalization();
-    document.getElementById('settings-toggle').textContent = t('settings');
+    const settingsLabel = document.querySelector('#settings-toggle [data-l10n]');
+    if (settingsLabel) settingsLabel.textContent = t('settings');
   });
 
   applyTheme();

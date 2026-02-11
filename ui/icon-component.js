@@ -1,27 +1,17 @@
 import { getIconStyle, onThemeChange } from './theme-manager.js';
 
-const ICON_ROOT = './assets/icons';
-const FORCE_OUTLINE = new Set(['trash']);
+const ICON_ROOT = '/assets/icons';
 const liveIcons = new Set();
 
-function resolveStyle(name) {
-  if (FORCE_OUTLINE.has(name)) return 'outline';
-  return getIconStyle();
-}
-
-function iconPath(name, style) {
-  return `${ICON_ROOT}/${style}/${name}.svg`;
+function iconPath(name, style = getIconStyle()) {
+  return `${ICON_ROOT}/${name}-${style}.svg`;
 }
 
 function applyIconAsset(iconEl) {
   const name = iconEl.dataset.iconName;
-  const style = resolveStyle(name);
+  const style = getIconStyle();
   const path = iconPath(name, style);
   iconEl.style.setProperty('--icon-url', `url("${path}")`);
-}
-
-function registerIcon(iconEl) {
-  liveIcons.add(iconEl);
 }
 
 function refreshLiveIcons() {
@@ -42,6 +32,17 @@ export function createIcon(name, options = {}) {
   iconEl.dataset.iconName = name;
   iconEl.setAttribute('aria-hidden', options.decorative === false ? 'false' : 'true');
   applyIconAsset(iconEl);
-  registerIcon(iconEl);
+  liveIcons.add(iconEl);
   return iconEl;
+}
+
+export function appendIconLabel(target, { icon, label, l10nKey }) {
+  target.textContent = '';
+  target.classList.add('button-with-icon');
+  target.append(createIcon(icon));
+
+  const textEl = document.createElement('span');
+  if (label != null) textEl.textContent = label;
+  if (l10nKey) textEl.dataset.l10n = l10nKey;
+  target.append(textEl);
 }
