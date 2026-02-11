@@ -550,3 +550,80 @@
   color: #fff;
   border-color: #4a4a4a;
 }
+
+/* =========================================================
+   POLISH OVERRIDES (2026-02)
+   ========================================================= */
+
+.db-backdrop {
+  backdrop-filter: blur(2px);
+}
+
+.db-window {
+  border: 1px solid #3a3a3a;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+}
+
+.db-search,
+.db-sort,
+.db-scale,
+.db-compact,
+.db-expand-all,
+.db-filter-btn,
+.db-copy-btn,
+.db-expand-btn,
+.db-tabs button,
+.db-controls-toggle,
+.db-close {
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.db-search:focus-visible,
+.db-sort:focus-visible,
+.db-scale:focus-visible,
+.db-compact:focus-visible,
+.db-expand-all:focus-visible,
+.db-filter-btn:focus-visible,
+.db-copy-btn:focus-visible,
+.db-expand-btn:focus-visible,
+.db-tabs button:focus-visible,
+.db-controls-toggle:focus-visible,
+.db-close:focus-visible {
+  outline: 2px solid #7ca6ff;
+  outline-offset: 1px;
+}
+
+.db-search::placeholder {
+  color: #8f8f8f;
+}
+
+.db-close:hover {
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.db-entry {
+  border: 1px solid #323232;
+}
+
+.db-entry:hover {
+  border-color: #4b4b4b;
+}
+
+.db-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.db-list::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+  border-radius: 999px;
+  border: 2px solid #222;
+}
+
+.db-list::-webkit-scrollbar-thumb:hover {
+  background: #575757;
+}
+
+.db-description {
+  white-space: pre-wrap;
+}

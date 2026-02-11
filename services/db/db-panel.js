@@ -44,6 +44,7 @@ export async function openDatabasePanel() {
     }
 
     modalEl.style.display = "block";
+    modalEl.focus();
     renderList();
   } catch (err) {
     console.error(err);
@@ -77,6 +78,7 @@ export function setDatabaseLanguage(lang) {
 function buildModal() {
   const modal = document.createElement("div");
   modal.className = "db-modal";
+  modal.tabIndex = -1;
 
   modal.innerHTML = `
     <div class="db-backdrop"></div>
@@ -147,6 +149,12 @@ function bindModalEvents(modal) {
   modal.querySelector(".db-backdrop").onclick = closeDatabasePanel;
   modal.querySelector(".db-close").onclick = closeDatabasePanel;
 
+  modal.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeDatabasePanel();
+    }
+  });
+
   modal.querySelectorAll(".db-tabs button").forEach(btn => {
     btn.onclick = () => {
       modal.querySelectorAll(".db-tabs button").forEach(b => b.classList.remove("active"));
@@ -190,6 +198,14 @@ function bindModalEvents(modal) {
     searchQuery = normalizeQuery(e.target.value);
     if (searchTimer) clearTimeout(searchTimer);
     searchTimer = setTimeout(renderList, 200);
+  };
+
+  modal.querySelector(".db-search").onkeydown = e => {
+    if (e.key === "Escape") {
+      e.target.value = "";
+      searchQuery = "";
+      renderList();
+    }
   };
 
   modal.querySelector(".db-controls-toggle").onclick = () => {
@@ -295,9 +311,6 @@ function buildEffectCard(entry) {
   details.className = "db-entry-details";
   details.style.display = expandedAll ? "block" : "none";
 
-  const previewTags = buildTags(entry, { compact: true });
-  if (previewTags) card.appendChild(previewTags);
-
   details.appendChild(createDetailRow("typeLabel", entry.type ?? "-"));
   details.appendChild(createDetailRow("maxStrengthLabel", entry.maxstrength ?? "-"));
   details.appendChild(createDetailRow("limbSpecificLabel", entry.limbspecific, true));
@@ -305,7 +318,7 @@ function buildEffectCard(entry) {
 
   const desc = document.createElement("div");
   desc.className = "db-description";
-  desc.textContent = entry.description || "";
+  desc.textContent = entry.description || t("descriptionMissing");
   details.appendChild(desc);
 
   expandBtn.onclick = e => {
