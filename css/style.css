@@ -95,7 +95,7 @@ button.danger { background: #723636; }
 
 .settings-panel {
   display: none;
-  border-bottom: 1px solid var(--border-main);
+  border: 1px solid var(--border-main);
   background: #111826;
   padding: 12px 14px;
   gap: 10px;
@@ -103,9 +103,30 @@ button.danger { background: #723636; }
 
 .settings-panel.open { display: grid; }
 
+.floating-panel {
+  position: fixed;
+  top: 56px;
+  right: 14px;
+  z-index: 1300;
+  width: min(360px, calc(100vw - 28px));
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.36);
+}
+
+.settings-fab {
+  padding: 6px 8px;
+}
+
+.theme-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 

@@ -1,10 +1,10 @@
 import { getIconStyle, onThemeChange } from './theme-manager.js';
 
-const ICON_ROOT = '/assets/icons';
+const ICON_ROOT = new URL('../assets/icons/', import.meta.url).pathname;
 const liveIcons = new Set();
 
 function iconPath(name, style = getIconStyle()) {
-  return `${ICON_ROOT}/${name}-${style}.svg`;
+  return `${ICON_ROOT}${name}-${style}.svg`;
 }
 
 function applyIconAsset(iconEl) {

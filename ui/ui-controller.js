@@ -14,7 +14,8 @@ const treeService = new TreeService({
   inspectorSelector: '#tree-inspector',
   onUpdateParam: (id, key, value) => editorStore.updateNodeParam(id, key, value),
   onRemoveNode: id => editorStore.removeNode(id),
-  onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type)
+  onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type),
+  onMoveNode: (nodeId, newParentId, branch) => editorStore.moveNode(nodeId, newParentId, branch)
 });
 
 function initButtonIcons() {
@@ -24,8 +25,8 @@ function initButtonIcons() {
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
     ['button[data-action="projectExport"]', 'export', 'projectExport'],
-    ['button[data-action="undo"]', 'minus-circle', null],
-    ['button[data-action="redo"]', 'checkmark-circle', null],
+    ['button[data-action="undo"]', 'minus-circle', 'undo'],
+    ['button[data-action="redo"]', 'checkmark-circle', 'redo'],
     ['button[data-action="addNode"][data-type="rng"]', 'sliders-horizontal', 'addRng'],
     ['button[data-action="addNode"][data-type="spawn"]', 'box', 'addItem'],
     ['button[data-action="addNode"][data-type="creature"]', 'hashtag', 'addCreature'],
