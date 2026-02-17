@@ -23,7 +23,8 @@ const defaults = {
   baseTheme: 'dark',
   themeStyle: 'balanced',
   uiScale: '100',
-  grid: true
+  grid: true,
+  chanceColorCoding: true
 };
 
 const listeners = new Set();
@@ -32,7 +33,8 @@ const state = {
   baseTheme: localStorage.getItem('baseTheme') || localStorage.getItem('theme') || defaults.baseTheme,
   themeStyle: localStorage.getItem('themeStyle') || defaults.themeStyle,
   uiScale: localStorage.getItem('uiScale') || defaults.uiScale,
-  grid: localStorage.getItem('bgGrid') !== 'false'
+  grid: localStorage.getItem('bgGrid') !== 'false',
+  chanceColorCoding: localStorage.getItem('chanceColorCoding') !== 'false'
 };
 
 function ensureValidState() {
@@ -61,6 +63,7 @@ export function applyTheme() {
   localStorage.setItem('themeStyle', state.themeStyle);
   localStorage.setItem('uiScale', state.uiScale);
   localStorage.setItem('bgGrid', String(state.grid));
+  localStorage.setItem('chanceColorCoding', String(state.chanceColorCoding));
 
   notifyThemeChange();
 }
@@ -107,5 +110,11 @@ export function setUiScale(uiScale) {
 
 export function setGrid(isVisible) {
   state.grid = isVisible;
+  applyTheme();
+}
+
+
+export function setChanceColorCoding(enabled) {
+  state.chanceColorCoding = !!enabled;
   applyTheme();
 }

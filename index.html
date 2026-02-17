@@ -17,25 +17,23 @@
     <div class="top-left">
       <button id="view-btn" data-action="toggleView" data-l10n="treeView"></button>
       <button data-action="openDB" data-l10n="database"></button>
-      <button id="settings-toggle" data-l10n="settings"></button>
     </div>
 
     <div class="top-right">
       <button data-action="projectImport" data-l10n="projectImport"></button>
       <button data-action="projectExport" data-l10n="projectExport"></button>
-      <button data-action="undo">Undo</button>
-      <button data-action="redo">Redo</button>
+      <button data-action="undo" data-l10n="undo"></button>
+      <button data-action="redo" data-l10n="redo"></button>
+      <button id="settings-toggle" class="settings-fab" data-l10n="settings"></button>
     </div>
   </header>
 
-  <section id="settings-panel" class="settings-panel">
+  <section id="settings-panel" class="settings-panel floating-panel">
     <div class="settings-grid">
-      <label><span data-l10n="theme"></span>
-        <select id="theme-select">
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </label>
+      <div class="theme-toggle-row">
+        <span data-l10n="theme"></span>
+        <button id="theme-toggle" type="button"></button>
+      </div>
       <label><span data-l10n="language"></span>
         <select id="lang-select">
           <option value="en">EN</option>
@@ -58,6 +56,7 @@
         </select>
       </label>
       <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
+      <label class="checkbox-row"><input id="toggle-chance-colors" type="checkbox" /><span data-l10n="chanceColorCoding"></span></label>
     </div>
   </section>
 

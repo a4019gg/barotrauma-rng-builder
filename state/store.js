@@ -155,6 +155,69 @@ export class EditorStore {
     this.notify();
   }
 
+  isDescendantOf(parentCandidateId, maybeDescendantId, nodes = this.events[this.currentEventIndex].model) {
+    const walk = (list, foundParent = false) => {
+      for (const node of list) {
+        const nextFoundParent = foundParent || node.id === parentCandidateId;
+        if (node.id === maybeDescendantId && nextFoundParent) return true;
+        if (node.type === 'rng') {
+          if (walk(node.children.success, nextFoundParent)) return true;
+          if (walk(node.children.failure, nextFoundParent)) return true;
+        }
+      }
+      return false;
+    };
+    return walk(nodes, false);
+  }
+
+  extractNodeById(id, nodes = this.events[this.currentEventIndex].model) {
+    for (let i = 0; i < nodes.length; i += 1) {
+      const node = nodes[i];
+      if (node.id === id) {
+        nodes.splice(i, 1);
+        return node;
+      }
+      if (node.type === 'rng') {
+        const fromSuccess = this.extractNodeById(id, node.children.success);
+        if (fromSuccess) return fromSuccess;
+        const fromFailure = this.extractNodeById(id, node.children.failure);
+        if (fromFailure) return fromFailure;
+      }
+    }
+    return null;
+  }
+
+  moveNode(nodeId, newParentId, branch = 'success') {
+    if (!Number.isFinite(nodeId)) return false;
+    if (newParentId != null && !Number.isFinite(newParentId)) return false;
+    if (newParentId === nodeId) return false;
+    if (newParentId != null && this.isDescendantOf(nodeId, newParentId)) return false;
+
+    this.snapshot('move-node');
+    const movingNode = this.extractNodeById(nodeId);
+    if (!movingNode) {
+      this.undoStack.pop();
+      return false;
+    }
+
+    if (newParentId == null) {
+      this.events[this.currentEventIndex].model.push(movingNode);
+      this.notify();
+      return true;
+    }
+
+    const parent = this.findNodeById(newParentId);
+    if (!parent || parent.type !== 'rng' || !parent.children[branch]) {
+      this.events[this.currentEventIndex].model.push(movingNode);
+      this.undoStack.pop();
+      return false;
+    }
+
+    parent.children[branch].push(movingNode);
+    this.notify();
+    return true;
+  }
+
   addChildNode(parentId, branch, type) {
     const parent = this.findNodeById(parentId);
     if (!parent || parent.type !== 'rng' || !parent.children[branch]) return;
