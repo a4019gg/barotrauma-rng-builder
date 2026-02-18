@@ -73,6 +73,7 @@
 .icon-btn:hover { background: #1c2e4b; }
 .icon-btn .ui-icon { width: 14px; height: 14px; }
 .node-title .ui-icon { margin-right: 4px; }
+.tree-affliction-icon { width: 14px; height: 14px; margin-right: 4px; border-radius: 3px; }
 .node-title { font-size: 12px; font-weight: 700; }
 .remove-btn { border-color: #c56b86; background: #4a1f2d; }
 .remove-btn .ui-icon { color: #ffd6e1; }

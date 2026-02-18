@@ -24,7 +24,8 @@ const defaults = {
   themeStyle: 'balanced',
   uiScale: '100',
   grid: true,
-  chanceColorCoding: true
+  chanceColorCoding: true,
+  chanceInputMode: 'fraction'
 };
 
 const listeners = new Set();
@@ -34,12 +35,14 @@ const state = {
   themeStyle: localStorage.getItem('themeStyle') || defaults.themeStyle,
   uiScale: localStorage.getItem('uiScale') || defaults.uiScale,
   grid: localStorage.getItem('bgGrid') !== 'false',
-  chanceColorCoding: localStorage.getItem('chanceColorCoding') !== 'false'
+  chanceColorCoding: localStorage.getItem('chanceColorCoding') !== 'false',
+  chanceInputMode: localStorage.getItem('chanceInputMode') || defaults.chanceInputMode
 };
 
 function ensureValidState() {
   if (!BASE_THEMES[state.baseTheme]) state.baseTheme = defaults.baseTheme;
   if (!STYLE_VARIANTS[state.themeStyle]) state.themeStyle = defaults.themeStyle;
+  if (!['fraction', 'percent'].includes(state.chanceInputMode)) state.chanceInputMode = defaults.chanceInputMode;
 }
 
 function notifyThemeChange() {
@@ -64,6 +67,7 @@ export function applyTheme() {
   localStorage.setItem('uiScale', state.uiScale);
   localStorage.setItem('bgGrid', String(state.grid));
   localStorage.setItem('chanceColorCoding', String(state.chanceColorCoding));
+  localStorage.setItem('chanceInputMode', state.chanceInputMode);
 
   notifyThemeChange();
 }
@@ -116,5 +120,10 @@ export function setGrid(isVisible) {
 
 export function setChanceColorCoding(enabled) {
   state.chanceColorCoding = !!enabled;
+  applyTheme();
+}
+
+export function setChanceInputMode(mode) {
+  state.chanceInputMode = mode;
   applyTheme();
 }

@@ -1,6 +1,7 @@
 import { t } from '../../ui/localization.js';
 import { createIcon } from '../../ui/icon-component.js';
 import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
+import { formatChanceForInput } from '../../ui/chance-utils.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', label: 'RNG' },
@@ -13,6 +14,19 @@ const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
 const NODE_SIZE = { width: 320, height: 108 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
+const AFFIX_ICON_SIZE = 18;
+
+function clamp01(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function parseSourceRect(src) {
+  const parts = Array.isArray(src) ? src : String(src || '').split(',').map(part => Number(part.trim()));
+  if (parts.length !== 4 || parts.some(v => !Number.isFinite(v))) return null;
+  const [x, y, w, h] = parts;
+  if (w <= 0 || h <= 0) return null;
+  return { x, y, w, h };
+}
 
 function toNumberOr(value, fallback) {
   const parsed = Number(value);
@@ -49,6 +63,7 @@ export class TreeService {
     this.themeUnsubscribe = null;
     this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
+    this.afflictionMetaById = new Map();
     this.treeSettings = {
       displayPercentOnLinks: true,
       displayPercentNearNodes: false,
@@ -99,7 +114,11 @@ export class TreeService {
       try {
         const response = await fetch(path);
         const data = await response.json();
-        this.idOptions[key] = Array.isArray(data) ? data.map(entry => String(entry.id || '')).filter(Boolean).slice(0, 2000) : [];
+        const entries = Array.isArray(data) ? data : [];
+        this.idOptions[key] = entries.map(entry => String(entry.id || '')).filter(Boolean).slice(0, 2000);
+        if (key === 'affliction') {
+          this.afflictionMetaById = new Map(entries.map(entry => [String(entry.id || '').toLowerCase(), entry]));
+        }
       } catch (_) {
         this.idOptions[key] = [];
       }
@@ -250,34 +269,51 @@ export class TreeService {
     const drag = window.d3.drag()
       .on('start', (event, d) => {
         if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef) return;
+        const sourceNode = event.sourceEvent?.target;
+        if (sourceNode?.closest('input, button, select, option, textarea, datalist, label')) return;
         this.draggingId = d.data.id;
-        d.__dragStart = this.getNodeCoords(d);
+        d.__dragLast = { x: event.x, y: event.y };
         window.d3.select(event.sourceEvent.target.closest('.tree-node')).classed('dragging', true);
       })
       .on('drag', (event, d) => {
-        if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef) return;
+        if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef || this.draggingId !== d.data.id) return;
+        const last = d.__dragLast || { x: event.x, y: event.y };
+        const deltaX = event.y - last.y;
+        const deltaY = event.x - last.x;
+        d.__dragLast = { x: event.x, y: event.y };
+
         const grid = Math.max(8, Number(this.treeSettings.gridSize) || 24);
-        let x = (d.__dragStart?.x ?? d.x) + event.dy;
-        let y = (d.__dragStart?.y ?? d.y) + event.dx;
-        if (this.treeSettings.snapToGrid) {
-          x = Math.round(x / grid) * grid;
-          y = Math.round(y / grid) * grid;
-        }
-        this.manualPositions.set(d.data.id, { x, y });
-        window.d3.select(event.sourceEvent.target.closest('.tree-node')).attr('transform', `translate(${y},${x})`);
+        const moveNodes = d.descendants().map(desc => desc.data.id);
+        moveNodes.forEach(nodeId => {
+          const rendered = this.findRenderedNodeById(nodeId);
+          if (!rendered) return;
+          const current = this.getNodeCoords(rendered);
+          let x = current.x + deltaX;
+          let y = current.y + deltaY;
+          if (this.treeSettings.snapToGrid && nodeId === d.data.id) {
+            x = Math.round(x / grid) * grid;
+            y = Math.round(y / grid) * grid;
+          }
+          this.manualPositions.set(nodeId, { x, y });
+        });
+
+        this.g.selectAll('.tree-node').attr('transform', nodeData => {
+          const pos = this.getNodeCoords(nodeData);
+          return `translate(${pos.y},${pos.x})`;
+        });
         this.g.selectAll('.tree-link').attr('d', link => this.buildLinkPath(link));
         this.g.selectAll('.tree-link-percent')
           .attr('x', link => this.getLinkMidPoint(link).y)
           .attr('y', link => this.getLinkMidPoint(link).x - 6);
-        const nodes = this.g.selectAll('.tree-node').data();
-        this.renderMinimap(nodes, this.g.selectAll('.tree-link').data());
+        const nodesData = this.g.selectAll('.tree-node').data();
+        this.renderMinimap(nodesData, this.g.selectAll('.tree-link').data());
 
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         this.dropTarget = hit;
         this.g.selectAll('.tree-node').classed('drop-target', nd => this.dropTarget?.id === nd.data.id);
       })
       .on('end', (event, d) => {
-        if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef) return;
+        if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef || this.draggingId !== d.data.id) return;
         window.d3.select(event.sourceEvent.target.closest('.tree-node')).classed('dragging', false);
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         if (hit && this.onMoveNode) {
@@ -285,10 +321,14 @@ export class TreeService {
         }
         this.dropTarget = null;
         this.draggingId = null;
-        delete d.__dragStart;
+        delete d.__dragLast;
       });
 
     nodes.filter(d => d.data.type !== 'root' && d.data.type !== 'branch').call(drag);
+  }
+
+  findRenderedNodeById(nodeId) {
+    return this.g?.selectAll('.tree-node').data().find(nodeData => nodeData.data.id === nodeId) || null;
   }
 
   getNodeHalfWidth(type) {
@@ -333,9 +373,18 @@ export class TreeService {
     if (!hitEl) return null;
     const data = window.d3.select(hitEl).datum();
     if (!data?.data?.nodeRef || data.data.id === draggingId) return null;
+    if (this.isTreeDescendant(draggingId, data.data.id)) return null;
     const rect = hitEl.getBoundingClientRect();
     const branch = clientY < rect.top + rect.height / 2 ? 'success' : 'failure';
     return { id: data.data.id, branch };
+  }
+
+  isTreeDescendant(parentId, candidateId) {
+    if (!parentId || !candidateId || parentId === candidateId) return false;
+    const root = this.findNodeById(parentId);
+    if (!root || root.type !== 'rng') return false;
+    const walk = list => list.some(child => child.id === candidateId || (child.type === 'rng' && (walk(child.children.success) || walk(child.children.failure))));
+    return walk(root.children.success) || walk(root.children.failure);
   }
 
   renderRootNode(group, d) {
@@ -388,7 +437,12 @@ export class TreeService {
     title.className = 'icon-btn node-title';
     title.type = 'button';
     title.title = `${NODE_META[node.type]?.label || node.type} #${node.id}`;
-    title.append(createIcon(NODE_META[node.type]?.icon || 'tag'));
+    const defaultIcon = createIcon(NODE_META[node.type]?.icon || 'tag');
+    title.append(defaultIcon);
+    if (node.type === 'affliction') {
+      const fxIcon = this.createAfflictionNodeIcon(node);
+      if (fxIcon) title.replaceChild(fxIcon, defaultIcon);
+    }
     title.append(` ${NODE_META[node.type]?.label || node.type}`);
     title.addEventListener('click', () => {
       this.selectedNodeId = node.id;
@@ -463,7 +517,7 @@ export class TreeService {
 
   buildInlineEditors(node) {
     const isSelected = this.selectedNodeId === node.id;
-    const makeInput = ({ key, label, type = 'text', step = '1', value }) => {
+    const makeInput = ({ key, label, type = 'text', step = '1', value, inputMode = null }) => {
       const row = document.createElement('label');
       row.className = 'tree-field';
       row.title = label;
@@ -473,7 +527,8 @@ export class TreeService {
 
       const input = document.createElement('input');
       input.type = type;
-      input.step = step;
+      if (type === 'number') input.step = step;
+      if (inputMode) input.inputMode = inputMode;
       input.value = value ?? '';
       input.disabled = !isSelected;
       input.addEventListener('change', event => this.onUpdateParam(node.id, key, event.target.value));
@@ -504,11 +559,72 @@ export class TreeService {
       return row;
     };
 
-    if (node.type === 'rng') return [makeInput({ key: 'chance', label: 'chance', type: 'number', step: '0.01', value: toNumberOr(node.params.chance, 0.5) })];
+    if (node.type === 'rng') return [makeInput({ key: 'chance', label: 'chance', type: 'text', inputMode: 'decimal', value: formatChanceForInput(toNumberOr(node.params.chance, 0.5)) })];
     if (node.type === 'spawn') return [makeIdInput({ key: 'item', label: 'id', type: 'spawn' }), makeInput({ key: 'amount', label: 'amount', type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }), makeInput({ key: 'quality', label: 'quality', type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })];
     if (node.type === 'creature') return [makeIdInput({ key: 'creature', label: 'id', type: 'creature' }), makeInput({ key: 'count', label: 'count', type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })];
     if (node.type === 'affliction') return [makeIdInput({ key: 'affliction', label: 'id', type: 'affliction' }), makeInput({ key: 'strength', label: 'strength', type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })];
     return [];
+  }
+
+  createAfflictionNodeIcon(node) {
+    const afflictionId = String(node.params.affliction || '').toLowerCase();
+    const entry = this.afflictionMetaById.get(afflictionId);
+    const iconData = entry?.icon;
+    if (!iconData?.texture || !iconData?.sourcerect) return null;
+
+    const rect = parseSourceRect(iconData.sourcerect);
+    if (!rect) return null;
+
+    const intensity = clamp01(toNumberOr(node.params.strength, 0) / Math.max(1, toNumberOr(entry?.maxstrength, 100)));
+    const canvas = document.createElement('canvas');
+    canvas.width = AFFIX_ICON_SIZE;
+    canvas.height = AFFIX_ICON_SIZE;
+    canvas.className = 'tree-affliction-icon';
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+    const img = new Image();
+    img.src = iconData.texture;
+    img.onload = () => {
+      ctx.clearRect(0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
+      ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
+
+      const tint = this.resolveAfflictionTint(iconData, intensity);
+      if (tint) {
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = tint;
+        ctx.fillRect(0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 0.35;
+        ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
+        ctx.globalAlpha = 1;
+      }
+    };
+
+    return canvas;
+  }
+
+  resolveAfflictionTint(iconData, intensity) {
+    const role = String(iconData.fixedColorKey || iconData.role || iconData.type || 'neutral').toLowerCase();
+    const palettes = {
+      buff: ['rgb(95, 177, 123)', 'rgb(111, 223, 149)', 'rgb(155, 241, 176)'],
+      debuff: ['rgb(205, 103, 124)', 'rgb(230, 124, 149)', 'rgb(249, 166, 185)'],
+      damage: ['rgb(203, 89, 89)', 'rgb(231, 116, 116)', 'rgb(250, 151, 151)'],
+      mental: ['rgb(137, 102, 215)', 'rgb(166, 128, 241)', 'rgb(197, 164, 255)'],
+      electric: ['rgb(97, 146, 232)', 'rgb(121, 173, 247)', 'rgb(168, 206, 255)'],
+      status: ['rgb(124, 167, 214)', 'rgb(154, 194, 237)', 'rgb(194, 218, 250)'],
+      neutral: ['rgb(123, 156, 186)', 'rgb(153, 186, 217)', 'rgb(188, 213, 236)']
+    };
+    const [low, mid, high] = palettes[role] || palettes.neutral;
+    if (intensity <= 0.5) return this.mixRgb(low, mid, intensity / 0.5);
+    return this.mixRgb(mid, high, (intensity - 0.5) / 0.5);
+  }
+
+  mixRgb(a, b, t) {
+    const parse = color => color.replace(/[^\d,]/g, '').split(',').map(Number).slice(0, 3);
+    const [ar, ag, ab] = parse(a);
+    const [br, bg, bb] = parse(b);
+    return `rgb(${Math.round(ar + (br - ar) * t)}, ${Math.round(ag + (bg - ag) * t)}, ${Math.round(ab + (bb - ab) * t)})`;
   }
 
   toTreeNode(node, branchType = null, probability = 1) {

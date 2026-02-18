@@ -8,6 +8,7 @@ import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, onLangChange, t } from './localization.js';
 import { initSettingsController } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
+import { onThemeChange } from './theme-manager.js';
 
 const treeService = new TreeService({
   svgSelector: '#tree-svg',
@@ -183,6 +184,11 @@ export function initEditorUI() {
   initSettingsController();
   initButtonIcons();
   applyLocalization();
+
+
+  onThemeChange(() => {
+    renderModel();
+  });
 
   onLangChange(() => {
     applyLocalization();
