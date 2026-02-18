@@ -5,6 +5,7 @@ import {
   onThemeChange,
   setBaseTheme,
   setChanceColorCoding,
+  setChanceInputMode,
   setGrid,
   setThemeStyle,
   setUiScale
@@ -42,6 +43,7 @@ export function initSettingsController() {
   document.getElementById('ui-scale-select').onchange = event => setUiScale(event.target.value);
   document.getElementById('toggle-grid').onchange = event => setGrid(event.target.checked);
   document.getElementById('toggle-chance-colors').onchange = event => setChanceColorCoding(event.target.checked);
+  document.getElementById('chance-input-mode').onchange = event => setChanceInputMode(event.target.value);
 
   const state = getThemeState();
   document.getElementById('theme-style-select').value = state.themeStyle;
@@ -49,6 +51,7 @@ export function initSettingsController() {
   document.getElementById('ui-scale-select').value = state.uiScale;
   document.getElementById('toggle-grid').checked = state.grid;
   document.getElementById('toggle-chance-colors').checked = state.chanceColorCoding;
+  document.getElementById('chance-input-mode').value = state.chanceInputMode;
 
   onLangChange(() => {
     applyLocalization();
@@ -60,6 +63,7 @@ export function initSettingsController() {
   renderThemeToggle();
   onThemeChange(currentState => {
     document.getElementById('toggle-chance-colors').checked = currentState.chanceColorCoding;
+    document.getElementById('chance-input-mode').value = currentState.chanceInputMode;
     renderThemeToggle();
   });
 }

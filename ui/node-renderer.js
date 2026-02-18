@@ -1,5 +1,6 @@
 import { t } from './localization.js';
 import { createIcon } from './icon-component.js';
+import { formatChanceForInput } from './chance-utils.js';
 
 const TITLES = {
   rng: 'RNG',
@@ -41,8 +42,10 @@ function createNodeControls(model) {
 
   if (model.type === 'rng') {
     const row = document.createElement('label');
-    row.textContent = 'Chance (0..1)';
-    row.appendChild(createParamInput(model.id, 'chance', model.params.chance, 'number', '0.01'));
+    row.textContent = 'Chance';
+    const chanceInput = createParamInput(model.id, 'chance', formatChanceForInput(model.params.chance), 'text');
+    chanceInput.inputMode = 'decimal';
+    row.appendChild(chanceInput);
     body.appendChild(row);
   }
 

@@ -1,3 +1,5 @@
+import { parseChanceInput } from '../ui/chance-utils.js';
+
 export class EditorStore {
   constructor() {
     this.events = [{ id: 'event_1', model: [] }];
@@ -232,12 +234,15 @@ export class EditorStore {
 
     let value = rawValue;
     if (["chance", "strength"].includes(key)) {
-      value = Number(rawValue);
-      if (!Number.isFinite(value)) value = 0;
-      if (key === 'chance') value = Math.max(0, Math.min(1, value));
+      if (key === 'chance') {
+        value = parseChanceInput(rawValue);
+      } else {
+        value = Number(String(rawValue).replace(',', '.'));
+        if (!Number.isFinite(value)) value = 0;
+      }
     }
     if (["amount", "count", "quality"].includes(key)) {
-      value = Number(rawValue);
+      value = Number(String(rawValue).replace(',', '.'));
       if (!Number.isFinite(value)) value = 1;
     }
 
