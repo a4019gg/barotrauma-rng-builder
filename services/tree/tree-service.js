@@ -1,6 +1,6 @@
 import { t } from '../../ui/localization.js';
 import { createIcon } from '../../ui/icon-component.js';
-import { getThemeState } from '../../ui/theme-manager.js';
+import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', label: 'RNG' },
@@ -10,6 +10,9 @@ const NODE_META = {
 };
 
 const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
+const NODE_SIZE = { width: 320, height: 108 };
+const BRANCH_SIZE = { width: 132, height: 36 };
+const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
 
 function toNumberOr(value, fallback) {
   const parsed = Number(value);
@@ -43,6 +46,9 @@ export class TreeService {
     this.draggingId = null;
     this.dropTarget = null;
     this.minimapEl = null;
+    this.themeUnsubscribe = null;
+    this.deleteConfirmState = { id: null, until: 0 };
+    this.idOptions = { spawn: [], creature: [], affliction: [] };
     this.treeSettings = {
       displayPercentOnLinks: true,
       displayPercentNearNodes: false,
@@ -50,7 +56,9 @@ export class TreeService {
       snapToGrid: true,
       showGrid: true,
       gridSize: 24,
-      showMinimap: true
+      showMinimap: true,
+      colorMinimapBranches: true,
+      showBranchNodes: true
     };
   }
 
@@ -75,6 +83,27 @@ export class TreeService {
     this.svg.on('dblclick.zoom', null);
 
     this.ensureMiniMapContainer();
+    if (!this.themeUnsubscribe) {
+      this.themeUnsubscribe = onThemeChange(() => this.render(this.model || []));
+    }
+    this.loadIdentifierOptions();
+  }
+
+  async loadIdentifierOptions() {
+    const datasets = [
+      ['spawn', 'data/items.json'],
+      ['creature', 'data/creatures.json'],
+      ['affliction', 'data/afflictions.json']
+    ];
+    await Promise.all(datasets.map(async ([key, path]) => {
+      try {
+        const response = await fetch(path);
+        const data = await response.json();
+        this.idOptions[key] = Array.isArray(data) ? data.map(entry => String(entry.id || '')).filter(Boolean).slice(0, 2000) : [];
+      } catch (_) {
+        this.idOptions[key] = [];
+      }
+    }));
   }
 
   ensureMiniMapContainer() {
@@ -117,6 +146,20 @@ export class TreeService {
   autoLayout() {
     this.manualPositions.clear();
     this.render(this.model || []);
+  }
+
+  centerOnNode(nodeId) {
+    const nodeEl = this.g?.selectAll('.tree-node').filter(d => d.data.id === nodeId).node();
+    if (!nodeEl || !this.svg || !this.zoom) return;
+    const d = window.d3.select(nodeEl).datum();
+    const p = this.getNodeCoords(d);
+    const svgEl = this.svg.node();
+    const w = svgEl.clientWidth || 900;
+    const h = svgEl.clientHeight || 600;
+    const current = window.d3.zoomTransform(svgEl);
+    const tx = w / 2 - p.y * current.k;
+    const ty = h / 2 - p.x * current.k;
+    this.svg.transition().duration(300).call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(current.k));
   }
 
   getNodeCoords(treeNode) {
@@ -164,17 +207,13 @@ export class TreeService {
         if (d.target.data.branchType === 'failure') cls.push('link-failure');
         return cls.join(' ');
       })
-      .attr('d', d => {
-        const s = this.getNodeCoords(d.source);
-        const tNode = this.getNodeCoords(d.target);
-        return window.d3.linkHorizontal().x(p => p.y).y(p => p.x)({ source: s, target: tNode });
-      });
+      .attr('d', d => this.buildLinkPath(d));
 
     if (this.treeSettings.displayPercentOnLinks) {
       const labels = this.g.selectAll('.tree-link-percent').data(links.filter(link => typeof link.target.data.probability === 'number')).join('text')
         .attr('class', d => `tree-link-percent ${chanceClass(d.target.data.probability, getThemeState().chanceColorCoding)}`)
-        .attr('x', d => (this.getNodeCoords(d.source).y + this.getNodeCoords(d.target).y) / 2)
-        .attr('y', d => (this.getNodeCoords(d.source).x + this.getNodeCoords(d.target).x) / 2 - 6)
+        .attr('x', d => this.getLinkMidPoint(d).y)
+        .attr('y', d => this.getLinkMidPoint(d).x - 6)
         .attr('text-anchor', 'middle')
         .text(d => `${Math.round(d.target.data.probability * 100)}%`);
       labels.raise();
@@ -202,6 +241,7 @@ export class TreeService {
     });
 
     this.installDrag(nodes);
+    this.updateCanvasSize(visibleNodes);
     this.renderInspector(this.findNodeById(this.selectedNodeId));
     this.renderMinimap(visibleNodes, links);
   }
@@ -211,19 +251,26 @@ export class TreeService {
       .on('start', (event, d) => {
         if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef) return;
         this.draggingId = d.data.id;
+        d.__dragStart = this.getNodeCoords(d);
         window.d3.select(event.sourceEvent.target.closest('.tree-node')).classed('dragging', true);
       })
       .on('drag', (event, d) => {
         if (!this.treeSettings.dragDropEnabled || !d.data.nodeRef) return;
         const grid = Math.max(8, Number(this.treeSettings.gridSize) || 24);
-        let x = d.x + event.dy;
-        let y = d.y + event.dx;
+        let x = (d.__dragStart?.x ?? d.x) + event.dy;
+        let y = (d.__dragStart?.y ?? d.y) + event.dx;
         if (this.treeSettings.snapToGrid) {
           x = Math.round(x / grid) * grid;
           y = Math.round(y / grid) * grid;
         }
         this.manualPositions.set(d.data.id, { x, y });
         window.d3.select(event.sourceEvent.target.closest('.tree-node')).attr('transform', `translate(${y},${x})`);
+        this.g.selectAll('.tree-link').attr('d', link => this.buildLinkPath(link));
+        this.g.selectAll('.tree-link-percent')
+          .attr('x', link => this.getLinkMidPoint(link).y)
+          .attr('y', link => this.getLinkMidPoint(link).x - 6);
+        const nodes = this.g.selectAll('.tree-node').data();
+        this.renderMinimap(nodes, this.g.selectAll('.tree-link').data());
 
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         this.dropTarget = hit;
@@ -238,9 +285,43 @@ export class TreeService {
         }
         this.dropTarget = null;
         this.draggingId = null;
+        delete d.__dragStart;
       });
 
     nodes.filter(d => d.data.type !== 'root' && d.data.type !== 'branch').call(drag);
+  }
+
+  getNodeHalfWidth(type) {
+    if (type === 'branch') return BRANCH_SIZE.width / 2;
+    if (type === 'root') return 230 / 2;
+    return NODE_SIZE.width / 2;
+  }
+
+  buildLinkPath(link) {
+    const s = this.getNodeCoords(link.source);
+    const tNode = this.getNodeCoords(link.target);
+    const sourceShift = this.getNodeHalfWidth(link.source.data.type);
+    const targetShift = this.getNodeHalfWidth(link.target.data.type);
+    const source = { x: s.x, y: s.y + sourceShift };
+    const target = { x: tNode.x, y: tNode.y - targetShift };
+    return window.d3.linkHorizontal().x(p => p.y).y(p => p.x)({ source, target });
+  }
+
+  getLinkMidPoint(link) {
+    const s = this.getNodeCoords(link.source);
+    const tNode = this.getNodeCoords(link.target);
+    return { x: (s.x + tNode.x) / 2, y: (s.y + tNode.y) / 2 };
+  }
+
+  updateCanvasSize(nodes) {
+    if (!nodes?.length || !this.svg) return;
+    const xs = nodes.map(d => this.getNodeCoords(d).y);
+    const ys = nodes.map(d => this.getNodeCoords(d).x);
+    const spanX = Math.max(...xs) - Math.min(...xs);
+    const spanY = Math.max(...ys) - Math.min(...ys);
+    this.width = Math.max(2200, spanX + 900);
+    this.height = Math.max(1500, spanY + 600);
+    this.svg.attr('viewBox', `0 0 ${this.width} ${this.height}`);
   }
 
   findDropTarget(clientX, clientY, draggingId) {
@@ -266,8 +347,8 @@ export class TreeService {
   }
 
   renderBranchTag(group, d) {
-    const width = 132;
-    const height = 36;
+    const width = BRANCH_SIZE.width;
+    const height = BRANCH_SIZE.height;
     const success = d.data.branchType === 'success';
 
     group.append('rect').attr('class', `tree-branch-card ${success ? 'branch-success' : 'branch-failure'}`).attr('x', -width / 2).attr('y', -height / 2).attr('rx', 18).attr('ry', 18).attr('width', width).attr('height', height);
@@ -276,8 +357,8 @@ export class TreeService {
 
   renderEditableNode(group, d) {
     const node = d.data.nodeRef;
-    const width = 320;
-    const height = 108;
+    const width = NODE_SIZE.width;
+    const height = NODE_SIZE.height;
     const collapsed = this.collapsed.has(node.id);
 
     group.append('rect').attr('class', 'tree-card').attr('x', -width / 2).attr('y', -height / 2).attr('rx', 12).attr('ry', 12).attr('width', width).attr('height', height)
@@ -330,9 +411,22 @@ export class TreeService {
     removeBtn.className = 'icon-btn remove-btn';
     removeBtn.type = 'button';
     removeBtn.title = t('removeNode');
-    removeBtn.append(createIcon('trash'));
+    const pendingDelete = this.deleteConfirmState.id === node.id && this.deleteConfirmState.until > Date.now();
+    removeBtn.append(createIcon(pendingDelete ? 'alert-triangle' : 'trash'));
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
+      if (!pendingDelete) {
+        this.deleteConfirmState = { id: node.id, until: Date.now() + REMOVE_CONFIRM_TIMEOUT_MS };
+        this.render(this.model);
+        setTimeout(() => {
+          if (this.deleteConfirmState.id === node.id && this.deleteConfirmState.until <= Date.now()) {
+            this.deleteConfirmState = { id: null, until: 0 };
+            this.render(this.model);
+          }
+        }, REMOVE_CONFIRM_TIMEOUT_MS + 50);
+        return;
+      }
+      this.deleteConfirmState = { id: null, until: 0 };
       this.onRemoveNode(node.id);
     });
 
@@ -388,10 +482,32 @@ export class TreeService {
       return row;
     };
 
+    const makeIdInput = ({ key, label, type }) => {
+      const row = document.createElement('label');
+      row.className = 'tree-field';
+      const caption = document.createElement('span');
+      caption.textContent = label;
+      const input = document.createElement('input');
+      const listId = `tree-datalist-${type}-${node.id}`;
+      input.setAttribute('list', listId);
+      input.value = node.params[key] ?? '';
+      input.disabled = !isSelected;
+      input.addEventListener('change', event => this.onUpdateParam(node.id, key, event.target.value));
+      const datalist = document.createElement('datalist');
+      datalist.id = listId;
+      (this.idOptions[type] || []).slice(0, 250).forEach(optionValue => {
+        const option = document.createElement('option');
+        option.value = optionValue;
+        datalist.appendChild(option);
+      });
+      row.append(caption, input, datalist);
+      return row;
+    };
+
     if (node.type === 'rng') return [makeInput({ key: 'chance', label: 'chance', type: 'number', step: '0.01', value: toNumberOr(node.params.chance, 0.5) })];
-    if (node.type === 'spawn') return [makeInput({ key: 'amount', label: 'amount', type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }), makeInput({ key: 'quality', label: 'quality', type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })];
-    if (node.type === 'creature') return [makeInput({ key: 'count', label: 'count', type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })];
-    if (node.type === 'affliction') return [makeInput({ key: 'strength', label: 'strength', type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })];
+    if (node.type === 'spawn') return [makeIdInput({ key: 'item', label: 'id', type: 'spawn' }), makeInput({ key: 'amount', label: 'amount', type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }), makeInput({ key: 'quality', label: 'quality', type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })];
+    if (node.type === 'creature') return [makeIdInput({ key: 'creature', label: 'id', type: 'creature' }), makeInput({ key: 'count', label: 'count', type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })];
+    if (node.type === 'affliction') return [makeIdInput({ key: 'affliction', label: 'id', type: 'affliction' }), makeInput({ key: 'strength', label: 'strength', type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })];
     return [];
   }
 
@@ -416,6 +532,10 @@ export class TreeService {
         children: collapsed ? [] : node.children.failure.map(child => this.toTreeNode(child, 'failure', probability * (1 - chance)))
       };
 
+      const branchChildren = this.treeSettings.showBranchNodes ? [successBranch, failureBranch].filter(branch => branch.children.length) : [
+        ...successBranch.children.map(child => ({ ...child, branchType: 'success' })),
+        ...failureBranch.children.map(child => ({ ...child, branchType: 'failure' }))
+      ];
       return {
         id: node.id,
         type: node.type,
@@ -423,7 +543,7 @@ export class TreeService {
         branchType,
         probability,
         name: `RNG ${Math.round(chance * 100)}%`,
-        children: [successBranch, failureBranch].filter(branch => branch.children.length)
+        children: branchChildren
       };
     }
 
@@ -463,6 +583,8 @@ export class TreeService {
       <label><input type="checkbox" data-setting="snapToGrid" ${this.treeSettings.snapToGrid ? 'checked' : ''}/> ${t('snapToGrid')}</label>
       <label><input type="checkbox" data-setting="showGrid" ${this.treeSettings.showGrid ? 'checked' : ''}/> ${t('showTreeGrid')}</label>
       <label><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/> ${t('showMinimap')}</label>
+      <label><input type="checkbox" data-setting="colorMinimapBranches" ${this.treeSettings.colorMinimapBranches ? 'checked' : ''}/> ${t('colorMinimapBranches')}</label>
+      <label><input type="checkbox" data-setting="showBranchNodes" ${this.treeSettings.showBranchNodes ? 'checked' : ''}/> ${t('showBranchNodes')}</label>
       <label>${t('gridSize')} <input type="number" min="8" max="120" step="2" data-setting="gridSize" value="${this.treeSettings.gridSize}"></label>
       <button type="button" class="icon-btn" data-tree-action="auto-layout"></button>
     `;
@@ -491,7 +613,7 @@ export class TreeService {
     base.innerHTML = `
       <h4>${t('treeEditor')}</h4>
       ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}
-      <p class="tree-inspector-hint">Pan: drag · Zoom: mouse wheel · Drop to RNG card (top=success, bottom=failure)</p>
+      <p class="tree-inspector-hint">Pan: drag · Zoom: mouse wheel · Minimap click: jump to node · Drop to RNG card (top=success, bottom=failure)</p>
     `;
     inspector.appendChild(base);
     inspector.appendChild(this.renderTreeSettings());
@@ -520,10 +642,22 @@ export class TreeService {
     svg.innerHTML = links.map(link => {
       const s = this.getNodeCoords(link.source);
       const tNode = this.getNodeCoords(link.target);
-      return `<line x1="${scaleX(s.y)}" y1="${scaleY(s.x)}" x2="${scaleX(tNode.y)}" y2="${scaleY(tNode.x)}" />`;
+      const classes = this.treeSettings.colorMinimapBranches
+        ? `${link.target.data.branchType === 'success' ? 'mm-success' : ''} ${link.target.data.branchType === 'failure' ? 'mm-failure' : ''}`.trim()
+        : '';
+      return `<line class="${classes}" x1="${scaleX(s.y)}" y1="${scaleY(s.x)}" x2="${scaleX(tNode.y)}" y2="${scaleY(tNode.x)}" />`;
     }).join('') + nodes.map(d => {
       const p = this.getNodeCoords(d);
-      return `<circle cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.5" />`;
+      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.5" />`;
     }).join('');
+
+    svg.querySelectorAll('circle[data-node-id]').forEach(circle => {
+      circle.addEventListener('click', () => {
+        const nodeId = circle.getAttribute('data-node-id');
+        this.selectedNodeId = Number.isFinite(Number(nodeId)) ? Number(nodeId) : nodeId;
+        this.centerOnNode(this.selectedNodeId);
+        this.render(this.model || []);
+      });
+    });
   }
 }
