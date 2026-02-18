@@ -38,6 +38,10 @@
 .tree-node,
 .tree-link-percent,
 .tree-node-percent { transition: all .18s ease; }
+#tree-svg.is-dragging-tree .tree-link,
+#tree-svg.is-dragging-tree .tree-node,
+#tree-svg.is-dragging-tree .tree-link-percent,
+#tree-svg.is-dragging-tree .tree-node-percent { transition: none; }
 .tree-link.link-success { stroke: #42c48a; }
 .tree-link.link-failure { stroke: #df7a92; }
 .tree-link-percent, .tree-node-percent { fill: #eaf3ff; font-size: 11px; font-weight: 700; }
@@ -90,10 +94,18 @@
 #tree-inspector { border-left: 1px solid var(--border-main); padding-left: 12px; color: var(--text-main); font-size: 13px; }
 .tree-editor-meta { margin-top: 8px; }
 .tree-inspector-hint { opacity: 0.78; margin: 8px 0 0; }
-.tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-.tree-settings-section h5 { margin: 0 0 4px; }
-.tree-settings-section label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.tree-settings-section input[type='number'] { max-width: 80px; }
+.tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.tree-settings-section h5 { margin: 0; }
+.tree-settings-group { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent); }
+.tree-settings-group h6 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
+.tree-setting-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tree-setting-row-stack { flex-direction: column; align-items: stretch; gap: 6px; }
+.tree-setting-row select,
+.tree-setting-row input[type='number'] { max-width: 120px; width: 100%; }
+.tree-segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.tree-segmented label { display: flex; gap: 6px; align-items: center; border: 1px solid var(--border-main); border-radius: 6px; padding: 4px 6px; font-size: 12px; }
+.tree-setting-dependent.is-disabled { opacity: .45; pointer-events: none; }
+.tree-settings-advanced summary { cursor: pointer; user-select: none; font-weight: 600; }
 
 .tree-minimap {
   position: absolute;
