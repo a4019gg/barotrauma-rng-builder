@@ -787,9 +787,7 @@ function normalizeSourceRect(src) {
 
 function resolveIconTint(iconData = {}) {
   const role = String(iconData.role || iconData.type || "").toLowerCase();
-  const colorMode = String(iconData.colorMode || iconData.colormode || "").toLowerCase();
   const fixedKey = String(iconData.fixedColorKey || iconData.fixedcolorkey || "").toLowerCase();
-  const isDynamic = colorMode === "dynamic";
 
   const roleMap = {
     buff: "buff",
@@ -803,20 +801,13 @@ function resolveIconTint(iconData = {}) {
 
   const targetRole = roleMap[fixedKey] || roleMap[role] || "neutral";
 
-  if (isDynamic) {
-    return {
-      type: "gradient",
-      colors: [
-        getCssRgb(`--role-${targetRole}-low`),
-        getCssRgb(`--role-${targetRole}-mid`),
-        getCssRgb(`--role-${targetRole}-high`)
-      ]
-    };
-  }
+  const low = getCssRgb(`--role-${targetRole}-low`) || getCssRgb(`--role-${targetRole}-mid`);
+  const mid = getCssRgb(`--role-${targetRole}-mid`);
+  const high = getCssRgb(`--role-${targetRole}-high`) || getCssRgb(`--role-${targetRole}-mid`);
 
   return {
-    type: "solid",
-    color: getCssRgb(`--role-${targetRole}-mid`)
+    type: "gradient",
+    colors: [low, mid, high]
   };
 }
 

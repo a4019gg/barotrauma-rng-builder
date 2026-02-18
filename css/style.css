@@ -137,6 +137,13 @@ button.danger { background: #723636; }
   color: var(--text-muted);
 }
 
+.settings-grid select,
+.settings-grid input {
+  background: color-mix(in srgb, var(--bg-main) 84%, #000);
+  color: var(--text-main);
+  border: 1px solid var(--border-main);
+}
+
 .checkbox-row {
   flex-direction: row !important;
   align-items: center;
@@ -261,4 +268,13 @@ button.danger { background: #723636; }
 @media (max-width: 1100px) {
   #main-container { grid-template-columns: 1fr; }
   #events-panel { border-right: none; border-bottom: 1px solid var(--border-main); }
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
