@@ -15,6 +15,11 @@ const NODE_SIZE = { width: 320, height: 108 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
 const AFFIX_ICON_SIZE = 18;
+const MINIMAP_PRESET_SIZES = {
+  compact: { width: 180, height: 120 },
+  medium: { width: 240, height: 150 },
+  large: { width: 300, height: 190 }
+};
 
 function clamp01(value) {
   return Math.max(0, Math.min(1, Number(value) || 0));
@@ -74,7 +79,16 @@ export class TreeService {
       showGrid: true,
       gridSize: 24,
       showMinimap: true,
-      colorMinimap: true,
+      minimapDisplayPercent: 'hidden',
+      minimapColorMode: 'success-failure',
+      minimapMode: 'standard',
+      minimapFocusMode: false,
+      minimapTypeMode: 'dots',
+      minimapPositionPreset: 'outside-right',
+      minimapFreePosition: { x: 20, y: 20 },
+      minimapSizePreset: 'medium',
+      minimapFreeSize: { width: 240, height: 150 },
+      minimapScale: 1,
       showIntermediateNodes: true,
       debugBounds: false
     };
@@ -172,12 +186,16 @@ export class TreeService {
     const dragDropEnabled = localStorage.getItem('tree.dragDropEnabled');
     if (dragDropEnabled != null) this.treeSettings.dragEnabled = JSON.parse(dragDropEnabled);
     const colorMinimapBranches = localStorage.getItem('tree.colorMinimapBranches');
-    if (colorMinimapBranches != null) this.treeSettings.colorMinimap = JSON.parse(colorMinimapBranches);
+    if (colorMinimapBranches != null) this.treeSettings.minimapColorMode = JSON.parse(colorMinimapBranches) ? 'success-failure' : 'none';
     const showBranchNodes = localStorage.getItem('tree.showBranchNodes');
     if (showBranchNodes != null) this.treeSettings.showIntermediateNodes = JSON.parse(showBranchNodes);
 
     if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.displayPercent)) this.treeSettings.displayPercent = 'links';
+    if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.minimapDisplayPercent)) this.treeSettings.minimapDisplayPercent = 'hidden';
     if (!['off', 'root-split', 'branch-split'].includes(this.treeSettings.autoChanceMode)) this.treeSettings.autoChanceMode = 'off';
+    if (!['none', 'success-failure', 'probability'].includes(this.treeSettings.minimapColorMode)) this.treeSettings.minimapColorMode = 'success-failure';
+    if (!['standard', 'heatmap'].includes(this.treeSettings.minimapMode)) this.treeSettings.minimapMode = 'standard';
+    if (!['dots', 'type-color', 'type-icon', 'type-icon-color'].includes(this.treeSettings.minimapTypeMode)) this.treeSettings.minimapTypeMode = 'dots';
   }
 
   toggleCollapse(nodeId) {
@@ -630,6 +648,12 @@ export class TreeService {
   }
 
   resolveAfflictionTint(iconData, intensity) {
+    const explicit = String(iconData?.color || '').split(',').map(v => Number(v.trim()));
+    if (explicit.length >= 3 && explicit.every(v => Number.isFinite(v))) {
+      const [r, g, b] = explicit;
+      return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    }
+
     const role = String(iconData.fixedColorKey || iconData.role || iconData.type || 'neutral').toLowerCase();
     const palettes = {
       buff: ['rgb(95, 177, 123)', 'rgb(111, 223, 149)', 'rgb(155, 241, 176)'],
@@ -716,6 +740,8 @@ export class TreeService {
   renderTreeSettings() {
     const wrapper = document.createElement('div');
     wrapper.className = 'tree-settings-section';
+    const freePos = this.treeSettings.minimapFreePosition || { x: 20, y: 20 };
+    const freeSize = this.treeSettings.minimapFreeSize || { width: 240, height: 150 };
     wrapper.innerHTML = `
       <h5>${t('treeSettings')}</h5>
       <section class="tree-settings-group">
@@ -748,7 +774,30 @@ export class TreeService {
         <label class="tree-setting-row"><span>${t('showTreeGrid')}</span><input type="checkbox" data-setting="showGrid" ${this.treeSettings.showGrid ? 'checked' : ''}/></label>
         <label class="tree-setting-row tree-setting-dependent" data-disable-if="!showGrid"><span>${t('gridSize')}</span><input type="number" min="8" max="120" step="2" data-setting="gridSize" value="${this.treeSettings.gridSize}"></label>
         <label class="tree-setting-row"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
-        <label class="tree-setting-row"><span>${t('colorMinimapBranches')}</span><input type="checkbox" data-setting="colorMinimap" ${this.treeSettings.colorMinimap ? 'checked' : ''}/></label>
+      </section>
+
+      <section class="tree-settings-group">
+        <h6>${t('showMinimap')}</h6>
+        <div class="tree-setting-row tree-setting-row-stack">
+          <span>${t('displayPercent')}</span>
+          <select data-setting="minimapDisplayPercent">
+            <option value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'selected' : ''}>${t('displayHidden')}</option>
+            <option value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'selected' : ''}>${t('displayLinks')}</option>
+            <option value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'selected' : ''}>${t('displayNodes')}</option>
+            <option value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'selected' : ''}>${t('displayBoth')}</option>
+          </select>
+        </div>
+        <label class="tree-setting-row"><span>Mode</span><select data-setting="minimapMode"><option value="standard" ${this.treeSettings.minimapMode === 'standard' ? 'selected' : ''}>Standard</option><option value="heatmap" ${this.treeSettings.minimapMode === 'heatmap' ? 'selected' : ''}>Heatmap</option></select></label>
+        <label class="tree-setting-row"><span>Focus / Active path</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
+        <label class="tree-setting-row"><span>Type mode</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>Dots</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>Type colors</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>Type icons</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>Icons + colors</option></select></label>
+        <label class="tree-setting-row"><span>${t('colorMinimapBranches')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>Success / Failure</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>Probability</option></select></label>
+        <label class="tree-setting-row"><span>Position</span><select data-setting="minimapPositionPreset"><option value="outside-right" ${this.treeSettings.minimapPositionPreset === 'outside-right' ? 'selected' : ''}>Outside right</option><option value="inside-top-right" ${this.treeSettings.minimapPositionPreset === 'inside-top-right' ? 'selected' : ''}>Inside top-right</option><option value="inside-bottom-right" ${this.treeSettings.minimapPositionPreset === 'inside-bottom-right' ? 'selected' : ''}>Inside bottom-right</option><option value="free" ${this.treeSettings.minimapPositionPreset === 'free' ? 'selected' : ''}>Free</option></select></label>
+        <div class="tree-setting-row tree-setting-dependent" data-disable-if="!minimapPositionFree"><span>X/Y</span><span><input type="number" data-setting="minimapFreePosX" value="${freePos.x}" step="1" min="-500" max="1200"> <input type="number" data-setting="minimapFreePosY" value="${freePos.y}" step="1" min="-500" max="1200"></span></div>
+        <label class="tree-setting-row"><span>Size</span><select data-setting="minimapSizePreset"><option value="compact" ${this.treeSettings.minimapSizePreset === 'compact' ? 'selected' : ''}>Compact</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>Medium</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>Large</option><option value="free" ${this.treeSettings.minimapSizePreset === 'free' ? 'selected' : ''}>Free</option></select></label>
+        <div class="tree-setting-row tree-setting-dependent" data-disable-if="!minimapSizeFree"><span>W/H</span><span><input type="number" data-setting="minimapFreeWidth" value="${freeSize.width}" step="5" min="120" max="600"> <input type="number" data-setting="minimapFreeHeight" value="${freeSize.height}" step="5" min="90" max="500"></span></div>
+        <label class="tree-setting-row"><span>Scale</span><input type="number" min="0.6" max="2" step="0.1" data-setting="minimapScale" value="${this.treeSettings.minimapScale}"></label>
+        <div class="tree-setting-row"><button type="button" class="icon-btn" data-tree-action="download-minimap-svg">Minimap SVG</button><button type="button" class="icon-btn" data-tree-action="download-minimap-png">Minimap PNG</button></div>
+        <div class="tree-setting-row"><button type="button" class="icon-btn" data-tree-action="download-tree-svg">Tree SVG</button><button type="button" class="icon-btn" data-tree-action="download-tree-png">Tree PNG</button></div>
       </section>
 
       <details class="tree-settings-group tree-settings-advanced">
@@ -762,13 +811,27 @@ export class TreeService {
     autoBtn.append(createIcon('compass'), ` ${t('autoLayout')}`);
     autoBtn.addEventListener('click', () => this.autoLayout());
 
+    wrapper.querySelectorAll('[data-tree-action^="download-"]').forEach(btn => {
+      btn.addEventListener('click', () => this.downloadSvgAsset(btn.dataset.treeAction));
+    });
+
     wrapper.querySelectorAll('[data-setting]').forEach(el => {
       const key = el.dataset.setting;
       el.addEventListener('change', event => {
         const target = event.target;
         let value = target.type === 'checkbox' ? target.checked : target.value;
         if (target.type === 'number') value = Number(target.value);
-        this.setTreeSetting(key, value);
+        if (key === 'minimapFreePosX' || key === 'minimapFreePosY') {
+          const next = { ...(this.treeSettings.minimapFreePosition || { x: 20, y: 20 }) };
+          next[key === 'minimapFreePosX' ? 'x' : 'y'] = value;
+          this.setTreeSetting('minimapFreePosition', next);
+        } else if (key === 'minimapFreeWidth' || key === 'minimapFreeHeight') {
+          const next = { ...(this.treeSettings.minimapFreeSize || { width: 240, height: 150 }) };
+          next[key === 'minimapFreeWidth' ? 'width' : 'height'] = value;
+          this.setTreeSetting('minimapFreeSize', next);
+        } else {
+          this.setTreeSetting(key, value);
+        }
         this.applySettingsDependencies(wrapper);
       });
     });
@@ -781,7 +844,9 @@ export class TreeService {
   applySettingsDependencies(wrapper) {
     const disableByExpr = {
       '!dragEnabled': !this.treeSettings.dragEnabled,
-      '!showGrid': !this.treeSettings.showGrid
+      '!showGrid': !this.treeSettings.showGrid,
+      '!minimapPositionFree': this.treeSettings.minimapPositionPreset !== 'free',
+      '!minimapSizeFree': this.treeSettings.minimapSizePreset !== 'free'
     };
     wrapper.querySelectorAll('.tree-setting-dependent').forEach(row => {
       const expr = row.dataset.disableIf;
@@ -791,6 +856,53 @@ export class TreeService {
         control.disabled = disabled;
       });
     });
+  }
+
+  downloadSvgAsset(action) {
+    const isTree = action.includes('tree');
+    const isPng = action.endsWith('png');
+    const source = isTree ? this.svg?.node() : this.minimapEl?.querySelector('svg');
+    if (!source) return;
+
+    const clone = source.cloneNode(true);
+    clone.removeAttribute('style');
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const vb = clone.getAttribute('viewBox') || '0 0 300 200';
+    const [,,w,h] = vb.split(' ').map(Number);
+    clone.setAttribute('width', Number.isFinite(w) ? w : 300);
+    clone.setAttribute('height', Number.isFinite(h) ? h : 200);
+
+    const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
+    if (!isPng) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${isTree ? 'tree' : 'minimap'}.svg`;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = Number.isFinite(w) ? w : 300;
+      canvas.height = Number.isFinite(h) ? h : 200;
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.drawImage(img, 0, 0);
+      canvas.toBlob(outBlob => {
+        if (!outBlob) return;
+        const pngUrl = URL.createObjectURL(outBlob);
+        const link = document.createElement('a');
+        link.href = pngUrl;
+        link.download = `${isTree ? 'tree' : 'minimap'}.png`;
+        link.click();
+        URL.revokeObjectURL(pngUrl);
+      }, 'image/png');
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
   }
 
   applyAutoChance(children, parentProbability, depth) {
@@ -845,34 +957,97 @@ export class TreeService {
 
     const svg = this.minimapEl.querySelector('svg');
     if (!svg) return;
-    const width = 180;
-    const height = 120;
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-    const xs = nodes.map(d => this.getNodeCoords(d).y);
-    const ys = nodes.map(d => this.getNodeCoords(d).x);
+    const activeNodes = nodes.filter(d => d?.data?.type !== 'branch');
+    const activeLinks = links.filter(link => link?.target?.data?.type !== 'branch');
+    const sizePreset = MINIMAP_PRESET_SIZES[this.treeSettings.minimapSizePreset] || this.treeSettings.minimapFreeSize || MINIMAP_PRESET_SIZES.medium;
+    const mapWidth = Math.max(120, Math.round((sizePreset.width || 240) * (Number(this.treeSettings.minimapScale) || 1)));
+    const mapHeight = Math.max(90, Math.round((sizePreset.height || 150) * (Number(this.treeSettings.minimapScale) || 1)));
+    this.minimapEl.style.width = `${mapWidth}px`;
+    this.minimapEl.style.height = `${mapHeight}px`;
+
+    this.minimapEl.classList.remove('outside-right', 'inside-top-right', 'inside-bottom-right', 'free-pos');
+    this.minimapEl.classList.add(this.treeSettings.minimapPositionPreset === 'free' ? 'free-pos' : this.treeSettings.minimapPositionPreset || 'outside-right');
+    if (this.treeSettings.minimapPositionPreset === 'free') {
+      const free = this.treeSettings.minimapFreePosition || { x: 20, y: 20 };
+      this.minimapEl.style.left = `${free.x}px`;
+      this.minimapEl.style.top = `${free.y}px`;
+      this.minimapEl.style.right = 'auto';
+      this.minimapEl.style.bottom = 'auto';
+    } else {
+      this.minimapEl.style.left = '';
+      this.minimapEl.style.top = '';
+    }
+
+    svg.setAttribute('viewBox', `0 0 ${mapWidth} ${mapHeight}`);
+
+    const xs = activeNodes.map(d => this.getNodeCoords(d).y);
+    const ys = activeNodes.map(d => this.getNodeCoords(d).x);
     const minX = Math.min(...xs, 0);
     const maxX = Math.max(...xs, 1);
     const minY = Math.min(...ys, 0);
     const maxY = Math.max(...ys, 1);
-    const scaleX = x => ((x - minX) / Math.max(1, maxX - minX)) * (width - 10) + 5;
-    const scaleY = y => ((y - minY) / Math.max(1, maxY - minY)) * (height - 10) + 5;
+    const pad = 8;
+    const scaleX = x => ((x - minX) / Math.max(1, maxX - minX)) * (mapWidth - pad * 2) + pad;
+    const scaleY = y => ((y - minY) / Math.max(1, maxY - minY)) * (mapHeight - pad * 2) + pad;
 
-    svg.innerHTML = links.map(link => {
+    const selectedSet = new Set();
+    if (this.treeSettings.minimapFocusMode && this.selectedNodeId != null) {
+      let current = activeNodes.find(n => n.data.id === this.selectedNodeId);
+      while (current) {
+        selectedSet.add(current.data.id);
+        current = current.parent;
+      }
+    }
+
+    const typeColor = type => ({ root: '#88b0f4', rng: '#79b2ff', spawn: '#7be0a6', creature: '#f5b96f', affliction: '#de7fcb' }[type] || '#9dc1ff');
+    const probColor = p => {
+      const value = Math.max(0, Math.min(1, Number(p) || 0));
+      const r = Math.round(235 - value * 140);
+      const g = Math.round(90 + value * 140);
+      const b = Math.round(120 + value * 20);
+      return `rgb(${r},${g},${b})`;
+    };
+
+    const linksSvg = activeLinks.map(link => {
       const s = this.getNodeCoords(link.source);
       const tNode = this.getNodeCoords(link.target);
-      const classes = this.treeSettings.colorMinimap
-        ? `${link.target.data.branchType === 'success' ? 'mm-success' : ''} ${link.target.data.branchType === 'failure' ? 'mm-failure' : ''}`.trim()
+      const faded = selectedSet.size && !selectedSet.has(link.source.data.id) && !selectedSet.has(link.target.data.id);
+      let stroke = '#6f86ad';
+      if (this.treeSettings.minimapMode === 'heatmap') stroke = probColor(link.target.data.probability);
+      else if (this.treeSettings.minimapColorMode === 'success-failure') {
+        if (link.target.data.branchType === 'success') stroke = '#4dcf96';
+        if (link.target.data.branchType === 'failure') stroke = '#ee7f98';
+      } else if (this.treeSettings.minimapColorMode === 'probability') {
+        stroke = probColor(link.target.data.probability);
+      }
+      const label = (this.treeSettings.minimapDisplayPercent === 'links' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(link.target.data.probability)
+        ? `<text class="mm-percent" x="${(scaleX(s.y)+scaleX(tNode.y))/2}" y="${(scaleY(s.x)+scaleY(tNode.x))/2 - 2}">${Math.round(link.target.data.probability * 100)}%</text>`
         : '';
-      return `<line class="${classes}" x1="${scaleX(s.y)}" y1="${scaleY(s.x)}" x2="${scaleX(tNode.y)}" y2="${scaleY(tNode.x)}" />`;
-    }).join('') + nodes.map(d => {
-      const p = this.getNodeCoords(d);
-      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.5" />`;
+      return `<line style="stroke:${stroke};opacity:${faded ? 0.18 : 0.9}" x1="${scaleX(s.y)}" y1="${scaleY(s.x)}" x2="${scaleX(tNode.y)}" y2="${scaleY(tNode.x)}" />${label}`;
     }).join('');
 
-    svg.querySelectorAll('circle[data-node-id]').forEach(circle => {
-      circle.addEventListener('click', () => {
-        const nodeId = circle.getAttribute('data-node-id');
+    const icons = { root: '◆', rng: '●', spawn: '■', creature: '▲', affliction: '✦' };
+    const nodesSvg = activeNodes.map(d => {
+      const p = this.getNodeCoords(d);
+      const faded = selectedSet.size && !selectedSet.has(d.data.id);
+      const color = this.treeSettings.minimapTypeMode === 'dots' ? '#9dc1ff' : typeColor(d.data.type);
+      const iconOnly = this.treeSettings.minimapTypeMode === 'type-icon' || this.treeSettings.minimapTypeMode === 'type-icon-color';
+      const fill = this.treeSettings.minimapTypeMode === 'type-icon' ? '#cfe1ff' : color;
+      const label = (this.treeSettings.minimapDisplayPercent === 'nodes' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(d.data.probability)
+        ? `<text class="mm-percent" x="${scaleX(p.y) + 4}" y="${scaleY(p.x) - 4}">${Math.round(d.data.probability * 100)}%</text>`
+        : '';
+      if (iconOnly) {
+        return `<text data-node-id="${d.data.id}" class="mm-node-icon" x="${scaleX(p.y)}" y="${scaleY(p.x)}" style="fill:${fill};opacity:${faded ? 0.25 : 1}">${icons[d.data.type] || '•'}</text>${label}`;
+      }
+      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.8" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
+    }).join('');
+
+    svg.innerHTML = `${linksSvg}${nodesSvg}`;
+
+    svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
+      nodeHit.addEventListener('click', () => {
+        const nodeId = nodeHit.getAttribute('data-node-id');
         this.selectedNodeId = Number.isFinite(Number(nodeId)) ? Number(nodeId) : nodeId;
         this.centerOnNode(this.selectedNodeId);
         this.render(this.model || []);

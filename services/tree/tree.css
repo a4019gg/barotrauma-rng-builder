@@ -5,6 +5,8 @@
   min-height: 520px;
   padding: 8px;
   position: relative;
+  overflow: visible;
+  padding-right: 270px;
 }
 
 .tree-layout {
@@ -76,9 +78,9 @@
 
 .icon-btn:hover { background: #1c2e4b; }
 .icon-btn .ui-icon { width: 14px; height: 14px; }
-.node-title .ui-icon { margin-right: 4px; }
-.tree-affliction-icon { width: 14px; height: 14px; margin-right: 4px; border-radius: 3px; }
-.node-title { font-size: 12px; font-weight: 700; }
+.node-title .ui-icon { margin-right: 6px; width: 16px; height: 16px; vertical-align: middle; }
+.tree-affliction-icon { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+.node-title { font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; }
 .remove-btn { border-color: #c56b86; background: #4a1f2d; }
 .remove-btn .ui-icon { color: #ffd6e1; }
 .tree-inline-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
@@ -107,22 +109,31 @@
 .tree-setting-dependent.is-disabled { opacity: .45; pointer-events: none; }
 .tree-settings-advanced summary { cursor: pointer; user-select: none; font-weight: 600; }
 
+
+
+.tree-setting-row select,
+.tree-setting-row input {
+  background: color-mix(in srgb, var(--bg-main) 82%, #000);
+  color: var(--text-main);
+  border: 1px solid var(--border-main);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+.tree-setting-row input[type="number"] { max-width: 80px; }
+.tree-setting-row .mm-percent { fill: #d8e8ff; font-size: 8px; }
+
 .tree-minimap {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
-  width: 190px;
-  height: 130px;
   border: 1px solid var(--border-main);
   border-radius: 8px;
-  background: rgba(15, 22, 35, 0.85);
+  background: rgba(15, 22, 35, 0.92);
   backdrop-filter: blur(2px);
   overflow: hidden;
+  z-index: 8;
 }
-
-.tree-minimap svg { width: 100%; height: 100%; }
-.tree-minimap line { stroke: #6f86ad; stroke-width: 1; }
-.tree-minimap line.mm-success { stroke: #4dcf96; }
-.tree-minimap line.mm-failure { stroke: #ee7f98; }
-.tree-minimap circle { fill: #9dc1ff; }
-.tree-minimap circle:hover { fill: #d5e7ff; cursor: pointer; }
+.tree-minimap.outside-right { right: -260px; top: 14px; }
+.tree-minimap.inside-top-right { right: 14px; top: 14px; }
+.tree-minimap.inside-bottom-right { right: 14px; bottom: 14px; }
+.tree-minimap.free-pos { right: auto; bottom: auto; }
+.tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
+.tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }

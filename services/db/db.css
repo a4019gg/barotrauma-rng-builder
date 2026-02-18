@@ -627,3 +627,13 @@
 .db-description {
   white-space: pre-wrap;
 }
+
+.db-modal select,
+.db-modal input,
+.db-modal button {
+  color: var(--text-main);
+}
+.db-modal option {
+  background: var(--bg-panel);
+  color: var(--text-main);
+}
