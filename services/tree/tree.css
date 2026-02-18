@@ -5,8 +5,7 @@
   min-height: 520px;
   padding: 8px;
   position: relative;
-  overflow: visible;
-  padding-right: 270px;
+  overflow: hidden;
 }
 
 .tree-layout {
@@ -98,7 +97,7 @@
 .tree-inspector-hint { opacity: 0.78; margin: 8px 0 0; }
 .tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
 .tree-settings-section h5 { margin: 0; }
-.tree-settings-group { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent); }
+.tree-settings-group { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent); }
 .tree-settings-group h6 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
 .tree-setting-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tree-setting-row-stack { flex-direction: column; align-items: stretch; gap: 6px; }
@@ -119,21 +118,52 @@
   border-radius: 6px;
   padding: 4px 6px;
 }
-.tree-setting-row input[type="number"] { max-width: 80px; }
+.tree-setting-row input[type="number"] { max-width: 92px; }
 .tree-setting-row .mm-percent { fill: #d8e8ff; font-size: 8px; }
 
 .tree-minimap {
   position: absolute;
   border: 1px solid var(--border-main);
-  border-radius: 8px;
+  border-radius: 10px;
   background: rgba(15, 22, 35, 0.92);
   backdrop-filter: blur(2px);
   overflow: hidden;
   z-index: 8;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  transition: width 0.14s ease, height 0.14s ease;
 }
-.tree-minimap.outside-right { right: -260px; top: 14px; }
-.tree-minimap.inside-top-right { right: 14px; top: 14px; }
-.tree-minimap.inside-bottom-right { right: 14px; bottom: 14px; }
-.tree-minimap.free-pos { right: auto; bottom: auto; }
+.tree-minimap-header {
+  height: 24px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-size: 11px;
+  letter-spacing: .02em;
+  font-weight: 600;
+  cursor: move;
+  user-select: none;
+}
+.tree-minimap svg {
+  width: 100%;
+  height: calc(100% - 24px);
+  display: block;
+}
+.tree-minimap-resize {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  background: linear-gradient(135deg, transparent 55%, rgba(198, 220, 255, 0.75) 55%, rgba(198, 220, 255, 0.75) 63%, transparent 63%);
+  cursor: nwse-resize;
+}
+.tree-settings-level { border-top: 0; padding-top: 0; }
+.tree-segmented-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tree-settings-export details > summary { list-style: none; cursor: pointer; width: fit-content; }
+.tree-settings-export details > summary::-webkit-details-marker { display: none; }
+.tree-export-menu { margin-top: 8px; display: grid; gap: 6px; }
 .tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
 .tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }
