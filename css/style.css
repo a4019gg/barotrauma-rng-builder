@@ -194,8 +194,15 @@ button.danger { background: #723636; }
 .settings-panel input {
   border: 1px solid var(--border-main);
   border-radius: var(--ui-radius-sm);
-  background: #111926;
+  background: color-mix(in srgb, var(--bg-main) 85%, #000);
+  color: var(--text-main);
   padding: 6px 8px;
+}
+
+.node-body select option,
+.settings-panel select option {
+  background: var(--bg-panel);
+  color: var(--text-main);
 }
 
 .node-branch { border-top: 1px dashed #6384bf; margin-top: 8px; padding-top: 8px; }
