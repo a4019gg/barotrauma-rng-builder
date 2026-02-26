@@ -98,15 +98,41 @@
 .tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
 .tree-settings-section h5 { margin: 0; }
 .tree-settings-group { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent); }
+.tree-settings-card {
+  border: 1px solid color-mix(in srgb, var(--border-main) 78%, transparent);
+  border-radius: 10px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--bg-panel) 82%, #081225 18%);
+}
 .tree-settings-group h6 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
 .tree-setting-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tree-setting-row-stack { flex-direction: column; align-items: stretch; gap: 6px; }
 .tree-setting-row select,
 .tree-setting-row input[type='number'] { max-width: 120px; width: 100%; }
 .tree-segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.tree-segmented-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .tree-segmented label { display: flex; gap: 6px; align-items: center; border: 1px solid var(--border-main); border-radius: 6px; padding: 4px 6px; font-size: 12px; }
 .tree-setting-dependent.is-disabled { opacity: .45; pointer-events: none; }
 .tree-settings-advanced summary { cursor: pointer; user-select: none; font-weight: 600; }
+.tree-settings-grid { display: grid; gap: 8px; }
+.tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tree-setting-tile {
+  border: 1px solid var(--border-main);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--bg-main) 80%, transparent);
+}
+.tree-setting-tile input { margin: 0; }
+.tree-primary-btn {
+  justify-content: center;
+  font-weight: 700;
+  padding: 8px 10px;
+}
 
 
 
@@ -174,4 +200,9 @@
   stroke: rgba(179, 211, 255, 0.95);
   stroke-width: 1;
   pointer-events: none;
+}
+
+@media (max-width: 1280px) {
+  .tree-segmented-four,
+  .tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
