@@ -46,6 +46,24 @@ function toNumberOr(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function parseJSONSafe(raw, fallback) {
+  if (raw == null) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function parseLegacyBoolean(raw, fallback = false) {
+  if (raw == null) return fallback;
+  if (typeof raw === 'boolean') return raw;
+  const normalized = String(raw).trim().toLowerCase();
+  if (['true', '1', 'yes', 'on', 'links', 'nodes', 'both'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'off', 'hidden', 'none'].includes(normalized)) return false;
+  return Boolean(parseJSONSafe(raw, fallback));
+}
+
 function chanceClass(value, enabled) {
   if (!enabled) return '';
   if (value < 0.2) return 'chance-low';
@@ -183,18 +201,14 @@ export class TreeService {
     Object.keys(this.treeSettings).forEach(key => {
       const raw = localStorage.getItem(`tree.${key}`);
       if (raw == null) return;
-      try {
-        this.treeSettings[key] = JSON.parse(raw);
-      } catch (_) {
-        this.treeSettings[key] = raw;
-      }
+      this.treeSettings[key] = parseJSONSafe(raw, raw);
     });
 
     const oldLink = localStorage.getItem('tree.displayPercentOnLinks');
     const oldNode = localStorage.getItem('tree.displayPercentNearNodes');
     if (oldLink != null || oldNode != null) {
-      const showLinks = oldLink == null ? true : JSON.parse(oldLink);
-      const showNodes = oldNode == null ? false : JSON.parse(oldNode);
+      const showLinks = oldLink == null ? true : parseLegacyBoolean(oldLink, true);
+      const showNodes = oldNode == null ? false : parseLegacyBoolean(oldNode, false);
       if (showLinks && showNodes) this.treeSettings.displayPercent = 'both';
       else if (showNodes) this.treeSettings.displayPercent = 'nodes';
       else if (showLinks) this.treeSettings.displayPercent = 'links';
@@ -202,11 +216,13 @@ export class TreeService {
     }
 
     const dragDropEnabled = localStorage.getItem('tree.dragDropEnabled');
-    if (dragDropEnabled != null) this.treeSettings.dragEnabled = JSON.parse(dragDropEnabled);
+    if (dragDropEnabled != null) this.treeSettings.dragEnabled = parseLegacyBoolean(dragDropEnabled, true);
     const colorMinimapBranches = localStorage.getItem('tree.colorMinimapBranches');
-    if (colorMinimapBranches != null) this.treeSettings.minimapColorMode = JSON.parse(colorMinimapBranches) ? 'success-failure' : 'none';
+    if (colorMinimapBranches != null) {
+      this.treeSettings.minimapColorMode = parseLegacyBoolean(colorMinimapBranches, true) ? 'success-failure' : 'none';
+    }
     const showBranchNodes = localStorage.getItem('tree.showBranchNodes');
-    if (showBranchNodes != null) this.treeSettings.showIntermediateNodes = JSON.parse(showBranchNodes);
+    if (showBranchNodes != null) this.treeSettings.showIntermediateNodes = parseLegacyBoolean(showBranchNodes, true);
 
     if (!['basic', 'advanced'].includes(this.treeSettings.uiLevel)) this.treeSettings.uiLevel = 'basic';
     if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.displayPercent)) this.treeSettings.displayPercent = 'links';
@@ -227,11 +243,7 @@ export class TreeService {
       else this.treeSettings.minimapPosition = { x: 18, y: 18 };
     }
     if (oldFreePos && !localStorage.getItem('tree.minimapPosition')) {
-      try {
-        this.treeSettings.minimapPosition = JSON.parse(oldFreePos);
-      } catch (_) {
-        this.treeSettings.minimapPosition = { x: 18, y: 18 };
-      }
+      this.treeSettings.minimapPosition = parseJSONSafe(oldFreePos, { x: 18, y: 18 });
     }
     if (!this.treeSettings.minimapPosition || !Number.isFinite(Number(this.treeSettings.minimapPosition.x)) || !Number.isFinite(Number(this.treeSettings.minimapPosition.y))) {
       this.treeSettings.minimapPosition = { x: 18, y: 18 };
@@ -239,11 +251,7 @@ export class TreeService {
 
     const oldFreeSize = localStorage.getItem('tree.minimapFreeSize');
     if (oldFreeSize && !localStorage.getItem('tree.minimapCustomSize')) {
-      try {
-        this.treeSettings.minimapCustomSize = JSON.parse(oldFreeSize);
-      } catch (_) {
-        this.treeSettings.minimapCustomSize = { width: 240, height: 150 };
-      }
+      this.treeSettings.minimapCustomSize = parseJSONSafe(oldFreeSize, { width: 240, height: 150 });
     }
     if (!this.treeSettings.minimapCustomSize || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.width)) || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.height))) {
       this.treeSettings.minimapCustomSize = { width: 240, height: 150 };
@@ -1114,17 +1122,17 @@ export class TreeService {
     img.src = url;
   }
 
-  applyAutoChance(children, parent${t('minimapColorProbability')}, depth) {
+  applyAutoChance(children, parentProbability, depth) {
     if (!children.length) return [];
     if (this.treeSettings.autoChanceMode === 'off') {
-      return children.map(child => ({ node: child, probability: parent${t('minimapColorProbability')} }));
+      return children.map(child => ({ node: child, probability: parentProbability }));
     }
 
     if (this.treeSettings.autoChanceMode === 'root-split' && depth > 0) {
-      return children.map(child => ({ node: child, probability: parent${t('minimapColorProbability')} }));
+      return children.map(child => ({ node: child, probability: parentProbability }));
     }
 
-    const perChild = parent${t('minimapColorProbability')} / children.length;
+    const perChild = parentProbability / children.length;
     return children.map(child => ({ node: child, probability: perChild }));
   }
 
