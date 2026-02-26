@@ -149,6 +149,8 @@
   width: 100%;
   height: calc(100% - 24px);
   display: block;
+  padding: 4px;
+  box-sizing: border-box;
 }
 .tree-minimap-resize {
   position: absolute;
@@ -167,3 +169,9 @@
 .tree-export-menu { margin-top: 8px; display: grid; gap: 6px; }
 .tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
 .tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }
+.tree-minimap .mm-tree-viewport {
+  fill: rgba(133, 176, 250, 0.12);
+  stroke: rgba(179, 211, 255, 0.95);
+  stroke-width: 1;
+  pointer-events: none;
+}

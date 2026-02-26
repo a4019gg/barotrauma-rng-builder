@@ -786,24 +786,26 @@ function normalizeSourceRect(src) {
 }
 
 function resolveIconTint(iconData = {}) {
-  const role = String(iconData.role || iconData.type || "").toLowerCase();
-  const fixedKey = String(iconData.fixedColorKey || iconData.fixedcolorkey || "").toLowerCase();
+  const explicit = String(iconData?.color || "").split(",").map(v => Number(v.trim()));
+  if (explicit.length >= 3 && explicit.every(v => Number.isFinite(v))) {
+    const [r, g, b] = explicit;
+    return {
+      type: "solid",
+      color: `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`
+    };
+  }
 
-  const roleMap = {
-    buff: "buff",
-    debuff: "debuff",
-    damage: "damage",
-    status: "neutral",
-    mental: "mental",
-    electric: "electric",
-    neutral: "neutral"
+  const role = String(iconData.fixedColorKey || iconData.fixedcolorkey || iconData.palette || iconData.role || iconData.type || "").toLowerCase();
+  const palettes = {
+    buff: ["rgb(95, 177, 123)", "rgb(111, 223, 149)", "rgb(155, 241, 176)"],
+    debuff: ["rgb(205, 103, 124)", "rgb(230, 124, 149)", "rgb(249, 166, 185)"],
+    damage: ["rgb(203, 89, 89)", "rgb(231, 116, 116)", "rgb(250, 151, 151)"],
+    mental: ["rgb(137, 102, 215)", "rgb(166, 128, 241)", "rgb(197, 164, 255)"],
+    electric: ["rgb(97, 146, 232)", "rgb(121, 173, 247)", "rgb(168, 206, 255)"],
+    status: ["rgb(124, 167, 214)", "rgb(154, 194, 237)", "rgb(194, 218, 250)"],
+    neutral: ["rgb(123, 156, 186)", "rgb(153, 186, 217)", "rgb(188, 213, 236)"]
   };
-
-  const targetRole = roleMap[fixedKey] || roleMap[role] || "neutral";
-
-  const low = getCssRgb(`--role-${targetRole}-low`) || getCssRgb(`--role-${targetRole}-mid`);
-  const mid = getCssRgb(`--role-${targetRole}-mid`);
-  const high = getCssRgb(`--role-${targetRole}-high`) || getCssRgb(`--role-${targetRole}-mid`);
+  const [low, mid, high] = palettes[role] || palettes.neutral;
 
   return {
     type: "gradient",
@@ -821,6 +823,10 @@ function buildTintFill(ctx, size, tint) {
     gradient.addColorStop(0.5, mid || "rgb(190, 190, 190)");
     gradient.addColorStop(1, high || "rgb(210, 210, 210)");
     return gradient;
+  }
+
+  if (tint.type === "solid") {
+    return tint.color || "transparent";
   }
 
   return tint.color || "transparent";

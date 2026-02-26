@@ -27,6 +27,7 @@ const MINIMAP_SIZE_LIMITS = {
   maxHeight: 360
 };
 const MINIMAP_SCALE_LIMITS = { min: 0.5, max: 3 };
+const MINIMAP_PADDING = 12;
 
 function clamp01(value) {
   return Math.max(0, Math.min(1, Number(value) || 0));
@@ -343,8 +344,8 @@ export class TreeService {
   syncMinimapOverlay() {
     if (!this.minimapEl || !this.minimapContainerEl) return;
     const baseSize = this.getMinimapBaseSize();
-    const mapWidth = Math.max(MINIMAP_SIZE_LIMITS.minWidth, Math.min(MINIMAP_SIZE_LIMITS.maxWidth, Math.round((baseSize.width || 240) * (Number(this.treeSettings.minimapScale) || 1))));
-    const mapHeight = Math.max(MINIMAP_SIZE_LIMITS.minHeight, Math.min(MINIMAP_SIZE_LIMITS.maxHeight, Math.round((baseSize.height || 150) * (Number(this.treeSettings.minimapScale) || 1))));
+    const mapWidth = Math.max(MINIMAP_SIZE_LIMITS.minWidth, Math.min(MINIMAP_SIZE_LIMITS.maxWidth, Math.round(baseSize.width || 240)));
+    const mapHeight = Math.max(MINIMAP_SIZE_LIMITS.minHeight, Math.min(MINIMAP_SIZE_LIMITS.maxHeight, Math.round(baseSize.height || 150)));
 
     this.minimapEl.style.width = `${mapWidth}px`;
     this.minimapEl.style.height = `${mapHeight}px`;
@@ -614,11 +615,20 @@ export class TreeService {
     const height = NODE_SIZE.height;
     const collapsed = this.collapsed.has(node.id);
 
-    group.append('rect').attr('class', 'tree-card').attr('x', -width / 2).attr('y', -height / 2).attr('rx', 12).attr('ry', 12).attr('width', width).attr('height', height)
+    const card = group.append('rect').attr('class', 'tree-card').attr('x', -width / 2).attr('y', -height / 2).attr('rx', 12).attr('ry', 12).attr('width', width).attr('height', height)
       .on('click', () => {
         this.selectedNodeId = node.id;
         this.render(this.model);
       });
+
+    if (node.type === 'affliction') {
+      const accent = this.getAfflictionNodeAccent(node);
+      if (accent) {
+        card
+          .attr('fill', accent.fill)
+          .attr('stroke', accent.stroke);
+      }
+    }
 
     const showNodePercent = this.treeSettings.displayPercent === 'nodes' || this.treeSettings.displayPercent === 'both';
     const percentStylingEnabled = this.treeSettings.displayPercent !== 'hidden';
@@ -832,6 +842,18 @@ export class TreeService {
     return this.mixRgb(mid, high, (intensity - 0.5) / 0.5);
   }
 
+  getAfflictionNodeAccent(node) {
+    const afflictionId = String(node.params.affliction || '').toLowerCase();
+    const entry = this.afflictionMetaById.get(afflictionId);
+    const iconData = entry?.icon || {};
+    const maxStrength = Math.max(1, toNumberOr(entry?.maxstrength, 100));
+    const intensity = clamp01(toNumberOr(node.params.strength, 0) / maxStrength);
+    const stroke = this.resolveAfflictionTint(iconData, intensity);
+    if (!stroke) return null;
+    const fill = this.mixRgb('rgb(31, 42, 63)', stroke, 0.16 + intensity * 0.14);
+    return { stroke, fill };
+  }
+
   mixRgb(a, b, t) {
     const parse = color => color.replace(/[^\d,]/g, '').split(',').map(Number).slice(0, 3);
     const [ar, ag, ab] = parse(a);
@@ -939,12 +961,12 @@ export class TreeService {
       <section class="tree-settings-group">
         <h6>${t('showMinimap')}</h6>
         <label class="tree-setting-row"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
-        ${showMinimapSettings ? `<label class="tree-setting-row"><span>Mode</span><select data-setting="minimapMode"><option value="standard" ${this.treeSettings.minimapMode === 'standard' ? 'selected' : ''}>Standard</option></select></label>
-        <label class="tree-setting-row"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>Success / Failure</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>Probability</option></select></label>
-        <label class="tree-setting-row"><span>Focus / Active path</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
+        ${showMinimapSettings ? `<label class="tree-setting-row"><span>${t('minimapMode')}</span><select data-setting="minimapMode"><option value="standard" ${this.treeSettings.minimapMode === 'standard' ? 'selected' : ''}>${t('minimapModeStandard')}</option></select></label>
+        <label class="tree-setting-row"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
+        <label class="tree-setting-row"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
         ${!isBasic ? `<div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><select data-setting="minimapDisplayPercent"><option value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'selected' : ''}>${t('displayHidden')}</option><option value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'selected' : ''}>${t('displayLinks')}</option><option value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'selected' : ''}>${t('displayNodes')}</option><option value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'selected' : ''}>${t('displayBoth')}</option></select></div>
-        <label class="tree-setting-row"><span>Type mode</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>Dots</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>Type colors</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>Type icons</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>Icons + colors</option></select></label>` : ''}
-        <label class="tree-setting-row"><span>${t('minimapSizePreset')}</span><select data-setting="minimapSizePreset"><option value="small" ${this.treeSettings.minimapSizePreset === 'small' ? 'selected' : ''}>Small</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>Medium</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>Large</option><option value="auto" ${this.treeSettings.minimapSizePreset === 'auto' ? 'selected' : ''}>Auto</option></select></label>
+        <label class="tree-setting-row"><span>${t('minimapTypeMode')}</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>${t('minimapTypeDots')}</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>${t('minimapTypeColor')}</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>${t('minimapTypeIcon')}</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>${t('minimapTypeIconColor')}</option></select></label>` : ''}
+        <label class="tree-setting-row"><span>${t('minimapSizePreset')}</span><select data-setting="minimapSizePreset"><option value="small" ${this.treeSettings.minimapSizePreset === 'small' ? 'selected' : ''}>${t('minimapSizeSmall')}</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>${t('minimapSizeMedium')}</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>${t('minimapSizeLarge')}</option><option value="auto" ${this.treeSettings.minimapSizePreset === 'auto' ? 'selected' : ''}>${t('minimapSizeAuto')}</option></select></label>
         <label class="tree-setting-row"><span>${t('minimapScale')}</span><input type="number" min="0.5" max="3" step="0.1" data-setting="minimapScale" value="${this.treeSettings.minimapScale}"></label>` : ''}
       </section>
 
@@ -1092,17 +1114,17 @@ export class TreeService {
     img.src = url;
   }
 
-  applyAutoChance(children, parentProbability, depth) {
+  applyAutoChance(children, parent${t('minimapColorProbability')}, depth) {
     if (!children.length) return [];
     if (this.treeSettings.autoChanceMode === 'off') {
-      return children.map(child => ({ node: child, probability: parentProbability }));
+      return children.map(child => ({ node: child, probability: parent${t('minimapColorProbability')} }));
     }
 
     if (this.treeSettings.autoChanceMode === 'root-split' && depth > 0) {
-      return children.map(child => ({ node: child, probability: parentProbability }));
+      return children.map(child => ({ node: child, probability: parent${t('minimapColorProbability')} }));
     }
 
-    const perChild = parentProbability / children.length;
+    const perChild = parent${t('minimapColorProbability')} / children.length;
     return children.map(child => ({ node: child, probability: perChild }));
   }
 
@@ -1146,7 +1168,7 @@ export class TreeService {
     if (!svg) return;
 
     const activeNodes = nodes.filter(d => d?.data?.type !== 'branch');
-    const activeLinks = links.filter(link => link?.target?.data?.type !== 'branch');
+    const activeLinks = this.getMinimapLinks(links);
     this.syncMinimapOverlay();
     const mapWidth = this.minimapEl.clientWidth || 240;
     const mapHeight = Math.max(80, (this.minimapEl.clientHeight || 150) - 24);
@@ -1162,9 +1184,20 @@ export class TreeService {
     const maxX = Math.max(...xs, 1);
     const minY = Math.min(...ys, 0);
     const maxY = Math.max(...ys, 1);
-    const pad = 8;
-    const scaleX = x => ((x - minX) / Math.max(1, maxX - minX)) * (mapWidth - pad * 2) + pad;
-    const scaleY = y => ((y - minY) / Math.max(1, maxY - minY)) * (mapHeight - pad * 2) + pad;
+    const pad = MINIMAP_PADDING;
+    const effectiveScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
+    const spanX = Math.max(1, (maxX - minX) / effectiveScale);
+    const spanY = Math.max(1, (maxY - minY) / effectiveScale);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const viewport = {
+      minX: centerX - spanX / 2,
+      maxX: centerX + spanX / 2,
+      minY: centerY - spanY / 2,
+      maxY: centerY + spanY / 2
+    };
+    const scaleX = x => ((x - viewport.minX) / Math.max(1, viewport.maxX - viewport.minX)) * (mapWidth - pad * 2) + pad;
+    const scaleY = y => ((y - viewport.minY) / Math.max(1, viewport.maxY - viewport.minY)) * (mapHeight - pad * 2) + pad;
 
     const selectedSet = new Set();
     if (this.treeSettings.minimapFocusMode && this.selectedNodeId != null) {
@@ -1217,7 +1250,12 @@ export class TreeService {
       return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.8" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
     }).join('');
 
-    svg.innerHTML = `${linksSvg}${nodesSvg}`;
+    const viewportRect = this.getTreeViewportOnMinimap(scaleX, scaleY);
+    const viewportSvg = viewportRect
+      ? `<rect class="mm-tree-viewport" x="${viewportRect.x}" y="${viewportRect.y}" width="${viewportRect.width}" height="${viewportRect.height}" />`
+      : '';
+
+    svg.innerHTML = `${linksSvg}${nodesSvg}${viewportSvg}`;
 
     svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
       nodeHit.addEventListener('click', () => {
@@ -1227,5 +1265,85 @@ export class TreeService {
         this.render(this.model || []);
       });
     });
+
+    this.bindMinimapViewportPan(svg, viewport, mapWidth, mapHeight);
+  }
+
+  getMinimapLinks(links = []) {
+    const compacted = [];
+    links.forEach(link => {
+      if (!link?.source?.data || !link?.target?.data) return;
+      if (link.target.data.type === 'branch') return;
+      if (link.source.data.type === 'branch' && link.source.parent) {
+        compacted.push({ source: link.source.parent, target: link.target });
+        return;
+      }
+      compacted.push(link);
+    });
+    return compacted;
+  }
+
+  getTreeViewportOnMinimap(scaleX, scaleY) {
+    const svgEl = this.svg?.node();
+    if (!svgEl || !this.zoomLayer) return null;
+    const transform = window.d3.zoomTransform(svgEl);
+    const worldLeft = (0 - transform.x) / transform.k;
+    const worldTop = (0 - transform.y) / transform.k;
+    const worldRight = ((svgEl.clientWidth || 0) - transform.x) / transform.k;
+    const worldBottom = ((svgEl.clientHeight || 0) - transform.y) / transform.k;
+    const x1 = scaleX(worldLeft);
+    const y1 = scaleY(worldTop);
+    const x2 = scaleX(worldRight);
+    const y2 = scaleY(worldBottom);
+    const left = Math.min(x1, x2);
+    const top = Math.min(y1, y2);
+    return {
+      x: left,
+      y: top,
+      width: Math.max(10, Math.abs(x2 - x1)),
+      height: Math.max(10, Math.abs(y2 - y1))
+    };
+  }
+
+  bindMinimapViewportPan(svg, viewport, mapWidth, mapHeight) {
+    const fromMapX = px => {
+      const span = Math.max(1, mapWidth - MINIMAP_PADDING * 2);
+      const ratio = (px - MINIMAP_PADDING) / span;
+      return viewport.minX + ratio * (viewport.maxX - viewport.minX);
+    };
+
+    const fromMapY = py => {
+      const span = Math.max(1, mapHeight - MINIMAP_PADDING * 2);
+      const ratio = (py - MINIMAP_PADDING) / span;
+      return viewport.minY + ratio * (viewport.maxY - viewport.minY);
+    };
+
+    const panTo = (offsetX, offsetY) => {
+      if (!this.svg || !this.zoom) return;
+      const svgEl = this.svg.node();
+      const transform = window.d3.zoomTransform(svgEl);
+      const worldX = fromMapX(offsetX);
+      const worldY = fromMapY(offsetY);
+      if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) return;
+      const tx = (svgEl.clientWidth || 0) / 2 - worldX * transform.k;
+      const ty = (svgEl.clientHeight || 0) / 2 - worldY * transform.k;
+      this.svg.call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(transform.k));
+    };
+
+    svg.onpointerdown = event => {
+      if (!this.treeSettings.showMinimap) return;
+      const hitNode = event.target.closest('[data-node-id]');
+      if (hitNode) return;
+      event.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const move = moveEvent => panTo(moveEvent.clientX - rect.left, moveEvent.clientY - rect.top);
+      move(event);
+      const onUp = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', onUp);
+    };
   }
 }
