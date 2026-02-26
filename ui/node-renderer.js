@@ -140,6 +140,12 @@ export function renderNode(model) {
 
   const title = document.createElement('strong');
   title.textContent = TITLES[model.type] ?? model.type;
+  if (model.type === 'affliction') {
+    const label = title.textContent;
+    title.textContent = '';
+    title.append(createIcon('alert-triangle'));
+    title.append(` ${label}`);
+  }
 
   const removeBtn = document.createElement('button');
   removeBtn.className = 'danger button-with-icon';
