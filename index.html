@@ -111,7 +111,22 @@
 
   <script type="module">
     import { initEditorUI } from './ui/ui-controller.js';
-    window.addEventListener('DOMContentLoaded', initEditorUI);
+
+    function renderStartupError(error) {
+      console.error('Failed to initialize app', error);
+      const fallback = document.createElement('div');
+      fallback.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;padding:2rem;background:#111;color:#f4f4f4;font:500 16px/1.5 system-ui,sans-serif;z-index:9999;text-align:center;';
+      fallback.innerHTML = '<div><h2 style="margin:0 0 12px;">Application failed to start</h2><p style="margin:0 0 6px;opacity:.9;">Please reload the page or clear local storage for this site.</p><p style="margin:0;opacity:.75;font-size:14px;">Ошибка запуска приложения. Попробуйте перезагрузить страницу или очистить localStorage для сайта.</p></div>';
+      document.body.appendChild(fallback);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        initEditorUI();
+      } catch (error) {
+        renderStartupError(error);
+      }
+    });
   </script>
 </body>
 </html>
