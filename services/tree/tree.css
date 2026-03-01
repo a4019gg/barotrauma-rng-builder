@@ -96,6 +96,11 @@
   pointer-events: all;
 }
 
+#tree-svg.is-dragging-tree .tree-node.drag-hidden-drop-zones .tree-drop-zone {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .tree-node.drop-target-success .tree-drop-success,
 .tree-node.drop-target-failure .tree-drop-failure {
   opacity: 1;

@@ -16,7 +16,10 @@ const treeService = new TreeService({
   onUpdateParam: (id, key, value) => editorStore.updateNodeParam(id, key, value),
   onRemoveNode: id => editorStore.removeNode(id),
   onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type),
-  onMoveNode: (nodeId, newParentId, branch) => editorStore.moveNode(nodeId, newParentId, branch)
+  onMoveNode: (nodeId, newParentId, branch) => {
+    const moved = editorStore.moveNode(nodeId, newParentId, branch);
+    if (moved) treeService.autoLayoutSubtree(nodeId);
+  }
 });
 
 function initButtonIcons() {
