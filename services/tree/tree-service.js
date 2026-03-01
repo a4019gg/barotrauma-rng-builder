@@ -2,6 +2,7 @@ import { t } from '../../ui/localization.js';
 import { createIcon } from '../../ui/icon-component.js';
 import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
 import { formatChanceForInput } from '../../ui/chance-utils.js';
+import { getAppSetting, setAppSetting, subscribeAppSettings } from '../../state/app-settings.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', label: 'RNG' },
@@ -96,6 +97,7 @@ export class TreeService {
     this.minimapResizeHandleEl = null;
     this.minimapInteractionsBound = false;
     this.themeUnsubscribe = null;
+    this.appSettingsUnsubscribe = null;
     this.dragFrame = null;
     this.pendingAutoLayoutNodeId = null;
     this.deleteConfirmState = { id: null, until: 0 };
@@ -104,13 +106,13 @@ export class TreeService {
     this.treeSettings = {
       uiLevel: 'basic',
       displayPercent: 'links',
-      autoChanceMode: 'off',
+      autoChanceMode: 'branch-split',
       dragEnabled: true,
       snapToGrid: true,
       showGrid: true,
       gridSize: 24,
       showMinimap: true,
-      minimapDisplayPercent: 'hidden',
+      minimapDisplayPercent: 'links',
       minimapColorMode: 'success-failure',
       minimapMode: 'standard',
       minimapFocusMode: false,
@@ -148,6 +150,16 @@ export class TreeService {
     this.ensureMiniMapContainer();
     if (!this.themeUnsubscribe) {
       this.themeUnsubscribe = onThemeChange(() => this.render(this.model || []));
+    }
+    if (!this.appSettingsUnsubscribe) {
+      this.appSettingsUnsubscribe = subscribeAppSettings(settings => {
+        const nextMode = settings.autoChanceMode || 'branch-split';
+        if (this.treeSettings.autoChanceMode !== nextMode) {
+          this.treeSettings.autoChanceMode = nextMode;
+          this.persistTreeSettings();
+          this.render(this.model || []);
+        }
+      });
     }
     this.loadIdentifierOptions();
   }
@@ -193,75 +205,51 @@ export class TreeService {
 
   setTreeSetting(key, value) {
     this.treeSettings[key] = value;
-    localStorage.setItem(`tree.${key}`, JSON.stringify(value));
+    if (key === 'autoChanceMode') {
+      setAppSetting('autoChanceMode', value);
+    }
+    this.persistTreeSettings();
     this.render(this.model || []);
   }
 
+  persistTreeSettings() {
+    localStorage.setItem('tree.settings.v2', JSON.stringify(this.treeSettings));
+  }
+
   loadSettings() {
-    Object.keys(this.treeSettings).forEach(key => {
-      const raw = localStorage.getItem(`tree.${key}`);
-      if (raw == null) return;
-      this.treeSettings[key] = parseJSONSafe(raw, raw);
-    });
-
-    const oldLink = localStorage.getItem('tree.displayPercentOnLinks');
-    const oldNode = localStorage.getItem('tree.displayPercentNearNodes');
-    if (oldLink != null || oldNode != null) {
-      const showLinks = oldLink == null ? true : parseLegacyBoolean(oldLink, true);
-      const showNodes = oldNode == null ? false : parseLegacyBoolean(oldNode, false);
-      if (showLinks && showNodes) this.treeSettings.displayPercent = 'both';
-      else if (showNodes) this.treeSettings.displayPercent = 'nodes';
-      else if (showLinks) this.treeSettings.displayPercent = 'links';
-      else this.treeSettings.displayPercent = 'hidden';
+    const raw = localStorage.getItem('tree.settings.v2');
+    const parsed = parseJSONSafe(raw, {});
+    if (parsed && typeof parsed === 'object') {
+      this.treeSettings = { ...this.treeSettings, ...parsed };
     }
 
-    const dragDropEnabled = localStorage.getItem('tree.dragDropEnabled');
-    if (dragDropEnabled != null) this.treeSettings.dragEnabled = parseLegacyBoolean(dragDropEnabled, true);
-    const colorMinimapBranches = localStorage.getItem('tree.colorMinimapBranches');
-    if (colorMinimapBranches != null) {
-      this.treeSettings.minimapColorMode = parseLegacyBoolean(colorMinimapBranches, true) ? 'success-failure' : 'none';
-    }
-    const showBranchNodes = localStorage.getItem('tree.showBranchNodes');
-    if (showBranchNodes != null) this.treeSettings.showIntermediateNodes = parseLegacyBoolean(showBranchNodes, true);
+    const globalAutoChance = getAppSetting('autoChanceMode');
+    this.treeSettings.autoChanceMode = globalAutoChance || this.treeSettings.autoChanceMode;
 
     if (!['basic', 'advanced'].includes(this.treeSettings.uiLevel)) this.treeSettings.uiLevel = 'basic';
     if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.displayPercent)) this.treeSettings.displayPercent = 'links';
-    if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.minimapDisplayPercent)) this.treeSettings.minimapDisplayPercent = 'hidden';
-    if (!['off', 'root-split', 'branch-split'].includes(this.treeSettings.autoChanceMode)) this.treeSettings.autoChanceMode = 'off';
+    if (!['hidden', 'links', 'nodes', 'both'].includes(this.treeSettings.minimapDisplayPercent)) this.treeSettings.minimapDisplayPercent = 'links';
+    if (!['off', 'root-split', 'branch-split'].includes(this.treeSettings.autoChanceMode)) this.treeSettings.autoChanceMode = 'branch-split';
     if (!['none', 'success-failure', 'probability'].includes(this.treeSettings.minimapColorMode)) this.treeSettings.minimapColorMode = 'success-failure';
     if (this.treeSettings.minimapMode !== 'standard') this.treeSettings.minimapMode = 'standard';
     if (!['dots', 'type-color', 'type-icon', 'type-icon-color'].includes(this.treeSettings.minimapTypeMode)) this.treeSettings.minimapTypeMode = 'dots';
-    if (!['small', 'medium', 'large', 'auto'].includes(this.treeSettings.minimapSizePreset)) {
-      this.treeSettings.minimapSizePreset = this.treeSettings.minimapSizePreset === 'compact' ? 'small' : 'medium';
-    }
+    if (!['small', 'medium', 'large', 'auto'].includes(this.treeSettings.minimapSizePreset)) this.treeSettings.minimapSizePreset = 'medium';
 
-    const oldPosPreset = localStorage.getItem('tree.minimapPositionPreset');
-    const oldFreePos = localStorage.getItem('tree.minimapFreePosition');
-    if (oldPosPreset && !localStorage.getItem('tree.minimapPosition')) {
-      if (oldPosPreset.includes('bottom')) this.treeSettings.minimapPosition = { x: 18, y: 280 };
-      else if (oldPosPreset.includes('outside')) this.treeSettings.minimapPosition = { x: 18, y: 18 };
-      else this.treeSettings.minimapPosition = { x: 18, y: 18 };
-    }
-    if (oldFreePos && !localStorage.getItem('tree.minimapPosition')) {
-      this.treeSettings.minimapPosition = parseJSONSafe(oldFreePos, { x: 18, y: 18 });
-    }
     if (!this.treeSettings.minimapPosition || !Number.isFinite(Number(this.treeSettings.minimapPosition.x)) || !Number.isFinite(Number(this.treeSettings.minimapPosition.y))) {
       this.treeSettings.minimapPosition = { x: 18, y: 18 };
     }
 
-    const oldFreeSize = localStorage.getItem('tree.minimapFreeSize');
-    if (oldFreeSize && !localStorage.getItem('tree.minimapCustomSize')) {
-      this.treeSettings.minimapCustomSize = parseJSONSafe(oldFreeSize, { width: 240, height: 150 });
-    }
     if (!this.treeSettings.minimapCustomSize || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.width)) || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.height))) {
       this.treeSettings.minimapCustomSize = { width: 240, height: 150 };
     }
 
     this.treeSettings.minimapScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
+    this.persistTreeSettings();
   }
 
 
   bindMinimapInteractions() {
+
     if (!this.minimapEl || !this.minimapHeaderEl || !this.minimapResizeHandleEl) return;
     this.minimapInteractionsBound = true;
 
@@ -289,7 +277,7 @@ export class TreeService {
         const nextY = moveEvent.clientY - containerRect.top - offsetY;
         const pos = clampPosition(nextX, nextY, rect.width, rect.height);
         this.treeSettings.minimapPosition = pos;
-        localStorage.setItem('tree.minimapPosition', JSON.stringify(pos));
+        this.persistTreeSettings();
         this.syncMinimapOverlay();
       };
       const onUp = () => {
@@ -315,8 +303,7 @@ export class TreeService {
         const height = Math.max(MINIMAP_SIZE_LIMITS.minHeight, Math.min(MINIMAP_SIZE_LIMITS.maxHeight, startRect.height + (moveEvent.clientY - startY)));
         this.treeSettings.minimapSizePreset = 'auto';
         this.treeSettings.minimapCustomSize = { width: Math.round(width), height: Math.round(height) };
-        localStorage.setItem('tree.minimapSizePreset', JSON.stringify('auto'));
-        localStorage.setItem('tree.minimapCustomSize', JSON.stringify(this.treeSettings.minimapCustomSize));
+        this.persistTreeSettings();
         this.syncMinimapOverlay();
       };
 
@@ -336,7 +323,7 @@ export class TreeService {
       const delta = event.deltaY < 0 ? 0.1 : -0.1;
       const nextScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale || 1) + delta));
       this.treeSettings.minimapScale = Number(nextScale.toFixed(2));
-      localStorage.setItem('tree.minimapScale', JSON.stringify(this.treeSettings.minimapScale));
+      this.persistTreeSettings();
       this.syncMinimapOverlay();
       this.renderInspector(this.findNodeById(this.selectedNodeId));
     }, { passive: false });
@@ -500,6 +487,31 @@ export class TreeService {
       if (d.data.type === 'root') return this.renderRootNode(group, d);
       this.renderEditableNode(group, d);
     });
+
+
+    if (this.treeSettings.debugBounds) {
+      const debug = this.g.append('g').attr('class', 'tree-debug-layer');
+      debug.append('rect')
+        .attr('class', 'tree-debug-dropzone')
+        .attr('x', -20)
+        .attr('y', -20)
+        .attr('width', this.width)
+        .attr('height', this.height);
+      visibleNodes.forEach(d => {
+        const p = this.getNodeCoords(d);
+        debug.append('rect')
+          .attr('class', 'tree-debug-dropzone')
+          .attr('x', p.y - 8)
+          .attr('y', p.x - 8)
+          .attr('width', 16)
+          .attr('height', 16);
+        debug.append('text')
+          .attr('class', 'tree-debug-label')
+          .attr('x', p.y + 8)
+          .attr('y', p.x - 10)
+          .text(`#${d.data.id} ${d.data.type} p=${Math.round((d.data.probability || 0) * 100)}%`);
+      });
+    }
 
     this.installDrag(nodes);
     this.updateCanvasSize(visibleNodes);
@@ -960,7 +972,6 @@ export class TreeService {
     wrapper.className = 'tree-settings-section';
     const isBasic = this.treeSettings.uiLevel !== 'advanced';
     const showMinimapSettings = !!this.treeSettings.showMinimap;
-    const minimapScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
 
     wrapper.innerHTML = `
       <h5>${t('treeSettings')}</h5>
@@ -979,8 +990,8 @@ export class TreeService {
             <label><input type="radio" name="tree-display-percent" value="both" ${this.treeSettings.displayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label>
           </div>
         </div>
-        ${!isBasic ? `<div class="tree-setting-row" title="${t('hintAutoChance')}"><span>${t('autoChanceMode')}</span><select data-setting="autoChanceMode"><option value="off" ${this.treeSettings.autoChanceMode === 'off' ? 'selected' : ''}>${t('autoChanceOff')}</option><option value="root-split" ${this.treeSettings.autoChanceMode === 'root-split' ? 'selected' : ''}>${t('autoChanceRoot')}</option><option value="branch-split" ${this.treeSettings.autoChanceMode === 'branch-split' ? 'selected' : ''}>${t('autoChanceBranch')}</option></select></div>
-        <label class="tree-setting-row"><span>${t('minimapTypeMode')}</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>${t('minimapTypeDots')}</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>${t('minimapTypeColor')}</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>${t('minimapTypeIcon')}</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>${t('minimapTypeIconColor')}</option></select></label>
+        <div class="tree-setting-row" title="${t('hintAutoChance')}"><span>${t('autoChanceMode')}</span><select data-setting="autoChanceMode"><option value="off" ${this.treeSettings.autoChanceMode === 'off' ? 'selected' : ''}>${t('autoChanceOff')}</option><option value="root-split" ${this.treeSettings.autoChanceMode === 'root-split' ? 'selected' : ''}>${t('autoChanceRoot')}</option><option value="branch-split" ${this.treeSettings.autoChanceMode === 'branch-split' ? 'selected' : ''}>${t('autoChanceBranch')}</option></select></div>
+        ${!isBasic ? `<label class="tree-setting-row"><span>${t('minimapTypeMode')}</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>${t('minimapTypeDots')}</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>${t('minimapTypeColor')}</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>${t('minimapTypeIcon')}</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>${t('minimapTypeIconColor')}</option></select></label>
         <label class="tree-setting-row"><span>${t('minimapSizePreset')}</span><select data-setting="minimapSizePreset"><option value="small" ${this.treeSettings.minimapSizePreset === 'small' ? 'selected' : ''}>${t('minimapSizeSmall')}</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>${t('minimapSizeMedium')}</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>${t('minimapSizeLarge')}</option><option value="auto" ${this.treeSettings.minimapSizePreset === 'auto' ? 'selected' : ''}>${t('minimapSizeAuto')}</option></select></label>` : ''}
       </section>
 
@@ -997,8 +1008,7 @@ export class TreeService {
         <h6>${t('visualSection')}</h6>
         <label class="tree-setting-row tree-setting-switch"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
         ${showMinimapSettings ? `<div class="tree-setting-nested">
-          <label class="tree-setting-row"><span>${t('minimapScale')}</span><input type="number" min="0.5" max="3" step="0.1" data-setting="minimapScale" value="${minimapScale}"></label>
-          <label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
+          <div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><div class="tree-segmented tree-segmented-four" data-setting="minimapDisplayPercent"><label><input type="radio" name="minimap-display-percent" value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label><label><input type="radio" name="minimap-display-percent" value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label><label><input type="radio" name="minimap-display-percent" value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label><label><input type="radio" name="minimap-display-percent" value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label></div></div><label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
           <label class="tree-setting-row tree-setting-switch"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
         </div>` : ''}
         ${!isBasic ? `<label class="tree-setting-row tree-setting-switch"><span>${t('showBranchNodes')}</span><input type="checkbox" data-setting="showIntermediateNodes" ${this.treeSettings.showIntermediateNodes ? 'checked' : ''}/></label>` : ''}
@@ -1037,7 +1047,7 @@ export class TreeService {
     if (advancedDetails) {
       advancedDetails.addEventListener('toggle', () => {
         this.treeSettings.advancedExpanded = advancedDetails.open;
-        localStorage.setItem('tree.advancedExpanded', JSON.stringify(advancedDetails.open));
+        this.persistTreeSettings();
       });
     }
 
@@ -1047,11 +1057,7 @@ export class TreeService {
         const target = event.target;
         let value = target.type === 'checkbox' ? target.checked : target.value;
         if (target.type === 'number') value = Number(target.value);
-        if (key === 'minimapScale') {
-          value = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(value) || 1));
-          this.setTreeSetting(key, value);
-          this.syncMinimapOverlay();
-        } else if (key === 'minimapSizePreset') {
+        if (key === 'minimapSizePreset') {
           this.setTreeSetting(key, value);
           this.syncMinimapOverlay();
         } else {
@@ -1252,8 +1258,8 @@ export class TreeService {
     const maxY = Math.max(...ys, 1);
     const pad = MINIMAP_PADDING;
     const effectiveScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
-    const spanX = Math.max(1, (maxX - minX) / effectiveScale);
-    const spanY = Math.max(1, (maxY - minY) / effectiveScale);
+    const spanX = Math.max(1, (maxX - minX));
+    const spanY = Math.max(1, (maxY - minY));
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     const viewport = {
@@ -1316,12 +1322,10 @@ export class TreeService {
       return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.8" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
     }).join('');
 
-    const viewportRect = this.getTreeViewportOnMinimap(scaleX, scaleY);
-    const viewportSvg = viewportRect
-      ? `<rect class="mm-tree-viewport" x="${viewportRect.x}" y="${viewportRect.y}" width="${viewportRect.width}" height="${viewportRect.height}" />`
-      : '';
-
-    svg.innerHTML = `${linksSvg}${nodesSvg}${viewportSvg}`;
+    const cx = mapWidth / 2;
+    const cy = mapHeight / 2;
+    const content = `${linksSvg}${nodesSvg}`;
+    svg.innerHTML = `<g transform="translate(${cx} ${cy}) scale(${effectiveScale}) translate(${-cx} ${-cy})">${content}</g>`;
 
     svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
       nodeHit.addEventListener('click', () => {
@@ -1332,7 +1336,6 @@ export class TreeService {
       });
     });
 
-    this.bindMinimapViewportPan(svg, viewport, mapWidth, mapHeight);
   }
 
   getMinimapLinks(links = []) {
@@ -1349,70 +1352,4 @@ export class TreeService {
     return compacted;
   }
 
-  getTreeViewportOnMinimap(scaleX, scaleY) {
-    const svgEl = this.svg?.node();
-    if (!svgEl || !this.zoomLayer) return null;
-    const transform = window.d3.zoomTransform(svgEl);
-    const worldLeft = (0 - transform.x) / transform.k;
-    const worldTop = (0 - transform.y) / transform.k;
-    const worldRight = ((svgEl.clientWidth || 0) - transform.x) / transform.k;
-    const worldBottom = ((svgEl.clientHeight || 0) - transform.y) / transform.k;
-    const x1 = scaleX(worldLeft);
-    const y1 = scaleY(worldTop);
-    const x2 = scaleX(worldRight);
-    const y2 = scaleY(worldBottom);
-    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-    const left = clamp(Math.min(x1, x2), MINIMAP_PADDING, this.minimapEl.clientWidth - MINIMAP_PADDING);
-    const top = clamp(Math.min(y1, y2), MINIMAP_PADDING, this.minimapEl.clientHeight - 24 - MINIMAP_PADDING);
-    const right = clamp(Math.max(x1, x2), MINIMAP_PADDING, this.minimapEl.clientWidth - MINIMAP_PADDING);
-    const bottom = clamp(Math.max(y1, y2), MINIMAP_PADDING, this.minimapEl.clientHeight - 24 - MINIMAP_PADDING);
-    return {
-      x: left,
-      y: top,
-      width: Math.max(10, right - left),
-      height: Math.max(10, bottom - top)
-    };
-  }
-
-  bindMinimapViewportPan(svg, viewport, mapWidth, mapHeight) {
-    const fromMapX = px => {
-      const span = Math.max(1, mapWidth - MINIMAP_PADDING * 2);
-      const ratio = (px - MINIMAP_PADDING) / span;
-      return viewport.minX + ratio * (viewport.maxX - viewport.minX);
-    };
-
-    const fromMapY = py => {
-      const span = Math.max(1, mapHeight - MINIMAP_PADDING * 2);
-      const ratio = (py - MINIMAP_PADDING) / span;
-      return viewport.minY + ratio * (viewport.maxY - viewport.minY);
-    };
-
-    const panTo = (offsetX, offsetY) => {
-      if (!this.svg || !this.zoom) return;
-      const svgEl = this.svg.node();
-      const transform = window.d3.zoomTransform(svgEl);
-      const worldX = fromMapX(offsetX);
-      const worldY = fromMapY(offsetY);
-      if (!Number.isFinite(worldX) || !Number.isFinite(worldY)) return;
-      const tx = (svgEl.clientWidth || 0) / 2 - worldX * transform.k;
-      const ty = (svgEl.clientHeight || 0) / 2 - worldY * transform.k;
-      this.svg.call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(transform.k));
-    };
-
-    svg.onpointerdown = event => {
-      if (!this.treeSettings.showMinimap) return;
-      const hitNode = event.target.closest('[data-node-id]');
-      if (hitNode) return;
-      event.preventDefault();
-      const rect = svg.getBoundingClientRect();
-      const move = moveEvent => panTo(moveEvent.clientX - rect.left, moveEvent.clientY - rect.top);
-      move(event);
-      const onUp = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', onUp);
-      };
-      window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', onUp);
-    };
-  }
 }

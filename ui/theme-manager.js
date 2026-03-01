@@ -1,3 +1,5 @@
+import { getAppSetting, setAppSetting } from '../state/app-settings.js';
+
 const BASE_THEMES = {
   dark: {
     id: 'dark',
@@ -31,12 +33,12 @@ const defaults = {
 const listeners = new Set();
 
 const state = {
-  baseTheme: localStorage.getItem('baseTheme') || localStorage.getItem('theme') || defaults.baseTheme,
-  themeStyle: localStorage.getItem('themeStyle') || defaults.themeStyle,
-  uiScale: localStorage.getItem('uiScale') || defaults.uiScale,
-  grid: localStorage.getItem('bgGrid') !== 'false',
-  chanceColorCoding: localStorage.getItem('chanceColorCoding') !== 'false',
-  chanceInputMode: localStorage.getItem('chanceInputMode') || defaults.chanceInputMode
+  baseTheme: getAppSetting('baseTheme') || defaults.baseTheme,
+  themeStyle: getAppSetting('themeStyle') || defaults.themeStyle,
+  uiScale: getAppSetting('uiScale') || defaults.uiScale,
+  grid: getAppSetting('grid') ?? defaults.grid,
+  chanceColorCoding: getAppSetting('chanceColorCoding') ?? defaults.chanceColorCoding,
+  chanceInputMode: getAppSetting('chanceInputMode') || defaults.chanceInputMode
 };
 
 function ensureValidState() {
@@ -62,12 +64,12 @@ export function applyTheme() {
   document.body.dataset.uiScale = state.uiScale;
   document.body.dataset.bgGrid = state.grid ? 'visible' : 'off';
 
-  localStorage.setItem('baseTheme', state.baseTheme);
-  localStorage.setItem('themeStyle', state.themeStyle);
-  localStorage.setItem('uiScale', state.uiScale);
-  localStorage.setItem('bgGrid', String(state.grid));
-  localStorage.setItem('chanceColorCoding', String(state.chanceColorCoding));
-  localStorage.setItem('chanceInputMode', state.chanceInputMode);
+  setAppSetting('baseTheme', state.baseTheme);
+  setAppSetting('themeStyle', state.themeStyle);
+  setAppSetting('uiScale', state.uiScale);
+  setAppSetting('grid', Boolean(state.grid));
+  setAppSetting('chanceColorCoding', Boolean(state.chanceColorCoding));
+  setAppSetting('chanceInputMode', state.chanceInputMode);
 
   notifyThemeChange();
 }

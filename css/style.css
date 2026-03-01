@@ -96,7 +96,7 @@ button.danger { background: #723636; }
 .settings-panel {
   display: none;
   border: 1px solid var(--border-main);
-  background: #111826;
+  background: var(--bg-panel);
   padding: 12px 14px;
   gap: 10px;
 }
@@ -151,26 +151,41 @@ button.danger { background: #723636; }
 }
 
 #main-container {
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: block;
   min-height: 56vh;
 }
 
-#events-panel {
-  border-right: 1px solid var(--border-main);
-  background: #111826;
-  padding: 12px;
+#editor-area { padding: 14px; }
+
+.events-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin-bottom: 10px;
 }
 
-#events-list { display: flex; flex-direction: column; gap: 8px; }
-#events-list button.active { background: #2d4063; border-color: #89b7ff; }
+.event-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+}
 
-#editor-area { padding: 14px; }
+.event-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-tab.active { background: #2d4063; border-color: #89b7ff; }
+.event-tab-close { font-weight: 700; line-height: 1; }
+.event-tab-add { width: 34px; justify-content: center; }
 
 .node-root {
   border: 1px solid var(--border-main);
   border-radius: var(--ui-radius-lg);
-  background: #121d2f;
+  background: color-mix(in srgb, var(--bg-panel) 90%, var(--bg-main) 10%);
   padding: var(--ui-node-padding);
 }
 
@@ -182,10 +197,10 @@ button.danger { background: #723636; }
 }
 
 .node {
-  border: 1px solid #3a4d72;
+  border: 1px solid var(--border-main);
   border-radius: var(--ui-radius-md);
   padding: var(--ui-node-padding);
-  background: #1a2942;
+  background: color-mix(in srgb, var(--bg-panel-soft) 88%, var(--bg-main) 12%);
   box-shadow: var(--ui-shadow-node);
 }
 
@@ -223,7 +238,7 @@ button.danger { background: #723636; }
   gap: 8px;
   border-top: 1px solid var(--border-main);
   padding: 10px 14px;
-  background: #121928;
+  background: var(--bg-panel);
 }
 
 #event-id { width: 320px; }
@@ -267,7 +282,6 @@ button.danger { background: #723636; }
 
 @media (max-width: 1100px) {
   #main-container { grid-template-columns: 1fr; }
-  #events-panel { border-right: none; border-bottom: 1px solid var(--border-main); }
 }
 
 input[type="number"] {

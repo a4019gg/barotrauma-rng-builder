@@ -1,3 +1,5 @@
+import { getAppSetting, setAppSetting } from '../state/app-settings.js';
+
 const DICTS = {
   en: {
     treeView: 'Tree View',
@@ -31,6 +33,16 @@ const DICTS = {
     addSuccess: 'Add to Success',
     addFailure: 'Add to Failure',
     language: 'Language',
+    clearCache: 'Clear cache',
+    langEnglish: 'English',
+    langRussian: 'Russian',
+    uiScale90: '90%',
+    uiScale100: '100%',
+    uiScale110: '110%',
+    uiScale125: '125%',
+    themeStyleCompact: 'Compact',
+    themeStyleBalanced: 'Balanced',
+    themeStyleSoft: 'Soft',
     xmlGenerated: 'XML generated',
     xmlImported: 'XML imported',
     xmlCopied: 'XML copied',
@@ -132,6 +144,16 @@ const DICTS = {
     addSuccess: 'Добавить в Success',
     addFailure: 'Добавить в Failure',
     language: 'Язык',
+    clearCache: 'Очистить кэш',
+    langEnglish: 'Английский',
+    langRussian: 'Русский',
+    uiScale90: '90%',
+    uiScale100: '100%',
+    uiScale110: '110%',
+    uiScale125: '125%',
+    themeStyleCompact: 'Компактная',
+    themeStyleBalanced: 'Сбалансированная',
+    themeStyleSoft: 'Мягкая',
     xmlGenerated: 'XML сгенерирован',
     xmlImported: 'XML импортирован',
     xmlCopied: 'XML скопирован',
@@ -203,7 +225,7 @@ const DICTS = {
   }
 };
 
-let currentLang = localStorage.getItem('lang') || 'en';
+let currentLang = getAppSetting('lang') || 'en';
 const listeners = new Set();
 
 export function t(key) {
@@ -217,7 +239,7 @@ export function getLang() {
 export function setLang(lang) {
   if (!DICTS[lang]) return;
   currentLang = lang;
-  localStorage.setItem('lang', lang);
+  setAppSetting('lang', lang);
   listeners.forEach(listener => listener(lang));
 }
 

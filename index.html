@@ -36,23 +36,23 @@
       </div>
       <label><span data-l10n="language"></span>
         <select id="lang-select">
-          <option value="en">EN</option>
-          <option value="ru">RU</option>
+          <option value="en" data-l10n="langEnglish">English</option>
+          <option value="ru" data-l10n="langRussian">Русский</option>
         </select>
       </label>
       <label><span data-l10n="uiScale"></span>
         <select id="ui-scale-select">
-          <option value="90">90%</option>
-          <option value="100">100%</option>
-          <option value="110">110%</option>
-          <option value="125">125%</option>
+          <option value="90" data-l10n="uiScale90">90%</option>
+          <option value="100" data-l10n="uiScale100">100%</option>
+          <option value="110" data-l10n="uiScale110">110%</option>
+          <option value="125" data-l10n="uiScale125">125%</option>
         </select>
       </label>
       <label><span data-l10n="themeStyle"></span>
         <select id="theme-style-select">
-          <option value="compact">Compact</option>
-          <option value="balanced">Balanced</option>
-          <option value="soft">Soft</option>
+          <option value="compact" data-l10n="themeStyleCompact">Compact</option>
+          <option value="balanced" data-l10n="themeStyleBalanced">Balanced</option>
+          <option value="soft" data-l10n="themeStyleSoft">Soft</option>
         </select>
       </label>
       <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
@@ -63,6 +63,14 @@
           <option value="percent" data-l10n="chanceModePercent">%</option>
         </select>
       </label>
+      <label><span data-l10n="autoChanceMode"></span>
+        <select id="auto-chance-global">
+          <option value="off" data-l10n="autoChanceOff">Off</option>
+          <option value="root-split" data-l10n="autoChanceRoot">Root</option>
+          <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
+        </select>
+      </label>
+      <button id="clear-cache-btn" type="button" data-l10n="clearCache"></button>
     </div>
   </section>
 
@@ -71,8 +79,7 @@
     <button data-action="addNode" data-type="spawn" data-l10n="addItem"></button>
     <button data-action="addNode" data-type="creature" data-l10n="addCreature"></button>
     <button data-action="addNode" data-type="affliction" data-l10n="addAffliction"></button>
-    <button data-action="addEvent" data-l10n="addEvent"></button>
-    <button data-action="clearAll" data-l10n="clearEvent"></button>
+        <button data-action="clearAll" data-l10n="clearEvent"></button>
     <div class="spacer"></div>
     <button data-action="generateXML" class="green" data-l10n="generateXML"></button>
     <button data-action="copyXML" data-l10n="copyXML"></button>
@@ -81,12 +88,8 @@
   </section>
 
   <main id="main-container">
-    <aside id="events-panel">
-      <h3 data-l10n="events"></h3>
-      <div id="events-list"></div>
-    </aside>
-
     <section id="editor-area">
+      <div id="events-tabs" class="events-tabs"></div>
       <div id="classic-view">
         <div id="tree-root" class="node-root">
           <strong data-l10n="rootEvent"></strong>

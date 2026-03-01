@@ -32,7 +32,6 @@ function initButtonIcons() {
     ['button[data-action="addNode"][data-type="spawn"]', 'box', 'addItem'],
     ['button[data-action="addNode"][data-type="creature"]', 'hashtag', 'addCreature'],
     ['button[data-action="addNode"][data-type="affliction"]', 'alert-circle', 'addAffliction'],
-    ['button[data-action="addEvent"]', 'plus-square', 'addEvent'],
     ['button[data-action="clearAll"]', 'trash', 'clearEvent'],
     ['button[data-action="generateXML"]', 'code', 'generateXML'],
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
@@ -49,17 +48,27 @@ function initButtonIcons() {
 
 function renderEvents() {
   const state = editorStore.getState();
-  const list = document.getElementById('events-list');
+  const list = document.getElementById('events-tabs');
   list.innerHTML = '';
 
   state.events.forEach((event, index) => {
-    const btn = document.createElement('button');
-    btn.textContent = `${index + 1}. ${event.id}`;
-    btn.dataset.action = 'selectEvent';
-    btn.dataset.index = String(index);
-    if (index === state.currentEventIndex) btn.classList.add('active');
-    list.appendChild(btn);
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = 'event-tab';
+    tab.dataset.action = 'selectEvent';
+    tab.dataset.index = String(index);
+    tab.innerHTML = `<span class="event-tab-title">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close" data-action="removeEvent" data-index="${index}">×</span>` : ''}`;
+    if (index === state.currentEventIndex) tab.classList.add('active');
+    list.appendChild(tab);
   });
+
+  const addTab = document.createElement('button');
+  addTab.type = 'button';
+  addTab.className = 'event-tab event-tab-add';
+  addTab.dataset.action = 'addEvent';
+  addTab.textContent = '+';
+  addTab.disabled = state.events.length >= 5;
+  list.appendChild(addTab);
 
   document.getElementById('event-id').value = state.currentEvent.id;
 }
@@ -113,6 +122,7 @@ function handleClick(event) {
   const id = Number(actionEl.dataset.id);
 
   if (action === 'addEvent') editorStore.addEvent();
+  if (action === 'removeEvent') editorStore.removeEvent(Number(actionEl.dataset.index));
   if (action === 'selectEvent') editorStore.setCurrentEvent(Number(actionEl.dataset.index));
   if (action === 'addNode') editorStore.addRootNode(actionEl.dataset.type);
   if (action === 'addChildNode') editorStore.addChildNode(Number(actionEl.dataset.parentId), actionEl.dataset.branch, actionEl.dataset.type);
@@ -184,7 +194,6 @@ export function initEditorUI() {
   initSettingsController();
   initButtonIcons();
   applyLocalization();
-
 
   onThemeChange(() => {
     renderModel();

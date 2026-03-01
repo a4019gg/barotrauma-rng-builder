@@ -350,6 +350,7 @@ function buildBaseCard(entry) {
   if (icon) header.appendChild(icon);
 
   const titleWrap = document.createElement("div");
+  titleWrap.className = "db-entry-title-wrap";
 
   const title = document.createElement("div");
   title.className = "db-entry-title";
