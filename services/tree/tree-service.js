@@ -13,6 +13,7 @@ const NODE_META = {
 
 const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
 const NODE_SIZE = { width: 320, height: 108 };
+const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
@@ -92,6 +93,7 @@ export class TreeService {
     this.collapsed = new Set();
     this.manualPositions = new Map();
     this.draggingId = null;
+    this.draggingTreeIds = null;
     this.dropTarget = null;
     this.minimapEl = null;
     this.minimapContainerEl = null;
@@ -379,6 +381,11 @@ export class TreeService {
     this.render(this.model || []);
   }
 
+  autoLayoutSubtree(nodeId) {
+    this.pendingAutoLayoutNodeId = nodeId;
+    this.render(this.model || []);
+  }
+
   selectNode(nodeId) {
     if (this.selectedNodeId === nodeId) return;
     this.selectedNodeId = nodeId;
@@ -448,7 +455,7 @@ export class TreeService {
       children: rootChildren
     });
 
-    window.d3.tree().nodeSize([130, 430])(root);
+    window.d3.tree().nodeSize([190, 430])(root);
 
     const links = root.links();
     const visibleNodes = root.descendants();
@@ -489,6 +496,7 @@ export class TreeService {
         }
         return classes.join(' ');
       })
+      .classed('drag-hidden-drop-zones', d => this.draggingTreeIds?.has(d.data.id))
       .attr('transform', d => {
         const pos = this.getNodeCoords(d);
         return `translate(${pos.y},${pos.x})`;
@@ -539,6 +547,7 @@ export class TreeService {
         const sourceNode = event.sourceEvent?.target;
         if (sourceNode?.closest('input, button, select, option, textarea, datalist, label')) return;
         this.draggingId = d.data.id;
+        this.draggingTreeIds = new Set(d.descendants().map(desc => desc.data.id));
         d.__dragOrigin = { x: event.x, y: event.y };
         d.__dragBasePositions = new Map(d.descendants().map(desc => {
           const pos = this.getNodeCoords(desc);
@@ -574,6 +583,7 @@ export class TreeService {
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         this.dropTarget = hit;
         this.g.selectAll('.tree-node')
+          .classed('drag-hidden-drop-zones', nd => this.draggingTreeIds?.has(nd.data.id))
           .classed('drop-target', nd => this.dropTarget?.id === nd.data.id)
           .classed('drop-target-success', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'success')
           .classed('drop-target-failure', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'failure');
@@ -586,6 +596,7 @@ export class TreeService {
         if (hit && this.onMoveNode) this.onMoveNode(d.data.id, hit.id, hit.branch);
         this.dropTarget = null;
         this.draggingId = null;
+        this.draggingTreeIds = null;
         delete d.__dragOrigin;
         delete d.__dragBasePositions;
       });
@@ -596,6 +607,11 @@ export class TreeService {
   getNodeSize(type) {
     if (type === 'branch') return BRANCH_SIZE;
     if (type === 'root') return ROOT_SIZE;
+    return NODE_SIZE;
+  }
+
+  getEditableNodeSize(node, collapsed) {
+    if (node?.type === 'rng' && !collapsed) return RNG_NODE_SIZE_EXPANDED;
     return NODE_SIZE;
   }
 
@@ -618,7 +634,8 @@ export class TreeService {
     const t = this.getNodeCoords(link.target);
     const source = this.getNodeBoundaryPoint(s, t, link.source.data.type);
     const target = this.getNodeBoundaryPoint(t, s, link.target.data.type);
-    return window.d3.linkHorizontal().x(p => p.y).y(p => p.x)({ source, target });
+    const midY = source.y + (target.y - source.y) * 0.5;
+    return `M${source.y},${source.x}L${midY},${source.x}L${midY},${target.x}L${target.y},${target.x}`;
   }
 
   getLinkMidPoint(link) {
@@ -685,9 +702,8 @@ export class TreeService {
 
   renderEditableNode(group, d) {
     const node = d.data.nodeRef;
-    const width = NODE_SIZE.width;
-    const height = NODE_SIZE.height;
     const collapsed = this.collapsed.has(node.id);
+    const { width, height } = this.getEditableNodeSize(node, collapsed);
 
     const card = group.append('rect').attr('class', 'tree-card').attr('x', -width / 2).attr('y', -height / 2).attr('rx', 12).attr('ry', 12).attr('width', width).attr('height', height)
       .on('click', () => this.selectNode(node.id));
@@ -816,8 +832,9 @@ export class TreeService {
         zone.append('title').text(t(titleKey));
       };
 
-      createDropZone('success', '+', -DROP_ZONE.offsetY, 'dropZoneSuccessHint');
-      createDropZone('failure', '−', DROP_ZONE.offsetY, 'dropZoneFailureHint');
+      const zoneOffset = Math.max(DROP_ZONE.offsetY, Math.round(height / 2) - 6);
+      createDropZone('success', '+', -zoneOffset, 'dropZoneSuccessHint');
+      createDropZone('failure', '−', zoneOffset, 'dropZoneFailureHint');
     }
 
     wrapper.append(header, controls);
