@@ -89,11 +89,23 @@ export class EditorStore {
   }
 
   addEvent() {
+    if (this.events.length >= 5) return false;
     this.snapshot('add-event');
     const nextId = `event_${this.events.length + 1}`;
     this.events.push({ id: nextId, model: [] });
     this.currentEventIndex = this.events.length - 1;
     this.notify();
+    return true;
+  }
+
+  removeEvent(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.events.length) return false;
+    if (this.events.length <= 1) return false;
+    this.snapshot('remove-event');
+    this.events.splice(index, 1);
+    this.currentEventIndex = Math.max(0, Math.min(this.currentEventIndex, this.events.length - 1));
+    this.notify();
+    return true;
   }
 
   setCurrentEvent(index) {

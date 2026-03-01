@@ -21,7 +21,7 @@
   min-height: 540px;
   border: 1px solid color-mix(in srgb, var(--border-main) 80%, transparent);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(35, 46, 72, 0.35), rgba(17, 24, 38, 0.5));
+  background: color-mix(in srgb, var(--bg-panel-soft) 78%, var(--bg-main) 22%);
   cursor: grab;
 }
 
@@ -50,7 +50,7 @@
 .chance-mid { fill: #ffd25f; }
 .chance-high { fill: #52d978; }
 
-.tree-card { fill: #1f2a3f; stroke: #6b88b6; stroke-width: 2; }
+.tree-card { fill: color-mix(in srgb, var(--bg-panel) 85%, #223958 15%); stroke: #6b88b6; stroke-width: 2; }
 .tree-node.selected .tree-card,
 .tree-node.drop-target .tree-card { stroke: #d9e8ff; filter: drop-shadow(0 0 6px rgba(106, 156, 238, 0.4)); }
 .tree-card-root { fill: #233452; stroke: #83aadf; }
@@ -60,14 +60,14 @@
 .tree-branch-card.branch-failure { fill: #4c2130; stroke: #ef8ea8; }
 .tree-branch-label { fill: #f4f9ff; font-size: 12px; font-weight: 700; }
 
-.tree-node-fo { color: #eef4ff; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px; }
+.tree-node-fo { color: var(--text-main); font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px; }
 .tree-node-head { display: flex; align-items: center; justify-content: space-between; }
 .tree-head-actions { display:flex; gap:4px; }
 
 .icon-btn {
-  border: 1px solid #748db8;
-  background: #132035;
-  color: #f1f6ff;
+  border: 1px solid var(--border-main);
+  background: color-mix(in srgb, var(--bg-panel-soft) 85%, var(--bg-main) 15%);
+  color: var(--text-main);
   border-radius: 6px;
   font-size: 12px;
   line-height: 1;
@@ -86,7 +86,7 @@
 .tree-field { display: flex; gap: 4px; align-items: center; font-size: 11px; text-transform: lowercase; }
 .tree-field span { min-width: 48px; opacity: 0.85; }
 .tree-field input,
-.tree-field select { width: 100%; min-width: 0; border: 1px solid #5f759f; background: #0e182a; color: #f7fbff; border-radius: 5px; padding: 3px 5px; font-size: 11px; }
+.tree-field select { width: 100%; min-width: 0; border: 1px solid var(--border-main); background: color-mix(in srgb, var(--bg-main) 85%, #000); color: var(--text-main); border-radius: 5px; padding: 3px 5px; font-size: 11px; }
 .tree-inline-actions { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
 .add-btn { padding: 3px 0; }
 .add-success { border-color: #57c997; }
@@ -111,6 +111,8 @@
 .tree-setting-row input[type='number'] { max-width: 120px; width: 100%; }
 .tree-segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .tree-segmented-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tree-segmented-four label { min-width: 0; padding: 3px 4px; font-size: 11px; line-height: 1.15; }
+.tree-segmented-four label span { overflow: hidden; text-overflow: ellipsis; }
 .tree-segmented label { display: flex; gap: 6px; align-items: center; border: 1px solid var(--border-main); border-radius: 6px; padding: 4px 6px; font-size: 12px; }
 .tree-setting-dependent.is-disabled { opacity: .45; pointer-events: none; }
 .tree-settings-advanced summary { cursor: pointer; user-select: none; font-weight: 600; }
@@ -190,14 +192,11 @@
 .tree-export-menu { margin-top: 8px; display: grid; gap: 6px; }
 .tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
 .tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }
-.tree-minimap .mm-tree-viewport {
-  fill: rgba(133, 176, 250, 0.12);
-  stroke: rgba(179, 211, 255, 0.95);
-  stroke-width: 1;
-  pointer-events: none;
-}
 
 @media (max-width: 1280px) {
   .tree-segmented-four,
   .tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.tree-debug-label { fill: #ffd88a; font-size: 10px; font-weight: 600; }
+.tree-debug-dropzone { fill: rgba(130, 170, 255, 0.1); stroke: rgba(130, 170, 255, 0.55); stroke-dasharray: 5 3; }

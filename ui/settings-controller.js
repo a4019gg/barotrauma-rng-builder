@@ -11,6 +11,7 @@ import {
   setUiScale
 } from './theme-manager.js';
 import { appendIconLabel } from './icon-component.js';
+import { clearAppSettingsCache, getAppSetting, setAppSetting } from '../state/app-settings.js';
 
 function renderThemeToggle() {
   const state = getThemeState();
@@ -44,6 +45,12 @@ export function initSettingsController() {
   document.getElementById('toggle-grid').onchange = event => setGrid(event.target.checked);
   document.getElementById('toggle-chance-colors').onchange = event => setChanceColorCoding(event.target.checked);
   document.getElementById('chance-input-mode').onchange = event => setChanceInputMode(event.target.value);
+  document.getElementById('auto-chance-global').onchange = event => setAppSetting('autoChanceMode', event.target.value);
+  document.getElementById('clear-cache-btn').onclick = () => {
+    clearAppSettingsCache();
+    localStorage.removeItem('tree.settings.v2');
+    location.reload();
+  };
 
   const state = getThemeState();
   document.getElementById('theme-style-select').value = state.themeStyle;
@@ -52,6 +59,7 @@ export function initSettingsController() {
   document.getElementById('toggle-grid').checked = state.grid;
   document.getElementById('toggle-chance-colors').checked = state.chanceColorCoding;
   document.getElementById('chance-input-mode').value = state.chanceInputMode;
+  document.getElementById('auto-chance-global').value = getAppSetting('autoChanceMode') || 'branch-split';
 
   onLangChange(() => {
     applyLocalization();
