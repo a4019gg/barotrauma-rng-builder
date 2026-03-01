@@ -60,6 +60,55 @@
 .tree-branch-card.branch-failure { fill: #4c2130; stroke: #ef8ea8; }
 .tree-branch-label { fill: #f4f9ff; font-size: 12px; font-weight: 700; }
 
+
+.tree-node.drop-target-success .tree-card {
+  stroke: #8af7bf;
+  filter: drop-shadow(0 0 9px rgba(66, 196, 138, 0.38));
+}
+
+.tree-node.drop-target-failure .tree-card {
+  stroke: #ff9cb5;
+  filter: drop-shadow(0 0 9px rgba(223, 122, 146, 0.4));
+}
+
+.tree-drop-zone {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease, transform .14s ease;
+}
+
+.tree-drop-zone rect {
+  fill: rgba(70, 84, 107, 0.74);
+  stroke-width: 1.6px;
+}
+
+.tree-drop-zone text {
+  fill: #eef6ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tree-drop-success rect { stroke: #4dd59a; }
+.tree-drop-failure rect { stroke: #ef8ea8; }
+
+#tree-svg.is-dragging-tree .tree-drop-zone {
+  opacity: 0.88;
+  pointer-events: all;
+}
+
+.tree-node.drop-target-success .tree-drop-success,
+.tree-node.drop-target-failure .tree-drop-failure {
+  opacity: 1;
+}
+
+.tree-node.drop-target-success .tree-drop-success rect {
+  fill: rgba(47, 121, 92, 0.8);
+}
+
+.tree-node.drop-target-failure .tree-drop-failure rect {
+  fill: rgba(135, 58, 79, 0.82);
+}
+
 .tree-node-fo { color: var(--text-main); font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px; }
 .tree-node-head { display: flex; align-items: center; justify-content: space-between; }
 .tree-head-actions { display:flex; gap:4px; }
@@ -87,7 +136,10 @@
 .tree-field span { min-width: 48px; opacity: 0.85; }
 .tree-field input,
 .tree-field select { width: 100%; min-width: 0; border: 1px solid var(--border-main); background: color-mix(in srgb, var(--bg-main) 85%, #000); color: var(--text-main); border-radius: 5px; padding: 3px 5px; font-size: 11px; }
-.tree-inline-actions { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.tree-inline-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.tree-inline-actions-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.tree-inline-actions-row.success { border-bottom: 1px solid color-mix(in srgb, #57c997 35%, transparent); padding-bottom: 4px; }
+.tree-inline-actions-row.failure { padding-top: 1px; }
 .add-btn { padding: 3px 0; }
 .add-success { border-color: #57c997; }
 .add-failure { border-color: #de7f9c; }
