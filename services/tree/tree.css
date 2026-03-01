@@ -95,16 +95,16 @@
 #tree-inspector { border-left: 1px solid var(--border-main); padding-left: 12px; color: var(--text-main); font-size: 13px; }
 .tree-editor-meta { margin-top: 8px; }
 .tree-inspector-hint { opacity: 0.78; margin: 8px 0 0; }
-.tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 18px; }
 .tree-settings-section h5 { margin: 0; }
-.tree-settings-group { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--border-main) 70%, transparent); }
+.tree-settings-group { display: flex; flex-direction: column; gap: 10px; }
 .tree-settings-card {
-  border: 1px solid color-mix(in srgb, var(--border-main) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-main) 65%, transparent);
   border-radius: 10px;
-  padding: 10px;
-  background: color-mix(in srgb, var(--bg-panel) 82%, #081225 18%);
+  padding: 12px;
+  background: color-mix(in srgb, var(--bg-panel) 90%, #081225 10%);
 }
-.tree-settings-group h6 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .8; }
+.tree-settings-group h6 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; opacity: .95; }
 .tree-setting-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tree-setting-row-stack { flex-direction: column; align-items: stretch; gap: 6px; }
 .tree-setting-row select,
@@ -116,18 +116,14 @@
 .tree-settings-advanced summary { cursor: pointer; user-select: none; font-weight: 600; }
 .tree-settings-grid { display: grid; gap: 8px; }
 .tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.tree-setting-tile {
-  border: 1px solid var(--border-main);
-  border-radius: 8px;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--bg-main) 80%, transparent);
+.tree-setting-switch input { width: 14px; height: 14px; margin: 0; }
+.tree-setting-nested {
+  margin-left: 12px;
+  padding-left: 10px;
+  border-left: 1px solid color-mix(in srgb, var(--border-main) 65%, transparent);
+  display: grid;
+  gap: 10px;
 }
-.tree-setting-tile input { margin: 0; }
 .tree-primary-btn {
   justify-content: center;
   font-weight: 700;
@@ -188,9 +184,8 @@
   background: linear-gradient(135deg, transparent 55%, rgba(198, 220, 255, 0.75) 55%, rgba(198, 220, 255, 0.75) 63%, transparent 63%);
   cursor: nwse-resize;
 }
-.tree-settings-level { border-top: 0; padding-top: 0; }
 .tree-segmented-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.tree-settings-export details > summary { list-style: none; cursor: pointer; width: fit-content; }
+.tree-settings-export details > summary { list-style: none; cursor: pointer; width: 100%; }
 .tree-settings-export details > summary::-webkit-details-marker { display: none; }
 .tree-export-menu { margin-top: 8px; display: grid; gap: 6px; }
 .tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }

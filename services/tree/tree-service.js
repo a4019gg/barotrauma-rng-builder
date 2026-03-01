@@ -107,7 +107,6 @@ export class TreeService {
       autoChanceMode: 'off',
       dragEnabled: true,
       snapToGrid: true,
-      autoLayout: true,
       showGrid: true,
       gridSize: 24,
       showMinimap: true,
@@ -556,10 +555,7 @@ export class TreeService {
         window.d3.select(event.sourceEvent.target.closest('.tree-node')).classed('dragging', false);
         this.svg.classed('is-dragging-tree', false);
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
-        if (hit && this.onMoveNode) {
-          if (this.treeSettings.autoLayout) this.pendingAutoLayoutNodeId = d.data.id;
-          this.onMoveNode(d.data.id, hit.id, hit.branch);
-        }
+        if (hit && this.onMoveNode) this.onMoveNode(d.data.id, hit.id, hit.branch);
         this.dropTarget = null;
         this.draggingId = null;
         delete d.__dragOrigin;
@@ -968,17 +964,13 @@ export class TreeService {
 
     wrapper.innerHTML = `
       <h5>${t('treeSettings')}</h5>
-      <section class="tree-settings-group tree-settings-level tree-settings-card">
-        <h6>${t('uiLevel')}</h6>
+      <section class="tree-settings-group tree-settings-card">
+        <h6>${t('modeSection')}</h6>
         <div class="tree-segmented tree-segmented-two" data-setting="uiLevel">
           <label><input type="radio" name="tree-ui-level" value="basic" ${isBasic ? 'checked' : ''}/> ${t('uiLevelBasic')}</label>
           <label><input type="radio" name="tree-ui-level" value="advanced" ${!isBasic ? 'checked' : ''}/> ${t('uiLevelAdvanced')}</label>
         </div>
-      </section>
-
-      <section class="tree-settings-group tree-settings-card">
-        <h6>${t('treeSettingsEditing')}</h6>
-        <div class="tree-setting-row tree-setting-row-stack">
+        <div class="tree-setting-row tree-setting-row-stack" title="${t('hintDisplayPercent')}">
           <span>${t('displayPercent')}</span>
           <div class="tree-segmented tree-segmented-four" data-setting="displayPercent">
             <label><input type="radio" name="tree-display-percent" value="hidden" ${this.treeSettings.displayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label>
@@ -987,45 +979,54 @@ export class TreeService {
             <label><input type="radio" name="tree-display-percent" value="both" ${this.treeSettings.displayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label>
           </div>
         </div>
-        <div class="tree-settings-grid tree-settings-grid-two">
-          <label class="tree-setting-tile"><input type="checkbox" data-setting="dragEnabled" ${this.treeSettings.dragEnabled ? 'checked' : ''}/><span>${t('enableDragDrop')}</span></label>
-          <label class="tree-setting-tile"><input type="checkbox" data-setting="snapToGrid" ${this.treeSettings.snapToGrid ? 'checked' : ''}/><span>${t('snapToGrid')}</span></label>
-          <label class="tree-setting-tile"><input type="checkbox" data-setting="autoLayout" ${this.treeSettings.autoLayout ? 'checked' : ''}/><span>${t('autoLayout')}</span></label>
-          <label class="tree-setting-tile"><input type="checkbox" data-setting="showGrid" ${this.treeSettings.showGrid ? 'checked' : ''}/><span>${t('showTreeGrid')}</span></label>
-        </div>
+        ${!isBasic ? `<div class="tree-setting-row" title="${t('hintAutoChance')}"><span>${t('autoChanceMode')}</span><select data-setting="autoChanceMode"><option value="off" ${this.treeSettings.autoChanceMode === 'off' ? 'selected' : ''}>${t('autoChanceOff')}</option><option value="root-split" ${this.treeSettings.autoChanceMode === 'root-split' ? 'selected' : ''}>${t('autoChanceRoot')}</option><option value="branch-split" ${this.treeSettings.autoChanceMode === 'branch-split' ? 'selected' : ''}>${t('autoChanceBranch')}</option></select></div>
+        <label class="tree-setting-row"><span>${t('minimapTypeMode')}</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>${t('minimapTypeDots')}</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>${t('minimapTypeColor')}</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>${t('minimapTypeIcon')}</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>${t('minimapTypeIconColor')}</option></select></label>
+        <label class="tree-setting-row"><span>${t('minimapSizePreset')}</span><select data-setting="minimapSizePreset"><option value="small" ${this.treeSettings.minimapSizePreset === 'small' ? 'selected' : ''}>${t('minimapSizeSmall')}</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>${t('minimapSizeMedium')}</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>${t('minimapSizeLarge')}</option><option value="auto" ${this.treeSettings.minimapSizePreset === 'auto' ? 'selected' : ''}>${t('minimapSizeAuto')}</option></select></label>` : ''}
+      </section>
+
+      <section class="tree-settings-group tree-settings-card">
+        <h6>${t('treeSettingsEditing')}</h6>
+        <label class="tree-setting-row tree-setting-switch"><span>${t('enableDragDrop')}</span><input type="checkbox" data-setting="dragEnabled" ${this.treeSettings.dragEnabled ? 'checked' : ''}/></label>
+        <label class="tree-setting-row tree-setting-switch"><span>${t('snapToGrid')}</span><input type="checkbox" data-setting="snapToGrid" ${this.treeSettings.snapToGrid ? 'checked' : ''}/></label>
+        <label class="tree-setting-row tree-setting-switch"><span>${t('showTreeGrid')}</span><input type="checkbox" data-setting="showGrid" ${this.treeSettings.showGrid ? 'checked' : ''}/></label>
         <label class="tree-setting-row tree-setting-dependent" data-depends-on="snapToGrid"><span>${t('gridSize')}</span><input type="number" min="8" max="120" step="2" data-setting="gridSize" value="${this.treeSettings.gridSize}"></label>
-        ${!isBasic ? `<div class="tree-setting-row"><span>${t('autoChanceMode')}</span><select data-setting="autoChanceMode"><option value="off" ${this.treeSettings.autoChanceMode === 'off' ? 'selected' : ''}>${t('autoChanceOff')}</option><option value="root-split" ${this.treeSettings.autoChanceMode === 'root-split' ? 'selected' : ''}>${t('autoChanceRoot')}</option><option value="branch-split" ${this.treeSettings.autoChanceMode === 'branch-split' ? 'selected' : ''}>${t('autoChanceBranch')}</option></select></div>` : ''}
         <button type="button" class="icon-btn tree-primary-btn" data-tree-action="auto-layout"></button>
       </section>
 
       <section class="tree-settings-group tree-settings-card">
-        <h6>${t('showMinimap')}</h6>
-        <label class="tree-setting-row"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
-        ${showMinimapSettings ? `<label class="tree-setting-row"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
-        <label class="tree-setting-row"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
-        ${!isBasic ? `<div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><select data-setting="minimapDisplayPercent"><option value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'selected' : ''}>${t('displayHidden')}</option><option value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'selected' : ''}>${t('displayLinks')}</option><option value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'selected' : ''}>${t('displayNodes')}</option><option value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'selected' : ''}>${t('displayBoth')}</option></select></div>
-        <label class="tree-setting-row"><span>${t('minimapTypeMode')}</span><select data-setting="minimapTypeMode"><option value="dots" ${this.treeSettings.minimapTypeMode === 'dots' ? 'selected' : ''}>${t('minimapTypeDots')}</option><option value="type-color" ${this.treeSettings.minimapTypeMode === 'type-color' ? 'selected' : ''}>${t('minimapTypeColor')}</option><option value="type-icon" ${this.treeSettings.minimapTypeMode === 'type-icon' ? 'selected' : ''}>${t('minimapTypeIcon')}</option><option value="type-icon-color" ${this.treeSettings.minimapTypeMode === 'type-icon-color' ? 'selected' : ''}>${t('minimapTypeIconColor')}</option></select></label>` : ''}
-        <div class="tree-settings-grid tree-settings-grid-two"><label class="tree-setting-row"><span>${t('minimapSizePreset')}</span><select data-setting="minimapSizePreset"><option value="small" ${this.treeSettings.minimapSizePreset === 'small' ? 'selected' : ''}>${t('minimapSizeSmall')}</option><option value="medium" ${this.treeSettings.minimapSizePreset === 'medium' ? 'selected' : ''}>${t('minimapSizeMedium')}</option><option value="large" ${this.treeSettings.minimapSizePreset === 'large' ? 'selected' : ''}>${t('minimapSizeLarge')}</option><option value="auto" ${this.treeSettings.minimapSizePreset === 'auto' ? 'selected' : ''}>${t('minimapSizeAuto')}</option></select></label><label class="tree-setting-row"><span>${t('minimapScale')}</span><input type="number" min="0.5" max="3" step="0.1" data-setting="minimapScale" value="${minimapScale}"></label></div>` : ''}
+        <h6>${t('visualSection')}</h6>
+        <label class="tree-setting-row tree-setting-switch"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
+        ${showMinimapSettings ? `<div class="tree-setting-nested">
+          <label class="tree-setting-row"><span>${t('minimapScale')}</span><input type="number" min="0.5" max="3" step="0.1" data-setting="minimapScale" value="${minimapScale}"></label>
+          <label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
+          <label class="tree-setting-row tree-setting-switch"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
+        </div>` : ''}
+        ${!isBasic ? `<label class="tree-setting-row tree-setting-switch"><span>${t('showBranchNodes')}</span><input type="checkbox" data-setting="showIntermediateNodes" ${this.treeSettings.showIntermediateNodes ? 'checked' : ''}/></label>` : ''}
       </section>
 
       <section class="tree-settings-group tree-settings-export tree-settings-card">
         <h6>${t('export')}</h6>
         <details>
-          <summary class="icon-btn">Export ▼</summary>
+          <summary class="icon-btn tree-primary-btn">${t('exportTree')} ▼</summary>
           <div class="tree-export-menu">
-            <button type="button" class="icon-btn" data-tree-action="download-tree-svg">Export Tree as SVG</button>
-            <button type="button" class="icon-btn" data-tree-action="download-tree-png">Export Tree as PNG</button>
-            <button type="button" class="icon-btn" data-tree-action="download-minimap-svg">Export Minimap as SVG</button>
-            <button type="button" class="icon-btn" data-tree-action="download-minimap-png">Export Minimap as PNG</button>
+            <button type="button" class="icon-btn" data-tree-action="download-tree-svg">${t('exportAsSvg')}</button>
+            <button type="button" class="icon-btn" data-tree-action="download-tree-png">${t('exportAsPng')}</button>
+          </div>
+        </details>
+        <details>
+          <summary class="icon-btn tree-primary-btn">${t('exportMinimap')} ▼</summary>
+          <div class="tree-export-menu">
+            <button type="button" class="icon-btn" data-tree-action="download-minimap-svg">${t('exportAsSvg')}</button>
+            <button type="button" class="icon-btn" data-tree-action="download-minimap-png">${t('exportAsPng')}</button>
           </div>
         </details>
       </section>
 
-      ${!isBasic ? `<details class="tree-settings-group tree-settings-advanced tree-settings-card" ${this.treeSettings.advancedExpanded ? 'open' : ''}><summary>${t('treeSettingsAdvanced')}</summary><label class="tree-setting-row"><span>${t('showBranchNodes')}</span><input type="checkbox" data-setting="showIntermediateNodes" ${this.treeSettings.showIntermediateNodes ? 'checked' : ''}/></label><label class="tree-setting-row"><span>${t('showDebugBounds')}</span><input type="checkbox" data-setting="debugBounds" ${this.treeSettings.debugBounds ? 'checked' : ''}/></label></details>` : ''}
+      ${!isBasic ? `<details class="tree-settings-group tree-settings-advanced tree-settings-card" ${this.treeSettings.advancedExpanded ? 'open' : ''}><summary>${t('debugSection')}</summary><label class="tree-setting-row tree-setting-switch"><span>${t('showDebugBounds')}</span><input type="checkbox" data-setting="debugBounds" ${this.treeSettings.debugBounds ? 'checked' : ''}/></label></details>` : ''}
     `;
 
     const autoBtn = wrapper.querySelector('[data-tree-action="auto-layout"]');
-    autoBtn.append(createIcon('compass'), ` ${t('autoLayout')}`);
+    autoBtn.append(createIcon('compass'), ` ${t('runAutoLayout')}`);
     autoBtn.addEventListener('click', () => this.autoLayout());
 
     wrapper.querySelectorAll('[data-tree-action^="download-"]').forEach(btn => {
@@ -1092,6 +1093,7 @@ export class TreeService {
     if (!source) return;
 
     const clone = source.cloneNode(true);
+    this.inlineSvgStyles(source, clone);
     clone.removeAttribute('style');
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
@@ -1110,12 +1112,22 @@ export class TreeService {
         clone.setAttribute('width', w);
         clone.setAttribute('height', h);
       }
+    } else {
+      const vb = clone.getAttribute('viewBox') || `0 0 ${source.clientWidth || 300} ${source.clientHeight || 200}`;
+      const [, , w, h] = vb.split(' ').map(Number);
+      const exportScale = 2;
+      if (Number.isFinite(w) && Number.isFinite(h)) {
+        clone.setAttribute('width', Math.round(w * exportScale));
+        clone.setAttribute('height', Math.round(h * exportScale));
+      }
     }
 
     const vb = clone.getAttribute('viewBox') || '0 0 300 200';
     const [,,w,h] = vb.split(' ').map(Number);
-    const width = Number.isFinite(w) ? w : 300;
-    const height = Number.isFinite(h) ? h : 200;
+    const explicitWidth = Number(clone.getAttribute('width'));
+    const explicitHeight = Number(clone.getAttribute('height'));
+    const width = Number.isFinite(explicitWidth) && explicitWidth > 0 ? explicitWidth : (Number.isFinite(w) ? w : 300);
+    const height = Number.isFinite(explicitHeight) && explicitHeight > 0 ? explicitHeight : (Number.isFinite(h) ? h : 200);
     clone.setAttribute('width', width);
     clone.setAttribute('height', height);
 
@@ -1152,6 +1164,20 @@ export class TreeService {
     };
     img.onerror = () => URL.revokeObjectURL(url);
     img.src = url;
+  }
+
+  inlineSvgStyles(sourceRoot, cloneRoot) {
+    const sourceEls = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const cloneEls = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+    sourceEls.forEach((sourceEl, idx) => {
+      const cloneEl = cloneEls[idx];
+      if (!cloneEl) return;
+      const computed = window.getComputedStyle(sourceEl);
+      ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'opacity', 'font-size', 'font-family', 'font-weight', 'letter-spacing', 'paint-order'].forEach(prop => {
+        const value = computed.getPropertyValue(prop);
+        if (value) cloneEl.style.setProperty(prop, value);
+      });
+    });
   }
 
   applyAutoChance(children, parentProbability, depth) {
