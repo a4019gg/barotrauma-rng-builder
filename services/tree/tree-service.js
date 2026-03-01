@@ -14,6 +14,8 @@ const NODE_META = {
 const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
 const NODE_SIZE = { width: 320, height: 108 };
 const BRANCH_SIZE = { width: 132, height: 36 };
+const ROOT_SIZE = { width: 230, height: 52 };
+const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
 const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
 const AFFIX_ICON_SIZE = 18;
 const MINIMAP_PRESET_SIZES = {
@@ -242,6 +244,14 @@ export class TreeService {
     if (!this.treeSettings.minimapCustomSize || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.width)) || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.height))) {
       this.treeSettings.minimapCustomSize = { width: 240, height: 150 };
     }
+
+    this.treeSettings.dragEnabled = parseLegacyBoolean(this.treeSettings.dragEnabled, true);
+    this.treeSettings.snapToGrid = parseLegacyBoolean(this.treeSettings.snapToGrid, true);
+    this.treeSettings.showGrid = parseLegacyBoolean(this.treeSettings.showGrid, true);
+    this.treeSettings.showMinimap = parseLegacyBoolean(this.treeSettings.showMinimap, true);
+    this.treeSettings.minimapFocusMode = parseLegacyBoolean(this.treeSettings.minimapFocusMode, false);
+    this.treeSettings.showIntermediateNodes = parseLegacyBoolean(this.treeSettings.showIntermediateNodes, true);
+    this.treeSettings.debugBounds = parseLegacyBoolean(this.treeSettings.debugBounds, false);
 
     this.treeSettings.minimapScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
     this.persistTreeSettings();
@@ -473,7 +483,10 @@ export class TreeService {
       .attr('class', d => {
         const classes = ['tree-node', `node-${d.data.type || 'label'}`];
         if (d.data.nodeRef && this.selectedNodeId === d.data.id) classes.push('selected');
-        if (this.dropTarget?.id === d.data.id) classes.push('drop-target');
+        if (this.dropTarget?.id === d.data.id) {
+          classes.push('drop-target');
+          classes.push(this.dropTarget.branch === 'success' ? 'drop-target-success' : 'drop-target-failure');
+        }
         return classes.join(' ');
       })
       .attr('transform', d => {
@@ -560,7 +573,10 @@ export class TreeService {
 
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         this.dropTarget = hit;
-        this.g.selectAll('.tree-node').classed('drop-target', nd => this.dropTarget?.id === nd.data.id);
+        this.g.selectAll('.tree-node')
+          .classed('drop-target', nd => this.dropTarget?.id === nd.data.id)
+          .classed('drop-target-success', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'success')
+          .classed('drop-target-failure', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'failure');
       })
       .on('end', (event, d) => {
         if (!this.treeSettings.dragEnabled || !d.data.nodeRef || this.draggingId !== d.data.id) return;
@@ -577,26 +593,40 @@ export class TreeService {
     nodes.filter(d => d.data.type !== 'root' && d.data.type !== 'branch').call(drag);
   }
 
-  getNodeHalfWidth(type) {
-    if (type === 'branch') return BRANCH_SIZE.width / 2;
-    if (type === 'root') return 230 / 2;
-    return NODE_SIZE.width / 2;
+  getNodeSize(type) {
+    if (type === 'branch') return BRANCH_SIZE;
+    if (type === 'root') return ROOT_SIZE;
+    return NODE_SIZE;
+  }
+
+  getNodeBoundaryPoint(fromCenter, toCenter, type) {
+    const { width, height } = this.getNodeSize(type);
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+    const dx = toCenter.y - fromCenter.y;
+    const dy = toCenter.x - fromCenter.x;
+    if (dx === 0 && dy === 0) return { x: fromCenter.x, y: fromCenter.y };
+    const scale = 1 / Math.max(Math.abs(dx) / halfWidth, Math.abs(dy) / halfHeight);
+    return {
+      x: fromCenter.x + dy * scale,
+      y: fromCenter.y + dx * scale
+    };
   }
 
   buildLinkPath(link) {
     const s = this.getNodeCoords(link.source);
-    const tNode = this.getNodeCoords(link.target);
-    const sourceShift = this.getNodeHalfWidth(link.source.data.type);
-    const targetShift = this.getNodeHalfWidth(link.target.data.type);
-    const source = { x: s.x, y: s.y + sourceShift };
-    const target = { x: tNode.x, y: tNode.y - targetShift };
+    const t = this.getNodeCoords(link.target);
+    const source = this.getNodeBoundaryPoint(s, t, link.source.data.type);
+    const target = this.getNodeBoundaryPoint(t, s, link.target.data.type);
     return window.d3.linkHorizontal().x(p => p.y).y(p => p.x)({ source, target });
   }
 
   getLinkMidPoint(link) {
     const s = this.getNodeCoords(link.source);
-    const tNode = this.getNodeCoords(link.target);
-    return { x: (s.x + tNode.x) / 2, y: (s.y + tNode.y) / 2 };
+    const t = this.getNodeCoords(link.target);
+    const source = this.getNodeBoundaryPoint(s, t, link.source.data.type);
+    const target = this.getNodeBoundaryPoint(t, s, link.target.data.type);
+    return { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
   }
 
   updateCanvasSize(nodes) {
@@ -611,18 +641,20 @@ export class TreeService {
   }
 
   findDropTarget(clientX, clientY, draggingId) {
-    const elements = [...document.querySelectorAll('.tree-node.node-rng')];
-    const extraHitArea = 26;
-    const hitEl = elements.find(el => {
-      const r = el.getBoundingClientRect();
-      return clientX >= r.left - extraHitArea && clientX <= r.right + extraHitArea && clientY >= r.top - extraHitArea && clientY <= r.bottom + extraHitArea;
+    const zones = [...document.querySelectorAll('.tree-drop-zone')];
+    const hitZone = zones.find(zone => {
+      const r = zone.getBoundingClientRect();
+      return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
     });
+    if (!hitZone) return null;
+
+    const hitEl = hitZone.closest('.tree-node.node-rng');
     if (!hitEl) return null;
+
     const data = window.d3.select(hitEl).datum();
     if (!data?.data?.nodeRef || data.data.id === draggingId) return null;
     if (this.isTreeDescendant(draggingId, data.data.id)) return null;
-    const rect = hitEl.getBoundingClientRect();
-    const branch = clientY < rect.top + rect.height / 2 ? 'success' : 'failure';
+    const branch = hitZone.dataset.branch === 'success' ? 'success' : 'failure';
     return { id: data.data.id, branch };
   }
 
@@ -635,8 +667,8 @@ export class TreeService {
   }
 
   renderRootNode(group, d) {
-    const width = 230;
-    const height = 52;
+    const width = ROOT_SIZE.width;
+    const height = ROOT_SIZE.height;
 
     group.append('rect').attr('class', 'tree-card tree-card-root').attr('x', -width / 2).attr('y', -height / 2).attr('rx', 10).attr('ry', 10).attr('width', width).attr('height', height);
     group.append('text').attr('class', 'tree-root-title').attr('text-anchor', 'middle').attr('dy', '0.35em').text(d.data.name);
@@ -747,6 +779,9 @@ export class TreeService {
     actions.className = 'tree-inline-actions';
     if (node.type === 'rng' && !collapsed) {
       ['success', 'failure'].forEach(branch => {
+        const row = document.createElement('div');
+        row.className = `tree-inline-actions-row ${branch}`;
+        row.title = branch === 'success' ? t('addSuccess') : t('addFailure');
         ADDABLE_TYPES.forEach(type => {
           const btn = document.createElement('button');
           btn.className = `icon-btn add-btn add-${branch}`;
@@ -757,9 +792,32 @@ export class TreeService {
             event.stopPropagation();
             this.onAddChild(node.id, branch, type);
           });
-          actions.appendChild(btn);
+          row.appendChild(btn);
         });
+        actions.appendChild(row);
       });
+
+      const createDropZone = (branch, symbol, y, titleKey) => {
+        const zone = group.append('g')
+          .attr('class', `tree-drop-zone tree-drop-${branch}`)
+          .attr('transform', `translate(0, ${y})`)
+          .attr('data-branch', branch);
+        zone.append('rect')
+          .attr('x', -DROP_ZONE.width / 2)
+          .attr('y', -DROP_ZONE.height / 2)
+          .attr('rx', 9)
+          .attr('ry', 9)
+          .attr('width', DROP_ZONE.width)
+          .attr('height', DROP_ZONE.height);
+        zone.append('text')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '0.35em')
+          .text(symbol);
+        zone.append('title').text(t(titleKey));
+      };
+
+      createDropZone('success', '+', -DROP_ZONE.offsetY, 'dropZoneSuccessHint');
+      createDropZone('failure', '−', DROP_ZONE.offsetY, 'dropZoneFailureHint');
     }
 
     wrapper.append(header, controls);
@@ -984,10 +1042,10 @@ export class TreeService {
         <div class="tree-setting-row tree-setting-row-stack" title="${t('hintDisplayPercent')}">
           <span>${t('displayPercent')}</span>
           <div class="tree-segmented tree-segmented-four" data-setting="displayPercent">
-            <label><input type="radio" name="tree-display-percent" value="hidden" ${this.treeSettings.displayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label>
-            <label><input type="radio" name="tree-display-percent" value="links" ${this.treeSettings.displayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label>
-            <label><input type="radio" name="tree-display-percent" value="nodes" ${this.treeSettings.displayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label>
-            <label><input type="radio" name="tree-display-percent" value="both" ${this.treeSettings.displayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label>
+            <label title="${t('displayHiddenHint')}"><input type="radio" name="tree-display-percent" value="hidden" ${this.treeSettings.displayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label>
+            <label title="${t('displayLinksHint')}"><input type="radio" name="tree-display-percent" value="links" ${this.treeSettings.displayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label>
+            <label title="${t('displayNodesHint')}"><input type="radio" name="tree-display-percent" value="nodes" ${this.treeSettings.displayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label>
+            <label title="${t('displayBothHint')}"><input type="radio" name="tree-display-percent" value="both" ${this.treeSettings.displayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label>
           </div>
         </div>
         <div class="tree-setting-row" title="${t('hintAutoChance')}"><span>${t('autoChanceMode')}</span><select data-setting="autoChanceMode"><option value="off" ${this.treeSettings.autoChanceMode === 'off' ? 'selected' : ''}>${t('autoChanceOff')}</option><option value="root-split" ${this.treeSettings.autoChanceMode === 'root-split' ? 'selected' : ''}>${t('autoChanceRoot')}</option><option value="branch-split" ${this.treeSettings.autoChanceMode === 'branch-split' ? 'selected' : ''}>${t('autoChanceBranch')}</option></select></div>
@@ -1008,7 +1066,7 @@ export class TreeService {
         <h6>${t('visualSection')}</h6>
         <label class="tree-setting-row tree-setting-switch"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
         ${showMinimapSettings ? `<div class="tree-setting-nested">
-          <div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><div class="tree-segmented tree-segmented-four" data-setting="minimapDisplayPercent"><label><input type="radio" name="minimap-display-percent" value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label><label><input type="radio" name="minimap-display-percent" value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label><label><input type="radio" name="minimap-display-percent" value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label><label><input type="radio" name="minimap-display-percent" value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label></div></div><label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
+          <div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><div class="tree-segmented tree-segmented-four" data-setting="minimapDisplayPercent"><label title="${t('displayHiddenHint')}"><input type="radio" name="minimap-display-percent" value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label><label title="${t('displayLinksHint')}"><input type="radio" name="minimap-display-percent" value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label><label title="${t('displayNodesHint')}"><input type="radio" name="minimap-display-percent" value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label><label title="${t('displayBothHint')}"><input type="radio" name="minimap-display-percent" value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label></div></div><label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
           <label class="tree-setting-row tree-setting-switch"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
         </div>` : ''}
         ${!isBasic ? `<label class="tree-setting-row tree-setting-switch"><span>${t('showBranchNodes')}</span><input type="checkbox" data-setting="showIntermediateNodes" ${this.treeSettings.showIntermediateNodes ? 'checked' : ''}/></label>` : ''}
