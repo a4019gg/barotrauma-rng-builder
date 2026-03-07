@@ -78,7 +78,6 @@ function initButtonIcons() {
     ['button[data-action="addNode"][data-type="spawn"]', 'box', 'addItem'],
     ['button[data-action="addNode"][data-type="creature"]', 'hashtag', 'addCreature'],
     ['button[data-action="addNode"][data-type="affliction"]', 'alert-circle', 'addAffliction'],
-    ['button[data-action="clearAll"]', 'trash', 'clearEvent'],
     ['button[data-action="generateXML"]', 'code', 'generateXML'],
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
@@ -86,8 +85,7 @@ function initButtonIcons() {
     ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation'],
     ['button[data-action="validateTree"]', 'checkmark-square', 'validateTree'],
     ['button[data-action="toggleHeatmap"]', 'sun', 'toggleHeatmap'],
-    ['button[data-action="searchNodes"]', 'search', 'searchNodes'],
-    ['button[data-action="quickAdd"]', 'plus-square', 'quickAdd']
+    ['button[data-action="searchNodes"]', 'search', 'searchNodes']
   ];
 
   iconMap.forEach(([selector, iconName, l10nKey]) => {
