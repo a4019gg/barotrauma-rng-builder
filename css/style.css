@@ -308,3 +308,33 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+button[data-action="toggleHeatmap"].active {
+  border-color: #7fc894;
+  background: color-mix(in srgb, #7fc894 25%, var(--bg-panel));
+}
+
+.node-context-menu {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-main);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+
+.node-context-menu button {
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.node-context-menu button:hover {
+  background: color-mix(in srgb, var(--bg-panel) 65%, #7ab8ff);
+}

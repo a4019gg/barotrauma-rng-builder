@@ -10,12 +10,8 @@ const DATA_FILES = {
 };
 
 const _cache = {
-  loaded: false,
-  data: {
-    items: [],
-    creatures: [],
-    afflictions: []
-  }
+  loaded: { items: false, creatures: false, afflictions: false },
+  data: { items: [], creatures: [], afflictions: [] }
 };
 
 /* =========================
@@ -23,29 +19,23 @@ const _cache = {
    ========================= */
 
 export async function load() {
-  if (_cache.loaded) return;
+  await Promise.all(Object.keys(DATA_FILES).map(type => loadType(type)));
+}
 
-  const entries = await Promise.all(
-    Object.entries(DATA_FILES).map(async ([type, path]) => {
-      const response = await fetch(path);
-      if (!response.ok) {
-        throw new Error(`Failed to load ${path}`);
-      }
+export async function loadItems() { return loadType('items'); }
+export async function loadCreatures() { return loadType('creatures'); }
+export async function loadAfflictions() { return loadType('afflictions'); }
 
-      const json = await response.json();
-      if (!Array.isArray(json)) {
-        throw new Error(`Invalid format in ${path} (expected array)`);
-      }
-
-      return [type, json.filter(isValidEntry).map(cloneEntry)];
-    })
-  );
-
-  for (const [type, list] of entries) {
-    _cache.data[type] = list;
-  }
-
-  _cache.loaded = true;
+async function loadType(type) {
+  ensureType(type);
+  if (_cache.loaded[type]) return;
+  const path = DATA_FILES[type];
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Failed to load ${path}`);
+  const json = await response.json();
+  if (!Array.isArray(json)) throw new Error(`Invalid format in ${path} (expected array)`);
+  _cache.data[type] = json.filter(isValidEntry).map(cloneEntry);
+  _cache.loaded[type] = true;
 }
 
 /* =========================
@@ -53,14 +43,14 @@ export async function load() {
    ========================= */
 
 export function getAll(type) {
-  ensureLoaded();
   ensureType(type);
+  ensureLoaded(type);
   return _cache.data[type].map(cloneEntry);
 }
 
 export function getById(type, id) {
-  ensureLoaded();
   ensureType(type);
+  ensureLoaded(type);
   if (!id) return null;
   const key = String(id).toLowerCase();
   const match = _cache.data[type].find(entry => entry.id?.toLowerCase() === key);
@@ -68,8 +58,8 @@ export function getById(type, id) {
 }
 
 export function search(type, query) {
-  ensureLoaded();
   ensureType(type);
+  ensureLoaded(type);
 
   const q = String(query || "").trim().toLowerCase();
   if (!q) return getAll(type);
@@ -118,10 +108,8 @@ export function sort(list, mode) {
    INTERNAL HELPERS
    ========================= */
 
-function ensureLoaded() {
-  if (!_cache.loaded) {
-    throw new Error("Database not loaded. Call load() first.");
-  }
+function ensureLoaded(type) {
+  if (type && !_cache.loaded[type]) throw new Error(`Database type not loaded: ${type}`);
 }
 
 function ensureType(type) {

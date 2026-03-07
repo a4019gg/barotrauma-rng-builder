@@ -3,6 +3,10 @@ import { createIcon } from '../../ui/icon-component.js';
 import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
 import { formatChanceForInput } from '../../ui/chance-utils.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../../state/app-settings.js';
+import { DEFAULT_TREE_SETTINGS, loadTreeSettings, persistTreeSettings } from './tree-settings.js';
+import { applyTreeLayout } from './tree-layout.js';
+import { chanceHeatClass } from './tree-renderer.js';
+import { rafBatch } from './tree-drag.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', label: 'RNG' },
@@ -111,29 +115,9 @@ export class TreeService {
     this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
     this.afflictionMetaById = new Map();
-    this.treeSettings = {
-      uiLevel: 'basic',
-      displayPercent: 'links',
-      autoChanceMode: 'branch-split',
-      dragEnabled: true,
-      snapToGrid: true,
-      showGrid: true,
-      gridSize: 24,
-      showMinimap: true,
-      minimapDisplayPercent: 'links',
-      minimapColorMode: 'success-failure',
-      minimapMode: 'standard',
-      minimapFocusMode: false,
-      minimapTypeMode: 'dots',
-      minimapPosition: { x: 18, y: 18 },
-      minimapSizePreset: 'medium',
-      minimapCustomSize: { width: 240, height: 150 },
-      minimapScale: 1,
-      smoothPaths: true,
-      advancedExpanded: false,
-      showIntermediateNodes: true,
-      debugBounds: false
-    };
+    this.treeSettings = { ...DEFAULT_TREE_SETTINGS };
+    this.queuedRender = rafBatch((model, opts) => this.render(model, opts));
+    this.searchHighlightIds = new Set();
   }
 
   init() {
@@ -226,15 +210,11 @@ export class TreeService {
   }
 
   persistTreeSettings() {
-    localStorage.setItem('tree.settings.v2', JSON.stringify(this.treeSettings));
+    persistTreeSettings(this.treeSettings);
   }
 
   loadSettings() {
-    const raw = localStorage.getItem('tree.settings.v2');
-    const parsed = parseJSONSafe(raw, {});
-    if (parsed && typeof parsed === 'object') {
-      this.treeSettings = { ...this.treeSettings, ...parsed };
-    }
+    this.treeSettings = loadTreeSettings(this.treeSettings);
 
     const globalAutoChance = getAppSetting('autoChanceMode');
     this.treeSettings.autoChanceMode = globalAutoChance || this.treeSettings.autoChanceMode;
@@ -416,6 +396,24 @@ export class TreeService {
     this.render(this.model || []);
   }
 
+
+  renderQueued(model, options = {}) {
+    this.queuedRender(model, options);
+  }
+
+  setSearchHighlights(nodeIds = []) {
+    this.searchHighlightIds = new Set(nodeIds);
+    this.renderQueued(this.model || []);
+  }
+
+  setHeatmapEnabled(enabled) {
+    this.setTreeSetting('showHeatmap', !!enabled);
+  }
+
+  getSelectedNodeId() {
+    return this.selectedNodeId;
+  }
+
   autoLayoutSubtree(nodeId) {
     this.pendingAutoLayoutNodeId = nodeId;
     this.render(this.model || []);
@@ -460,7 +458,7 @@ export class TreeService {
     return { x: treeNode.x, y: treeNode.y };
   }
 
-  render(model) {
+  render(model, options = {}) {
     this.model = model;
     if (!this.svg) {
       this.loadSettings();
@@ -490,7 +488,7 @@ export class TreeService {
       children: rootChildren
     });
 
-    window.d3.tree().nodeSize([190, 430])(root);
+    applyTreeLayout(root, [190, 430]);
 
     const links = root.links();
     const visibleNodes = root.descendants();
@@ -521,12 +519,16 @@ export class TreeService {
 
     const activeDropTarget = this.dropTarget || this.dropHighlightTarget;
 
+    const heatmapEnabled = !!this.treeSettings.showHeatmap;
     const nodes = this.g.selectAll('.tree-node')
       .data(visibleNodes)
       .join('g')
       .attr('class', d => {
         const classes = ['tree-node', `node-${d.data.type || 'label'}`];
         if (d.data.nodeRef && this.selectedNodeId === d.data.id) classes.push('selected');
+        if (this.searchHighlightIds.has(d.data.id)) classes.push('search-hit');
+        const heatClass = chanceHeatClass(d.data.probability, heatmapEnabled);
+        if (heatClass) classes.push(heatClass);
         if (activeDropTarget?.id === d.data.id) {
           classes.push('drop-target');
           classes.push(activeDropTarget.branch === 'success' ? 'drop-target-success' : 'drop-target-failure');

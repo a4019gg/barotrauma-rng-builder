@@ -119,6 +119,11 @@ const DICTS = {
     dropZoneFailureHint: 'Drop here to insert into Failure branch',
     confirmRemoveEvent: 'Delete this event?',
     smoothTreePaths: 'Smooth links',
+    runSimulation: 'Run Simulation',
+    validateTree: 'Validate Tree',
+    toggleHeatmap: 'Heatmap',
+    searchNodes: 'Search Nodes',
+    quickAdd: 'Quick Add',
   },
   ru: {
     treeView: 'Древо',
@@ -238,6 +243,11 @@ const DICTS = {
     dropZoneFailureHint: 'Отпустите сюда, чтобы вставить в ветку Failure',
     confirmRemoveEvent: 'Удалить это событие?',
     smoothTreePaths: 'Плавные линии связей',
+    runSimulation: 'Симуляция',
+    validateTree: 'Проверить дерево',
+    toggleHeatmap: 'Тепловая карта',
+    searchNodes: 'Поиск нод',
+    quickAdd: 'Быстро добавить',
   }
 };
 
