@@ -250,6 +250,18 @@
 .tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
 .tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }
 
+.tree-minimap .mm-bg {
+  fill: rgba(64, 90, 132, 0.08);
+  stroke: rgba(144, 174, 222, 0.18);
+}
+
+.tree-minimap .mm-viewport {
+  fill: rgba(105, 153, 238, 0.12);
+  stroke: rgba(180, 210, 255, 0.72);
+  stroke-width: 1;
+  rx: 4;
+}
+
 @media (max-width: 1280px) {
   .tree-segmented-four,
   .tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -182,6 +182,22 @@ button.danger { background: #723636; }
 .event-tab-close { font-weight: 700; line-height: 1; }
 .event-tab-add { width: 34px; justify-content: center; }
 
+
+.event-tab-close.pending {
+  color: #ffd7df;
+  background: #6c2a3d;
+  border-radius: 5px;
+  padding: 0 4px;
+}
+
+.event-tab-edit-input {
+  max-width: 170px;
+  border: 1px solid #89b7ff;
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: color-mix(in srgb, var(--bg-main) 86%, #000);
+}
+
 .node-root {
   border: 1px solid var(--border-main);
   border-radius: var(--ui-radius-lg);

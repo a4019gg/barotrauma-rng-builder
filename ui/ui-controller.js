@@ -10,6 +10,10 @@ import { initSettingsController } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
 import { onThemeChange } from './theme-manager.js';
 
+let pendingDeleteEventIndex = null;
+let pendingDeleteResetTimer = null;
+const EVENT_DELETE_CONFIRM_TIMEOUT_MS = 5000;
+
 const treeService = new TreeService({
   svgSelector: '#tree-svg',
   inspectorSelector: '#tree-inspector',
@@ -49,8 +53,66 @@ function initButtonIcons() {
   });
 }
 
+
+function clearPendingEventDelete() {
+  pendingDeleteEventIndex = null;
+  if (pendingDeleteResetTimer) {
+    clearTimeout(pendingDeleteResetTimer);
+    pendingDeleteResetTimer = null;
+  }
+}
+
+function schedulePendingEventDeleteReset() {
+  if (pendingDeleteResetTimer) clearTimeout(pendingDeleteResetTimer);
+  pendingDeleteResetTimer = setTimeout(() => {
+    pendingDeleteEventIndex = null;
+    pendingDeleteResetTimer = null;
+    renderEvents();
+  }, EVENT_DELETE_CONFIRM_TIMEOUT_MS);
+}
+
+function startEventRename(titleEl) {
+  const parentTab = titleEl.closest('.event-tab');
+  if (!parentTab) return;
+  const index = Number(parentTab.dataset.index);
+  if (!Number.isInteger(index)) return;
+
+  const state = editorStore.getState();
+  const currentTitle = state.events[index]?.id || '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'event-tab-edit-input';
+  input.value = currentTitle;
+  input.setAttribute('aria-label', t('eventId'));
+
+  const commit = () => {
+    const nextValue = input.value.trim() || `event_${index + 1}`;
+    editorStore.updateEventId(index, nextValue);
+  };
+
+  const cancel = () => renderEvents();
+
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commit();
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancel();
+    }
+  });
+
+  input.addEventListener('blur', commit, { once: true });
+
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
 function renderEvents() {
   const state = editorStore.getState();
+  if (pendingDeleteEventIndex != null && pendingDeleteEventIndex >= state.events.length) clearPendingEventDelete();
   const list = document.getElementById('events-tabs');
   list.innerHTML = '';
 
@@ -60,7 +122,8 @@ function renderEvents() {
     tab.className = 'event-tab';
     tab.dataset.action = 'selectEvent';
     tab.dataset.index = String(index);
-    tab.innerHTML = `<span class="event-tab-title">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close" data-action="removeEvent" data-index="${index}">×</span>` : ''}`;
+    const pendingDelete = pendingDeleteEventIndex === index;
+    tab.innerHTML = `<span class="event-tab-title" data-action="renameEvent" data-index="${index}" title="Double click to rename">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
     if (index === state.currentEventIndex) tab.classList.add('active');
     list.appendChild(tab);
   });
@@ -124,8 +187,21 @@ function handleClick(event) {
   const action = actionEl.dataset.action;
   const id = Number(actionEl.dataset.id);
 
+  if (action === 'renameEvent') return;
+
   if (action === 'addEvent') editorStore.addEvent();
-  if (action === 'removeEvent') editorStore.removeEvent(Number(actionEl.dataset.index));
+  if (action === 'removeEvent') {
+    const index = Number(actionEl.dataset.index);
+    if (pendingDeleteEventIndex !== index) {
+      pendingDeleteEventIndex = index;
+      schedulePendingEventDeleteReset();
+      renderEvents();
+      return;
+    }
+    clearPendingEventDelete();
+    editorStore.removeEvent(index);
+    return;
+  }
   if (action === 'selectEvent') editorStore.setCurrentEvent(Number(actionEl.dataset.index));
   if (action === 'addNode') editorStore.addRootNode(actionEl.dataset.type);
   if (action === 'addChildNode') editorStore.addChildNode(Number(actionEl.dataset.parentId), actionEl.dataset.branch, actionEl.dataset.type);
@@ -183,6 +259,15 @@ function handleChange(event) {
   }
 }
 
+
+function handleDblClick(event) {
+  const title = event.target.closest('.event-tab-title[data-action="renameEvent"]');
+  if (!title) return;
+  event.preventDefault();
+  event.stopPropagation();
+  startEventRename(title);
+}
+
 function handleInput(event) {
   if (event.target.id === 'event-id') {
     editorStore.updateCurrentEventId(event.target.value);
@@ -193,6 +278,7 @@ export function initEditorUI() {
   document.addEventListener('click', handleClick);
   document.addEventListener('change', handleChange);
   document.addEventListener('input', handleInput);
+  document.addEventListener('dblclick', handleDblClick);
 
   initSettingsController();
   initButtonIcons();

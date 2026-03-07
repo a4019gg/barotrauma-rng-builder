@@ -18,6 +18,8 @@ const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
 const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
+const DROP_HIGHLIGHT_TIMEOUT_MIN_MS = 3000;
+const DROP_HIGHLIGHT_TIMEOUT_MAX_MS = 7000;
 const AFFIX_ICON_SIZE = 18;
 const MINIMAP_PRESET_SIZES = {
   small: { width: 180, height: 120 },
@@ -95,6 +97,7 @@ export class TreeService {
     this.draggingId = null;
     this.draggingTreeIds = null;
     this.dropTarget = null;
+    this.dropHighlightTarget = null;
     this.minimapEl = null;
     this.minimapContainerEl = null;
     this.minimapHeaderEl = null;
@@ -103,6 +106,7 @@ export class TreeService {
     this.themeUnsubscribe = null;
     this.appSettingsUnsubscribe = null;
     this.dragFrame = null;
+    this.dropHighlightTimer = null;
     this.pendingAutoLayoutNodeId = null;
     this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
@@ -125,6 +129,7 @@ export class TreeService {
       minimapSizePreset: 'medium',
       minimapCustomSize: { width: 240, height: 150 },
       minimapScale: 1,
+      smoothPaths: true,
       advancedExpanded: false,
       showIntermediateNodes: true,
       debugBounds: false
@@ -208,9 +213,13 @@ export class TreeService {
   }
 
   setTreeSetting(key, value) {
+    const prevValue = this.treeSettings[key];
     this.treeSettings[key] = value;
     if (key === 'autoChanceMode') {
       setAppSetting('autoChanceMode', value);
+    }
+    if (key === 'showIntermediateNodes' && prevValue !== value) {
+      this.manualPositions.clear();
     }
     this.persistTreeSettings();
     this.render(this.model || []);
@@ -253,6 +262,7 @@ export class TreeService {
     this.treeSettings.showMinimap = parseLegacyBoolean(this.treeSettings.showMinimap, true);
     this.treeSettings.minimapFocusMode = parseLegacyBoolean(this.treeSettings.minimapFocusMode, false);
     this.treeSettings.showIntermediateNodes = parseLegacyBoolean(this.treeSettings.showIntermediateNodes, true);
+    this.treeSettings.smoothPaths = parseLegacyBoolean(this.treeSettings.smoothPaths, true);
     this.treeSettings.debugBounds = parseLegacyBoolean(this.treeSettings.debugBounds, false);
 
     this.treeSettings.minimapScale = Math.max(MINIMAP_SCALE_LIMITS.min, Math.min(MINIMAP_SCALE_LIMITS.max, Number(this.treeSettings.minimapScale) || 1));
@@ -367,6 +377,31 @@ export class TreeService {
     this.minimapEl.style.left = `${clamped.x}px`;
     this.minimapEl.style.top = `${clamped.y}px`;
     this.treeSettings.minimapPosition = clamped;
+  }
+
+
+  setDropHighlight(target) {
+    this.dropHighlightTarget = target ? { ...target } : null;
+    if (this.dropHighlightTimer) clearTimeout(this.dropHighlightTimer);
+    if (!target) {
+      this.render(this.model || []);
+      return;
+    }
+    const delay = Math.floor(DROP_HIGHLIGHT_TIMEOUT_MIN_MS + Math.random() * (DROP_HIGHLIGHT_TIMEOUT_MAX_MS - DROP_HIGHLIGHT_TIMEOUT_MIN_MS));
+    this.dropHighlightTimer = setTimeout(() => {
+      this.dropHighlightTarget = null;
+      this.dropHighlightTimer = null;
+      this.render(this.model || []);
+    }, delay);
+    this.render(this.model || []);
+  }
+
+  clearDropHighlight() {
+    if (this.dropHighlightTimer) {
+      clearTimeout(this.dropHighlightTimer);
+      this.dropHighlightTimer = null;
+    }
+    this.dropHighlightTarget = null;
   }
 
   toggleCollapse(nodeId) {
@@ -484,15 +519,17 @@ export class TreeService {
       labels.raise();
     }
 
+    const activeDropTarget = this.dropTarget || this.dropHighlightTarget;
+
     const nodes = this.g.selectAll('.tree-node')
       .data(visibleNodes)
       .join('g')
       .attr('class', d => {
         const classes = ['tree-node', `node-${d.data.type || 'label'}`];
         if (d.data.nodeRef && this.selectedNodeId === d.data.id) classes.push('selected');
-        if (this.dropTarget?.id === d.data.id) {
+        if (activeDropTarget?.id === d.data.id) {
           classes.push('drop-target');
-          classes.push(this.dropTarget.branch === 'success' ? 'drop-target-success' : 'drop-target-failure');
+          classes.push(activeDropTarget.branch === 'success' ? 'drop-target-success' : 'drop-target-failure');
         }
         return classes.join(' ');
       })
@@ -547,6 +584,7 @@ export class TreeService {
         const sourceNode = event.sourceEvent?.target;
         if (sourceNode?.closest('input, button, select, option, textarea, datalist, label')) return;
         this.draggingId = d.data.id;
+        this.clearDropHighlight();
         this.draggingTreeIds = new Set(d.descendants().map(desc => desc.data.id));
         d.__dragOrigin = { x: event.x, y: event.y };
         d.__dragBasePositions = new Map(d.descendants().map(desc => {
@@ -595,6 +633,8 @@ export class TreeService {
         const hit = this.findDropTarget(event.sourceEvent.clientX, event.sourceEvent.clientY, d.data.id);
         if (hit && this.onMoveNode) this.onMoveNode(d.data.id, hit.id, hit.branch);
         this.dropTarget = null;
+        if (hit) this.setDropHighlight(hit);
+        else this.clearDropHighlight();
         this.draggingId = null;
         this.draggingTreeIds = null;
         delete d.__dragOrigin;
@@ -629,13 +669,16 @@ export class TreeService {
     };
   }
 
-  buildLinkPath(link) {
+  buildLinkPath(link, smooth = this.treeSettings.smoothPaths) {
     const s = this.getNodeCoords(link.source);
     const t = this.getNodeCoords(link.target);
     const source = this.getNodeBoundaryPoint(s, t, link.source.data.type);
     const target = this.getNodeBoundaryPoint(t, s, link.target.data.type);
     const midY = source.y + (target.y - source.y) * 0.5;
-    return `M${source.y},${source.x}L${midY},${source.x}L${midY},${target.x}L${target.y},${target.x}`;
+    if (!smooth) return `M${source.y},${source.x}L${midY},${source.x}L${midY},${target.x}L${target.y},${target.x}`;
+    const c1y = source.y + (target.y - source.y) * 0.38;
+    const c2y = source.y + (target.y - source.y) * 0.62;
+    return `M${source.y},${source.x}C${c1y},${source.x} ${c2y},${target.x} ${target.y},${target.x}`;
   }
 
   getLinkMidPoint(link) {
@@ -643,7 +686,18 @@ export class TreeService {
     const t = this.getNodeCoords(link.target);
     const source = this.getNodeBoundaryPoint(s, t, link.source.data.type);
     const target = this.getNodeBoundaryPoint(t, s, link.target.data.type);
-    return { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
+    if (!this.treeSettings.smoothPaths) {
+      return { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
+    }
+    const p0 = { x: source.x, y: source.y };
+    const p1 = { x: source.x, y: source.y + (target.y - source.y) * 0.38 };
+    const p2 = { x: target.x, y: source.y + (target.y - source.y) * 0.62 };
+    const p3 = { x: target.x, y: target.y };
+    const tMid = 0.5;
+    const mt = 1 - tMid;
+    const x = mt ** 3 * p0.x + 3 * mt ** 2 * tMid * p1.x + 3 * mt * tMid ** 2 * p2.x + tMid ** 3 * p3.x;
+    const y = mt ** 3 * p0.y + 3 * mt ** 2 * tMid * p1.y + 3 * mt * tMid ** 2 * p2.y + tMid ** 3 * p3.y;
+    return { x, y };
   }
 
   updateCanvasSize(nodes) {
@@ -1082,6 +1136,7 @@ export class TreeService {
       <section class="tree-settings-group tree-settings-card">
         <h6>${t('visualSection')}</h6>
         <label class="tree-setting-row tree-setting-switch"><span>${t('showMinimap')}</span><input type="checkbox" data-setting="showMinimap" ${this.treeSettings.showMinimap ? 'checked' : ''}/></label>
+        <label class="tree-setting-row tree-setting-switch"><span>${t('smoothTreePaths')}</span><input type="checkbox" data-setting="smoothPaths" ${this.treeSettings.smoothPaths ? 'checked' : ''}/></label>
         ${showMinimapSettings ? `<div class="tree-setting-nested">
           <div class="tree-setting-row tree-setting-row-stack"><span>${t('displayPercent')}</span><div class="tree-segmented tree-segmented-four" data-setting="minimapDisplayPercent"><label title="${t('displayHiddenHint')}"><input type="radio" name="minimap-display-percent" value="hidden" ${this.treeSettings.minimapDisplayPercent === 'hidden' ? 'checked' : ''}/> ${t('displayHidden')}</label><label title="${t('displayLinksHint')}"><input type="radio" name="minimap-display-percent" value="links" ${this.treeSettings.minimapDisplayPercent === 'links' ? 'checked' : ''}/> ${t('displayLinks')}</label><label title="${t('displayNodesHint')}"><input type="radio" name="minimap-display-percent" value="nodes" ${this.treeSettings.minimapDisplayPercent === 'nodes' ? 'checked' : ''}/> ${t('displayNodes')}</label><label title="${t('displayBothHint')}"><input type="radio" name="minimap-display-percent" value="both" ${this.treeSettings.minimapDisplayPercent === 'both' ? 'checked' : ''}/> ${t('displayBoth')}</label></div></div><label class="tree-setting-row" title="${t('hintPathColoring')}"><span>${t('minimapPathColoring')}</span><select data-setting="minimapColorMode"><option value="none">${t('displayHidden')}</option><option value="success-failure" ${this.treeSettings.minimapColorMode === 'success-failure' ? 'selected' : ''}>${t('minimapColorSuccessFailure')}</option><option value="probability" ${this.treeSettings.minimapColorMode === 'probability' ? 'selected' : ''}>${t('minimapColorProbability')}</option></select></label>
           <label class="tree-setting-row tree-setting-switch"><span>${t('minimapFocusMode')}</span><input type="checkbox" data-setting="minimapFocusMode" ${this.treeSettings.minimapFocusMode ? 'checked' : ''}/></label>
@@ -1365,7 +1420,7 @@ export class TreeService {
     };
 
     const linksSvg = activeLinks.map(link => {
-      const s = this.getNodeCoords(link.source);
+      const sNode = this.getNodeCoords(link.source);
       const tNode = this.getNodeCoords(link.target);
       const faded = selectedSet.size && !selectedSet.has(link.source.data.id) && !selectedSet.has(link.target.data.id);
       let stroke = '#6f86ad';
@@ -1375,10 +1430,17 @@ export class TreeService {
       } else if (this.treeSettings.minimapColorMode === 'probability') {
         stroke = probColor(link.target.data.probability);
       }
+      const sx = scaleX(sNode.y);
+      const sy = scaleY(sNode.x);
+      const tx = scaleX(tNode.y);
+      const ty = scaleY(tNode.x);
+      const path = this.treeSettings.smoothPaths
+        ? `M${sx},${sy} C${sx + (tx - sx) * 0.38},${sy} ${sx + (tx - sx) * 0.62},${ty} ${tx},${ty}`
+        : `M${sx},${sy} L${sx + (tx - sx) * 0.5},${sy} L${sx + (tx - sx) * 0.5},${ty} L${tx},${ty}`;
       const label = (this.treeSettings.minimapDisplayPercent === 'links' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(link.target.data.probability)
-        ? `<text class="mm-percent" x="${(scaleX(s.y)+scaleX(tNode.y))/2}" y="${(scaleY(s.x)+scaleY(tNode.x))/2 - 2}">${Math.round(link.target.data.probability * 100)}%</text>`
+        ? `<text class="mm-percent" x="${(sx + tx) / 2}" y="${(sy + ty) / 2 - 2}">${Math.round(link.target.data.probability * 100)}%</text>`
         : '';
-      return `<line style="stroke:${stroke};opacity:${faded ? 0.18 : 0.9}" x1="${scaleX(s.y)}" y1="${scaleY(s.x)}" x2="${scaleX(tNode.y)}" y2="${scaleY(tNode.x)}" />${label}`;
+      return `<path d="${path}" style="fill:none;stroke:${stroke};stroke-width:1.4;opacity:${faded ? 0.18 : 0.9}" />${label}`;
     }).join('');
 
     const icons = { root: '◆', rng: '●', spawn: '■', creature: '▲', affliction: '✦' };
@@ -1388,19 +1450,49 @@ export class TreeService {
       const color = this.treeSettings.minimapTypeMode === 'dots' ? '#9dc1ff' : typeColor(d.data.type);
       const iconOnly = this.treeSettings.minimapTypeMode === 'type-icon' || this.treeSettings.minimapTypeMode === 'type-icon-color';
       const fill = this.treeSettings.minimapTypeMode === 'type-icon' ? '#cfe1ff' : color;
+      const radius = d.data.id === this.selectedNodeId ? 4.4 : 3.1;
       const label = (this.treeSettings.minimapDisplayPercent === 'nodes' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(d.data.probability)
         ? `<text class="mm-percent" x="${scaleX(p.y) + 4}" y="${scaleY(p.x) - 4}">${Math.round(d.data.probability * 100)}%</text>`
         : '';
       if (iconOnly) {
         return `<text data-node-id="${d.data.id}" class="mm-node-icon" x="${scaleX(p.y)}" y="${scaleY(p.x)}" style="fill:${fill};opacity:${faded ? 0.25 : 1}">${icons[d.data.type] || '•'}</text>${label}`;
       }
-      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="2.8" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
+      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="${radius}" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
     }).join('');
+
+    const zoomTransform = this.svg?.node() ? window.d3.zoomTransform(this.svg.node()) : window.d3.zoomIdentity;
+    const gTranslateX = 90;
+    const gTranslateY = 80;
+    const viewportWorld = {
+      minX: (0 - zoomTransform.x) / zoomTransform.k - gTranslateX,
+      maxX: ((this.svg?.node()?.clientWidth || 0) - zoomTransform.x) / zoomTransform.k - gTranslateX,
+      minY: (0 - zoomTransform.y) / zoomTransform.k - gTranslateY,
+      maxY: ((this.svg?.node()?.clientHeight || 0) - zoomTransform.y) / zoomTransform.k - gTranslateY
+    };
+    const viewportRect = `<rect class="mm-viewport" x="${scaleX(viewportWorld.minX)}" y="${scaleY(viewportWorld.minY)}" width="${Math.max(6, scaleX(viewportWorld.maxX) - scaleX(viewportWorld.minX))}" height="${Math.max(6, scaleY(viewportWorld.maxY) - scaleY(viewportWorld.minY))}" />`;
 
     const cx = mapWidth / 2;
     const cy = mapHeight / 2;
-    const content = `${linksSvg}${nodesSvg}`;
+    const content = `<rect class="mm-bg" x="0" y="0" width="${mapWidth}" height="${mapHeight}"/>${linksSvg}${nodesSvg}${viewportRect}`;
     svg.innerHTML = `<g transform="translate(${cx} ${cy}) scale(${effectiveScale}) translate(${-cx} ${-cy})">${content}</g>`;
+
+    svg.onclick = event => {
+      const target = event.target;
+      if (target && target.getAttribute('data-node-id')) return;
+      const rect = svg.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const worldY = ((x - pad) / Math.max(1, mapWidth - pad * 2)) * Math.max(1, viewport.maxX - viewport.minX) + viewport.minX;
+      const worldX = ((y - pad) / Math.max(1, mapHeight - pad * 2)) * Math.max(1, viewport.maxY - viewport.minY) + viewport.minY;
+      const svgEl = this.svg?.node();
+      if (!svgEl || !this.zoom) return;
+      const w = svgEl.clientWidth || 900;
+      const h = svgEl.clientHeight || 600;
+      const current = window.d3.zoomTransform(svgEl);
+      const tx = w / 2 - (worldY + 90) * current.k;
+      const ty = h / 2 - (worldX + 80) * current.k;
+      this.svg.transition().duration(220).call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(current.k));
+    };
 
     svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
       nodeHit.addEventListener('click', () => {

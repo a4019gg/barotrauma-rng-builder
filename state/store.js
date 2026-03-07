@@ -114,6 +114,17 @@ export class EditorStore {
     this.notify();
   }
 
+
+  updateEventId(index, eventId) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.events.length) return false;
+    const safeId = String(eventId || '').trim() || `event_${index + 1}`;
+    if (this.events[index].id === safeId) return false;
+    this.snapshot('rename-event');
+    this.events[index].id = safeId;
+    this.notify();
+    return true;
+  }
+
   updateCurrentEventId(eventId) {
     const safeId = String(eventId || '').trim() || 'new_event';
     this.events[this.currentEventIndex].id = safeId;
