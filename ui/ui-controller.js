@@ -1,4 +1,6 @@
 import { editorStore } from '../state/store.js';
+import { dispatch } from './action-dispatcher.js';
+import { flattenWithProbabilities } from '../core/tree-model.js';
 import { renderNode } from './node-renderer.js';
 import { buildEventXML } from '../io/xml-export.js';
 import { parseEventXML } from '../io/xml-import.js';
@@ -14,14 +16,51 @@ let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
 const EVENT_DELETE_CONFIRM_TIMEOUT_MS = 5000;
 
+let searchQuery = '';
+
+let contextMenuEl = null;
+
+function closeContextMenu() {
+  if (contextMenuEl) contextMenuEl.remove();
+  contextMenuEl = null;
+}
+
+function openNodeContextMenu(event) {
+  const nodeEl = event.target.closest('.tree-node');
+  if (!nodeEl || !window.d3) return;
+  const datum = window.d3.select(nodeEl).datum();
+  const nodeId = datum?.data?.id;
+  if (!Number.isFinite(Number(nodeId))) return;
+  event.preventDefault();
+  closeContextMenu();
+  const menu = document.createElement('div');
+  menu.className = 'node-context-menu';
+  menu.style.left = `${event.clientX}px`;
+  menu.style.top = `${event.clientY}px`;
+  const add = (label, fn) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    btn.onclick = () => { fn(); closeContextMenu(); };
+    menu.appendChild(btn);
+  };
+  add('Add child (Success)', () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), branch: 'success', nodeType: 'rng' }));
+  add('Duplicate', () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
+  add('Copy subtree', () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
+  add('Paste subtree', () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId), branch: 'success' }));
+  add('Delete', () => dispatch({ type: 'REMOVE_NODE', id: Number(nodeId) }));
+  document.body.appendChild(menu);
+  contextMenuEl = menu;
+}
+
 const treeService = new TreeService({
   svgSelector: '#tree-svg',
   inspectorSelector: '#tree-inspector',
-  onUpdateParam: (id, key, value) => editorStore.updateNodeParam(id, key, value),
-  onRemoveNode: id => editorStore.removeNode(id),
-  onAddChild: (parentId, branch, type) => editorStore.addChildNode(parentId, branch, type),
+  onUpdateParam: (id, key, value) => dispatch({ type: 'UPDATE_NODE_PARAM', id, key, value }),
+  onRemoveNode: id => dispatch({ type: 'REMOVE_NODE', id }),
+  onAddChild: (parentId, branch, type) => dispatch({ type: 'ADD_CHILD_NODE', parentId, branch, nodeType: type }),
   onMoveNode: (nodeId, newParentId, branch) => {
-    const moved = editorStore.moveNode(nodeId, newParentId, branch);
+    const moved = editorStore.moveNode ? editorStore.moveNode(nodeId, newParentId, branch) : false;
     if (moved) treeService.autoLayoutSubtree(nodeId);
   }
 });
@@ -43,7 +82,12 @@ function initButtonIcons() {
     ['button[data-action="generateXML"]', 'code', 'generateXML'],
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
-    ['button[data-action="importXML"]', 'upload-cloud', 'importXML']
+    ['button[data-action="importXML"]', 'upload-cloud', 'importXML'],
+    ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation'],
+    ['button[data-action="validateTree"]', 'checkmark-square', 'validateTree'],
+    ['button[data-action="toggleHeatmap"]', 'sun', 'toggleHeatmap'],
+    ['button[data-action="searchNodes"]', 'search', 'searchNodes'],
+    ['button[data-action="quickAdd"]', 'plus-square', 'quickAdd']
   ];
 
   iconMap.forEach(([selector, iconName, l10nKey]) => {
@@ -147,7 +191,7 @@ function renderModel() {
   state.currentEvent.model.forEach(node => root.appendChild(renderNode(node)));
 
   if (document.getElementById('tree-container').style.display === 'block') {
-    treeService.render(state.currentEvent.model);
+    treeService.renderQueued(state.currentEvent.model);
   }
 }
 
@@ -173,7 +217,7 @@ function toggleView() {
     label.textContent = t(label.dataset.l10n);
   }
 
-  if (!isTree) treeService.render(editorStore.getState().currentEvent.model);
+  if (!isTree) treeService.renderQueued(editorStore.getState().currentEvent.model);
 }
 
 function handleProjectStub() {
@@ -189,7 +233,7 @@ function handleClick(event) {
 
   if (action === 'renameEvent') return;
 
-  if (action === 'addEvent') editorStore.addEvent();
+  if (action === 'addEvent') dispatch({ type: 'ADD_EVENT' });
   if (action === 'removeEvent') {
     const index = Number(actionEl.dataset.index);
     if (pendingDeleteEventIndex !== index) {
@@ -199,14 +243,14 @@ function handleClick(event) {
       return;
     }
     clearPendingEventDelete();
-    editorStore.removeEvent(index);
+    dispatch({ type: 'REMOVE_EVENT', index });
     return;
   }
-  if (action === 'selectEvent') editorStore.setCurrentEvent(Number(actionEl.dataset.index));
-  if (action === 'addNode') editorStore.addRootNode(actionEl.dataset.type);
-  if (action === 'addChildNode') editorStore.addChildNode(Number(actionEl.dataset.parentId), actionEl.dataset.branch, actionEl.dataset.type);
-  if (action === 'removeNode') editorStore.removeNode(id);
-  if (action === 'clearAll') editorStore.clearCurrentEvent();
+  if (action === 'selectEvent') dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
+  if (action === 'addNode') dispatch({ type: 'ADD_ROOT_NODE', nodeType: actionEl.dataset.type });
+  if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch, nodeType: actionEl.dataset.type });
+  if (action === 'removeNode') dispatch({ type: 'REMOVE_NODE', id });
+  if (action === 'clearAll') dispatch({ type: 'CLEAR_EVENT' });
 
   if (action === 'toggleView') toggleView();
   if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
@@ -239,7 +283,7 @@ function handleClick(event) {
     try {
       const parsed = parseEventXML(document.getElementById('output').value, () => editorStore.idCounter++);
       editorStore.updateCurrentEventId(parsed.eventId);
-      editorStore.setModel(parsed.model);
+      dispatch({ type: 'SET_MODEL', model: parsed.model });
       showSuccess(t('xmlImported'));
     } catch (err) {
       showError(err.message || 'XML import failed');
@@ -250,12 +294,21 @@ function handleClick(event) {
 
   if (action === 'undo') editorStore.undo();
   if (action === 'redo') editorStore.redo();
+  if (action === 'runSimulation') runSimulation();
+  if (action === 'validateTree') runValidation();
+  if (action === 'toggleHeatmap') {
+    const next = !actionEl.classList.contains('active');
+    actionEl.classList.toggle('active', next);
+    treeService.setHeatmapEnabled(next);
+  }
+  if (action === 'searchNodes') runSearch();
+  if (action === 'quickAdd') runQuickAdd();
 }
 
 function handleChange(event) {
   const el = event.target;
   if (el.dataset.action === 'updateParam') {
-    editorStore.updateNodeParam(Number(el.dataset.id), el.dataset.key, el.value);
+    dispatch({ type: 'UPDATE_NODE_PARAM', id: Number(el.dataset.id), key: el.dataset.key, value: el.value });
   }
 }
 
@@ -270,8 +323,79 @@ function handleDblClick(event) {
 
 function handleInput(event) {
   if (event.target.id === 'event-id') {
-    editorStore.updateCurrentEventId(event.target.value);
+    dispatch({ type: 'UPDATE_EVENT_ID', index: editorStore.getState().currentEventIndex, eventId: event.target.value }, { skipHistory: true });
   }
+}
+
+
+function runSimulation() {
+  const model = editorStore.getState().currentEvent.model;
+  const nodes = flattenWithProbabilities(model);
+  const totals = new Map();
+  nodes.forEach(({ node, probability }) => {
+    if (!['spawn', 'creature', 'affliction'].includes(node.type)) return;
+    const key = node.type === 'spawn' ? `SpawnItem ${node.params.item || 'unknown'}` : node.type === 'creature' ? `SpawnCreature ${node.params.creature || 'unknown'}` : `Affliction ${node.params.affliction || 'unknown'}`;
+    totals.set(key, (totals.get(key) || 0) + probability);
+  });
+  const lines = [...totals.entries()].sort((a,b) => b[1]-a[1]).slice(0, 20).map(([k,v]) => `${k} → ${(v*100).toFixed(2)}%`);
+  showNeutral(lines.length ? lines.join('\n') : 'No terminal spawn nodes in tree');
+}
+
+function runValidation() {
+  const state = editorStore.getState();
+  const model = state.currentEvent.model;
+  const warnings = [];
+  const visit = (nodes, reachable = true) => {
+    nodes.forEach(node => {
+      if (node.type === 'rng') {
+        const chance = Number(node.params.chance);
+        if (!Number.isFinite(chance) || chance < 0 || chance > 1) warnings.push(`Node #${node.id}: chance outside 0..1`);
+        if (!node.children.success.length && !node.children.failure.length) warnings.push(`Node #${node.id}: empty branches`);
+        visit(node.children.success, reachable);
+        visit(node.children.failure, reachable);
+      } else if (node.type === 'spawn' && !node.params.item) warnings.push(`Node #${node.id}: missing item id`);
+      else if (node.type === 'creature' && !node.params.creature) warnings.push(`Node #${node.id}: missing creature id`);
+      else if (node.type === 'affliction' && !node.params.affliction) warnings.push(`Node #${node.id}: missing affliction id`);
+      if (!reachable) warnings.push(`Node #${node.id}: unreachable`);
+    });
+  };
+  visit(model, true);
+  showNeutral(warnings.length ? warnings.slice(0, 25).join('\n') : 'Validation: no issues found');
+}
+
+function runSearch() {
+  const query = window.prompt('Find node by id/item/creature/affliction', searchQuery || '');
+  if (query == null) return;
+  searchQuery = query.trim().toLowerCase();
+  if (!searchQuery) {
+    treeService.setSearchHighlights([]);
+    return;
+  }
+  const hits = [];
+  editorStore.collectNodes().forEach(node => {
+    const hay = [String(node.id), node.params.item, node.params.creature, node.params.affliction].filter(Boolean).join(' ').toLowerCase();
+    if (hay.includes(searchQuery)) hits.push(node.id);
+  });
+  treeService.setSearchHighlights(hits);
+  if (hits.length) treeService.centerOnNode(hits[0]);
+  showNeutral(hits.length ? `Found ${hits.length} node(s)` : 'No matches');
+}
+
+function runQuickAdd() {
+  const value = window.prompt('Quick add node type (rng/spawn/creature/affliction)', 'rng');
+  if (!value) return;
+  const type = value.trim().toLowerCase();
+  if (!['rng', 'spawn', 'creature', 'affliction'].includes(type)) return showError('Unknown node type');
+  dispatch({ type: 'ADD_ROOT_NODE', nodeType: type });
+}
+
+function handleKeyboardShortcuts(event) {
+  const selectedId = treeService.getSelectedNodeId();
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); editorStore.undo(); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); editorStore.redo(); }
+  if (event.key === 'Delete' && selectedId != null) { event.preventDefault(); dispatch({ type: 'REMOVE_NODE', id: selectedId }); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedId != null) { event.preventDefault(); dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId }); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); runQuickAdd(); }
 }
 
 export function initEditorUI() {
@@ -279,6 +403,9 @@ export function initEditorUI() {
   document.addEventListener('change', handleChange);
   document.addEventListener('input', handleInput);
   document.addEventListener('dblclick', handleDblClick);
+  document.addEventListener('keydown', handleKeyboardShortcuts);
+  document.addEventListener('contextmenu', openNodeContextMenu);
+  document.addEventListener('click', closeContextMenu);
 
   initSettingsController();
   initButtonIcons();
@@ -294,7 +421,7 @@ export function initEditorUI() {
     if (viewLabel) {
       viewLabel.textContent = document.getElementById('tree-container').style.display === 'block' ? t('classicView') : t('treeView');
     }
-    treeService.render(editorStore.getState().currentEvent.model);
+    treeService.renderQueued(editorStore.getState().currentEvent.model);
   });
 
   editorStore.subscribe(() => {

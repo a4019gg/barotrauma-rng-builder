@@ -654,3 +654,7 @@
 
 .db-language { background: #2a2a2a; color: #f4f4f4; border: 1px solid #3c3c3c; }
 body[data-base-theme="light"] .db-language { background: #f0f4ff; color: #1f2a40; border-color: #9db3d6; }
+
+.db-virtual-spacer { width: 1px; opacity: 0; }
+.db-virtual-layer { position: absolute; left: 0; right: 0; top: 0; }
+.db-list { position: relative; }

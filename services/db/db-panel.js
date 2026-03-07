@@ -22,6 +22,7 @@ let activeRoleFilter = "all";
 let controlsCollapsed = false;
 let fallbackIcon = null;
 let hasOpenedDatabasePanel = false;
+let virtualState = null;
 
 const DEFAULT_ICON_SIZE = 36;
 const SCALE_LEVELS = [0.9, 1, 1.1];
@@ -39,7 +40,7 @@ export async function openDatabasePanel() {
       document.body.appendChild(modalEl);
 
       showLoadingState(true);
-      await DB.load();
+      await DB.loadAfflictions();
       prepareFallbackIcon();
       showLoadingState(false);
     }
@@ -52,6 +53,7 @@ export async function openDatabasePanel() {
 
     modalEl.style.display = "block";
     modalEl.focus();
+    await ensureCurrentTypeLoaded();
     renderList();
   } catch (err) {
     console.error(err);
@@ -169,9 +171,13 @@ function bindModalEvents(modal) {
 
       currentType = btn.dataset.type;
       expandedAll = false;
-      renderFilters();
-      updateCount();
-      renderList();
+      showLoadingState(true);
+      ensureCurrentTypeLoaded().then(() => {
+        showLoadingState(false);
+        renderFilters();
+        updateCount();
+        renderList();
+      }).catch(() => showLoadingState(false));
     };
   });
 
@@ -269,10 +275,48 @@ function renderList() {
   }
 
   const sorted = DB.sort(filtered, sortMode);
-  for (const entry of sorted) {
-    listEl.appendChild(buildEntryCard(entry));
-  }
+  renderVirtualList(sorted, listEl);
   updateCount(sorted.length);
+}
+
+function renderVirtualList(sortedEntries, listEl) {
+  const threshold = 140;
+  if (sortedEntries.length <= threshold) {
+    virtualState = null;
+    for (const entry of sortedEntries) listEl.appendChild(buildEntryCard(entry));
+    return;
+  }
+  const viewport = listEl.closest('.db-content') || listEl;
+  const itemHeight = isCompact ? 72 : 124;
+  const overscan = 8;
+  const spacer = document.createElement('div');
+  spacer.className = 'db-virtual-spacer';
+  spacer.style.height = `${sortedEntries.length * itemHeight}px`;
+  listEl.appendChild(spacer);
+  const layer = document.createElement('div');
+  layer.className = 'db-virtual-layer';
+  listEl.appendChild(layer);
+  virtualState = { sortedEntries, layer };
+
+  const update = () => {
+    if (!virtualState || virtualState.sortedEntries !== sortedEntries) return;
+    const viewTop = viewport.scrollTop;
+    const viewHeight = viewport.clientHeight || 500;
+    const start = Math.max(0, Math.floor(viewTop / itemHeight) - overscan);
+    const end = Math.min(sortedEntries.length, Math.ceil((viewTop + viewHeight) / itemHeight) + overscan);
+    layer.innerHTML = '';
+    layer.style.transform = `translateY(${start * itemHeight}px)`;
+    for (let i = start; i < end; i += 1) layer.appendChild(buildEntryCard(sortedEntries[i]));
+  };
+
+  viewport.onscroll = update;
+  update();
+}
+
+async function ensureCurrentTypeLoaded() {
+  if (currentType === 'items') return DB.loadItems();
+  if (currentType === 'creatures') return DB.loadCreatures();
+  return DB.loadAfflictions();
 }
 
 function buildEntryCard(entry) {

@@ -269,3 +269,14 @@
 
 .tree-debug-label { fill: #ffd88a; font-size: 10px; font-weight: 600; }
 .tree-debug-dropzone { fill: rgba(130, 170, 255, 0.1); stroke: rgba(130, 170, 255, 0.55); stroke-dasharray: 5 3; }
+
+.tree-node.search-hit .tree-card {
+  stroke: #7ab8ff;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 8px rgba(122, 184, 255, .45));
+}
+
+.tree-node.heat-prob-red .tree-card { box-shadow: inset 0 0 0 2px #c54747; }
+.tree-node.heat-prob-orange .tree-card { box-shadow: inset 0 0 0 2px #cf7d2c; }
+.tree-node.heat-prob-yellow .tree-card { box-shadow: inset 0 0 0 2px #bfae3c; }
+.tree-node.heat-prob-green .tree-card { box-shadow: inset 0 0 0 2px #409a5f; }
