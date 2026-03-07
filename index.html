@@ -14,12 +14,14 @@
 </head>
 <body>
   <header class="top-bar">
+    <div class="top-brand">
+      <h1>Barotrauma RNG Builder</h1>
+      <p>Visual event editor</p>
+    </div>
+
     <div class="top-left">
       <button id="view-btn" data-action="toggleView" data-l10n="treeView"></button>
       <button data-action="openDB" data-l10n="database"></button>
-    </div>
-
-    <div class="top-right">
       <button data-action="projectImport" data-l10n="projectImport"></button>
       <button data-action="projectExport" data-l10n="projectExport"></button>
       <button data-action="undo" data-l10n="undo"></button>
@@ -75,21 +77,29 @@
   </section>
 
   <section class="action-bar">
-    <button data-action="addNode" data-type="rng" data-l10n="addRng"></button>
-    <button data-action="addNode" data-type="spawn" data-l10n="addItem"></button>
-    <button data-action="addNode" data-type="creature" data-l10n="addCreature"></button>
-    <button data-action="addNode" data-type="affliction" data-l10n="addAffliction"></button>
-    <button data-action="quickAdd" data-l10n="quickAdd"></button>
-    <button data-action="clearAll" data-l10n="clearEvent"></button>
-    <button data-action="runSimulation" data-l10n="runSimulation"></button>
-    <button data-action="validateTree" data-l10n="validateTree"></button>
-    <button data-action="toggleHeatmap" data-l10n="toggleHeatmap"></button>
-    <button data-action="searchNodes" data-l10n="searchNodes"></button>
-    <div class="spacer"></div>
-    <button data-action="generateXML" class="green" data-l10n="generateXML"></button>
-    <button data-action="copyXML" data-l10n="copyXML"></button>
-    <button data-action="downloadXML" data-l10n="downloadXML"></button>
-    <button data-action="importXML" data-l10n="importXML"></button>
+    <div class="action-group">
+      <span class="action-title">Build</span>
+      <button data-action="addNode" data-type="rng" data-l10n="addRng"></button>
+      <button data-action="addNode" data-type="spawn" data-l10n="addItem"></button>
+      <button data-action="addNode" data-type="creature" data-l10n="addCreature"></button>
+      <button data-action="addNode" data-type="affliction" data-l10n="addAffliction"></button>
+    </div>
+
+    <div class="action-group">
+      <span class="action-title">Inspect</span>
+      <button data-action="runSimulation" data-l10n="runSimulation"></button>
+      <button data-action="validateTree" data-l10n="validateTree"></button>
+      <button data-action="toggleHeatmap" data-l10n="toggleHeatmap"></button>
+      <button data-action="searchNodes" data-l10n="searchNodes"></button>
+    </div>
+
+    <div class="action-group export-group">
+      <span class="action-title">XML</span>
+      <button data-action="generateXML" class="green" data-l10n="generateXML"></button>
+      <button data-action="copyXML" data-l10n="copyXML"></button>
+      <button data-action="downloadXML" data-l10n="downloadXML"></button>
+      <button data-action="importXML" data-l10n="importXML"></button>
+    </div>
   </section>
 
   <main id="main-container">
