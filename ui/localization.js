@@ -117,6 +117,8 @@ const DICTS = {
     expandSubtree: 'Expand subtree',
     dropZoneSuccessHint: 'Drop here to insert into Success branch',
     dropZoneFailureHint: 'Drop here to insert into Failure branch',
+    confirmRemoveEvent: 'Delete this event?',
+    smoothTreePaths: 'Smooth links',
   },
   ru: {
     treeView: 'Древо',
@@ -234,6 +236,8 @@ const DICTS = {
     expandSubtree: 'Развернуть поддерево',
     dropZoneSuccessHint: 'Отпустите сюда, чтобы вставить в ветку Success',
     dropZoneFailureHint: 'Отпустите сюда, чтобы вставить в ветку Failure',
+    confirmRemoveEvent: 'Удалить это событие?',
+    smoothTreePaths: 'Плавные линии связей',
   }
 };
 
