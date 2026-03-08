@@ -34,7 +34,7 @@
 
 #tree-svg:active { cursor: grabbing; }
 .tree-empty { fill: var(--text-main); font-size: 14px; }
-.tree-link { fill: none; stroke: #6d91cd; stroke-opacity: 0.65; stroke-width: 2; }
+.tree-link { fill: none; stroke: var(--ui-accent); stroke-opacity: 0.65; stroke-width: 2; }
 .tree-link,
 .tree-node,
 .tree-link-percent,
@@ -43,22 +43,22 @@
 #tree-svg.is-dragging-tree .tree-node,
 #tree-svg.is-dragging-tree .tree-link-percent,
 #tree-svg.is-dragging-tree .tree-node-percent { transition: none; }
-.tree-link.link-success { stroke: #42c48a; }
-.tree-link.link-failure { stroke: #df7a92; }
-.tree-link-percent, .tree-node-percent { fill: #eaf3ff; font-size: 11px; font-weight: 700; }
+.tree-link.link-success { stroke: color-mix(in srgb, var(--ui-accent) 60%, #3bc47a); }
+.tree-link.link-failure { stroke: color-mix(in srgb, var(--ui-accent) 45%, #d15a6e); }
+.tree-link-percent, .tree-node-percent { fill: var(--ui-text); font-size: 11px; font-weight: 700; }
 .chance-low { fill: #ff6161; }
 .chance-mid { fill: #ffd25f; }
 .chance-high { fill: #52d978; }
 
-.tree-card { fill: color-mix(in srgb, var(--bg-panel) 85%, #223958 15%); stroke: #6b88b6; stroke-width: 2; }
+.tree-card { fill: color-mix(in srgb, var(--bg-panel) 85%, #223958 15%); stroke: var(--ui-border); stroke-width: 2; }
 .tree-node.selected .tree-card,
-.tree-node.drop-target .tree-card { stroke: #d9e8ff; filter: drop-shadow(0 0 6px rgba(106, 156, 238, 0.4)); }
-.tree-card-root { fill: #233452; stroke: #83aadf; }
-.tree-root-title { fill: #f3f8ff; font-weight: 700; font-size: 14px; }
+.tree-node.drop-target .tree-card { stroke: var(--ui-accent-strong); filter: drop-shadow(0 0 6px rgba(106, 156, 238, 0.4)); }
+.tree-card-root { fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent) 25%); stroke: var(--ui-accent); }
+.tree-root-title { fill: var(--ui-text); font-weight: 700; font-size: 14px; }
 .tree-branch-card { stroke-width: 1.6; }
-.tree-branch-card.branch-success { fill: #204534; stroke: #4dd59a; }
-.tree-branch-card.branch-failure { fill: #4c2130; stroke: #ef8ea8; }
-.tree-branch-label { fill: #f4f9ff; font-size: 12px; font-weight: 700; }
+.tree-branch-card.branch-success { fill: color-mix(in srgb, var(--ui-panel) 68%, #2b825f); stroke: #4dd59a; }
+.tree-branch-card.branch-failure { fill: color-mix(in srgb, var(--ui-panel) 68%, #7b3045); stroke: #ef8ea8; }
+.tree-branch-label { fill: var(--ui-text); font-size: 12px; font-weight: 700; }
 
 
 .tree-node.drop-target-success .tree-card {
@@ -129,7 +129,7 @@
   cursor: pointer;
 }
 
-.icon-btn:hover { background: #1c2e4b; }
+.icon-btn:hover { background: color-mix(in srgb, var(--ui-panel) 70%, var(--ui-accent)); }
 .icon-btn .ui-icon { width: 14px; height: 14px; }
 .node-title .ui-icon { margin-right: 6px; width: 16px; height: 16px; vertical-align: middle; }
 .tree-affliction-icon { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
@@ -206,7 +206,7 @@
   position: absolute;
   border: 1px solid var(--border-main);
   border-radius: 10px;
-  background: rgba(15, 22, 35, 0.92);
+  background: color-mix(in srgb, var(--ui-panel) 92%, transparent);
   backdrop-filter: blur(2px);
   overflow: hidden;
   z-index: 8;
@@ -271,7 +271,7 @@
 .tree-debug-dropzone { fill: rgba(130, 170, 255, 0.1); stroke: rgba(130, 170, 255, 0.55); stroke-dasharray: 5 3; }
 
 .tree-node.search-hit .tree-card {
-  stroke: #7ab8ff;
+  stroke: var(--ui-accent);
   stroke-width: 2px;
   filter: drop-shadow(0 0 8px rgba(122, 184, 255, .45));
 }

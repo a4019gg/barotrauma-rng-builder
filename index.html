@@ -8,7 +8,7 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <link rel="stylesheet" href="./css/style.css" />
-  <link id="theme-style" rel="stylesheet" href="./css/themes/dark.css" />
+  <link id="theme-style" rel="stylesheet" href="./css/themes/theme-system.css" />
   <link rel="stylesheet" href="./services/tree/tree.css" />
   <link rel="stylesheet" href="./services/db/db.css" />
 </head>
@@ -32,10 +32,20 @@
 
   <section id="settings-panel" class="settings-panel floating-panel">
     <div class="settings-grid">
-      <div class="theme-toggle-row">
-        <span data-l10n="theme"></span>
-        <button id="theme-toggle" type="button"></button>
-      </div>
+      <label><span data-l10n="theme"></span>
+        <select id="base-theme-select">
+          <option value="debug" data-l10n="themeDebug">Debug</option>
+          <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
+          <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
+          <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
+        </select>
+      </label>
+      <label><span data-l10n="themeMode"></span>
+        <select id="theme-mode-select">
+          <option value="dark" data-l10n="themeModeDark">Dark</option>
+          <option value="light" data-l10n="themeModeLight">Light</option>
+        </select>
+      </label>
       <label><span data-l10n="language"></span>
         <select id="lang-select">
           <option value="en" data-l10n="langEnglish">English</option>

@@ -1,18 +1,15 @@
 import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 
 const BASE_THEMES = {
-  dark: {
-    id: 'dark',
-    label: 'Dark',
-    file: './css/themes/dark.css',
-    iconStyle: 'outline'
-  },
-  light: {
-    id: 'light',
-    label: 'Light',
-    file: './css/themes/light.css',
-    iconStyle: 'solid'
-  }
+  debug: { id: 'debug', label: 'Debug' },
+  'neon-ops': { id: 'neon-ops', label: 'Neon Ops' },
+  'retro-terminal': { id: 'retro-terminal', label: 'Retro Terminal' },
+  'soft-bloom': { id: 'soft-bloom', label: 'Soft Bloom' }
+};
+
+const THEME_MODES = {
+  dark: { id: 'dark', label: 'Dark', iconStyle: 'outline' },
+  light: { id: 'light', label: 'Light', iconStyle: 'solid' }
 };
 
 const STYLE_VARIANTS = {
@@ -22,7 +19,8 @@ const STYLE_VARIANTS = {
 };
 
 const defaults = {
-  baseTheme: 'dark',
+  baseTheme: 'neon-ops',
+  themeMode: 'dark',
   themeStyle: 'balanced',
   uiScale: '100',
   grid: true,
@@ -34,6 +32,7 @@ const listeners = new Set();
 
 const state = {
   baseTheme: getAppSetting('baseTheme') || defaults.baseTheme,
+  themeMode: getAppSetting('themeMode') || defaults.themeMode,
   themeStyle: getAppSetting('themeStyle') || defaults.themeStyle,
   uiScale: getAppSetting('uiScale') || defaults.uiScale,
   grid: getAppSetting('grid') ?? defaults.grid,
@@ -43,6 +42,7 @@ const state = {
 
 function ensureValidState() {
   if (!BASE_THEMES[state.baseTheme]) state.baseTheme = defaults.baseTheme;
+  if (!THEME_MODES[state.themeMode]) state.themeMode = defaults.themeMode;
   if (!STYLE_VARIANTS[state.themeStyle]) state.themeStyle = defaults.themeStyle;
   if (!['fraction', 'percent'].includes(state.chanceInputMode)) state.chanceInputMode = defaults.chanceInputMode;
 }
@@ -56,15 +56,17 @@ export function applyTheme() {
   ensureValidState();
 
   const themeLink = document.getElementById('theme-style');
-  themeLink.href = BASE_THEMES[state.baseTheme].file;
+  if (themeLink) themeLink.href = './css/themes/theme-system.css';
 
   document.body.dataset.baseTheme = state.baseTheme;
+  document.body.dataset.themeMode = state.themeMode;
   document.body.dataset.themeStyle = state.themeStyle;
-  document.body.dataset.iconStyle = BASE_THEMES[state.baseTheme].iconStyle;
+  document.body.dataset.iconStyle = THEME_MODES[state.themeMode].iconStyle;
   document.body.dataset.uiScale = state.uiScale;
   document.body.dataset.bgGrid = state.grid ? 'visible' : 'off';
 
   setAppSetting('baseTheme', state.baseTheme);
+  setAppSetting('themeMode', state.themeMode);
   setAppSetting('themeStyle', state.themeStyle);
   setAppSetting('uiScale', state.uiScale);
   setAppSetting('grid', Boolean(state.grid));
@@ -80,10 +82,9 @@ export function onThemeChange(listener) {
 }
 
 export function getThemeState() {
-  const base = BASE_THEMES[state.baseTheme] || BASE_THEMES[defaults.baseTheme];
   return {
     ...state,
-    iconStyle: base.iconStyle
+    iconStyle: THEME_MODES[state.themeMode]?.iconStyle || THEME_MODES[defaults.themeMode].iconStyle
   };
 }
 
@@ -95,12 +96,21 @@ export function getBaseThemes() {
   return Object.values(BASE_THEMES);
 }
 
+export function getThemeModes() {
+  return Object.values(THEME_MODES);
+}
+
 export function getStyleVariants() {
   return Object.values(STYLE_VARIANTS);
 }
 
 export function setBaseTheme(baseTheme) {
   state.baseTheme = baseTheme;
+  applyTheme();
+}
+
+export function setThemeMode(themeMode) {
+  state.themeMode = themeMode;
   applyTheme();
 }
 
@@ -118,7 +128,6 @@ export function setGrid(isVisible) {
   state.grid = isVisible;
   applyTheme();
 }
-
 
 export function setChanceColorCoding(enabled) {
   state.chanceColorCoding = !!enabled;
