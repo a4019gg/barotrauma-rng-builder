@@ -7,22 +7,11 @@ import {
   setChanceColorCoding,
   setChanceInputMode,
   setGrid,
+  setThemeMode,
   setThemeStyle,
   setUiScale
 } from './theme-manager.js';
-import { appendIconLabel } from './icon-component.js';
 import { clearAppSettingsCache, getAppSetting, setAppSetting } from '../state/app-settings.js';
-
-function renderThemeToggle() {
-  const state = getThemeState();
-  const toggle = document.getElementById('theme-toggle');
-  const nextTheme = state.baseTheme === 'dark' ? 'light' : 'dark';
-  appendIconLabel(toggle, {
-    icon: state.baseTheme === 'dark' ? 'moon' : 'sun',
-    label: state.baseTheme === 'dark' ? 'Dark' : 'Light'
-  });
-  toggle.onclick = () => setBaseTheme(nextTheme);
-}
 
 export function initSettingsController() {
   const settingsRoot = document.getElementById('settings-panel');
@@ -39,6 +28,8 @@ export function initSettingsController() {
     settingsRoot.classList.remove('open');
   });
 
+  document.getElementById('base-theme-select').onchange = event => setBaseTheme(event.target.value);
+  document.getElementById('theme-mode-select').onchange = event => setThemeMode(event.target.value);
   document.getElementById('theme-style-select').onchange = event => setThemeStyle(event.target.value);
   document.getElementById('lang-select').onchange = event => setLang(event.target.value);
   document.getElementById('ui-scale-select').onchange = event => setUiScale(event.target.value);
@@ -53,6 +44,8 @@ export function initSettingsController() {
   };
 
   const state = getThemeState();
+  document.getElementById('base-theme-select').value = state.baseTheme;
+  document.getElementById('theme-mode-select').value = state.themeMode;
   document.getElementById('theme-style-select').value = state.themeStyle;
   document.getElementById('lang-select').value = getLang();
   document.getElementById('ui-scale-select').value = state.uiScale;
@@ -68,10 +61,10 @@ export function initSettingsController() {
   });
 
   applyTheme();
-  renderThemeToggle();
   onThemeChange(currentState => {
+    document.getElementById('base-theme-select').value = currentState.baseTheme;
+    document.getElementById('theme-mode-select').value = currentState.themeMode;
     document.getElementById('toggle-chance-colors').checked = currentState.chanceColorCoding;
     document.getElementById('chance-input-mode').value = currentState.chanceInputMode;
-    renderThemeToggle();
   });
 }

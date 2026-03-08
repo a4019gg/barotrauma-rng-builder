@@ -2,7 +2,8 @@ const SETTINGS_KEY = 'rng-builder.settings.v2';
 
 const DEFAULT_SETTINGS = {
   lang: 'en',
-  baseTheme: 'dark',
+  baseTheme: 'neon-ops',
+  themeMode: 'dark',
   themeStyle: 'balanced',
   uiScale: '100',
   grid: true,
