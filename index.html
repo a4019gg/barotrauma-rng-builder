@@ -21,12 +21,14 @@
       </div>
 
       <div class="top-left">
-        <button id="view-btn" data-action="toggleView" data-action-tier="secondary" data-l10n="treeView"></button>
+        <div id="view-segmented" class="segmented-control" data-view-mode="node" role="tablist" aria-label="Editor mode">
+          <div class="segmented-control-indicator" aria-hidden="true"></div>
+          <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
+          <button type="button" class="segmented-option" data-action="setViewMode" data-view-mode="tree" role="tab" aria-selected="false" data-l10n="treeMode"></button>
+        </div>
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
         <button data-action="projectImport" data-action-tier="neutral" data-l10n="projectImport"></button>
         <button data-action="projectExport" data-action-tier="neutral" data-l10n="projectExport"></button>
-        <button data-action="undo" data-action-tier="neutral" data-l10n="undo"></button>
-        <button data-action="redo" data-action-tier="neutral" data-l10n="redo"></button>
         <button id="settings-toggle" class="settings-fab" data-action-tier="secondary" data-l10n="settings"></button>
       </div>
     </header>
@@ -96,6 +98,11 @@
         <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-l10n="addAffliction"></button>
       </div>
 
+      <div class="action-group history-group">
+        <button data-action="undo" data-action-tier="neutral" data-l10n="undo"></button>
+        <button data-action="redo" data-action-tier="neutral" data-l10n="redo"></button>
+      </div>
+
       <div class="action-group export-group">
         <span class="action-title">XML</span>
         <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
@@ -131,12 +138,6 @@
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
         </div>
-        <div class="simulation-header-controls">
-          <input id="simulation-search" type="text" data-l10n-placeholder="searchNodes" placeholder="Search Nodes" />
-          <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
-          <input id="simulation-seed" type="text" placeholder="random" />
-          <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
-        </div>
         <div class="event-id-bar">
           <label for="event-id" data-l10n="eventId"></label>
           <input id="event-id" value="event_1" />
@@ -149,6 +150,23 @@
         </section>
 
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
+          <div class="simulation-controls-panel">
+            <label class="simulation-control-row simulation-control-row-search">
+              <span data-l10n="search"></span>
+              <input id="simulation-search" type="text" data-l10n-placeholder="searchNodes" placeholder="Search Nodes" />
+            </label>
+            <div class="simulation-control-grid">
+              <label class="simulation-control-row">
+                <span data-l10n="iterations"></span>
+                <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
+              </label>
+              <label class="simulation-control-row">
+                <span data-l10n="seed"></span>
+                <input id="simulation-seed" type="text" placeholder="random" />
+              </label>
+              <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
+            </div>
+          </div>
           <div class="simulation-table-wrap">
             <table class="simulation-table">
               <thead>

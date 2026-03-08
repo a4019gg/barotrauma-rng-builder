@@ -131,6 +131,11 @@ const DICTS = {
     toggleHeatmap: 'Heatmap',
     searchNodes: 'Search Nodes',
     quickAdd: 'Quick Add',
+    nodeMode: 'Node',
+    treeMode: 'Tree',
+    search: 'Search',
+    iterations: 'Iterations',
+    seed: 'Seed',
   },
   ru: {
     treeView: 'Древо',
@@ -262,6 +267,11 @@ const DICTS = {
     toggleHeatmap: 'Тепловая карта',
     searchNodes: 'Поиск нод',
     quickAdd: 'Быстро добавить',
+    nodeMode: 'Ноды',
+    treeMode: 'Дерево',
+    search: 'Поиск',
+    iterations: 'Итерации',
+    seed: 'Seed',
   }
 };
 
