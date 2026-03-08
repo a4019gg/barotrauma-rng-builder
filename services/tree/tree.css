@@ -151,7 +151,14 @@
 .add-success { border-color: color-mix(in srgb, var(--ui-accent) 62%, var(--ui-text)); }
 .add-failure { border-color: color-mix(in srgb, var(--ui-border) 62%, var(--ui-text)); }
 
-#tree-inspector { border-left: 1px solid var(--border-main); padding-left: 12px; color: var(--text-main); font-size: 13px; }
+#tree-inspector {
+  border-left: 1px solid var(--border-main);
+  padding-left: 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  min-height: 0;
+  overflow: auto;
+}
 .tree-editor-meta { margin-top: 8px; }
 .tree-inspector-hint { opacity: 0.78; margin: 8px 0 0; }
 .tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 18px; }

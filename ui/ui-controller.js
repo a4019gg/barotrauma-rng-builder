@@ -45,6 +45,27 @@ function setOutputCollapsed(collapsed) {
   localStorage.setItem(OUTPUT_COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
 }
 
+function setViewMode(mode) {
+  const nextMode = mode === 'tree' ? 'tree' : 'node';
+  const classic = document.getElementById('classic-view');
+  const tree = document.getElementById('tree-container');
+  const segmented = document.getElementById('view-segmented');
+  if (!classic || !tree || !segmented) return;
+
+  const isTree = nextMode === 'tree';
+  tree.style.display = isTree ? 'block' : 'none';
+  classic.style.display = isTree ? 'none' : 'block';
+  segmented.dataset.viewMode = nextMode;
+
+  segmented.querySelectorAll('.segmented-option').forEach(button => {
+    const active = button.dataset.viewMode === nextMode;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  if (isTree) treeService.renderQueued(editorStore.getState().currentEvent.model);
+}
+
 function createSeededRng(seedValue) {
   const parsed = Number(seedValue);
   if (!Number.isFinite(parsed)) return Math.random;
@@ -191,7 +212,6 @@ const treeService = new TreeService({
 
 function initButtonIcons() {
   const iconMap = [
-    ['#view-btn', 'compass', 'treeView'],
     ['button[data-action="openDB"]', 'folder', 'database'],
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
@@ -323,23 +343,6 @@ function updateXML() {
   });
 }
 
-function toggleView() {
-  const classic = document.getElementById('classic-view');
-  const tree = document.getElementById('tree-container');
-  const button = document.getElementById('view-btn');
-  const isTree = tree.style.display === 'block';
-
-  tree.style.display = isTree ? 'none' : 'block';
-  classic.style.display = isTree ? 'block' : 'none';
-  const label = button.querySelector('[data-l10n]');
-  if (label) {
-    label.dataset.l10n = isTree ? 'treeView' : 'classicView';
-    label.textContent = t(label.dataset.l10n);
-  }
-
-  if (!isTree) treeService.renderQueued(editorStore.getState().currentEvent.model);
-}
-
 function handleProjectStub() {
   showNeutral(t('projectStub'));
 }
@@ -372,7 +375,7 @@ function handleClick(event) {
   if (action === 'removeNode') dispatch({ type: 'REMOVE_NODE', id });
   if (action === 'clearAll') dispatch({ type: 'CLEAR_EVENT' });
 
-  if (action === 'toggleView') toggleView();
+  if (action === 'setViewMode') setViewMode(actionEl.dataset.viewMode);
   if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
 
   if (action === 'generateXML') {
@@ -553,10 +556,6 @@ export function initEditorUI() {
 
   onLangChange(() => {
     applyLocalization();
-    const viewLabel = document.querySelector('#view-btn [data-l10n]');
-    if (viewLabel) {
-      viewLabel.textContent = document.getElementById('tree-container').style.display === 'block' ? t('classicView') : t('treeView');
-    }
     treeService.renderQueued(editorStore.getState().currentEvent.model);
   });
 
@@ -569,6 +568,7 @@ export function initEditorUI() {
   const collapsed = localStorage.getItem(OUTPUT_COLLAPSE_STORAGE_KEY) === '1';
   setOutputTab('xml');
   setOutputCollapsed(collapsed);
+  setViewMode('node');
 
   renderEvents();
   renderModel();
