@@ -13,129 +13,164 @@
   <link rel="stylesheet" href="./services/db/db.css" />
 </head>
 <body>
-  <header class="top-bar">
-    <div class="top-brand">
-      <h1>Barotrauma RNG Builder</h1>
-      <p>Visual event editor</p>
-    </div>
-
-    <div class="top-left">
-      <button id="view-btn" data-action="toggleView" data-l10n="treeView"></button>
-      <button data-action="openDB" data-l10n="database"></button>
-      <button data-action="projectImport" data-l10n="projectImport"></button>
-      <button data-action="projectExport" data-l10n="projectExport"></button>
-      <button data-action="undo" data-l10n="undo"></button>
-      <button data-action="redo" data-l10n="redo"></button>
-      <button id="settings-toggle" class="settings-fab" data-l10n="settings"></button>
-    </div>
-  </header>
-
-  <section id="settings-panel" class="settings-panel floating-panel">
-    <div class="settings-grid">
-      <label><span data-l10n="theme"></span>
-        <select id="base-theme-select">
-          <option value="debug" data-l10n="themeDebug">Debug</option>
-          <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
-          <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
-          <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
-        </select>
-      </label>
-      <label><span data-l10n="themeMode"></span>
-        <select id="theme-mode-select">
-          <option value="dark" data-l10n="themeModeDark">Dark</option>
-          <option value="light" data-l10n="themeModeLight">Light</option>
-        </select>
-      </label>
-      <label><span data-l10n="language"></span>
-        <select id="lang-select">
-          <option value="en" data-l10n="langEnglish">English</option>
-          <option value="ru" data-l10n="langRussian">Русский</option>
-        </select>
-      </label>
-      <label><span data-l10n="uiScale"></span>
-        <select id="ui-scale-select">
-          <option value="90" data-l10n="uiScale90">90%</option>
-          <option value="100" data-l10n="uiScale100">100%</option>
-          <option value="110" data-l10n="uiScale110">110%</option>
-          <option value="125" data-l10n="uiScale125">125%</option>
-        </select>
-      </label>
-      <label><span data-l10n="themeStyle"></span>
-        <select id="theme-style-select">
-          <option value="compact" data-l10n="themeStyleCompact">Compact</option>
-          <option value="balanced" data-l10n="themeStyleBalanced">Balanced</option>
-          <option value="soft" data-l10n="themeStyleSoft">Soft</option>
-        </select>
-      </label>
-      <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
-      <label class="checkbox-row"><input id="toggle-chance-colors" type="checkbox" /><span data-l10n="chanceColorCoding"></span></label>
-      <label><span data-l10n="chanceInputMode"></span>
-        <select id="chance-input-mode">
-          <option value="fraction" data-l10n="chanceModeFraction">0..1</option>
-          <option value="percent" data-l10n="chanceModePercent">%</option>
-        </select>
-      </label>
-      <label><span data-l10n="autoChanceMode"></span>
-        <select id="auto-chance-global">
-          <option value="off" data-l10n="autoChanceOff">Off</option>
-          <option value="root-split" data-l10n="autoChanceRoot">Root</option>
-          <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
-        </select>
-      </label>
-      <button id="clear-cache-btn" type="button" data-l10n="clearCache"></button>
-    </div>
-  </section>
-
-  <section class="action-bar">
-    <div class="action-group">
-      <span class="action-title">Build</span>
-      <button data-action="addNode" data-type="rng" data-l10n="addRng"></button>
-      <button data-action="addNode" data-type="spawn" data-l10n="addItem"></button>
-      <button data-action="addNode" data-type="creature" data-l10n="addCreature"></button>
-      <button data-action="addNode" data-type="affliction" data-l10n="addAffliction"></button>
-    </div>
-
-    <div class="action-group">
-      <span class="action-title">Inspect</span>
-      <button data-action="runSimulation" data-l10n="runSimulation"></button>
-      <button data-action="validateTree" data-l10n="validateTree"></button>
-      <button data-action="toggleHeatmap" data-l10n="toggleHeatmap"></button>
-      <button data-action="searchNodes" data-l10n="searchNodes"></button>
-    </div>
-
-    <div class="action-group export-group">
-      <span class="action-title">XML</span>
-      <button data-action="generateXML" class="green" data-l10n="generateXML"></button>
-      <button data-action="copyXML" data-l10n="copyXML"></button>
-      <button data-action="downloadXML" data-l10n="downloadXML"></button>
-      <button data-action="importXML" data-l10n="importXML"></button>
-    </div>
-  </section>
-
-  <main id="main-container">
-    <section id="editor-area">
-      <div id="events-tabs" class="events-tabs"></div>
-      <div id="classic-view">
-        <div id="tree-root" class="node-root">
-          <strong data-l10n="rootEvent"></strong>
-          <div id="root-children"></div>
-        </div>
+  <div id="app-shell">
+    <header class="top-bar">
+      <div class="top-brand">
+        <h1>Barotrauma RNG Builder</h1>
+        <p>Visual event editor</p>
       </div>
-      <div id="tree-container" style="display:none;">
-        <div class="tree-layout">
-          <svg id="tree-svg"></svg>
-          <aside id="tree-inspector"></aside>
-        </div>
+
+      <div class="top-left">
+        <button id="view-btn" data-action="toggleView" data-action-tier="secondary" data-l10n="treeView"></button>
+        <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
+        <button data-action="projectImport" data-action-tier="neutral" data-l10n="projectImport"></button>
+        <button data-action="projectExport" data-action-tier="neutral" data-l10n="projectExport"></button>
+        <button data-action="undo" data-action-tier="neutral" data-l10n="undo"></button>
+        <button data-action="redo" data-action-tier="neutral" data-l10n="redo"></button>
+        <button id="settings-toggle" class="settings-fab" data-action-tier="secondary" data-l10n="settings"></button>
+      </div>
+    </header>
+
+    <section id="settings-panel" class="settings-panel floating-panel">
+      <div class="settings-grid">
+        <label><span data-l10n="theme"></span>
+          <select id="base-theme-select">
+            <option value="debug" data-l10n="themeDebug">Debug</option>
+            <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
+            <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
+            <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
+          </select>
+        </label>
+        <label><span data-l10n="themeMode"></span>
+          <select id="theme-mode-select">
+            <option value="dark" data-l10n="themeModeDark">Dark</option>
+            <option value="light" data-l10n="themeModeLight">Light</option>
+          </select>
+        </label>
+        <label><span data-l10n="language"></span>
+          <select id="lang-select">
+            <option value="en" data-l10n="langEnglish">English</option>
+            <option value="ru" data-l10n="langRussian">Русский</option>
+          </select>
+        </label>
+        <label><span data-l10n="uiScale"></span>
+          <select id="ui-scale-select">
+            <option value="90" data-l10n="uiScale90">90%</option>
+            <option value="100" data-l10n="uiScale100">100%</option>
+            <option value="110" data-l10n="uiScale110">110%</option>
+            <option value="125" data-l10n="uiScale125">125%</option>
+          </select>
+        </label>
+        <label><span data-l10n="themeStyle"></span>
+          <select id="theme-style-select">
+            <option value="compact" data-l10n="themeStyleCompact">Compact</option>
+            <option value="balanced" data-l10n="themeStyleBalanced">Balanced</option>
+            <option value="soft" data-l10n="themeStyleSoft">Soft</option>
+          </select>
+        </label>
+        <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
+        <label class="checkbox-row"><input id="toggle-chance-colors" type="checkbox" /><span data-l10n="chanceColorCoding"></span></label>
+        <label><span data-l10n="chanceInputMode"></span>
+          <select id="chance-input-mode">
+            <option value="fraction" data-l10n="chanceModeFraction">0..1</option>
+            <option value="percent" data-l10n="chanceModePercent">%</option>
+          </select>
+        </label>
+        <label><span data-l10n="autoChanceMode"></span>
+          <select id="auto-chance-global">
+            <option value="off" data-l10n="autoChanceOff">Off</option>
+            <option value="root-split" data-l10n="autoChanceRoot">Root</option>
+            <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
+          </select>
+        </label>
+        <button id="clear-cache-btn" type="button" data-l10n="clearCache"></button>
       </div>
     </section>
-  </main>
 
-  <div class="event-id-bar">
-    <label for="event-id" data-l10n="eventId"></label>
-    <input id="event-id" value="event_1" />
+    <section class="action-bar">
+      <div class="action-group">
+        <span class="action-title">Build</span>
+        <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-l10n="addRng"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="spawn" data-l10n="addItem"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="creature" data-l10n="addCreature"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-l10n="addAffliction"></button>
+      </div>
+
+      <div class="action-group">
+        <span class="action-title">Inspect</span>
+        <button data-action="openOutputTab" data-tab="simulation" data-action-tier="secondary" data-l10n="runSimulation"></button>
+        <button data-action="validateTree" data-action-tier="neutral" data-l10n="validateTree"></button>
+        <button data-action="toggleHeatmap" data-action-tier="neutral" data-l10n="toggleHeatmap"></button>
+        <button data-action="searchNodes" data-action-tier="neutral" data-l10n="searchNodes"></button>
+      </div>
+
+      <div class="action-group export-group">
+        <span class="action-title">XML</span>
+        <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
+        <button data-action="copyXML" data-action-tier="secondary" data-l10n="copyXML"></button>
+        <button data-action="downloadXML" data-action-tier="secondary" data-l10n="downloadXML"></button>
+        <button data-action="importXML" data-action-tier="secondary" data-l10n="importXML"></button>
+      </div>
+    </section>
+
+    <main id="main-container">
+      <section id="editor-area">
+        <div id="events-tabs" class="events-tabs"></div>
+        <div id="classic-view">
+          <div id="tree-root" class="node-root">
+            <strong data-l10n="rootEvent"></strong>
+            <div id="root-children"></div>
+          </div>
+        </div>
+        <div id="tree-container" style="display:none;">
+          <div class="tree-layout">
+            <svg id="tree-svg"></svg>
+            <aside id="tree-inspector"></aside>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section id="output-panel" class="output-panel">
+      <div class="output-panel-header">
+        <button id="output-collapse-toggle" type="button" data-action="toggleOutputCollapse" data-action-tier="neutral" class="output-collapse-btn">▼ Output</button>
+        <div class="output-tabs" role="tablist" aria-label="Output tabs">
+          <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
+          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
+        </div>
+        <div class="event-id-bar">
+          <label for="event-id" data-l10n="eventId"></label>
+          <input id="event-id" value="event_1" />
+        </div>
+      </div>
+
+      <div class="output-panel-body">
+        <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
+          <textarea id="output" spellcheck="false"></textarea>
+        </section>
+
+        <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
+          <div class="simulation-controls">
+            <label for="simulation-iterations">Iterations</label>
+            <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
+            <button type="button" data-action="runSimulation" data-action-tier="primary">Run Simulation</button>
+          </div>
+          <div class="simulation-table-wrap">
+            <table class="simulation-table">
+              <thead>
+                <tr>
+                  <th>Result</th>
+                  <th>Count</th>
+                  <th>Probability</th>
+                </tr>
+              </thead>
+              <tbody id="simulation-results"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
   </div>
-
-  <textarea id="output" spellcheck="false"></textarea>
 
   <script type="module">
     import { initEditorUI } from './ui/ui-controller.js';
