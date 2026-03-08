@@ -328,24 +328,56 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 
 .output-tabs {
-  display: inline-flex;
-  gap: 6px;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(84px, 1fr));
   padding: 2px;
   border: 1px solid var(--border-main);
-  border-radius: var(--ui-radius-sm);
+  border-radius: 999px;
   background: color-mix(in srgb, var(--bg-main) 35%, var(--bg-panel));
 }
 
+.output-tabs-indicator {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-accent) 22%, var(--bg-panel));
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 42%, var(--border-main));
+  transition: transform .22s ease;
+  pointer-events: none;
+}
+
 .output-tab {
+  position: relative;
+  z-index: 1;
   border: 1px solid transparent;
-  padding: 5px 10px;
+  border-radius: 999px;
+  padding: 5px 14px;
   background: transparent;
 }
 
 .output-tab.active {
-  border-color: color-mix(in srgb, var(--ui-accent) 50%, var(--border-main));
-  background: color-mix(in srgb, var(--ui-accent) 16%, var(--bg-panel));
+  border-color: transparent;
+  font-weight: 600;
 }
+
+.output-tabs[data-active-tab='simulation'] .output-tabs-indicator {
+  transform: translateX(100%);
+}
+
+.simulation-header-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#simulation-search { width: min(260px, 30vw); }
+#simulation-iterations { width: 110px; }
+#simulation-seed { width: 125px; }
 
 .event-id-bar {
   margin-left: auto;
@@ -379,16 +411,6 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   resize: none;
 }
 
-.simulation-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-#simulation-iterations { width: 130px; }
-
 .simulation-table-wrap {
   flex: 1 1 auto;
   min-height: 0;
@@ -407,12 +429,26 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   padding: 8px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--border-main) 65%, transparent);
   text-align: left;
+  white-space: nowrap;
 }
 
 .simulation-table th {
   position: sticky;
   top: 0;
   background: color-mix(in srgb, var(--bg-panel) 94%, var(--bg-main));
+}
+
+.simulation-table td:nth-child(2),
+.simulation-table td:nth-child(3),
+.simulation-table td:nth-child(4),
+.simulation-table th:nth-child(2),
+.simulation-table th:nth-child(3),
+.simulation-table th:nth-child(4) {
+  text-align: right;
+}
+
+#sim-prob-header {
+  cursor: pointer;
 }
 
 #toast-container { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; pointer-events: none; }
@@ -445,6 +481,9 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 @media (max-width: 1100px) {
   .output-panel-header {
     flex-wrap: wrap;
+  }
+  .simulation-header-controls {
+    width: 100%;
   }
   .event-id-bar {
     margin-left: 0;
