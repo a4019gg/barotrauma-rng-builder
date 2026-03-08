@@ -90,7 +90,7 @@
   flex: 1;
   padding: 6px 8px;
   background: color-mix(in srgb, var(--ui-panel) 82%, var(--ui-bg) 18%);
-  color: #eee;
+  color: var(--ui-text);
   border: 1px solid var(--ui-border);
   border-radius: 4px;
 }
@@ -100,9 +100,9 @@
 .db-compact,
 .db-expand-all {
   padding: 6px 10px;
-  background: #2e2e2e;
-  color: #ddd;
-  border: none;
+  background: color-mix(in srgb, var(--ui-panel) 82%, var(--ui-bg));
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
   border-radius: 4px;
   cursor: pointer;
 }
@@ -170,7 +170,7 @@
   border-radius: 12px;
   border: 1px solid var(--ui-border);
   background: color-mix(in srgb, var(--ui-panel) 82%, var(--ui-bg) 18%);
-  color: #ccc;
+  color: var(--ui-text);
   cursor: pointer;
   font-size: 12px;
 }
@@ -178,7 +178,15 @@
 .db-filter-btn.active {
   background: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent) 25%);
   color: var(--ui-text);
-  border-color: #4a4a4a;
+  border-color: color-mix(in srgb, var(--ui-border) 70%, var(--ui-accent));
+}
+
+body[data-theme-mode='light'] .db-window {
+  box-shadow: 0 12px 34px rgba(36, 48, 72, 0.2);
+}
+
+body[data-theme-mode='light'] .db-backdrop {
+  background: rgba(20, 26, 37, 0.28);
 }
 
 /* =========================================================

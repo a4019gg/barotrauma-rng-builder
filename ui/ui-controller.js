@@ -16,11 +16,14 @@ let pendingDeleteResetTimer = null;
 const EVENT_DELETE_CONFIRM_TIMEOUT_MS = 5000;
 
 let searchQuery = '';
+let simulationSortDirection = 'desc';
 
 let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
 function setOutputTab(tab) {
   const nextTab = tab === 'simulation' ? 'simulation' : 'xml';
+  const tabs = document.querySelector('.output-tabs');
+  if (tabs) tabs.dataset.activeTab = nextTab;
   document.querySelectorAll('.output-tab').forEach(btn => {
     const active = btn.dataset.tab === nextTab;
     btn.classList.toggle('active', active);
@@ -42,7 +45,20 @@ function setOutputCollapsed(collapsed) {
   localStorage.setItem(OUTPUT_COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
 }
 
-function sampleSimulationNode(nodes) {
+function createSeededRng(seedValue) {
+  const parsed = Number(seedValue);
+  if (!Number.isFinite(parsed)) return Math.random;
+  let state = (Math.floor(parsed) >>> 0) || 0x6d2b79f5;
+  return () => {
+    state += 0x6d2b79f5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function sampleSimulationNode(nodes, randomFn = Math.random) {
   if (!nodes.length) return [];
   const out = [];
   const walk = list => {
@@ -50,7 +66,7 @@ function sampleSimulationNode(nodes) {
       if (node.type === 'rng') {
         const chance = Number(node.params.chance);
         const clampedChance = Number.isFinite(chance) ? Math.max(0, Math.min(1, chance)) : 0;
-        const branch = Math.random() <= clampedChance ? 'success' : 'failure';
+        const branch = randomFn() <= clampedChance ? 'success' : 'failure';
         walk(node.children[branch] || []);
         return;
       }
@@ -68,21 +84,62 @@ function sampleSimulationNode(nodes) {
   return out;
 }
 
-function renderSimulationResults(results, iterations) {
+function calculateExactProbabilities(nodes) {
+  const totals = new Map();
+  const visit = (list, probability) => {
+    list.forEach(node => {
+      if (node.type === 'rng') {
+        const chanceValue = Number(node.params.chance);
+        const chance = Number.isFinite(chanceValue) ? Math.max(0, Math.min(1, chanceValue)) : 0;
+        visit(node.children.success || [], probability * chance);
+        visit(node.children.failure || [], probability * (1 - chance));
+        return;
+      }
+      if (['spawn', 'creature', 'affliction'].includes(node.type)) {
+        const key = node.type === 'spawn'
+          ? `SpawnItem ${node.params.item || 'unknown'}`
+          : node.type === 'creature'
+            ? `SpawnCreature ${node.params.creature || 'unknown'}`
+            : `Affliction ${node.params.affliction || 'unknown'}`;
+        totals.set(key, (totals.get(key) || 0) + probability);
+      }
+    });
+  };
+  visit(nodes, 1);
+  return totals;
+}
+
+function formatPercent(value) {
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+function renderSimulationResults(results, exactResults, iterations) {
   const body = document.getElementById('simulation-results');
   if (!body) return;
   body.innerHTML = '';
-  if (!results.size) {
+  if (!results.size && !exactResults.size) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="3">No terminal spawn nodes in tree</td>';
+    row.innerHTML = '<td colspan="4">No terminal spawn nodes in tree</td>';
     body.appendChild(row);
     return;
   }
-  [...results.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .forEach(([result, count]) => {
+
+  const keys = new Set([...results.keys(), ...exactResults.keys()]);
+  const rows = [...keys].map(result => {
+    const count = results.get(result) || 0;
+    const simulatedProbability = count / iterations;
+    const exactProbability = exactResults.get(result) || 0;
+    return { result, count, simulatedProbability, exactProbability };
+  });
+
+  rows
+    .sort((a, b) => {
+      if (simulationSortDirection === 'asc') return a.simulatedProbability - b.simulatedProbability;
+      return b.simulatedProbability - a.simulatedProbability;
+    })
+    .forEach(({ result, count, simulatedProbability, exactProbability }) => {
       const row = document.createElement('tr');
-      row.innerHTML = `<td>${result}</td><td>${count}</td><td>${((count / iterations) * 100).toFixed(2)}%</td>`;
+      row.innerHTML = `<td>${result}</td><td>${count}</td><td>${formatPercent(simulatedProbability)}</td><td>${formatPercent(exactProbability)}</td>`;
       body.appendChild(row);
     });
 }
@@ -150,9 +207,7 @@ function initButtonIcons() {
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
     ['button[data-action="importXML"]', 'upload-cloud', 'importXML'],
     ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'runSimulation'],
-    ['button[data-action="validateTree"]', 'checkmark-square', 'validateTree'],
-    ['button[data-action="toggleHeatmap"]', 'sun', 'toggleHeatmap'],
-    ['button[data-action="searchNodes"]', 'search', 'searchNodes']
+    ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation']
   ];
 
   iconMap.forEach(([selector, iconName, l10nKey]) => {
@@ -368,13 +423,10 @@ function handleClick(event) {
     setOutputCollapsed(!panel?.classList.contains('is-collapsed'));
   }
   if (action === 'runSimulation') runSimulation();
-  if (action === 'validateTree') runValidation();
-  if (action === 'toggleHeatmap') {
-    const next = !actionEl.classList.contains('active');
-    actionEl.classList.toggle('active', next);
-    treeService.setHeatmapEnabled(next);
+  if (action === 'toggleSimulationSort') {
+    simulationSortDirection = simulationSortDirection === 'desc' ? 'asc' : 'desc';
+    runSimulation();
   }
-  if (action === 'searchNodes') runSearch();
   if (action === 'quickAdd') runQuickAdd();
 }
 
@@ -398,6 +450,9 @@ function handleInput(event) {
   if (event.target.id === 'event-id') {
     dispatch({ type: 'UPDATE_EVENT_ID', index: editorStore.getState().currentEventIndex, eventId: event.target.value }, { skipHistory: true });
   }
+  if (event.target.id === 'simulation-search') {
+    runSearch(event.target.value);
+  }
 }
 
 
@@ -407,15 +462,19 @@ function runSimulation() {
   const iterationsValue = Number(iterationsInput?.value);
   const iterations = Number.isFinite(iterationsValue) ? Math.max(1, Math.min(200000, Math.floor(iterationsValue))) : 10000;
   if (iterationsInput) iterationsInput.value = String(iterations);
+  const seedInput = document.getElementById('simulation-seed');
+  const seed = seedInput?.value?.trim() || '';
+  const randomFn = seed ? createSeededRng(seed) : Math.random;
 
   const totals = new Map();
   for (let i = 0; i < iterations; i += 1) {
-    sampleSimulationNode(model).forEach(result => {
+    sampleSimulationNode(model, randomFn).forEach(result => {
       totals.set(result, (totals.get(result) || 0) + 1);
     });
   }
 
-  renderSimulationResults(totals, iterations);
+  const exactTotals = calculateExactProbabilities(model);
+  renderSimulationResults(totals, exactTotals, iterations);
   setOutputTab('simulation');
   setOutputCollapsed(false);
   if (!model.length) showNeutral('Simulation completed: empty tree');
@@ -443,10 +502,8 @@ function runValidation() {
   showNeutral(warnings.length ? warnings.slice(0, 25).join('\n') : 'Validation: no issues found');
 }
 
-function runSearch() {
-  const query = window.prompt('Find node by id/item/creature/affliction', searchQuery || '');
-  if (query == null) return;
-  searchQuery = query.trim().toLowerCase();
+function runSearch(rawQuery) {
+  searchQuery = String(rawQuery || '').trim().toLowerCase();
   if (!searchQuery) {
     treeService.setSearchHighlights([]);
     return;
@@ -458,7 +515,6 @@ function runSearch() {
   });
   treeService.setSearchHighlights(hits);
   if (hits.length) treeService.centerOnNode(hits[0]);
-  showNeutral(hits.length ? `Found ${hits.length} node(s)` : 'No matches');
 }
 
 function runQuickAdd() {

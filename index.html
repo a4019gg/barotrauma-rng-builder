@@ -96,14 +96,6 @@
         <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-l10n="addAffliction"></button>
       </div>
 
-      <div class="action-group">
-        <span class="action-title">Inspect</span>
-        <button data-action="openOutputTab" data-tab="simulation" data-action-tier="secondary" data-l10n="runSimulation"></button>
-        <button data-action="validateTree" data-action-tier="neutral" data-l10n="validateTree"></button>
-        <button data-action="toggleHeatmap" data-action-tier="neutral" data-l10n="toggleHeatmap"></button>
-        <button data-action="searchNodes" data-action-tier="neutral" data-l10n="searchNodes"></button>
-      </div>
-
       <div class="action-group export-group">
         <span class="action-title">XML</span>
         <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
@@ -135,8 +127,15 @@
       <div class="output-panel-header">
         <button id="output-collapse-toggle" type="button" data-action="toggleOutputCollapse" data-action-tier="neutral" class="output-collapse-btn">▼ Output</button>
         <div class="output-tabs" role="tablist" aria-label="Output tabs">
+          <div class="output-tabs-indicator" aria-hidden="true"></div>
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
+        </div>
+        <div class="simulation-header-controls">
+          <input id="simulation-search" type="text" data-l10n-placeholder="searchNodes" placeholder="Search Nodes" />
+          <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
+          <input id="simulation-seed" type="text" placeholder="random" />
+          <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
         </div>
         <div class="event-id-bar">
           <label for="event-id" data-l10n="eventId"></label>
@@ -150,18 +149,14 @@
         </section>
 
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
-          <div class="simulation-controls">
-            <label for="simulation-iterations">Iterations</label>
-            <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
-            <button type="button" data-action="runSimulation" data-action-tier="primary">Run Simulation</button>
-          </div>
           <div class="simulation-table-wrap">
             <table class="simulation-table">
               <thead>
                 <tr>
                   <th>Result</th>
                   <th>Count</th>
-                  <th>Probability</th>
+                  <th id="sim-prob-header" data-action="toggleSimulationSort">Simulated Probability</th>
+                  <th>Exact Probability</th>
                 </tr>
               </thead>
               <tbody id="simulation-results"></tbody>
