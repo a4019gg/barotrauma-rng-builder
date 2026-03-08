@@ -1,6 +1,5 @@
 import { editorStore } from '../state/store.js';
 import { dispatch } from './action-dispatcher.js';
-import { flattenWithProbabilities } from '../core/tree-model.js';
 import { renderNode } from './node-renderer.js';
 import { buildEventXML } from '../io/xml-export.js';
 import { parseEventXML } from '../io/xml-import.js';
@@ -19,6 +18,74 @@ const EVENT_DELETE_CONFIRM_TIMEOUT_MS = 5000;
 let searchQuery = '';
 
 let contextMenuEl = null;
+const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
+function setOutputTab(tab) {
+  const nextTab = tab === 'simulation' ? 'simulation' : 'xml';
+  document.querySelectorAll('.output-tab').forEach(btn => {
+    const active = btn.dataset.tab === nextTab;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-output-pane]').forEach(pane => {
+    pane.classList.toggle('active', pane.dataset.outputPane === nextTab);
+  });
+}
+
+function setOutputCollapsed(collapsed) {
+  const panel = document.getElementById('output-panel');
+  const body = panel?.querySelector('.output-panel-body');
+  const toggle = document.getElementById('output-collapse-toggle');
+  if (!panel || !body || !toggle) return;
+  panel.classList.toggle('is-collapsed', collapsed);
+  body.hidden = collapsed;
+  toggle.textContent = `${collapsed ? '▶' : '▼'} Output`;
+  localStorage.setItem(OUTPUT_COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
+}
+
+function sampleSimulationNode(nodes) {
+  if (!nodes.length) return [];
+  const out = [];
+  const walk = list => {
+    list.forEach(node => {
+      if (node.type === 'rng') {
+        const chance = Number(node.params.chance);
+        const clampedChance = Number.isFinite(chance) ? Math.max(0, Math.min(1, chance)) : 0;
+        const branch = Math.random() <= clampedChance ? 'success' : 'failure';
+        walk(node.children[branch] || []);
+        return;
+      }
+      if (['spawn', 'creature', 'affliction'].includes(node.type)) {
+        const key = node.type === 'spawn'
+          ? `SpawnItem ${node.params.item || 'unknown'}`
+          : node.type === 'creature'
+            ? `SpawnCreature ${node.params.creature || 'unknown'}`
+            : `Affliction ${node.params.affliction || 'unknown'}`;
+        out.push(key);
+      }
+    });
+  };
+  walk(nodes);
+  return out;
+}
+
+function renderSimulationResults(results, iterations) {
+  const body = document.getElementById('simulation-results');
+  if (!body) return;
+  body.innerHTML = '';
+  if (!results.size) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="3">No terminal spawn nodes in tree</td>';
+    body.appendChild(row);
+    return;
+  }
+  [...results.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([result, count]) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${result}</td><td>${count}</td><td>${((count / iterations) * 100).toFixed(2)}%</td>`;
+      body.appendChild(row);
+    });
+}
 
 function closeContextMenu() {
   if (contextMenuEl) contextMenuEl.remove();
@@ -82,7 +149,7 @@ function initButtonIcons() {
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
     ['button[data-action="importXML"]', 'upload-cloud', 'importXML'],
-    ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation'],
+    ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'runSimulation'],
     ['button[data-action="validateTree"]', 'checkmark-square', 'validateTree'],
     ['button[data-action="toggleHeatmap"]', 'sun', 'toggleHeatmap'],
     ['button[data-action="searchNodes"]', 'search', 'searchNodes']
@@ -292,6 +359,14 @@ function handleClick(event) {
 
   if (action === 'undo') editorStore.undo();
   if (action === 'redo') editorStore.redo();
+  if (action === 'openOutputTab') {
+    setOutputTab(actionEl.dataset.tab);
+    if (actionEl.dataset.tab === 'simulation') setOutputCollapsed(false);
+  }
+  if (action === 'toggleOutputCollapse') {
+    const panel = document.getElementById('output-panel');
+    setOutputCollapsed(!panel?.classList.contains('is-collapsed'));
+  }
   if (action === 'runSimulation') runSimulation();
   if (action === 'validateTree') runValidation();
   if (action === 'toggleHeatmap') {
@@ -328,15 +403,22 @@ function handleInput(event) {
 
 function runSimulation() {
   const model = editorStore.getState().currentEvent.model;
-  const nodes = flattenWithProbabilities(model);
+  const iterationsInput = document.getElementById('simulation-iterations');
+  const iterationsValue = Number(iterationsInput?.value);
+  const iterations = Number.isFinite(iterationsValue) ? Math.max(1, Math.min(200000, Math.floor(iterationsValue))) : 10000;
+  if (iterationsInput) iterationsInput.value = String(iterations);
+
   const totals = new Map();
-  nodes.forEach(({ node, probability }) => {
-    if (!['spawn', 'creature', 'affliction'].includes(node.type)) return;
-    const key = node.type === 'spawn' ? `SpawnItem ${node.params.item || 'unknown'}` : node.type === 'creature' ? `SpawnCreature ${node.params.creature || 'unknown'}` : `Affliction ${node.params.affliction || 'unknown'}`;
-    totals.set(key, (totals.get(key) || 0) + probability);
-  });
-  const lines = [...totals.entries()].sort((a,b) => b[1]-a[1]).slice(0, 20).map(([k,v]) => `${k} → ${(v*100).toFixed(2)}%`);
-  showNeutral(lines.length ? lines.join('\n') : 'No terminal spawn nodes in tree');
+  for (let i = 0; i < iterations; i += 1) {
+    sampleSimulationNode(model).forEach(result => {
+      totals.set(result, (totals.get(result) || 0) + 1);
+    });
+  }
+
+  renderSimulationResults(totals, iterations);
+  setOutputTab('simulation');
+  setOutputCollapsed(false);
+  if (!model.length) showNeutral('Simulation completed: empty tree');
 }
 
 function runValidation() {
@@ -427,6 +509,10 @@ export function initEditorUI() {
     renderModel();
     updateXML();
   });
+
+  const collapsed = localStorage.getItem(OUTPUT_COLLAPSE_STORAGE_KEY) === '1';
+  setOutputTab('xml');
+  setOutputCollapsed(collapsed);
 
   renderEvents();
   renderModel();

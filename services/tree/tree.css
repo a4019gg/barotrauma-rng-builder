@@ -2,7 +2,8 @@
   border: 1px solid var(--border-main);
   border-radius: 12px;
   background: var(--bg-panel);
-  min-height: 520px;
+  min-height: 0;
+  height: 100%;
   padding: 8px;
   position: relative;
   overflow: hidden;
@@ -12,13 +13,14 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 12px;
-  min-height: 560px;
+  min-height: 0;
+  height: 100%;
 }
 
 #tree-svg {
   width: 100%;
   height: 100%;
-  min-height: 540px;
+  min-height: 0;
   border: 1px solid color-mix(in srgb, var(--border-main) 80%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--bg-panel-soft) 78%, var(--bg-main) 22%);
@@ -43,32 +45,32 @@
 #tree-svg.is-dragging-tree .tree-node,
 #tree-svg.is-dragging-tree .tree-link-percent,
 #tree-svg.is-dragging-tree .tree-node-percent { transition: none; }
-.tree-link.link-success { stroke: color-mix(in srgb, var(--ui-accent) 60%, #3bc47a); }
-.tree-link.link-failure { stroke: color-mix(in srgb, var(--ui-accent) 45%, #d15a6e); }
+.tree-link.link-success { stroke: color-mix(in srgb, var(--ui-accent) 60%, var(--ui-accent-strong)); }
+.tree-link.link-failure { stroke: color-mix(in srgb, var(--ui-accent) 30%, var(--ui-border)); }
 .tree-link-percent, .tree-node-percent { fill: var(--ui-text); font-size: 11px; font-weight: 700; }
-.chance-low { fill: #ff6161; }
-.chance-mid { fill: #ffd25f; }
-.chance-high { fill: #52d978; }
+.chance-low { fill: color-mix(in srgb, var(--ui-accent-strong) 60%, var(--ui-border)); }
+.chance-mid { fill: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-text)); }
+.chance-high { fill: color-mix(in srgb, var(--ui-accent) 80%, var(--ui-text)); }
 
-.tree-card { fill: color-mix(in srgb, var(--bg-panel) 85%, #223958 15%); stroke: var(--ui-border); stroke-width: 2; }
+.tree-card { fill: color-mix(in srgb, var(--bg-panel) 85%, var(--bg-main) 15%); stroke: var(--ui-border); stroke-width: 2; }
 .tree-node.selected .tree-card,
 .tree-node.drop-target .tree-card { stroke: var(--ui-accent-strong); filter: drop-shadow(0 0 6px rgba(106, 156, 238, 0.4)); }
 .tree-card-root { fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent) 25%); stroke: var(--ui-accent); }
 .tree-root-title { fill: var(--ui-text); font-weight: 700; font-size: 14px; }
 .tree-branch-card { stroke-width: 1.6; }
-.tree-branch-card.branch-success { fill: color-mix(in srgb, var(--ui-panel) 68%, #2b825f); stroke: #4dd59a; }
-.tree-branch-card.branch-failure { fill: color-mix(in srgb, var(--ui-panel) 68%, #7b3045); stroke: #ef8ea8; }
+.tree-branch-card.branch-success { fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent)); stroke: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-text)); }
+.tree-branch-card.branch-failure { fill: color-mix(in srgb, var(--ui-panel) 85%, var(--ui-border)); stroke: color-mix(in srgb, var(--ui-border) 65%, var(--ui-text)); }
 .tree-branch-label { fill: var(--ui-text); font-size: 12px; font-weight: 700; }
 
 
 .tree-node.drop-target-success .tree-card {
-  stroke: #8af7bf;
-  filter: drop-shadow(0 0 9px rgba(66, 196, 138, 0.38));
+  stroke: color-mix(in srgb, var(--ui-accent) 75%, var(--ui-text));
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--ui-accent) 35%, transparent));
 }
 
 .tree-node.drop-target-failure .tree-card {
-  stroke: #ff9cb5;
-  filter: drop-shadow(0 0 9px rgba(223, 122, 146, 0.4));
+  stroke: color-mix(in srgb, var(--ui-border) 45%, var(--ui-text));
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--ui-border) 45%, transparent));
 }
 
 .tree-drop-zone {
@@ -78,18 +80,18 @@
 }
 
 .tree-drop-zone rect {
-  fill: rgba(70, 84, 107, 0.74);
+  fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-border));
   stroke-width: 1.6px;
 }
 
 .tree-drop-zone text {
-  fill: #eef6ff;
+  fill: var(--ui-text);
   font-size: 13px;
   font-weight: 700;
 }
 
-.tree-drop-success rect { stroke: #4dd59a; }
-.tree-drop-failure rect { stroke: #ef8ea8; }
+.tree-drop-success rect { stroke: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-text)); }
+.tree-drop-failure rect { stroke: color-mix(in srgb, var(--ui-border) 55%, var(--ui-text)); }
 
 #tree-svg.is-dragging-tree .tree-drop-zone {
   opacity: 0.88;
@@ -107,11 +109,11 @@
 }
 
 .tree-node.drop-target-success .tree-drop-success rect {
-  fill: rgba(47, 121, 92, 0.8);
+  fill: color-mix(in srgb, var(--ui-accent) 35%, var(--ui-panel));
 }
 
 .tree-node.drop-target-failure .tree-drop-failure rect {
-  fill: rgba(135, 58, 79, 0.82);
+  fill: color-mix(in srgb, var(--ui-border) 78%, var(--ui-panel));
 }
 
 .tree-node-fo { color: var(--text-main); font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px; }
@@ -134,8 +136,8 @@
 .node-title .ui-icon { margin-right: 6px; width: 16px; height: 16px; vertical-align: middle; }
 .tree-affliction-icon { width: 16px; height: 16px; margin-right: 6px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
 .node-title { font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; }
-.remove-btn { border-color: #c56b86; background: #4a1f2d; }
-.remove-btn .ui-icon { color: #ffd6e1; }
+.remove-btn { border-color: color-mix(in srgb, var(--ui-border) 60%, var(--ui-text)); background: color-mix(in srgb, var(--ui-panel) 78%, var(--ui-border)); }
+.remove-btn .ui-icon { color: var(--ui-text); }
 .tree-inline-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
 .tree-field { display: flex; gap: 4px; align-items: center; font-size: 11px; text-transform: lowercase; }
 .tree-field span { min-width: 48px; opacity: 0.85; }
@@ -143,11 +145,11 @@
 .tree-field select { width: 100%; min-width: 0; border: 1px solid var(--border-main); background: color-mix(in srgb, var(--bg-main) 85%, #000); color: var(--text-main); border-radius: 5px; padding: 3px 5px; font-size: 11px; }
 .tree-inline-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
 .tree-inline-actions-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-.tree-inline-actions-row.success { border-bottom: 1px solid color-mix(in srgb, #57c997 35%, transparent); padding-bottom: 4px; }
+.tree-inline-actions-row.success { border-bottom: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent); padding-bottom: 4px; }
 .tree-inline-actions-row.failure { padding-top: 1px; }
 .add-btn { padding: 3px 0; }
-.add-success { border-color: #57c997; }
-.add-failure { border-color: #de7f9c; }
+.add-success { border-color: color-mix(in srgb, var(--ui-accent) 62%, var(--ui-text)); }
+.add-failure { border-color: color-mix(in srgb, var(--ui-border) 62%, var(--ui-text)); }
 
 #tree-inspector { border-left: 1px solid var(--border-main); padding-left: 12px; color: var(--text-main); font-size: 13px; }
 .tree-editor-meta { margin-top: 8px; }
@@ -200,7 +202,7 @@
   padding: 4px 6px;
 }
 .tree-setting-row input[type="number"] { max-width: 92px; }
-.tree-setting-row .mm-percent { fill: #d8e8ff; font-size: 8px; }
+.tree-setting-row .mm-percent { fill: var(--ui-text); font-size: 8px; }
 
 .tree-minimap {
   position: absolute;
@@ -240,24 +242,24 @@
   width: 14px;
   height: 14px;
   border: 0;
-  background: linear-gradient(135deg, transparent 55%, rgba(198, 220, 255, 0.75) 55%, rgba(198, 220, 255, 0.75) 63%, transparent 63%);
+  background: linear-gradient(135deg, transparent 55%, color-mix(in srgb, var(--ui-text) 75%, transparent) 55%, color-mix(in srgb, var(--ui-text) 75%, transparent) 63%, transparent 63%);
   cursor: nwse-resize;
 }
 .tree-segmented-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tree-settings-export details > summary { list-style: none; cursor: pointer; width: 100%; }
 .tree-settings-export details > summary::-webkit-details-marker { display: none; }
 .tree-export-menu { margin-top: 8px; display: grid; gap: 6px; }
-.tree-minimap .mm-percent { fill: #d7e9ff; font-size: 8px; font-weight: 600; }
+.tree-minimap .mm-percent { fill: var(--ui-text); font-size: 8px; font-weight: 600; }
 .tree-minimap .mm-node-icon { font-size: 10px; dominant-baseline: central; text-anchor: middle; cursor: pointer; }
 
 .tree-minimap .mm-bg {
-  fill: rgba(64, 90, 132, 0.08);
-  stroke: rgba(144, 174, 222, 0.18);
+  fill: color-mix(in srgb, var(--ui-panel) 90%, transparent);
+  stroke: color-mix(in srgb, var(--ui-border) 35%, transparent);
 }
 
 .tree-minimap .mm-viewport {
-  fill: rgba(105, 153, 238, 0.12);
-  stroke: rgba(180, 210, 255, 0.72);
+  fill: color-mix(in srgb, var(--ui-accent) 15%, transparent);
+  stroke: color-mix(in srgb, var(--ui-accent) 55%, var(--ui-text));
   stroke-width: 1;
   rx: 4;
 }
