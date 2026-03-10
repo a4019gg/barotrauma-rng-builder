@@ -24,6 +24,8 @@
 
   --output-expanded-h: clamp(240px, 32vh, 360px);
   --output-collapsed-h: 54px;
+  --topbar-h: 58px;
+  --toolbar-h: 62px;
 }
 
 html,
@@ -93,7 +95,7 @@ button {
   border: 1px solid var(--border-main);
   background: var(--btn-neutral-bg);
   color: var(--text-main);
-  padding: 7px 10px;
+  padding: 7px 12px;
   border-radius: var(--ui-radius-sm);
   cursor: pointer;
   transition: border-color .14s ease, background-color .14s ease, color .14s ease;
@@ -121,7 +123,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--border-main);
   background: var(--bg-panel);
   flex: 0 0 auto;
@@ -129,16 +131,25 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .top-bar {
   justify-content: space-between;
-  flex-wrap: wrap;
   background: color-mix(in srgb, var(--bg-panel) 92%, var(--bg-main));
+  min-height: var(--topbar-h);
 }
 
-.top-brand { display: flex; flex-direction: column; gap: 2px; }
-.top-brand h1 { margin: 0; font-size: 1.05rem; }
-.top-brand p { margin: 0; color: var(--text-muted); font-size: .82rem; }
-
 .top-left, .top-right, .action-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.top-left, .top-right { align-items: center; }
 .spacer { flex: 1; }
+
+.app-logo {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-main);
+  border-radius: var(--ui-radius-sm);
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--ui-text) 8%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--ui-text) 8%, transparent) 75%),
+    linear-gradient(45deg, color-mix(in srgb, var(--ui-text) 8%, transparent) 25%, transparent 25%, transparent 75%, color-mix(in srgb, var(--ui-text) 8%, transparent) 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 5px 5px;
+}
 
 .segmented-control {
   position: relative;
@@ -191,7 +202,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 .settings-panel.open { display: grid; }
 .floating-panel {
   position: fixed;
-  top: 56px;
+  top: calc(var(--topbar-h) + 6px);
   right: 14px;
   z-index: 1300;
   width: min(360px, calc(100vw - 28px));
@@ -215,7 +226,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 10px 14px;
+  padding: 8px 10px;
   overflow: hidden;
 }
 
@@ -236,13 +247,15 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 #tree-container {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .action-bar {
   align-items: stretch;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 14px;
   background: color-mix(in srgb, var(--bg-panel) 88%, var(--bg-main));
+  min-height: var(--toolbar-h);
 }
 
 .action-group {
@@ -254,6 +267,17 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   border-radius: var(--ui-radius-md);
   background: color-mix(in srgb, var(--bg-panel-soft) 80%, var(--bg-main));
   flex-wrap: wrap;
+  position: relative;
+}
+
+.action-group + .action-group::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: color-mix(in srgb, var(--border-main) 58%, transparent);
 }
 
 .action-title {
@@ -264,7 +288,8 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   margin-right: 4px;
 }
 
-.export-group { margin-left: auto; }
+.export-group,
+.file-group { margin-left: 0; }
 
 .events-tabs {
   display: flex;
@@ -439,10 +464,27 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   min-height: 0;
 }
 
+.xml-pane-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.xml-pane-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.xml-pane-actions button[data-action='generateXML'] {
+  min-width: 146px;
+  font-weight: 600;
+}
+
 #output {
   width: 100%;
   min-height: 0;
-  height: 100%;
+  flex: 1 1 auto;
   border-radius: var(--ui-radius-md);
   resize: none;
 }
@@ -546,8 +588,8 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
     flex-wrap: wrap;
   }
   .event-id-bar {
-    margin-left: 0;
-    width: 100%;
+    margin-left: auto;
+    width: auto;
   }
 
   .simulation-control-grid {
@@ -562,9 +604,12 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
   .top-bar { flex-direction: column; align-items: stretch; }
   .top-left { width: 100%; }
+  .top-right { justify-content: flex-end; }
   .segmented-control { width: 100%; max-width: 220px; }
   .action-group,
-  .export-group { width: 100%; margin-left: 0; }
+  .export-group,
+  .file-group { width: 100%; margin-left: 0; }
+  .action-group + .action-group::before { display: none; }
   .simulation-control-grid {
     grid-template-columns: 1fr;
   }
@@ -614,7 +659,7 @@ body[data-base-theme='neon-ops'] {
 }
 
 body[data-base-theme='neon-ops'] .action-title,
-body[data-base-theme='neon-ops'] .top-brand h1 {
+body[data-base-theme='neon-ops'] .output-collapse-btn {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

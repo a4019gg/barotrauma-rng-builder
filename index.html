@@ -15,20 +15,18 @@
 <body>
   <div id="app-shell">
     <header class="top-bar">
-      <div class="top-brand">
-        <h1>Barotrauma RNG Builder</h1>
-        <p>Visual event editor</p>
-      </div>
-
       <div class="top-left">
+        <div class="app-logo" aria-hidden="true"></div>
         <div id="view-segmented" class="segmented-control" data-view-mode="node" role="tablist" aria-label="Editor mode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
           <button type="button" class="segmented-option" data-action="setViewMode" data-view-mode="tree" role="tab" aria-selected="false" data-l10n="treeMode"></button>
         </div>
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
-        <button data-action="projectImport" data-action-tier="neutral" data-l10n="projectImport"></button>
-        <button data-action="projectExport" data-action-tier="neutral" data-l10n="projectExport"></button>
+      </div>
+
+      <div class="top-right">
+        <button type="button" data-action-tier="neutral">Help</button>
         <button id="settings-toggle" class="settings-fab" data-action-tier="secondary" data-l10n="settings"></button>
       </div>
     </header>
@@ -105,10 +103,15 @@
 
       <div class="action-group export-group">
         <span class="action-title">XML</span>
-        <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
         <button data-action="copyXML" data-action-tier="secondary" data-l10n="copyXML"></button>
         <button data-action="downloadXML" data-action-tier="secondary" data-l10n="downloadXML"></button>
         <button data-action="importXML" data-action-tier="secondary" data-l10n="importXML"></button>
+      </div>
+
+      <div class="action-group file-group">
+        <span class="action-title">File</span>
+        <button data-action="projectImport" data-action-tier="neutral" data-l10n="projectImport"></button>
+        <button data-action="projectExport" data-action-tier="neutral" data-l10n="projectExport"></button>
       </div>
     </section>
 
@@ -138,15 +141,20 @@
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
         </div>
-        <div class="event-id-bar">
-          <label for="event-id" data-l10n="eventId"></label>
-          <input id="event-id" value="event_1" />
-        </div>
       </div>
 
       <div class="output-panel-body">
         <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
+          <div class="xml-pane-toolbar">
+            <div class="event-id-bar">
+              <label for="event-id" data-l10n="eventId"></label>
+              <input id="event-id" value="event_1" />
+            </div>
+          </div>
           <textarea id="output" spellcheck="false"></textarea>
+          <div class="xml-pane-actions">
+            <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
+          </div>
         </section>
 
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
