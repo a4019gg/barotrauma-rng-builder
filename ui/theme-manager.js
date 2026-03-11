@@ -1,7 +1,7 @@
 import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 
 const BASE_THEMES = {
-  debug: { id: 'debug', label: 'Debug' },
+  debug: { id: 'debug', label: 'Normal' },
   'neon-ops': { id: 'neon-ops', label: 'Neon Ops' },
   'retro-terminal': { id: 'retro-terminal', label: 'Retro Terminal' },
   'soft-bloom': { id: 'soft-bloom', label: 'Soft Bloom' }
