@@ -35,7 +35,7 @@
       <div class="settings-grid">
         <label><span data-l10n="theme"></span>
           <select id="base-theme-select">
-            <option value="debug" data-l10n="themeDebug">Debug</option>
+            <option value="debug" data-l10n="themeDebug">Normal</option>
             <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
             <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
             <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
@@ -141,16 +141,21 @@
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
         </div>
+        <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
+        <div class="output-header-controls">
+          <label class="header-search-bar" for="simulation-search">
+            <span data-l10n="search"></span>
+            <input id="simulation-search" type="text" data-l10n-placeholder="searchNodes" placeholder="Search Nodes" />
+          </label>
+          <div class="event-id-bar">
+            <label for="event-id" data-l10n="eventId"></label>
+            <input id="event-id" value="event_1" />
+          </div>
+        </div>
       </div>
 
       <div class="output-panel-body">
         <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
-          <div class="xml-pane-toolbar">
-            <div class="event-id-bar">
-              <label for="event-id" data-l10n="eventId"></label>
-              <input id="event-id" value="event_1" />
-            </div>
-          </div>
           <textarea id="output" spellcheck="false"></textarea>
           <div class="xml-pane-actions">
             <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
@@ -159,10 +164,6 @@
 
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
           <div class="simulation-controls-panel">
-            <label class="simulation-control-row simulation-control-row-search">
-              <span data-l10n="search"></span>
-              <input id="simulation-search" type="text" data-l10n-placeholder="searchNodes" placeholder="Search Nodes" />
-            </label>
             <div class="simulation-control-grid">
               <label class="simulation-control-row">
                 <span data-l10n="iterations"></span>
@@ -172,7 +173,6 @@
                 <span data-l10n="seed"></span>
                 <input id="simulation-seed" type="text" placeholder="random" />
               </label>
-              <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
             </div>
           </div>
           <div class="simulation-table-wrap">
