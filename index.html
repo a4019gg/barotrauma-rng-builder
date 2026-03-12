@@ -103,8 +103,21 @@
         <div class="menu-item" role="none">
           <button type="button" class="menu-button" role="menuitem">Settings</button>
           <div class="menu-dropdown" role="menu">
-            <button type="button" role="menuitem" data-action="openSettingsLanguage">Language</button>
-            <button type="button" role="menuitem" data-action="openSettingsXmlBehavior">XML Behavior</button>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">Language <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="en" data-l10n="langEnglish"></button>
+                <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="ru" data-l10n="langRussian"></button>
+              </div>
+            </div>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">XML Behavior <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="importXML">Import XML</button>
+                <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
+                <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
+              </div>
+            </div>
             <button type="button" role="menuitem" data-action="resetSettings">Reset Settings</button>
           </div>
         </div>

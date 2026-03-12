@@ -6,7 +6,7 @@ import { parseEventXML } from '../io/xml-import.js';
 import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
-import { applyLocalization, onLangChange, t } from './localization.js';
+import { applyLocalization, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
 import { onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
@@ -463,6 +463,7 @@ function handleClick(event) {
     handleMenuStub('Feature available in upcoming updates');
   }
   if (action === 'openSettingsLanguage' || action === 'openSettingsXmlBehavior') openSettingsPanel();
+  if (action === 'menuSetLanguage') setLang(actionEl.dataset.value);
   if (action === 'resetSettings') {
     localStorage.clear();
     location.reload();
