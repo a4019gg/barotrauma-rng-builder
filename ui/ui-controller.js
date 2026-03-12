@@ -7,9 +7,9 @@ import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, onLangChange, t } from './localization.js';
-import { initSettingsController } from './settings-controller.js';
+import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
-import { onThemeChange } from './theme-manager.js';
+import { onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -347,6 +347,29 @@ function handleProjectStub() {
   showNeutral(t('projectStub'));
 }
 
+
+function handleMenuStub(message) {
+  showNeutral(message);
+}
+
+function handleMenuDeleteSelected() {
+  const selectedId = treeService.getSelectedNodeId();
+  if (selectedId == null) {
+    showNeutral('Select a node to delete');
+    return;
+  }
+  dispatch({ type: 'REMOVE_NODE', id: selectedId });
+}
+
+function handleMenuDuplicateSelected() {
+  const selectedId = treeService.getSelectedNodeId();
+  if (selectedId == null) {
+    showNeutral('Select a node to duplicate');
+    return;
+  }
+  dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId });
+}
+
 function handleClick(event) {
   const actionEl = event.target.closest('[data-action]');
   if (!actionEl) return;
@@ -426,6 +449,24 @@ function handleClick(event) {
     setOutputCollapsed(!panel?.classList.contains('is-collapsed'));
   }
   if (action === 'runSimulation') runSimulation();
+  if (action === 'validateTree') runValidation();
+  if (action === 'menuDeleteSelected') handleMenuDeleteSelected();
+  if (action === 'menuDuplicateSelected') handleMenuDuplicateSelected();
+  if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
+  if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
+  if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
+  if (action === 'openDocumentation') window.open('https://barotraumagame.com/wiki/', '_blank', 'noopener');
+  if (action === 'openGithub') window.open('https://github.com/', '_blank', 'noopener');
+  if (action === 'reportIssue') window.open('https://github.com/issues', '_blank', 'noopener');
+  if (action === 'aboutApp') handleMenuStub('Barotrauma RNG Builder');
+  if (action === 'probabilityAnalysis' || action === 'loadPreset' || action === 'savePreset' || action === 'managePreset') {
+    handleMenuStub('Feature available in upcoming updates');
+  }
+  if (action === 'openSettingsLanguage' || action === 'openSettingsXmlBehavior') openSettingsPanel();
+  if (action === 'resetSettings') {
+    localStorage.clear();
+    location.reload();
+  }
   if (action === 'toggleSimulationSort') {
     simulationSortDirection = simulationSortDirection === 'desc' ? 'asc' : 'desc';
     runSimulation();

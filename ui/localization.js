@@ -262,7 +262,7 @@ const DICTS = {
     dropZoneFailureHint: 'Отпустите сюда, чтобы вставить в ветку Failure',
     confirmRemoveEvent: 'Удалить это событие?',
     smoothTreePaths: 'Плавные линии связей',
-    runSimulation: 'Симуляция',
+    runSimulation: 'Запуск симуляции',
     validateTree: 'Проверить дерево',
     toggleHeatmap: 'Тепловая карта',
     searchNodes: 'Поиск нод',
