@@ -14,20 +14,109 @@
 </head>
 <body>
   <div id="app-shell">
-    <header class="top-bar">
-      <div class="top-left">
-        <div class="app-logo" aria-hidden="true"></div>
+    <header class="top-bar menu-bar">
+      <div class="menu-left" role="menubar" aria-label="Main menu">
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">File</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="projectImport">Import Project</button>
+            <button type="button" role="menuitem" data-action="projectExport">Export Project</button>
+            <button type="button" role="menuitem" data-action="importXML">Import XML</button>
+            <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
+            <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">Edit</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="undo" data-l10n="undo"></button>
+            <button type="button" role="menuitem" data-action="redo" data-l10n="redo"></button>
+            <button type="button" role="menuitem" data-action="menuDeleteSelected">Delete Node</button>
+            <button type="button" role="menuitem" data-action="menuDuplicateSelected">Duplicate Node</button>
+            <button type="button" role="menuitem" data-action="clearAll" data-l10n="clearEvent"></button>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">Presets</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="loadPreset">Load Preset</button>
+            <button type="button" role="menuitem" data-action="savePreset">Save As Preset</button>
+            <button type="button" role="menuitem" data-action="managePreset">Manage Presets</button>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">Tools</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="runSimulation" data-l10n="runSimulation"></button>
+            <button type="button" role="menuitem" data-action="validateTree" data-l10n="validateTree"></button>
+            <button type="button" role="menuitem" data-action="probabilityAnalysis">Probability Analysis</button>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">View</button>
+          <div class="menu-dropdown" role="menu">
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">Theme <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetThemeMode" data-value="dark" data-l10n="themeModeDark"></button>
+                <button type="button" role="menuitem" data-action="menuSetThemeMode" data-value="light" data-l10n="themeModeLight"></button>
+              </div>
+            </div>
+
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">Style <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="debug" data-l10n="themeDebug"></button>
+                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="neon-ops" data-l10n="themeNeonOps"></button>
+                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="retro-terminal" data-l10n="themeRetroTerminal"></button>
+                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="soft-bloom" data-l10n="themeSoftBloom"></button>
+              </div>
+            </div>
+
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">UI Scale <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="80">80%</button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="90" data-l10n="uiScale90"></button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="100" data-l10n="uiScale100"></button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="110" data-l10n="uiScale110"></button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="120">120%</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">Help</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="openDocumentation">Documentation</button>
+            <button type="button" role="menuitem" data-action="openGithub">GitHub</button>
+            <button type="button" role="menuitem" data-action="reportIssue">Report Issue</button>
+            <button type="button" role="menuitem" data-action="aboutApp">About</button>
+          </div>
+        </div>
+
+        <div class="menu-item" role="none">
+          <button type="button" class="menu-button" role="menuitem">Settings</button>
+          <div class="menu-dropdown" role="menu">
+            <button type="button" role="menuitem" data-action="openSettingsLanguage">Language</button>
+            <button type="button" role="menuitem" data-action="openSettingsXmlBehavior">XML Behavior</button>
+            <button type="button" role="menuitem" data-action="resetSettings">Reset Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-right">
+        <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
         <div id="view-segmented" class="segmented-control" data-view-mode="node" role="tablist" aria-label="Editor mode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
           <button type="button" class="segmented-option" data-action="setViewMode" data-view-mode="tree" role="tab" aria-selected="false" data-l10n="treeMode"></button>
         </div>
-        <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
-      </div>
-
-      <div class="top-right">
-        <button type="button" data-action-tier="neutral">Help</button>
-        <button id="settings-toggle" class="settings-fab" data-action-tier="secondary" data-l10n="settings"></button>
       </div>
     </header>
 
@@ -100,19 +189,6 @@
         <button data-action="undo" data-action-tier="neutral" data-l10n="undo"></button>
         <button data-action="redo" data-action-tier="neutral" data-l10n="redo"></button>
       </div>
-
-      <div class="action-group export-group">
-        <span class="action-title">XML</span>
-        <button data-action="copyXML" data-action-tier="secondary" data-l10n="copyXML"></button>
-        <button data-action="downloadXML" data-action-tier="secondary" data-l10n="downloadXML"></button>
-        <button data-action="importXML" data-action-tier="secondary" data-l10n="importXML"></button>
-      </div>
-
-      <div class="action-group file-group">
-        <span class="action-title">File</span>
-        <button data-action="projectImport" data-action-tier="neutral" data-l10n="projectImport"></button>
-        <button data-action="projectExport" data-action-tier="neutral" data-l10n="projectExport"></button>
-      </div>
     </section>
 
     <main id="main-container">
@@ -139,9 +215,8 @@
         <div class="output-tabs" role="tablist" aria-label="Output tabs">
           <div class="output-tabs-indicator" aria-hidden="true"></div>
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
-          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false">Simulation</button>
+          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false" data-l10n="runSimulation"></button>
         </div>
-        <button type="button" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
         <div class="output-header-controls">
           <label class="header-search-bar" for="simulation-search">
             <span data-l10n="search"></span>
@@ -165,14 +240,15 @@
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
           <div class="simulation-controls-panel">
             <div class="simulation-control-grid">
-              <label class="simulation-control-row">
+              <label class="simulation-control-row inline-control-row">
                 <span data-l10n="iterations"></span>
                 <input id="simulation-iterations" type="number" min="1" max="200000" step="100" value="10000" />
               </label>
-              <label class="simulation-control-row">
+              <label class="simulation-control-row inline-control-row">
                 <span data-l10n="seed"></span>
                 <input id="simulation-seed" type="text" placeholder="random" />
               </label>
+              <button type="button" class="simulation-run-btn" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
             </div>
           </div>
           <div class="simulation-table-wrap">

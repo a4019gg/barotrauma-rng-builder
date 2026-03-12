@@ -17,14 +17,16 @@ export function initSettingsController() {
   const settingsRoot = document.getElementById('settings-panel');
   const toggleBtn = document.getElementById('settings-toggle');
 
-  toggleBtn.addEventListener('click', () => {
-    settingsRoot.classList.toggle('open');
-    applyLocalization(settingsRoot);
-  });
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      settingsRoot.classList.toggle('open');
+      applyLocalization(settingsRoot);
+    });
+  }
 
   document.addEventListener('click', event => {
     if (!settingsRoot.classList.contains('open')) return;
-    if (event.target.closest('#settings-panel') || event.target.closest('#settings-toggle')) return;
+    if (event.target.closest('#settings-panel') || (toggleBtn && event.target.closest('#settings-toggle'))) return;
     settingsRoot.classList.remove('open');
   });
 
@@ -67,4 +69,17 @@ export function initSettingsController() {
     document.getElementById('toggle-chance-colors').checked = currentState.chanceColorCoding;
     document.getElementById('chance-input-mode').value = currentState.chanceInputMode;
   });
+}
+
+export function openSettingsPanel() {
+  const settingsRoot = document.getElementById('settings-panel');
+  if (!settingsRoot) return;
+  settingsRoot.classList.add('open');
+  applyLocalization(settingsRoot);
+}
+
+export function closeSettingsPanel() {
+  const settingsRoot = document.getElementById('settings-panel');
+  if (!settingsRoot) return;
+  settingsRoot.classList.remove('open');
 }
