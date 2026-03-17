@@ -33,34 +33,34 @@ body[data-base-theme='debug'][data-theme-mode='light'] {
 }
 
 body[data-base-theme='classic-luna'][data-theme-mode='light'] {
-  --ui-bg: #eaf3ff;
-  --ui-panel: #ffffff;
-  --ui-border: #7ca2d8;
-  --ui-text: #0f2f58;
-  --ui-muted: #456690;
-  --ui-accent: #2f77da;
-  --ui-accent-strong: #205bb2;
-  --ui-grid: rgba(47, 119, 218, 0.09);
-  --ui-shadow: 0 8px 24px rgba(63, 105, 158, 0.18);
-  --ui-radius-sm: 6px;
-  --ui-radius-md: 8px;
-  --ui-radius-lg: 10px;
+  --ui-bg: #dbeafc;
+  --ui-panel: #f7fbff;
+  --ui-border: #6486b3;
+  --ui-text: #0a2243;
+  --ui-muted: #345884;
+  --ui-accent: #2b67b6;
+  --ui-accent-strong: #1d4d96;
+  --ui-grid: rgba(43, 103, 182, 0.11);
+  --ui-shadow: 0 8px 18px rgba(59, 88, 124, 0.22);
+  --ui-radius-sm: 3px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 5px;
 }
 
 body[data-base-theme='classic-luna'][data-theme-mode='dark'] {
-  --ui-bg: #13233a;
-  --ui-panel: #1b2f4d;
-  --ui-border: #4b6e9f;
-  --ui-text: #d9e9ff;
-  --ui-muted: #9db4d8;
-  --ui-accent: #6fb0ff;
-  --ui-accent-strong: #9bc8ff;
-  --ui-grid: rgba(111, 176, 255, 0.14);
-  --ui-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
-  --ui-radius-sm: 6px;
-  --ui-radius-md: 8px;
-  --ui-radius-lg: 10px;
-  --ui-text-contrast: #10223a;
+  --ui-bg: #0f2240;
+  --ui-panel: #1d3863;
+  --ui-border: #5f83b7;
+  --ui-text: #e5f0ff;
+  --ui-muted: #afc4e4;
+  --ui-accent: #7cb5ff;
+  --ui-accent-strong: #b5d5ff;
+  --ui-grid: rgba(124, 181, 255, 0.16);
+  --ui-shadow: 0 10px 24px rgba(5, 9, 17, 0.48);
+  --ui-radius-sm: 3px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 5px;
+  --ui-text-contrast: #0f2444;
 }
 
 body[data-base-theme='debug'][data-theme-mode='dark'] {
@@ -79,18 +79,18 @@ body[data-base-theme='debug'][data-theme-mode='dark'] {
 }
 
 body[data-base-theme='neon-ops'][data-theme-mode='dark'] {
-  --ui-bg: #090e18;
-  --ui-panel: #121a28;
-  --ui-border: #2b3a52;
-  --ui-text: #dfe8f7;
-  --ui-muted: #8b9ab4;
-  --ui-accent: #4de7d0;
-  --ui-accent-strong: #98f58f;
-  --ui-grid: rgba(77, 231, 208, 0.1);
-  --ui-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  --ui-bg: #070c14;
+  --ui-panel: #111c2b;
+  --ui-border: #2d4260;
+  --ui-text: #dce9ff;
+  --ui-muted: #8ea2c3;
+  --ui-accent: #33d5ff;
+  --ui-accent-strong: #b6ff5c;
+  --ui-grid: rgba(51, 213, 255, 0.14);
+  --ui-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
   --ui-cut-corner: 10px;
   --ui-overlay-opacity: 1;
-  --ui-text-contrast: #071119;
+  --ui-text-contrast: #06111e;
 }
 
 body[data-base-theme='neon-ops'][data-theme-mode='light'] {
