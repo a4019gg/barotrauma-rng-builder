@@ -607,6 +607,32 @@ function handleKeyboardShortcuts(event) {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); runQuickAdd(); }
 }
 
+function initMenuBarBehavior() {
+  const menuBar = document.querySelector('.menu-left[role="menubar"]');
+  if (!menuBar) return;
+
+  menuBar.addEventListener('pointerenter', event => {
+    const hoveredItem = event.target.closest('.menu-item');
+    if (!hoveredItem) return;
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement) || !menuBar.contains(active) || hoveredItem.contains(active)) return;
+    active.blur();
+  }, true);
+
+  menuBar.addEventListener('click', event => {
+    const menuAction = event.target.closest('.menu-dropdown [data-action]');
+    if (!menuAction) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+  });
+
+  document.addEventListener('click', event => {
+    if (event.target.closest('.menu-item')) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && menuBar.contains(active)) active.blur();
+  });
+}
+
 export function initEditorUI() {
   document.addEventListener('click', handleClick);
   document.addEventListener('change', handleChange);
@@ -617,6 +643,7 @@ export function initEditorUI() {
   document.addEventListener('click', closeContextMenu);
 
   initSettingsController();
+  initMenuBarBehavior();
   initButtonIcons();
   applyLocalization();
   updateMenuThemeStatus();

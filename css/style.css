@@ -201,8 +201,10 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .menu-item:hover > .menu-dropdown,
 .menu-item:focus-within > .menu-dropdown,
+.menu-item.is-open > .menu-dropdown,
 .menu-subitem:hover > .menu-dropdown,
-.menu-subitem:focus-within > .menu-dropdown {
+.menu-subitem:focus-within > .menu-dropdown,
+.menu-subitem.is-open > .menu-dropdown {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -795,10 +797,91 @@ button[data-action="toggleHeatmap"].active {
   background: color-mix(in srgb, var(--bg-panel) 65%, var(--ui-accent));
 }
 
+
+body[data-base-theme='classic-luna'] .top-bar,
+body[data-base-theme='classic-luna'] .action-bar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 96%, #ffffff 4%), color-mix(in srgb, var(--bg-panel) 82%, #b9d1ef 18%));
+  border-bottom-color: color-mix(in srgb, var(--border-main) 88%, #eef6ff 12%);
+}
+
+body[data-base-theme='classic-luna'] .menu-button,
+body[data-base-theme='classic-luna'] .menu-dropdown button,
+body[data-base-theme='classic-luna'] button,
+body[data-base-theme='classic-luna'] input,
+body[data-base-theme='classic-luna'] select,
+body[data-base-theme='classic-luna'] textarea,
+body[data-base-theme='classic-luna'] .segmented-control,
+body[data-base-theme='classic-luna'] .action-group,
+body[data-base-theme='classic-luna'] .node,
+body[data-base-theme='classic-luna'] .node-root,
+body[data-base-theme='classic-luna'] .output-panel,
+body[data-base-theme='classic-luna'] .output-tab {
+  border-radius: 2px;
+}
+
+body[data-base-theme='classic-luna'] button,
+body[data-base-theme='classic-luna'] input,
+body[data-base-theme='classic-luna'] select,
+body[data-base-theme='classic-luna'] textarea,
+body[data-base-theme='classic-luna'] .segmented-control,
+body[data-base-theme='classic-luna'] .action-group,
+body[data-base-theme='classic-luna'] .output-panel,
+body[data-base-theme='classic-luna'] .node,
+body[data-base-theme='classic-luna'] .node-root {
+  border-color: color-mix(in srgb, var(--border-main) 85%, #f3f8ff 15%);
+  box-shadow: inset 1px 1px 0 color-mix(in srgb, #ffffff 70%, var(--bg-panel)), inset -1px -1px 0 color-mix(in srgb, #6e8fb5 55%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] button:hover,
+body[data-base-theme='classic-luna'] .menu-button:hover,
+body[data-base-theme='classic-luna'] .menu-item:hover > .menu-button,
+body[data-base-theme='classic-luna'] .menu-subitem:hover > .menu-button {
+  background: linear-gradient(180deg, #fff7d8, #f6de96);
+  border-color: #9b7a2e;
+}
+
+body[data-base-theme='classic-luna'] .menu-dropdown {
+  background: #f0f6ff;
+  border-color: #6f93c0;
+}
+
+body[data-base-theme='classic-luna'] .menu-dropdown button.is-selected {
+  background: linear-gradient(180deg, #4d90e6, #2f6ebd);
+  border-color: #234f92;
+  color: #ffffff;
+}
+
+body[data-theme-mode='light'] {
+  --btn-neutral-bg: color-mix(in srgb, var(--ui-panel) 88%, #ffffff 12%);
+  --btn-secondary-bg: color-mix(in srgb, var(--ui-panel) 80%, #e8f0fb 20%);
+  --btn-primary-bg: color-mix(in srgb, var(--ui-accent) 22%, #ffffff 10%);
+}
+
+body[data-theme-mode='light'] .top-bar,
+body[data-theme-mode='light'] .action-bar,
+body[data-theme-mode='light'] .output-panel,
+body[data-theme-mode='light'] .action-group,
+body[data-theme-mode='light'] .node,
+body[data-theme-mode='light'] .node-root,
+body[data-theme-mode='light'] .menu-dropdown,
+body[data-theme-mode='light'] .node-context-menu,
+body[data-theme-mode='light'] .simulation-table-wrap,
+body[data-theme-mode='light'] #tree-inspector,
+body[data-theme-mode='light'] #events-tabs {
+  background-color: color-mix(in srgb, var(--ui-panel) 92%, #ffffff 8%);
+  box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 68%, transparent), var(--ui-shadow-node);
+}
+
+body[data-theme-mode='light'] .menu-dropdown,
+body[data-theme-mode='light'] .node-context-menu,
+body[data-theme-mode='light'] .about-modal-panel {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--ui-bg) 20%, transparent);
+}
+
 body[data-base-theme='neon-ops'] {
-  --btn-neutral-bg: color-mix(in srgb, var(--ui-panel) 90%, var(--ui-bg));
-  --btn-secondary-bg: color-mix(in srgb, var(--ui-panel) 84%, var(--ui-bg));
-  --btn-primary-bg: color-mix(in srgb, var(--ui-accent) 18%, var(--ui-panel));
+  --btn-neutral-bg: color-mix(in srgb, var(--ui-panel) 92%, #09121f 8%);
+  --btn-secondary-bg: color-mix(in srgb, var(--ui-panel) 82%, #0a1828 18%);
+  --btn-primary-bg: linear-gradient(135deg, color-mix(in srgb, var(--ui-accent) 28%, var(--ui-panel)), color-mix(in srgb, var(--ui-accent-strong) 24%, var(--ui-panel)));
 }
 
 body[data-base-theme='neon-ops'] .action-title,
@@ -829,11 +912,13 @@ body[data-base-theme='neon-ops'] button {
 body[data-base-theme='neon-ops'] .menu-button,
 body[data-base-theme='neon-ops'] .output-tab,
 body[data-base-theme='neon-ops'] .segmented-option {
-  background-image: linear-gradient(130deg, color-mix(in srgb, var(--ui-accent) 12%, transparent), transparent 60%);
+  background-image: linear-gradient(130deg, color-mix(in srgb, var(--ui-accent) 20%, transparent), color-mix(in srgb, var(--ui-accent-strong) 8%, transparent) 62%, transparent 85%);
 }
 
 body[data-base-theme='neon-ops'] .action-group button[data-action-tier='secondary'] {
   border-style: dashed;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 body[data-base-theme='neon-ops'] .xml-pane-actions button,
@@ -852,8 +937,30 @@ body[data-base-theme='neon-ops'] button[data-action-tier='primary'] {
 }
 
 body[data-base-theme='neon-ops'] button:hover {
-  background: color-mix(in srgb, var(--ui-accent) 24%, var(--btn-secondary-bg));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ui-accent) 28%, var(--btn-secondary-bg)), color-mix(in srgb, var(--ui-accent-strong) 16%, var(--btn-secondary-bg)));
   color: var(--ui-text);
+}
+
+
+body[data-base-theme='neon-ops'] .top-bar {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ui-accent) 16%, transparent), transparent 28%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 95%, #050910 5%), color-mix(in srgb, var(--bg-panel) 85%, #142640 15%));
+}
+
+body[data-base-theme='neon-ops'] .menu-dropdown,
+body[data-base-theme='neon-ops'] .node-context-menu {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--bg-panel) 90%, #08111d 10%), color-mix(in srgb, var(--bg-panel) 96%, #1b2f45 4%));
+  border-color: color-mix(in srgb, var(--ui-accent) 28%, var(--ui-border));
+}
+
+body[data-base-theme='neon-ops'] #editor-area::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(135deg, transparent 0 24px, color-mix(in srgb, var(--ui-accent) 10%, transparent) 24px 25px);
+  opacity: 0.5;
 }
 
 body[data-base-theme='neon-ops'] button[data-action-tier='primary']:hover {
