@@ -9,7 +9,7 @@ import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
-import { onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
+import { getThemeState, onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -226,7 +226,7 @@ function initButtonIcons() {
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
     ['button[data-action="importXML"]', 'upload-cloud', 'importXML'],
-    ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'runSimulation'],
+    ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'simulation'],
     ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation']
   ];
 
@@ -352,6 +352,31 @@ function handleMenuStub(message) {
   showNeutral(message);
 }
 
+function updateMenuThemeStatus() {
+  const theme = getThemeState();
+  document.querySelectorAll('button[data-action="menuSetThemeMode"]').forEach(button => {
+    const selected = button.dataset.value === theme.themeMode;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
+  document.querySelectorAll('button[data-action="menuSetBaseTheme"]').forEach(button => {
+    const selected = button.dataset.value === theme.baseTheme;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
+}
+
+function openAboutPanel() {
+  if (document.querySelector('.about-modal')) return;
+  const modal = document.createElement('div');
+  modal.className = 'about-modal';
+  modal.innerHTML = `<div class="about-modal-backdrop" data-role="close"></div><section class="about-modal-panel" role="dialog" aria-modal="true" aria-label="About"><h3>Barotrauma RNG Builder</h3><p>Placeholder info panel.</p><p>Tree editor, XML generation and simulation tools for event balancing.</p><button type="button" data-role="close">Close</button></section>`;
+  modal.addEventListener('click', event => {
+    if (event.target.dataset.role === 'close') modal.remove();
+  });
+  document.body.appendChild(modal);
+}
+
 function handleMenuDeleteSelected() {
   const selectedId = treeService.getSelectedNodeId();
   if (selectedId == null) {
@@ -455,10 +480,13 @@ function handleClick(event) {
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
   if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
-  if (action === 'openDocumentation') window.open('https://barotraumagame.com/wiki/', '_blank', 'noopener');
-  if (action === 'openGithub') window.open('https://github.com/', '_blank', 'noopener');
-  if (action === 'reportIssue') window.open('https://github.com/issues', '_blank', 'noopener');
-  if (action === 'aboutApp') handleMenuStub('Barotrauma RNG Builder');
+  if (action === 'openDocumentation') handleMenuStub('Documentation placeholder');
+  if (action === 'openWiki') window.open('https://barotraumagame.com/wiki', '_blank', 'noopener');
+  if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
+  if (action === 'reportIssue') window.open('https://github.com/a4019gg/barotrauma-rng-builder/issues', '_blank', 'noopener');
+  if (action === 'aboutApp') openAboutPanel();
+  if (action === 'menuLangPlaceholder') handleMenuStub('Localization placeholder');
+  if (action === 'basePresetPlaceholder') handleMenuStub('Base preset placeholder');
   if (action === 'probabilityAnalysis' || action === 'loadPreset' || action === 'savePreset' || action === 'managePreset') {
     handleMenuStub('Feature available in upcoming updates');
   }
@@ -591,9 +619,11 @@ export function initEditorUI() {
   initSettingsController();
   initButtonIcons();
   applyLocalization();
+  updateMenuThemeStatus();
 
   onThemeChange(() => {
     renderModel();
+    updateMenuThemeStatus();
   });
 
   onLangChange(() => {
