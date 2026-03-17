@@ -41,6 +41,14 @@
         <div class="menu-item" role="none">
           <button type="button" class="menu-button" role="menuitem">Presets</button>
           <div class="menu-dropdown" role="menu">
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem">Base Presets <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="basePresetPlaceholder">Outpost Mission</button>
+                <button type="button" role="menuitem" data-action="basePresetPlaceholder">Wreck Expedition</button>
+              </div>
+            </div>
+            <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
             <button type="button" role="menuitem" data-action="loadPreset">Load Preset</button>
             <button type="button" role="menuitem" data-action="savePreset">Save As Preset</button>
             <button type="button" role="menuitem" data-action="managePreset">Manage Presets</button>
@@ -50,7 +58,7 @@
         <div class="menu-item" role="none">
           <button type="button" class="menu-button" role="menuitem">Tools</button>
           <div class="menu-dropdown" role="menu">
-            <button type="button" role="menuitem" data-action="runSimulation" data-l10n="runSimulation"></button>
+            <button type="button" role="menuitem" data-action="runSimulation" data-l10n="simulation"></button>
             <button type="button" role="menuitem" data-action="validateTree" data-l10n="validateTree"></button>
             <button type="button" role="menuitem" data-action="probabilityAnalysis">Probability Analysis</button>
           </div>
@@ -71,6 +79,7 @@
               <button type="button" class="menu-button submenu-trigger" role="menuitem">Style <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="debug" data-l10n="themeDebug"></button>
+                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="classic-luna" data-l10n="themeClassicLuna"></button>
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="neon-ops" data-l10n="themeNeonOps"></button>
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="retro-terminal" data-l10n="themeRetroTerminal"></button>
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="soft-bloom" data-l10n="themeSoftBloom"></button>
@@ -94,8 +103,9 @@
           <button type="button" class="menu-button" role="menuitem">Help</button>
           <div class="menu-dropdown" role="menu">
             <button type="button" role="menuitem" data-action="openDocumentation">Documentation</button>
+            <button type="button" role="menuitem" data-action="openWiki">Wiki</button>
             <button type="button" role="menuitem" data-action="openGithub">GitHub</button>
-            <button type="button" role="menuitem" data-action="reportIssue">Report Issue</button>
+            <button type="button" role="menuitem" data-action="reportIssue">Issues</button>
             <button type="button" role="menuitem" data-action="aboutApp">About</button>
           </div>
         </div>
@@ -108,6 +118,8 @@
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="en" data-l10n="langEnglish"></button>
                 <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="ru" data-l10n="langRussian"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder">Deutsch (placeholder)</button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder">Español (placeholder)</button>
               </div>
             </div>
             <div class="menu-subitem" role="none">
@@ -138,6 +150,7 @@
         <label><span data-l10n="theme"></span>
           <select id="base-theme-select">
             <option value="debug" data-l10n="themeDebug">Normal</option>
+            <option value="classic-luna" data-l10n="themeClassicLuna">Classic Luna</option>
             <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
             <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
             <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
@@ -228,7 +241,7 @@
         <div class="output-tabs" role="tablist" aria-label="Output tabs">
           <div class="output-tabs-indicator" aria-hidden="true"></div>
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
-          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false" data-l10n="runSimulation"></button>
+          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false" data-l10n="simulation"></button>
         </div>
         <div class="output-header-controls">
           <label class="header-search-bar" for="simulation-search">

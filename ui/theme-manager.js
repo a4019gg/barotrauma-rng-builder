@@ -2,6 +2,7 @@ import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 
 const BASE_THEMES = {
   debug: { id: 'debug', label: 'Normal' },
+  'classic-luna': { id: 'classic-luna', label: 'Classic Luna' },
   'neon-ops': { id: 'neon-ops', label: 'Neon Ops' },
   'retro-terminal': { id: 'retro-terminal', label: 'Retro Terminal' },
   'soft-bloom': { id: 'soft-bloom', label: 'Soft Bloom' }
@@ -19,7 +20,7 @@ const STYLE_VARIANTS = {
 };
 
 const defaults = {
-  baseTheme: 'neon-ops',
+  baseTheme: 'debug',
   themeMode: 'dark',
   themeStyle: 'balanced',
   uiScale: '100',
