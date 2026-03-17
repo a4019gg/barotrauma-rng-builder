@@ -280,37 +280,10 @@ function renderList() {
 }
 
 function renderVirtualList(sortedEntries, listEl) {
-  const threshold = 140;
-  if (sortedEntries.length <= threshold) {
-    virtualState = null;
-    for (const entry of sortedEntries) listEl.appendChild(buildEntryCard(entry));
-    return;
+  virtualState = null;
+  for (const entry of sortedEntries) {
+    listEl.appendChild(buildEntryCard(entry));
   }
-  const viewport = listEl.closest('.db-content') || listEl;
-  const itemHeight = isCompact ? 72 : 124;
-  const overscan = 8;
-  const spacer = document.createElement('div');
-  spacer.className = 'db-virtual-spacer';
-  spacer.style.height = `${sortedEntries.length * itemHeight}px`;
-  listEl.appendChild(spacer);
-  const layer = document.createElement('div');
-  layer.className = 'db-virtual-layer';
-  listEl.appendChild(layer);
-  virtualState = { sortedEntries, layer };
-
-  const update = () => {
-    if (!virtualState || virtualState.sortedEntries !== sortedEntries) return;
-    const viewTop = viewport.scrollTop;
-    const viewHeight = viewport.clientHeight || 500;
-    const start = Math.max(0, Math.floor(viewTop / itemHeight) - overscan);
-    const end = Math.min(sortedEntries.length, Math.ceil((viewTop + viewHeight) / itemHeight) + overscan);
-    layer.innerHTML = '';
-    layer.style.transform = `translateY(${start * itemHeight}px)`;
-    for (let i = start; i < end; i += 1) layer.appendChild(buildEntryCard(sortedEntries[i]));
-  };
-
-  viewport.onscroll = update;
-  update();
 }
 
 async function ensureCurrentTypeLoaded() {
