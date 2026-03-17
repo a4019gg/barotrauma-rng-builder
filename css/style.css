@@ -34,6 +34,19 @@ body {
 }
 
 body {
+  --bg-main: var(--ui-bg);
+  --bg-panel: var(--ui-panel);
+  --bg-panel-soft: color-mix(in srgb, var(--ui-panel) 84%, var(--ui-bg));
+  --text-main: var(--ui-text);
+  --text-muted: var(--ui-muted);
+  --border-main: var(--ui-border);
+  --accent-main: var(--ui-accent);
+  --btn-neutral-bg: color-mix(in srgb, var(--ui-panel) 80%, var(--ui-bg));
+  --btn-secondary-bg: color-mix(in srgb, var(--ui-panel) 74%, var(--ui-bg));
+  --btn-primary-bg: color-mix(in srgb, var(--ui-accent) 14%, var(--ui-panel));
+  --btn-primary-text: var(--ui-text);
+  --ui-shadow-node: 0 4px 14px color-mix(in srgb, var(--ui-bg) 44%, transparent);
+
   margin: 0;
   font-family: var(--ui-font, Inter, system-ui, sans-serif);
   color: var(--text-main);
@@ -798,64 +811,85 @@ button[data-action="toggleHeatmap"].active {
 }
 
 
-body[data-base-theme='classic-luna'] .top-bar,
-body[data-base-theme='classic-luna'] .action-bar {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .top-bar,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .action-bar {
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 96%, #ffffff 4%), color-mix(in srgb, var(--bg-panel) 82%, #b9d1ef 18%));
   border-bottom-color: color-mix(in srgb, var(--border-main) 88%, #eef6ff 12%);
 }
 
-body[data-base-theme='classic-luna'] .menu-button,
-body[data-base-theme='classic-luna'] .menu-dropdown button,
-body[data-base-theme='classic-luna'] button,
-body[data-base-theme='classic-luna'] input,
-body[data-base-theme='classic-luna'] select,
-body[data-base-theme='classic-luna'] textarea,
-body[data-base-theme='classic-luna'] .segmented-control,
-body[data-base-theme='classic-luna'] .action-group,
-body[data-base-theme='classic-luna'] .node,
-body[data-base-theme='classic-luna'] .node-root,
-body[data-base-theme='classic-luna'] .output-panel,
-body[data-base-theme='classic-luna'] .output-tab {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-button,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-dropdown button,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] button,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] input,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] select,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] textarea,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .segmented-control,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .action-group,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .node,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .node-root,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .output-panel,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .output-tab {
   border-radius: 2px;
 }
 
-body[data-base-theme='classic-luna'] button,
-body[data-base-theme='classic-luna'] input,
-body[data-base-theme='classic-luna'] select,
-body[data-base-theme='classic-luna'] textarea,
-body[data-base-theme='classic-luna'] .segmented-control,
-body[data-base-theme='classic-luna'] .action-group,
-body[data-base-theme='classic-luna'] .output-panel,
-body[data-base-theme='classic-luna'] .node,
-body[data-base-theme='classic-luna'] .node-root {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] button,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] input,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] select,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] textarea,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .segmented-control,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .action-group,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .output-panel,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .node,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .node-root {
   border-color: color-mix(in srgb, var(--border-main) 85%, #f3f8ff 15%);
   box-shadow: inset 1px 1px 0 color-mix(in srgb, #ffffff 70%, var(--bg-panel)), inset -1px -1px 0 color-mix(in srgb, #6e8fb5 55%, var(--border-main));
 }
 
-body[data-base-theme='classic-luna'] button:hover,
-body[data-base-theme='classic-luna'] .menu-button:hover,
-body[data-base-theme='classic-luna'] .menu-item:hover > .menu-button,
-body[data-base-theme='classic-luna'] .menu-subitem:hover > .menu-button {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] button:hover,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-button:hover,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-item:hover > .menu-button,
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-subitem:hover > .menu-button {
   background: linear-gradient(180deg, #fff7d8, #f6de96);
   border-color: #9b7a2e;
 }
 
-body[data-base-theme='classic-luna'] .menu-dropdown {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-dropdown {
   background: #f0f6ff;
   border-color: #6f93c0;
 }
 
-body[data-base-theme='classic-luna'] .menu-dropdown button.is-selected {
+body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-dropdown button.is-selected {
   background: linear-gradient(180deg, #4d90e6, #2f6ebd);
   border-color: #234f92;
   color: #ffffff;
 }
 
-body[data-theme-mode='light'] {
-  --btn-neutral-bg: color-mix(in srgb, var(--ui-panel) 88%, #ffffff 12%);
-  --btn-secondary-bg: color-mix(in srgb, var(--ui-panel) 80%, #e8f0fb 20%);
-  --btn-primary-bg: color-mix(in srgb, var(--ui-accent) 22%, #ffffff 10%);
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .top-bar,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .action-bar {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 94%, #091325 6%), color-mix(in srgb, var(--bg-panel) 88%, #0f1f38 12%));
 }
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] button,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] input,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] select,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] textarea,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .segmented-control,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .action-group,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .output-panel,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .node,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .node-root {
+  border-color: color-mix(in srgb, var(--border-main) 88%, #132748 12%);
+  box-shadow: inset 1px 1px 0 color-mix(in srgb, #87aede 22%, transparent), inset -1px -1px 0 color-mix(in srgb, #0a1528 72%, var(--border-main));
+}
+
+body[data-theme-mode='light'] {
+  --btn-neutral-bg: #ffffff;
+  --btn-secondary-bg: color-mix(in srgb, var(--ui-accent) 8%, #ffffff);
+  --btn-primary-bg: color-mix(in srgb, var(--ui-accent) 18%, #ffffff);
+  --btn-primary-text: var(--ui-text);
+}
+
 
 body[data-theme-mode='light'] .top-bar,
 body[data-theme-mode='light'] .action-bar,
@@ -868,7 +902,7 @@ body[data-theme-mode='light'] .node-context-menu,
 body[data-theme-mode='light'] .simulation-table-wrap,
 body[data-theme-mode='light'] #tree-inspector,
 body[data-theme-mode='light'] #events-tabs {
-  background-color: color-mix(in srgb, var(--ui-panel) 92%, #ffffff 8%);
+  background-color: var(--ui-panel);
   box-shadow: 0 1px 0 color-mix(in srgb, #ffffff 68%, transparent), var(--ui-shadow-node);
 }
 
