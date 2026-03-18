@@ -54,7 +54,7 @@ export function initSettingsController() {
   document.getElementById('toggle-grid').checked = state.grid;
   document.getElementById('toggle-chance-colors').checked = state.chanceColorCoding;
   document.getElementById('chance-input-mode').value = state.chanceInputMode;
-  document.getElementById('auto-chance-global').value = getAppSetting('autoChanceMode') || 'branch-split';
+  document.getElementById('auto-chance-global').value = getAppSetting('autoChanceMode') || 'off';
 
   onLangChange(() => {
     applyLocalization();

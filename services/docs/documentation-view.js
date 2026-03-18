@@ -1,3 +1,4 @@
+import { t } from "../../ui/localization.js";
 import { documentationGroups } from "./documentation-data.js";
 import * as documentationStore from "./documentation-store.js";
 import { tDoc } from "./docs-loc.js";
@@ -155,6 +156,7 @@ function render() {
   const titleEl = rootEl.querySelector(".docs-module-title");
   const subtitleEl = rootEl.querySelector(".docs-module-subtitle");
   const backButton = rootEl.querySelector('[data-action="openEditorModule"]');
+  const groupsNav = rootEl.querySelector('.docs-groups');
   if (searchInput) {
     searchInput.placeholder = tDoc("docs.ui.searchPlaceholder");
     if (searchInput.value !== state.searchQuery) searchInput.value = state.searchQuery;
@@ -162,6 +164,7 @@ function render() {
   if (titleEl) titleEl.textContent = tDoc("docs.ui.title");
   if (subtitleEl) subtitleEl.textContent = tDoc("docs.ui.subtitle");
   if (backButton) backButton.textContent = tDoc("docs.ui.backToEditor");
+  if (groupsNav) groupsNav.setAttribute('aria-label', t('docsGroupsLabel'));
   const emptyTitle = rootEl.querySelector(".docs-empty h3");
   const emptyText = rootEl.querySelector(".docs-empty p");
   if (emptyTitle) emptyTitle.textContent = tDoc("docs.ui.searchEmptyTitle");
@@ -206,7 +209,7 @@ export function initDocumentationView(container) {
         <input type="search" class="docs-search-input" />
         <div class="docs-search-summary"></div>
       </div>
-      <nav class="docs-groups" aria-label="Documentation groups"></nav>
+      <nav class="docs-groups" aria-label=""></nav>
       <div class="docs-articles"></div>
       <div class="docs-empty" hidden>
         <h3></h3>

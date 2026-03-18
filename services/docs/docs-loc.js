@@ -1,34 +1,30 @@
-const dictionaries = new Map();
-let currentLang = "en";
+import { getLang, hasLocalizationKey, registerLocalizationBundle, setLang, t } from '../../ui/localization.js';
+
+// Documentation uses the same localization backend as the rest of the app,
+// but keeps its own key space so article text remains modular.
 
 export function registerDocumentationDictionary(lang, entries) {
-  if (!lang || !entries || typeof entries !== "object") return;
-  dictionaries.set(lang, { ...entries });
+  registerLocalizationBundle('docs', { [lang]: entries });
 }
 
 export function setDocumentationLanguage(lang) {
-  if (!lang || !dictionaries.has(lang)) return;
-  currentLang = lang;
+  setLang(lang);
 }
 
 export function getDocumentationLanguage() {
-  return currentLang;
+  return getLang();
 }
 
-export function tDoc(key, fallback = "") {
-  const dict = dictionaries.get(currentLang);
-  if (dict && key in dict) return dict[key];
-  const english = dictionaries.get("en");
-  if (english && key in english) return english[key];
-  return fallback || key;
+export function tDoc(key, fallback = '') {
+  return t(key, fallback || key);
 }
 
-export function hasDocKey(key, lang = currentLang) {
-  const dict = dictionaries.get(lang);
-  return Boolean(dict && key in dict);
+export function hasDocKey(key, lang = getLang()) {
+  return hasLocalizationKey(key, lang);
 }
 
-registerDocumentationDictionary("en", {
+registerLocalizationBundle('docs', {
+  en: {
   "docs.ui.title": "Documentation",
   "docs.ui.subtitle": "Built-in guide for practical Barotrauma event authoring.",
   "docs.ui.backToEditor": "Back to editor",
@@ -343,9 +339,8 @@ registerDocumentationDictionary("en", {
   "docs.advanced.spawning.exampleLine3": "Max per level = 3 to cap repeated outcomes.",
   "docs.advanced.spawning.mistake1": "Tweaking one spawn parameter in isolation and ignoring the others that still block the result.",
   "docs.advanced.spawning.mistake2": "Allowing unlimited repeated spawns in a branch that can trigger many times."
-});
-
-registerDocumentationDictionary("ru", {
+  },
+  ru: {
   "docs.ui.title": "Документация",
   "docs.ui.subtitle": "Встроенное практическое руководство по созданию событий Barotrauma.",
   "docs.ui.backToEditor": "Вернуться в редактор",
@@ -660,4 +655,5 @@ registerDocumentationDictionary("ru", {
   "docs.advanced.spawning.exampleLine3": "Max per level = 3, чтобы ограничить повторяющиеся исходы.",
   "docs.advanced.spawning.mistake1": "Менять один параметр спавна изолированно и игнорировать остальные, которые всё ещё блокируют результат.",
   "docs.advanced.spawning.mistake2": "Разрешать неограниченные повторные спавны в ветке, которая может срабатывать много раз."
+  }
 });
