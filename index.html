@@ -21,7 +21,7 @@
           <div class="menu-dropdown" role="menu">
             <button type="button" role="menuitem" data-action="projectImport">Import Project</button>
             <button type="button" role="menuitem" data-action="projectExport">Export Project</button>
-            <button type="button" role="menuitem" data-action="importXML">Import XML</button>
+            <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
             <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
             <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
           </div>
@@ -117,15 +117,19 @@
               <button type="button" class="menu-button submenu-trigger" role="menuitem">Language <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="en" data-l10n="langEnglish"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="zh-Hans" data-l10n="langSimplifiedChinese"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="zh-Hant" data-l10n="langTraditionalChinese"></button>
                 <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="ru" data-l10n="langRussian"></button>
-                <button type="button" role="menuitem" data-action="menuLangPlaceholder">Deutsch (placeholder)</button>
-                <button type="button" role="menuitem" data-action="menuLangPlaceholder">Español (placeholder)</button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="fr" data-l10n="langFrench"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="es" data-l10n="langSpanish"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="de" data-l10n="langGerman"></button>
+                <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="pl" data-l10n="langPolish"></button>
               </div>
             </div>
             <div class="menu-subitem" role="none">
               <button type="button" class="menu-button submenu-trigger" role="menuitem">XML Behavior <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
-                <button type="button" role="menuitem" data-action="importXML">Import XML</button>
+                <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
                 <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
                 <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
               </div>
@@ -291,6 +295,34 @@
             </table>
           </div>
         </section>
+      </div>
+    </section>
+  </div>
+
+  <div id="import-xml-modal" class="about-modal import-xml-modal" hidden>
+    <div class="about-modal-backdrop" data-role="close-import-xml"></div>
+    <section class="about-modal-panel import-xml-panel" role="dialog" aria-modal="true" aria-labelledby="import-xml-title">
+      <div class="import-xml-header">
+        <div>
+          <h3 id="import-xml-title" data-l10n="importXML"></h3>
+          <p data-l10n="importXmlPlaceholderDescription"></p>
+        </div>
+        <button type="button" data-role="close-import-xml" data-l10n="close">Close</button>
+      </div>
+      <div class="import-xml-layout">
+        <label class="import-xml-dropzone" for="import-xml-file">
+          <input id="import-xml-file" type="file" accept=".xml,text/xml,application/xml" hidden />
+          <strong data-l10n="importXmlDropTitle"></strong>
+          <span data-l10n="importXmlDropHint"></span>
+          <span class="import-xml-file-name" id="import-xml-file-name" data-l10n="importXmlNoFile"></span>
+        </label>
+        <label class="import-xml-textbox">
+          <span data-l10n="importXmlPasteLabel"></span>
+          <textarea id="import-xml-textarea" spellcheck="false" data-l10n-placeholder="importXmlPastePlaceholder"></textarea>
+        </label>
+      </div>
+      <div class="import-xml-actions">
+        <button type="button" data-role="import-xml-placeholder" data-action-tier="primary" data-l10n="importXmlActionPlaceholder"></button>
       </div>
     </section>
   </div>

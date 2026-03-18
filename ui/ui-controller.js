@@ -2,11 +2,10 @@ import { editorStore } from '../state/store.js';
 import { dispatch } from './action-dispatcher.js';
 import { renderNode } from './node-renderer.js';
 import { buildEventXML } from '../io/xml-export.js';
-import { parseEventXML } from '../io/xml-import.js';
 import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
-import { applyLocalization, onLangChange, setLang, t } from './localization.js';
+import { applyLocalization, getLang, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
 import { getThemeState, onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
@@ -20,6 +19,23 @@ let simulationSortDirection = 'desc';
 
 let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
+
+function confirmAction(messageKey) {
+  return window.confirm(t(messageKey));
+}
+
+function requestNodeRemoval(id) {
+  if (!Number.isFinite(Number(id))) return false;
+  if (!confirmAction('confirmRemoveNode')) return false;
+  dispatch({ type: 'REMOVE_NODE', id: Number(id) });
+  return true;
+}
+
+function requestClearCurrentEvent() {
+  if (!confirmAction('confirmClearEvent')) return false;
+  dispatch({ type: 'CLEAR_EVENT' });
+  return true;
+}
 function setOutputTab(tab) {
   const nextTab = tab === 'simulation' ? 'simulation' : 'xml';
   const tabs = document.querySelector('.output-tabs');
@@ -53,6 +69,7 @@ function setViewMode(mode) {
   if (!classic || !tree || !segmented) return;
 
   const isTree = nextMode === 'tree';
+  document.body.dataset.viewMode = nextMode;
   tree.style.display = isTree ? 'block' : 'none';
   classic.style.display = isTree ? 'none' : 'block';
   segmented.dataset.viewMode = nextMode;
@@ -193,7 +210,7 @@ function openNodeContextMenu(event) {
   add('Duplicate', () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
   add('Copy subtree', () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
   add('Paste subtree', () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId), branch: 'success' }));
-  add('Delete', () => dispatch({ type: 'REMOVE_NODE', id: Number(nodeId) }));
+  add('Delete', () => requestNodeRemoval(Number(nodeId)));
   document.body.appendChild(menu);
   contextMenuEl = menu;
 }
@@ -202,7 +219,7 @@ const treeService = new TreeService({
   svgSelector: '#tree-svg',
   inspectorSelector: '#tree-inspector',
   onUpdateParam: (id, key, value) => dispatch({ type: 'UPDATE_NODE_PARAM', id, key, value }),
-  onRemoveNode: id => dispatch({ type: 'REMOVE_NODE', id }),
+  onRemoveNode: id => requestNodeRemoval(id),
   onAddChild: (parentId, branch, type) => dispatch({ type: 'ADD_CHILD_NODE', parentId, branch, nodeType: type }),
   onMoveNode: (nodeId, newParentId, branch) => {
     const moved = editorStore.moveNode ? editorStore.moveNode(nodeId, newParentId, branch) : false;
@@ -225,7 +242,7 @@ function initButtonIcons() {
     ['button[data-action="generateXML"]', 'code', 'generateXML'],
     ['button[data-action="copyXML"]', 'copy', 'copyXML'],
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
-    ['button[data-action="importXML"]', 'upload-cloud', 'importXML'],
+    ['button[data-action="openImportXmlModal"]', 'upload-cloud', 'importXML'],
     ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'simulation'],
     ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation']
   ];
@@ -307,7 +324,7 @@ function renderEvents() {
     tab.dataset.action = 'selectEvent';
     tab.dataset.index = String(index);
     const pendingDelete = pendingDeleteEventIndex === index;
-    tab.innerHTML = `<span class="event-tab-title" data-action="renameEvent" data-index="${index}" title="Double click to rename">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
+    tab.innerHTML = `<span class="event-tab-title" title="Double click to rename">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
     if (index === state.currentEventIndex) tab.classList.add('active');
     list.appendChild(tab);
   });
@@ -317,7 +334,7 @@ function renderEvents() {
   addTab.className = 'event-tab event-tab-add';
   addTab.dataset.action = 'addEvent';
   addTab.textContent = '+';
-  addTab.disabled = state.events.length >= 5;
+  addTab.disabled = state.events.length >= 7;
   list.appendChild(addTab);
 
   document.getElementById('event-id').value = state.currentEvent.id;
@@ -364,10 +381,37 @@ function updateMenuThemeStatus() {
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-current', selected ? 'true' : 'false');
   });
+  document.querySelectorAll('button[data-action="menuSetUiScale"]').forEach(button => {
+    const selected = button.dataset.value === theme.uiScale;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
+  document.querySelectorAll('button[data-action="menuSetLanguage"]').forEach(button => {
+    const selected = button.dataset.value === getLang();
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
+}
+
+function openImportXmlModal() {
+  const modal = document.getElementById('import-xml-modal');
+  const fileInput = document.getElementById('import-xml-file');
+  const fileName = document.getElementById('import-xml-file-name');
+  const textarea = document.getElementById('import-xml-textarea');
+  if (!modal || !fileInput || !fileName || !textarea) return;
+  modal.hidden = false;
+  applyLocalization(modal);
+  fileName.textContent = fileInput.files?.[0]?.name || t('importXmlNoFile');
+  textarea.focus();
+}
+
+function closeImportXmlModal() {
+  const modal = document.getElementById('import-xml-modal');
+  if (modal) modal.hidden = true;
 }
 
 function openAboutPanel() {
-  if (document.querySelector('.about-modal')) return;
+  if (document.querySelector('.about-modal:not(.import-xml-modal)')) return;
   const modal = document.createElement('div');
   modal.className = 'about-modal';
   modal.innerHTML = `<div class="about-modal-backdrop" data-role="close"></div><section class="about-modal-panel" role="dialog" aria-modal="true" aria-label="About"><h3>Barotrauma RNG Builder</h3><p>Placeholder info panel.</p><p>Tree editor, XML generation and simulation tools for event balancing.</p><button type="button" data-role="close">Close</button></section>`;
@@ -383,7 +427,7 @@ function handleMenuDeleteSelected() {
     showNeutral('Select a node to delete');
     return;
   }
-  dispatch({ type: 'REMOVE_NODE', id: selectedId });
+  requestNodeRemoval(selectedId);
 }
 
 function handleMenuDuplicateSelected() {
@@ -402,8 +446,6 @@ function handleClick(event) {
   const action = actionEl.dataset.action;
   const id = Number(actionEl.dataset.id);
 
-  if (action === 'renameEvent') return;
-
   if (action === 'addEvent') dispatch({ type: 'ADD_EVENT' });
   if (action === 'removeEvent') {
     const index = Number(actionEl.dataset.index);
@@ -420,8 +462,8 @@ function handleClick(event) {
   if (action === 'selectEvent') dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
   if (action === 'addNode') dispatch({ type: 'ADD_ROOT_NODE', nodeType: actionEl.dataset.type });
   if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch, nodeType: actionEl.dataset.type });
-  if (action === 'removeNode') dispatch({ type: 'REMOVE_NODE', id });
-  if (action === 'clearAll') dispatch({ type: 'CLEAR_EVENT' });
+  if (action === 'removeNode') return void requestNodeRemoval(id);
+  if (action === 'clearAll') return void requestClearCurrentEvent();
 
   if (action === 'setViewMode') setViewMode(actionEl.dataset.viewMode);
   if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
@@ -450,16 +492,7 @@ function handleClick(event) {
     showSuccess(t('xmlDownloaded'));
   }
 
-  if (action === 'importXML') {
-    try {
-      const parsed = parseEventXML(document.getElementById('output').value, () => editorStore.idCounter++);
-      editorStore.updateCurrentEventId(parsed.eventId);
-      dispatch({ type: 'SET_MODEL', model: parsed.model });
-      showSuccess(t('xmlImported'));
-    } catch (err) {
-      showError(err.message || 'XML import failed');
-    }
-  }
+  if (action === 'openImportXmlModal') openImportXmlModal();
 
   if (action === 'projectImport' || action === 'projectExport') handleProjectStub();
 
@@ -485,7 +518,7 @@ function handleClick(event) {
   if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
   if (action === 'reportIssue') window.open('https://github.com/a4019gg/barotrauma-rng-builder/issues', '_blank', 'noopener');
   if (action === 'aboutApp') openAboutPanel();
-  if (action === 'menuLangPlaceholder') handleMenuStub('Localization placeholder');
+  if (action === 'menuLangPlaceholder') handleMenuStub(t('localizationPlaceholder'));
   if (action === 'basePresetPlaceholder') handleMenuStub('Base preset placeholder');
   if (action === 'probabilityAnalysis' || action === 'loadPreset' || action === 'savePreset' || action === 'managePreset') {
     handleMenuStub('Feature available in upcoming updates');
@@ -512,7 +545,7 @@ function handleChange(event) {
 
 
 function handleDblClick(event) {
-  const title = event.target.closest('.event-tab-title[data-action="renameEvent"]');
+  const title = event.target.closest('.event-tab-title');
   if (!title) return;
   event.preventDefault();
   event.stopPropagation();
@@ -602,7 +635,7 @@ function handleKeyboardShortcuts(event) {
   const selectedId = treeService.getSelectedNodeId();
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); editorStore.undo(); }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); editorStore.redo(); }
-  if (event.key === 'Delete' && selectedId != null) { event.preventDefault(); dispatch({ type: 'REMOVE_NODE', id: selectedId }); }
+  if (event.key === 'Delete' && selectedId != null) { event.preventDefault(); requestNodeRemoval(selectedId); }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedId != null) { event.preventDefault(); dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId }); }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); runQuickAdd(); }
 }
@@ -641,6 +674,38 @@ export function initEditorUI() {
   document.addEventListener('keydown', handleKeyboardShortcuts);
   document.addEventListener('contextmenu', openNodeContextMenu);
   document.addEventListener('click', closeContextMenu);
+  document.addEventListener('click', event => {
+    const closeTrigger = event.target.closest('[data-role="close-import-xml"]');
+    if (closeTrigger) closeImportXmlModal();
+    const placeholderTrigger = event.target.closest('[data-role="import-xml-placeholder"]');
+    if (placeholderTrigger) showNeutral(t('importXmlPlaceholderDescription'));
+  });
+  document.addEventListener('change', event => {
+    if (event.target.id !== 'import-xml-file') return;
+    const fileName = document.getElementById('import-xml-file-name');
+    if (fileName) fileName.textContent = event.target.files?.[0]?.name || t('importXmlNoFile');
+  });
+  document.addEventListener('dragover', event => {
+    const dropzone = event.target.closest('.import-xml-dropzone');
+    if (!dropzone) return;
+    event.preventDefault();
+    dropzone.classList.add('is-dragover');
+  });
+  document.addEventListener('dragleave', event => {
+    const dropzone = event.target.closest('.import-xml-dropzone');
+    if (!dropzone) return;
+    if (dropzone.contains(event.relatedTarget)) return;
+    dropzone.classList.remove('is-dragover');
+  });
+  document.addEventListener('drop', event => {
+    const dropzone = event.target.closest('.import-xml-dropzone');
+    if (!dropzone) return;
+    event.preventDefault();
+    dropzone.classList.remove('is-dragover');
+    const fileName = document.getElementById('import-xml-file-name');
+    const files = event.dataTransfer?.files;
+    if (files?.length && fileName) fileName.textContent = files[0].name;
+  });
 
   initSettingsController();
   initMenuBarBehavior();
@@ -655,6 +720,7 @@ export function initEditorUI() {
 
   onLangChange(() => {
     applyLocalization();
+    updateMenuThemeStatus();
     treeService.renderQueued(editorStore.getState().currentEvent.model);
   });
 

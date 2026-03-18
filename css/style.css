@@ -22,7 +22,7 @@
   --ui-shadow-node: 0 4px 14px color-mix(in srgb, var(--ui-bg) 44%, transparent);
   --ui-saturation: 1;
 
-  --output-expanded-h: clamp(240px, 32vh, 360px);
+  --output-expanded-h: clamp(180px, 24vh, 280px);
   --output-collapsed-h: 54px;
   --topbar-h: 44px;
   --toolbar-h: 62px;
@@ -383,10 +383,23 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   overflow: hidden;
 }
 
+#editor-area > * {
+  position: relative;
+  z-index: 1;
+}
+
 #classic-view,
 #tree-container {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+#classic-view {
+  overflow: auto;
+  padding-right: 4px;
+}
+
+#tree-container {
   overflow: hidden;
 }
 
@@ -430,18 +443,19 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .events-tabs {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   flex: 0 0 auto;
+  align-items: center;
 }
 
-.event-tab { display: inline-flex; align-items: center; gap: 8px; max-width: 220px; }
+.event-tab { display: inline-flex; align-items: center; gap: 7px; max-width: 220px; min-height: 32px; padding: 5px 10px; }
 .event-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .event-tab.active { background: color-mix(in srgb, var(--ui-accent) 22%, var(--bg-panel)); border-color: var(--ui-accent); }
-.event-tab-close { font-weight: 700; line-height: 1; }
-.event-tab-add { width: 34px; justify-content: center; }
+.event-tab-close { font-weight: 700; line-height: 1; padding: 0 2px; cursor: pointer; }
+.event-tab-add { width: 34px; justify-content: center; padding-inline: 0; }
 
 .event-tab-close.pending {
   color: var(--ui-text);
@@ -679,7 +693,8 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 
 .simulation-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -992,9 +1007,14 @@ body[data-base-theme='neon-ops'] #editor-area::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   background: repeating-linear-gradient(135deg, transparent 0 24px, color-mix(in srgb, var(--ui-accent) 10%, transparent) 24px 25px);
   opacity: 0.5;
+}
+
+body[data-base-theme='neon-ops'][data-view-mode='tree'] #editor-area::after {
+  opacity: 0.18;
 }
 
 body[data-base-theme='neon-ops'] button[data-action-tier='primary']:hover {
@@ -1038,4 +1058,88 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
   background: var(--bg-panel);
   box-shadow: 0 14px 34px color-mix(in srgb, var(--ui-bg) 52%, transparent);
   padding: 18px;
+}
+
+.import-xml-modal[hidden] {
+  display: none;
+}
+
+.import-xml-panel {
+  width: min(760px, 92vw);
+  display: grid;
+  gap: 16px;
+}
+
+.import-xml-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.import-xml-header h3,
+.import-xml-header p {
+  margin: 0;
+}
+
+.import-xml-header p {
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.import-xml-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.import-xml-dropzone,
+.import-xml-textbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.import-xml-dropzone {
+  min-height: 260px;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border: 1px dashed color-mix(in srgb, var(--ui-accent) 45%, var(--border-main));
+  border-radius: var(--ui-radius-md);
+  background: color-mix(in srgb, var(--bg-main) 55%, var(--bg-panel));
+  text-align: center;
+  cursor: pointer;
+}
+
+.import-xml-dropzone.is-dragover {
+  border-color: var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 12%, var(--bg-panel));
+}
+
+.import-xml-dropzone strong {
+  font-size: 1rem;
+}
+
+.import-xml-dropzone span,
+.import-xml-file-name,
+.import-xml-textbox > span {
+  color: var(--text-muted);
+}
+
+#import-xml-textarea {
+  min-height: 260px;
+  width: 100%;
+  resize: vertical;
+}
+
+.import-xml-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 840px) {
+  .import-xml-layout {
+    grid-template-columns: 1fr;
+  }
 }

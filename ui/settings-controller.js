@@ -58,6 +58,7 @@ export function initSettingsController() {
 
   onLangChange(() => {
     applyLocalization();
+    document.getElementById('lang-select').value = getLang();
     const settingsLabel = document.querySelector('#settings-toggle [data-l10n]');
     if (settingsLabel) settingsLabel.textContent = t('settings');
   });
@@ -66,6 +67,8 @@ export function initSettingsController() {
   onThemeChange(currentState => {
     document.getElementById('base-theme-select').value = currentState.baseTheme;
     document.getElementById('theme-mode-select').value = currentState.themeMode;
+    document.getElementById('theme-style-select').value = currentState.themeStyle;
+    document.getElementById('ui-scale-select').value = currentState.uiScale;
     document.getElementById('toggle-chance-colors').checked = currentState.chanceColorCoding;
     document.getElementById('chance-input-mode').value = currentState.chanceInputMode;
   });
