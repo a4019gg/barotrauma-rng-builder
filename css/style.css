@@ -178,6 +178,15 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   position: relative;
 }
 
+.menu-subitem::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -12px;
+  width: 14px;
+  height: calc(100% + 8px);
+}
+
 .menu-button {
   border: 1px solid transparent;
   background: transparent;
@@ -272,8 +281,9 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 
 .menu-dropdown.submenu {
-  top: -6px;
-  left: calc(100% + 2px);
+  top: -4px;
+  left: calc(100% + 8px);
+  gap: 4px;
 }
 
 
@@ -361,6 +371,111 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   border: 1px solid var(--border-main);
 }
 .checkbox-row { flex-direction: row !important; align-items: center; gap: 8px; }
+
+input[type='checkbox'] {
+  margin: 0;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 82%, #eef6ff 18%);
+  border-radius: 2px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 97%, #ffffff 3%), color-mix(in srgb, var(--bg-panel) 82%, #bcd2ee 18%));
+  box-shadow: inset 1px 1px 0 color-mix(in srgb, #ffffff 75%, var(--bg-panel)), inset -1px -1px 0 color-mix(in srgb, #6283ae 58%, var(--border-main));
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  transform: scale(0);
+  transition: transform .1s ease-out;
+  clip-path: polygon(14% 52%, 0 66%, 40% 100%, 100% 22%, 84% 8%, 38% 64%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ui-accent) 88%, #ffffff 12%), color-mix(in srgb, var(--ui-accent-strong) 60%, var(--ui-accent)));
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']:hover {
+  border-color: color-mix(in srgb, var(--ui-accent) 52%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--ui-accent) 65%, #ffffff 35%);
+  outline-offset: 1px;
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']:checked {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ui-accent) 26%, #ffffff 74%), color-mix(in srgb, var(--ui-accent) 54%, var(--bg-panel)));
+  border-color: color-mix(in srgb, var(--ui-accent) 58%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] input[type='checkbox']:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+body[data-base-theme='classic-luna'] input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+body[data-base-theme='classic-luna'] input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 84%, #eef6ff 16%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-main) 88%, #f7fbff 12%), color-mix(in srgb, var(--bg-panel) 78%, #9db9de 22%));
+  box-shadow: inset 1px 1px 0 color-mix(in srgb, #ffffff 75%, transparent), inset -1px -1px 0 color-mix(in srgb, #6385b0 52%, transparent);
+}
+
+body[data-base-theme='classic-luna'] input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 80%, #f7fbff 20%);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--bg-panel) 82%, #afcaeb 18%));
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.85), inset -1px -1px 0 color-mix(in srgb, #5a7ea7 58%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] input[type='range']::-moz-range-track {
+  height: 6px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 84%, #eef6ff 16%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-main) 88%, #f7fbff 12%), color-mix(in srgb, var(--bg-panel) 78%, #9db9de 22%));
+  box-shadow: inset 1px 1px 0 color-mix(in srgb, #ffffff 75%, transparent), inset -1px -1px 0 color-mix(in srgb, #6385b0 52%, transparent);
+}
+
+body[data-base-theme='classic-luna'] input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 80%, #f7fbff 20%);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--bg-panel) 82%, #afcaeb 18%));
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.85), inset -1px -1px 0 color-mix(in srgb, #5a7ea7 58%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] input[type='range']:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--ui-accent) 65%, #ffffff 35%);
+  outline-offset: 2px;
+}
 
 #main-container {
   display: flex;
@@ -883,6 +998,25 @@ body[data-base-theme='classic-luna'][data-theme-mode='light'] .menu-dropdown but
 body[data-base-theme='classic-luna'][data-theme-mode='dark'] .top-bar,
 body[data-base-theme='classic-luna'][data-theme-mode='dark'] .action-bar {
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 94%, #091325 6%), color-mix(in srgb, var(--bg-panel) 88%, #0f1f38 12%));
+}
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .menu-button:hover,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .menu-item:hover > .menu-button,
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .menu-subitem:hover > .menu-button {
+  background: linear-gradient(180deg, #fff2b5, #d5ab3d);
+  border-color: #f5d676;
+  color: #132744;
+}
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .menu-dropdown {
+  background: #21406d;
+  border-color: #86a9d9;
+}
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] .menu-dropdown button.is-selected {
+  background: linear-gradient(180deg, #fff2b5, #ddb853);
+  border-color: #f5d676;
+  color: #132744;
 }
 
 body[data-base-theme='classic-luna'][data-theme-mode='dark'] button,
