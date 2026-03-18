@@ -208,11 +208,22 @@
 
     <section class="action-bar">
       <div class="action-group">
+        <span class="action-title">Mode</span>
+        <div class="segmented-control" role="tablist" aria-label="Editor operation mode">
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab">Basic</button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab">Intermediate</button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab">Advanced</button>
+        </div>
+      </div>
+
+      <div class="action-group">
         <span class="action-title">Build</span>
-        <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-l10n="addRng"></button>
-        <button data-action="addNode" data-action-tier="secondary" data-type="spawn" data-l10n="addItem"></button>
-        <button data-action="addNode" data-action-tier="secondary" data-type="creature" data-l10n="addCreature"></button>
-        <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-l10n="addAffliction"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-node-type="rng" data-l10n="addRng"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="event" data-node-type="event">+ Event</button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="eventSet" data-node-type="eventSet">+ EventSet</button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="spawn" data-node-type="spawn" data-l10n="addItem"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="creature" data-node-type="creature" data-l10n="addCreature"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-node-type="affliction" data-l10n="addAffliction"></button>
       </div>
 
       <div class="action-group history-group">

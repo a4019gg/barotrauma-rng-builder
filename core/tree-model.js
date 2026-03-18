@@ -1,14 +1,21 @@
-import { computeBranchProbability } from './rng.js';
+import { computeBranchProbability, normalizeRngBranchProbabilities } from './rng.js';
+import { ensureNodeShape, getNodeCollections, isRngNode } from './graph-utils.js';
 
 export function flattenWithProbabilities(model, parentProbability = 1, acc = []) {
-  model.forEach(node => {
+  model.forEach(rawNode => {
+    const node = ensureNodeShape(rawNode);
     acc.push({ node, probability: parentProbability });
 
-    if (node.type === 'rng') {
-      const chance = node.params.chance ?? 0.5;
-      flattenWithProbabilities(node.children.success, computeBranchProbability(parentProbability, chance, 'success'), acc);
-      flattenWithProbabilities(node.children.failure, computeBranchProbability(parentProbability, chance, 'failure'), acc);
+    if (isRngNode(node)) {
+      normalizeRngBranchProbabilities(node).forEach(branch => {
+        flattenWithProbabilities(branch.children || [], computeBranchProbability(parentProbability, branch.probability), acc);
+      });
+      return;
     }
+
+    getNodeCollections(node).forEach(children => {
+      flattenWithProbabilities(children, parentProbability, acc);
+    });
   });
 
   return acc;

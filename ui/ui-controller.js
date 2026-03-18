@@ -9,6 +9,9 @@ import { applyLocalization, getLang, onLangChange, setLang, t } from './localiza
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
 import { getThemeState, onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
+import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
+import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
+import { normalizeRngBranchProbabilities } from '../core/rng.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -96,26 +99,35 @@ function createSeededRng(seedValue) {
   };
 }
 
+function nodeResultKey(node) {
+  return node.type === 'spawn'
+    ? `SpawnItem ${node.params.item || 'unknown'}`
+    : node.type === 'creature'
+      ? `SpawnCreature ${node.params.creature || 'unknown'}`
+      : `Affliction ${node.params.affliction || 'unknown'}`;
+}
+
 function sampleSimulationNode(nodes, randomFn = Math.random) {
   if (!nodes.length) return [];
   const out = [];
   const walk = list => {
     list.forEach(node => {
-      if (node.type === 'rng') {
-        const chance = Number(node.params.chance);
-        const clampedChance = Number.isFinite(chance) ? Math.max(0, Math.min(1, chance)) : 0;
-        const branch = randomFn() <= clampedChance ? 'success' : 'failure';
-        walk(node.children[branch] || []);
+      if (isRngNode(node)) {
+        const branches = normalizeRngBranchProbabilities(node);
+        let roll = randomFn();
+        let picked = branches[branches.length - 1];
+        for (const branch of branches) {
+          roll -= branch.probability;
+          if (roll <= 0) { picked = branch; break; }
+        }
+        walk(picked?.children || []);
         return;
       }
-      if (['spawn', 'creature', 'affliction'].includes(node.type)) {
-        const key = node.type === 'spawn'
-          ? `SpawnItem ${node.params.item || 'unknown'}`
-          : node.type === 'creature'
-            ? `SpawnCreature ${node.params.creature || 'unknown'}`
-            : `Affliction ${node.params.affliction || 'unknown'}`;
-        out.push(key);
+      if (isActionNode(node)) {
+        out.push(nodeResultKey(node));
+        return;
       }
+      getNodeCollections(node).forEach(children => walk(children));
     });
   };
   walk(nodes);
@@ -126,21 +138,18 @@ function calculateExactProbabilities(nodes) {
   const totals = new Map();
   const visit = (list, probability) => {
     list.forEach(node => {
-      if (node.type === 'rng') {
-        const chanceValue = Number(node.params.chance);
-        const chance = Number.isFinite(chanceValue) ? Math.max(0, Math.min(1, chanceValue)) : 0;
-        visit(node.children.success || [], probability * chance);
-        visit(node.children.failure || [], probability * (1 - chance));
+      if (isRngNode(node)) {
+        normalizeRngBranchProbabilities(node).forEach(branch => {
+          visit(branch.children || [], probability * branch.probability);
+        });
         return;
       }
-      if (['spawn', 'creature', 'affliction'].includes(node.type)) {
-        const key = node.type === 'spawn'
-          ? `SpawnItem ${node.params.item || 'unknown'}`
-          : node.type === 'creature'
-            ? `SpawnCreature ${node.params.creature || 'unknown'}`
-            : `Affliction ${node.params.affliction || 'unknown'}`;
+      if (isActionNode(node)) {
+        const key = nodeResultKey(node);
         totals.set(key, (totals.get(key) || 0) + probability);
+        return;
       }
+      getNodeCollections(node).forEach(children => visit(children, probability));
     });
   };
   visit(nodes, 1);
@@ -206,10 +215,10 @@ function openNodeContextMenu(event) {
     btn.onclick = () => { fn(); closeContextMenu(); };
     menu.appendChild(btn);
   };
-  add('Add child (Success)', () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), branch: 'success', nodeType: 'rng' }));
+  add('Add child', () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), nodeType: 'rng' }));
   add('Duplicate', () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
   add('Copy subtree', () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
-  add('Paste subtree', () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId), branch: 'success' }));
+  add('Paste subtree', () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId) }));
   add('Delete', () => requestNodeRemoval(Number(nodeId)));
   document.body.appendChild(menu);
   contextMenuEl = menu;
@@ -345,7 +354,7 @@ function renderModel() {
   root.innerHTML = '';
 
   const state = editorStore.getState();
-  state.currentEvent.model.forEach(node => root.appendChild(renderNode(node)));
+  state.currentEvent.model.forEach(node => root.appendChild(renderNode(node, state.editorMode)));
 
   if (document.getElementById('tree-container').style.display === 'block') {
     treeService.renderQueued(state.currentEvent.model);
@@ -461,7 +470,10 @@ function handleClick(event) {
   }
   if (action === 'selectEvent') dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
   if (action === 'addNode') dispatch({ type: 'ADD_ROOT_NODE', nodeType: actionEl.dataset.type });
-  if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch, nodeType: actionEl.dataset.type });
+  if (action === 'setEditorMode') { setAppSetting('editorMode', actionEl.dataset.mode); editorStore.setEditorMode(actionEl.dataset.mode); applyEditorMode(); }
+  if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch || null, nodeType: actionEl.dataset.type });
+  if (action === 'addRngBranch') dispatch({ type: 'ADD_RNG_BRANCH', id });
+  if (action === 'removeRngBranch') dispatch({ type: 'REMOVE_RNG_BRANCH', id, branchId: actionEl.dataset.branchId });
   if (action === 'removeNode') return void requestNodeRemoval(id);
   if (action === 'clearAll') return void requestClearCurrentEvent();
 
@@ -539,7 +551,11 @@ function handleClick(event) {
 function handleChange(event) {
   const el = event.target;
   if (el.dataset.action === 'updateParam') {
-    dispatch({ type: 'UPDATE_NODE_PARAM', id: Number(el.dataset.id), key: el.dataset.key, value: el.value });
+    const value = el.dataset.valueType === 'boolean' ? el.checked : el.value;
+    dispatch({ type: 'UPDATE_NODE_PARAM', id: Number(el.dataset.id), key: el.dataset.key, value });
+  }
+  if (el.dataset.action === 'updateBranch') {
+    dispatch({ type: 'UPDATE_BRANCH', id: Number(el.dataset.id), branchId: el.dataset.branchId, key: el.dataset.key, value: el.value });
   }
 }
 
@@ -592,15 +608,18 @@ function runValidation() {
   const warnings = [];
   const visit = (nodes, reachable = true) => {
     nodes.forEach(node => {
-      if (node.type === 'rng') {
-        const chance = Number(node.params.chance);
-        if (!Number.isFinite(chance) || chance < 0 || chance > 1) warnings.push(`Node #${node.id}: chance outside 0..1`);
-        if (!node.children.success.length && !node.children.failure.length) warnings.push(`Node #${node.id}: empty branches`);
-        visit(node.children.success, reachable);
-        visit(node.children.failure, reachable);
+      if (isRngNode(node)) {
+        if (!node.branches?.length) warnings.push(`Node #${node.id}: no branches`);
+        node.branches?.forEach(branch => {
+          if ((branch.children || []).length === 0) warnings.push(`Node #${node.id}: branch ${branch.label || branch.id} is empty`);
+          visit(branch.children || [], reachable);
+        });
       } else if (node.type === 'spawn' && !node.params.item) warnings.push(`Node #${node.id}: missing item id`);
       else if (node.type === 'creature' && !node.params.creature) warnings.push(`Node #${node.id}: missing creature id`);
       else if (node.type === 'affliction' && !node.params.affliction) warnings.push(`Node #${node.id}: missing affliction id`);
+      else if (node.type === 'eventSet' && !node.children?.length) warnings.push(`Node #${node.id}: empty EventSet`);
+      else if (node.type === 'event' && !node.children?.length) warnings.push(`Node #${node.id}: empty Event`);
+      if (isContainerNode(node)) getNodeCollections(node).forEach(children => visit(children, reachable));
       if (!reachable) warnings.push(`Node #${node.id}: unreachable`);
     });
   };
@@ -616,7 +635,7 @@ function runSearch(rawQuery) {
   }
   const hits = [];
   editorStore.collectNodes().forEach(node => {
-    const hay = [String(node.id), node.params.item, node.params.creature, node.params.affliction].filter(Boolean).join(' ').toLowerCase();
+    const hay = [String(node.id), node.params.item, node.params.creature, node.params.affliction, node.params.identifier].filter(Boolean).join(' ').toLowerCase();
     if (hay.includes(searchQuery)) hits.push(node.id);
   });
   treeService.setSearchHighlights(hits);
@@ -624,10 +643,11 @@ function runSearch(rawQuery) {
 }
 
 function runQuickAdd() {
-  const value = window.prompt('Quick add node type (rng/spawn/creature/affliction)', 'rng');
+  const allowed = getAllowedNodeTypes(getAppSetting('editorMode') || 'basic');
+  const value = window.prompt(`Quick add node type (${allowed.join('/')})`, allowed[0] || 'rng');
   if (!value) return;
   const type = value.trim().toLowerCase();
-  if (!['rng', 'spawn', 'creature', 'affliction'].includes(type)) return showError('Unknown node type');
+  if (!allowed.includes(type)) return showError('Unknown node type for current mode');
   dispatch({ type: 'ADD_ROOT_NODE', nodeType: type });
 }
 
@@ -708,6 +728,7 @@ export function initEditorUI() {
   });
 
   initSettingsController();
+  editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
   applyLocalization();
@@ -735,7 +756,29 @@ export function initEditorUI() {
   setOutputCollapsed(collapsed);
   setViewMode('node');
 
+  subscribeAppSettings(settings => {
+    if (settings.editorMode !== editorStore.getState().editorMode) editorStore.setEditorMode(settings.editorMode || 'basic');
+    applyEditorMode();
+  });
+
   renderEvents();
+  applyEditorMode();
   renderModel();
   updateXML();
 }
+
+function applyEditorMode() {
+  const mode = getAppSetting('editorMode') || 'basic';
+  const def = getModeDefinition(mode);
+  document.body.dataset.editorMode = mode;
+  document.querySelectorAll('[data-editor-mode-option]').forEach(button => {
+    const active = button.dataset.mode === mode;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-node-type]').forEach(button => {
+    const enabled = def.availableNodeTypes.includes(button.dataset.nodeType);
+    button.hidden = !enabled;
+  });
+}
+
