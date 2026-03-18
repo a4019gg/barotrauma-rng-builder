@@ -21,7 +21,6 @@ const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
-const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
 const DROP_HIGHLIGHT_TIMEOUT_MIN_MS = 3000;
 const DROP_HIGHLIGHT_TIMEOUT_MAX_MS = 7000;
 const AFFIX_ICON_SIZE = 18;
@@ -112,7 +111,6 @@ export class TreeService {
     this.dragFrame = null;
     this.dropHighlightTimer = null;
     this.pendingAutoLayoutNodeId = null;
-    this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
     this.afflictionMetaById = new Map();
     this.treeSettings = { ...DEFAULT_TREE_SETTINGS };
@@ -131,7 +129,7 @@ export class TreeService {
     this.g = this.zoomLayer.append('g').attr('transform', 'translate(90,80)');
 
     this.zoom = window.d3.zoom()
-      .scaleExtent([0.2, 2.2])
+      .scaleExtent([0.08, 4.5])
       .on('zoom', event => {
         this.zoomLayer.attr('transform', event.transform);
       });
@@ -821,22 +819,9 @@ export class TreeService {
     removeBtn.className = 'icon-btn remove-btn';
     removeBtn.type = 'button';
     removeBtn.title = t('removeNode');
-    const pendingDelete = this.deleteConfirmState.id === node.id && this.deleteConfirmState.until > Date.now();
-    removeBtn.append(createIcon(pendingDelete ? 'alert-triangle' : 'trash'));
+    removeBtn.append(createIcon('trash'));
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
-      if (!pendingDelete) {
-        this.deleteConfirmState = { id: node.id, until: Date.now() + REMOVE_CONFIRM_TIMEOUT_MS };
-        this.render(this.model);
-        setTimeout(() => {
-          if (this.deleteConfirmState.id === node.id && this.deleteConfirmState.until <= Date.now()) {
-            this.deleteConfirmState = { id: null, until: 0 };
-            this.render(this.model);
-          }
-        }, REMOVE_CONFIRM_TIMEOUT_MS + 50);
-        return;
-      }
-      this.deleteConfirmState = { id: null, until: 0 };
       this.onRemoveNode(node.id);
     });
 

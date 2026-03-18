@@ -72,7 +72,7 @@ export class EditorStore {
     const currentEvent = this.events[this.currentEventIndex];
     switch (action.type) {
       case 'ADD_EVENT': {
-        if (this.events.length >= 5) return { changed: false };
+        if (this.events.length >= 7) return { changed: false };
         const event = { id: `event_${this.events.length + 1}`, model: [] };
         const index = this.events.length;
         this.events.push(event);
