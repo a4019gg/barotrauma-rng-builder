@@ -1,12 +1,22 @@
 import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 import { enUiDictionary } from './localization/en.js';
 import { ruUiDictionary } from './localization/ru.js';
-import { menuOnlyDictionaries } from './localization/menu-only.js';
+import { zhHansUiDictionary } from './localization/zh-Hans.js';
+import { zhHantUiDictionary } from './localization/zh-Hant.js';
+import { frUiDictionary } from './localization/fr.js';
+import { esUiDictionary } from './localization/es.js';
+import { deUiDictionary } from './localization/de.js';
+import { plUiDictionary } from './localization/pl.js';
 
 const dictionaries = new Map([
   ['en', { ...enUiDictionary }],
   ['ru', { ...ruUiDictionary }],
-  ...Object.entries(menuOnlyDictionaries).map(([lang, entries]) => [lang, { ...entries }])
+  ['zh-Hans', { ...zhHansUiDictionary }],
+  ['zh-Hant', { ...zhHantUiDictionary }],
+  ['fr', { ...frUiDictionary }],
+  ['es', { ...esUiDictionary }],
+  ['de', { ...deUiDictionary }],
+  ['pl', { ...plUiDictionary }]
 ]);
 
 let currentLang = getAppSetting('lang') || 'en';

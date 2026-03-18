@@ -280,4 +280,5 @@ export const ruUiDictionary = {
     removeBranch: 'Удалить ветку',
     children: 'Дочерние элементы',
     branch: 'Ветка',
-    strength: 'Сила';
+    strength: 'Сила'
+};

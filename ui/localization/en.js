@@ -280,4 +280,5 @@ export const enUiDictionary = {
     removeBranch: 'Remove branch',
     children: 'Children',
     branch: 'Branch',
-    strength: 'Strength';
+    strength: 'Strength'
+};
