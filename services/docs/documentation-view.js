@@ -57,12 +57,14 @@ function renderArticle(state) {
 
     if (section.titleKey) {
       const title = document.createElement("h2");
+      title.className = "docs-section-title";
       title.textContent = tDoc(section.titleKey);
       sectionEl.appendChild(title);
     }
 
     if (section.contentKey) {
       const paragraph = document.createElement("p");
+      paragraph.className = "docs-section-text";
       paragraph.textContent = tDoc(section.contentKey);
       sectionEl.appendChild(paragraph);
     }

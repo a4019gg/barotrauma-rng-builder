@@ -530,11 +530,6 @@ body[data-base-theme='classic-luna'] input[type='range']:focus-visible {
   overflow: hidden;
 }
 
-body[data-active-module='documentation'] .action-bar {
-  display: none;
-}
-
-body[data-active-module='documentation'] #editor-mode-segmented,
 body[data-active-module='documentation'] #view-segmented {
   display: none;
 }

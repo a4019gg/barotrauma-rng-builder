@@ -151,7 +151,7 @@
 
 .docs-article-body {
   display: grid;
-  gap: 18px;
+  gap: 22px;
 }
 
 .docs-section {
@@ -163,11 +163,21 @@
   background: color-mix(in srgb, var(--bg-panel-soft) 82%, var(--bg-main));
 }
 
-.docs-section h2,
+.docs-section-title,
 .docs-section p,
 .docs-list,
 .docs-definition-list {
   margin: 0;
+}
+
+.docs-section-title {
+  font-size: 1rem;
+  letter-spacing: .01em;
+  color: color-mix(in srgb, var(--ui-accent) 62%, var(--text-main));
+}
+
+.docs-section-text {
+  color: var(--text-main);
 }
 
 .docs-section p,
