@@ -162,6 +162,10 @@
 .tree-editor-meta { margin-top: 8px; }
 .tree-inspector-hint { opacity: 0.78; margin: 8px 0 0; }
 .tree-settings-section { margin-top: 14px; border-top: 1px solid var(--border-main); padding-top: 12px; display: flex; flex-direction: column; gap: 18px; }
+.tree-settings-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tree-settings-collapse-btn { white-space: nowrap; }
+.tree-settings-body { display: flex; flex-direction: column; gap: 18px; }
+.tree-settings-body.is-collapsed { display: none; }
 .tree-settings-section h5 { margin: 0; }
 .tree-settings-group { display: flex; flex-direction: column; gap: 10px; }
 .tree-settings-card {

@@ -5,7 +5,7 @@ import { buildEventXML } from '../io/xml-export.js';
 import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
-import { applyLocalization, getLang, onLangChange, setLang, t } from './localization.js';
+import { applyLocalization, formatL10n, getLang, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { initDocumentationView, refreshDocumentationView } from '../services/docs/documentation-view.js';
 import * as documentationStore from '../services/docs/documentation-store.js';
@@ -30,6 +30,10 @@ const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
 
 function confirmAction(messageKey) {
   return window.confirm(t(messageKey));
+}
+
+function getOutputToggleLabel(collapsed) {
+  return formatL10n(collapsed ? 'outputPanelExpand' : 'outputPanelCollapse', { label: t('output') });
 }
 
 function requestNodeRemoval(id) {
@@ -65,7 +69,7 @@ function setOutputCollapsed(collapsed) {
   if (!panel || !body || !toggle) return;
   panel.classList.toggle('is-collapsed', collapsed);
   body.hidden = collapsed;
-  toggle.textContent = `${collapsed ? '▶' : '▼'} Output`;
+  toggle.textContent = getOutputToggleLabel(collapsed);
   localStorage.setItem(OUTPUT_COLLAPSE_STORAGE_KEY, collapsed ? '1' : '0');
 }
 
@@ -77,7 +81,9 @@ function setViewMode(mode) {
   if (!classic || !tree || !segmented) return;
 
   const isTree = nextMode === 'tree';
+  // Persist the active editor view so Tree mode can be restored after reloads.
   document.body.dataset.viewMode = nextMode;
+  setAppSetting('viewMode', nextMode);
   tree.style.display = isTree ? 'block' : 'none';
   classic.style.display = isTree ? 'none' : 'block';
   segmented.dataset.viewMode = nextMode;
@@ -197,7 +203,7 @@ function renderSimulationResults(results, exactResults, iterations) {
   body.innerHTML = '';
   if (!results.size && !exactResults.size) {
     const row = document.createElement('tr');
-    row.innerHTML = '<td colspan="4">No terminal spawn nodes in tree</td>';
+    row.innerHTML = `<td colspan="4">${t('noTerminalSpawnNodes')}</td>`;
     body.appendChild(row);
     return;
   }
@@ -246,11 +252,11 @@ function openNodeContextMenu(event) {
     btn.onclick = () => { fn(); closeContextMenu(); };
     menu.appendChild(btn);
   };
-  add('Add child', () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), nodeType: 'rng' }));
-  add('Duplicate', () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
-  add('Copy subtree', () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
-  add('Paste subtree', () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId) }));
-  add('Delete', () => requestNodeRemoval(Number(nodeId)));
+  add(t('addChild'), () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), nodeType: 'rng' }));
+  add(t('duplicateNode'), () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
+  add(t('copySubtree'), () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
+  add(t('pasteSubtree'), () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId) }));
+  add(t('removeNode'), () => requestNodeRemoval(Number(nodeId)));
   document.body.appendChild(menu);
   contextMenuEl = menu;
 }
@@ -389,7 +395,7 @@ function renderEvents() {
     tab.dataset.action = 'selectEvent';
     tab.dataset.index = String(index);
     const pendingDelete = pendingDeleteEventIndex === index;
-    tab.innerHTML = `<span class="event-tab-title" title="Double click to rename">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
+    tab.innerHTML = `<span class="event-tab-title" title="${t('renameEventHint')}">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
     if (index === state.currentEventIndex) tab.classList.add('active');
     list.appendChild(tab);
   });
@@ -399,6 +405,7 @@ function renderEvents() {
   addTab.className = 'event-tab event-tab-add';
   addTab.dataset.action = 'addEvent';
   addTab.textContent = '+';
+  addTab.title = t('eventTabAdd');
   addTab.disabled = state.events.length >= 7;
   list.appendChild(addTab);
 
@@ -481,7 +488,7 @@ function openAboutPanel() {
   if (document.querySelector('.about-modal:not(.import-xml-modal)')) return;
   const modal = document.createElement('div');
   modal.className = 'about-modal';
-  modal.innerHTML = `<div class="about-modal-backdrop" data-role="close"></div><section class="about-modal-panel" role="dialog" aria-modal="true" aria-label="About"><h3>Barotrauma RNG Builder</h3><p>Placeholder info panel.</p><p>Tree editor, XML generation and simulation tools for event balancing.</p><button type="button" data-role="close">Close</button></section>`;
+  modal.innerHTML = `<div class="about-modal-backdrop" data-role="close"></div><section class="about-modal-panel" role="dialog" aria-modal="true" aria-label="${t('aboutTitle')}"><h3>${t('aboutHeading')}</h3><p>${t('aboutBody1')}</p><p>${t('aboutBody2')}</p><button type="button" data-role="close">${t('close')}</button></section>`;
   modal.addEventListener('click', event => {
     if (event.target.dataset.role === 'close') modal.remove();
   });
@@ -491,7 +498,7 @@ function openAboutPanel() {
 function handleMenuDeleteSelected() {
   const selectedId = treeService.getSelectedNodeId();
   if (selectedId == null) {
-    showNeutral('Select a node to delete');
+    showNeutral(t('selectNodeDelete'));
     return;
   }
   requestNodeRemoval(selectedId);
@@ -500,7 +507,7 @@ function handleMenuDeleteSelected() {
 function handleMenuDuplicateSelected() {
   const selectedId = treeService.getSelectedNodeId();
   if (selectedId == null) {
-    showNeutral('Select a node to duplicate');
+    showNeutral(t('selectNodeDuplicate'));
     return;
   }
   dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId });
@@ -537,7 +544,7 @@ function handleClick(event) {
 
   if (action === 'setViewMode') setViewMode(actionEl.dataset.viewMode);
   if (action === 'openEditorModule') setActiveModule('editor');
-  if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
+  if (action === 'openDB') openDatabasePanel().catch(() => showError(t('dbLoadError')));
 
   if (action === 'generateXML') {
     updateXML();
@@ -590,9 +597,9 @@ function handleClick(event) {
   if (action === 'reportIssue') window.open('https://github.com/a4019gg/barotrauma-rng-builder/issues', '_blank', 'noopener');
   if (action === 'aboutApp') openAboutPanel();
   if (action === 'menuLangPlaceholder') handleMenuStub(t('localizationPlaceholder'));
-  if (action === 'basePresetPlaceholder') handleMenuStub('Base preset placeholder');
+  if (action === 'basePresetPlaceholder') handleMenuStub(t('basePresetPlaceholder'));
   if (action === 'probabilityAnalysis' || action === 'loadPreset' || action === 'savePreset' || action === 'managePreset') {
-    handleMenuStub('Feature available in upcoming updates');
+    handleMenuStub(t('featureUpcoming'));
   }
   if (action === 'openSettingsLanguage' || action === 'openSettingsXmlBehavior') openSettingsPanel();
   if (action === 'menuSetLanguage') setLang(actionEl.dataset.value);
@@ -658,7 +665,7 @@ function runSimulation() {
   renderSimulationResults(totals, exactTotals, iterations);
   setOutputTab('simulation');
   setOutputCollapsed(false);
-  if (!model.length) showNeutral('Simulation completed: empty tree');
+  if (!model.length) showNeutral(t('simulationCompletedEmpty'));
 }
 
 function runValidation() {
@@ -683,7 +690,7 @@ function runValidation() {
     });
   };
   visit(model, true);
-  showNeutral(warnings.length ? warnings.slice(0, 25).join('\n') : 'Validation: no issues found');
+  showNeutral(warnings.length ? warnings.slice(0, 25).join('\n') : t('validationNoIssues'));
 }
 
 function runSearch(rawQuery) {
@@ -703,10 +710,10 @@ function runSearch(rawQuery) {
 
 function runQuickAdd() {
   const allowed = getAllowedNodeTypes(getAppSetting('editorMode') || 'basic');
-  const value = window.prompt(`Quick add node type (${allowed.join('/')})`, allowed[0] || 'rng');
+  const value = window.prompt(formatL10n('quickAddPrompt', { types: allowed.join('/') }), allowed[0] || 'rng');
   if (!value) return;
   const type = value.trim().toLowerCase();
-  if (!allowed.includes(type)) return showError('Unknown node type for current mode');
+  if (!allowed.includes(type)) return showError(t('unknownNodeTypeForMode'));
   dispatch({ type: 'ADD_ROOT_NODE', nodeType: type });
 }
 
@@ -805,9 +812,12 @@ export function initEditorUI() {
   onLangChange(lang => {
     applyLocalization();
     updateMenuThemeStatus();
+    setOutputCollapsed(document.getElementById('output-panel')?.classList.contains('is-collapsed'));
     setDocumentationLanguage(lang);
     documentationStore.refreshLocalizedState();
     refreshDocumentationView();
+    renderEvents();
+    renderModel();
     treeService.renderQueued(editorStore.getState().currentEvent.model);
   });
 
@@ -820,7 +830,7 @@ export function initEditorUI() {
   const collapsed = localStorage.getItem(OUTPUT_COLLAPSE_STORAGE_KEY) === '1';
   setOutputTab('xml');
   setOutputCollapsed(collapsed);
-  setViewMode('node');
+  setViewMode(getAppSetting('viewMode') || 'node');
   setActiveModule('editor');
 
   subscribeAppSettings(settings => {
@@ -854,4 +864,3 @@ function applyEditorMode() {
     button.hidden = !enabled;
   });
 }
-

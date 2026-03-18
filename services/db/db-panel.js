@@ -57,7 +57,7 @@ export async function openDatabasePanel() {
     renderList();
   } catch (err) {
     console.error(err);
-    showError("Failed to load database");
+    showError(t("failedLoadDatabase"));
   }
 }
 
@@ -120,7 +120,7 @@ function buildModal() {
       <div class="db-filters"></div>
 
       <div class="db-body">
-        <div class="db-legend-panel" aria-label="Controls">
+        <div class="db-legend-panel" aria-label="Database controls">
           <div class="db-legend-title">
             <span data-l10n="legendTitle"></span>
             <button class="db-controls-toggle" type="button" data-l10n-title="legendToggleTitle" aria-pressed="false">⟨⟨</button>

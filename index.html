@@ -18,58 +18,58 @@
     <header class="top-bar menu-bar">
       <div class="menu-left" role="menubar" aria-label="Main menu">
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">File</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuFile"></button>
           <div class="menu-dropdown" role="menu">
-            <button type="button" role="menuitem" data-action="projectImport">Import Project</button>
-            <button type="button" role="menuitem" data-action="projectExport">Export Project</button>
+            <button type="button" role="menuitem" data-action="projectImport" data-l10n="projectImport"></button>
+            <button type="button" role="menuitem" data-action="projectExport" data-l10n="projectExport"></button>
             <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
-            <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
-            <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
+            <button type="button" role="menuitem" data-action="downloadXML" data-l10n="downloadXML"></button>
+            <button type="button" role="menuitem" data-action="generateXML" data-l10n="generateXML"></button>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">Edit</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuEdit"></button>
           <div class="menu-dropdown" role="menu">
             <button type="button" role="menuitem" data-action="undo" data-l10n="undo"></button>
             <button type="button" role="menuitem" data-action="redo" data-l10n="redo"></button>
-            <button type="button" role="menuitem" data-action="menuDeleteSelected">Delete Node</button>
-            <button type="button" role="menuitem" data-action="menuDuplicateSelected">Duplicate Node</button>
+            <button type="button" role="menuitem" data-action="menuDeleteSelected" data-l10n="menuDeleteSelected"></button>
+            <button type="button" role="menuitem" data-action="menuDuplicateSelected" data-l10n="menuDuplicateSelected"></button>
             <button type="button" role="menuitem" data-action="clearAll" data-l10n="clearEvent"></button>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">Presets</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuPresets"></button>
           <div class="menu-dropdown" role="menu">
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">Base Presets <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuBasePresets"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
-                <button type="button" role="menuitem" data-action="basePresetPlaceholder">Outpost Mission</button>
-                <button type="button" role="menuitem" data-action="basePresetPlaceholder">Wreck Expedition</button>
+                <button type="button" role="menuitem" data-action="basePresetPlaceholder" data-l10n="menuOutpostMission"></button>
+                <button type="button" role="menuitem" data-action="basePresetPlaceholder" data-l10n="menuWreckExpedition"></button>
               </div>
             </div>
             <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
-            <button type="button" role="menuitem" data-action="loadPreset">Load Preset</button>
-            <button type="button" role="menuitem" data-action="savePreset">Save As Preset</button>
-            <button type="button" role="menuitem" data-action="managePreset">Manage Presets</button>
+            <button type="button" role="menuitem" data-action="loadPreset" data-l10n="loadPreset"></button>
+            <button type="button" role="menuitem" data-action="savePreset" data-l10n="savePreset"></button>
+            <button type="button" role="menuitem" data-action="managePreset" data-l10n="managePreset"></button>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">Tools</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuTools"></button>
           <div class="menu-dropdown" role="menu">
             <button type="button" role="menuitem" data-action="runSimulation" data-l10n="simulation"></button>
             <button type="button" role="menuitem" data-action="validateTree" data-l10n="validateTree"></button>
-            <button type="button" role="menuitem" data-action="probabilityAnalysis">Probability Analysis</button>
+            <button type="button" role="menuitem" data-action="probabilityAnalysis" data-l10n="probabilityAnalysis"></button>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">View</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuView"></button>
           <div class="menu-dropdown" role="menu">
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">Theme <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuTheme"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetThemeMode" data-value="dark" data-l10n="themeModeDark"></button>
                 <button type="button" role="menuitem" data-action="menuSetThemeMode" data-value="light" data-l10n="themeModeLight"></button>
@@ -77,7 +77,7 @@
             </div>
 
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">Style <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuStyle"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="debug" data-l10n="themeDebug"></button>
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="classic-luna" data-l10n="themeClassicLuna"></button>
@@ -88,34 +88,34 @@
             </div>
 
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">UI Scale <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuUiScale"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
-                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="80">80%</button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="80" data-l10n="uiScale80"></button>
                 <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="90" data-l10n="uiScale90"></button>
                 <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="100" data-l10n="uiScale100"></button>
                 <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="110" data-l10n="uiScale110"></button>
-                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="120">120%</button>
+                <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="120" data-l10n="uiScale120"></button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">Help</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuHelp"></button>
           <div class="menu-dropdown" role="menu">
             <button type="button" role="menuitem" data-action="openDocumentation" data-l10n="documentation"></button>
-            <button type="button" role="menuitem" data-action="openWiki">Wiki</button>
-            <button type="button" role="menuitem" data-action="openGithub">GitHub</button>
-            <button type="button" role="menuitem" data-action="reportIssue">Issues</button>
-            <button type="button" role="menuitem" data-action="aboutApp">About</button>
+            <button type="button" role="menuitem" data-action="openWiki" data-l10n="openWiki"></button>
+            <button type="button" role="menuitem" data-action="openGithub" data-l10n="openGithub"></button>
+            <button type="button" role="menuitem" data-action="reportIssue" data-l10n="reportIssue"></button>
+            <button type="button" role="menuitem" data-action="aboutApp" data-l10n="aboutApp"></button>
           </div>
         </div>
 
         <div class="menu-item" role="none">
-          <button type="button" class="menu-button" role="menuitem">Settings</button>
+          <button type="button" class="menu-button" role="menuitem" data-l10n="menuSettings"></button>
           <div class="menu-dropdown" role="menu">
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">Language <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="language"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="menuSetLanguage" data-value="en" data-l10n="langEnglish"></button>
                 <button type="button" role="menuitem" data-action="menuLangPlaceholder" data-value="zh-Hans" data-l10n="langSimplifiedChinese"></button>
@@ -128,14 +128,14 @@
               </div>
             </div>
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem">XML Behavior <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="openSettingsXmlBehavior"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu" role="menu">
                 <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
-                <button type="button" role="menuitem" data-action="downloadXML">Download XML</button>
-                <button type="button" role="menuitem" data-action="generateXML">Generate XML</button>
+                <button type="button" role="menuitem" data-action="downloadXML" data-l10n="downloadXML"></button>
+                <button type="button" role="menuitem" data-action="generateXML" data-l10n="generateXML"></button>
               </div>
             </div>
-            <button type="button" role="menuitem" data-action="resetSettings">Reset Settings</button>
+            <button type="button" role="menuitem" data-action="resetSettings" data-l10n="resetSettings"></button>
           </div>
         </div>
       </div>
@@ -143,13 +143,13 @@
       <div class="menu-right">
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
         <button data-action="openDocumentation" data-action-tier="secondary" data-l10n="documentation"></button>
-        <div id="editor-mode-segmented" class="segmented-control segmented-control-three" data-editor-mode="basic" data-segment-count="3" role="tablist" aria-label="Editor operation mode">
+        <div id="editor-mode-segmented" class="segmented-control segmented-control-three" data-editor-mode="basic" data-segment-count="3" role="tablist" data-l10n-aria-label="editorOperationMode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
-          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true">Basic</button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab" aria-selected="false">Intermediate</button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false">Advanced</button>
+          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true" data-l10n="editorModeBasic"></button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab" aria-selected="false" data-l10n="editorModeIntermediate"></button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false" data-l10n="editorModeAdvanced"></button>
         </div>
-        <div id="view-segmented" class="segmented-control" data-view-mode="node" data-segment-count="2" role="tablist" aria-label="Editor view mode">
+        <div id="view-segmented" class="segmented-control" data-view-mode="node" data-segment-count="2" role="tablist" data-l10n-aria-label="editorViewMode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
           <button type="button" class="segmented-option" data-action="setViewMode" data-view-mode="tree" role="tab" aria-selected="false" data-l10n="treeMode"></button>
@@ -216,10 +216,10 @@
 
     <section class="action-bar">
       <div class="action-group">
-        <span class="action-title">Build</span>
+        <span class="action-title" data-l10n="build"></span>
         <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-node-type="rng" data-l10n="addRng"></button>
-        <button data-action="addNode" data-action-tier="secondary" data-type="event" data-node-type="event">+ Event</button>
-        <button data-action="addNode" data-action-tier="secondary" data-type="eventSet" data-node-type="eventSet">+ EventSet</button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="event" data-node-type="event" data-l10n="addEvent"></button>
+        <button data-action="addNode" data-action-tier="secondary" data-type="eventSet" data-node-type="eventSet" data-l10n="addEventSet"></button>
         <button data-action="addNode" data-action-tier="secondary" data-type="spawn" data-node-type="spawn" data-l10n="addItem"></button>
         <button data-action="addNode" data-action-tier="secondary" data-type="creature" data-node-type="creature" data-l10n="addCreature"></button>
         <button data-action="addNode" data-action-tier="secondary" data-type="affliction" data-node-type="affliction" data-l10n="addAffliction"></button>
@@ -242,7 +242,7 @@
         </div>
         <div id="tree-container" style="display:none;">
           <div class="tree-layout">
-            <section id="tree-outline" class="tree-outline" aria-label="Tree outline"></section>
+            <section id="tree-outline" class="tree-outline" data-l10n-aria-label="treeOutlineLabel"></section>
             <svg id="tree-svg" aria-hidden="true"></svg>
             <aside id="tree-inspector"></aside>
           </div>
@@ -253,10 +253,10 @@
 
     <section id="output-panel" class="output-panel">
       <div class="output-panel-header">
-        <button id="output-collapse-toggle" type="button" data-action="toggleOutputCollapse" data-action-tier="neutral" class="output-collapse-btn">▼ Output</button>
-        <div class="output-tabs" role="tablist" aria-label="Output tabs">
+        <button id="output-collapse-toggle" type="button" data-action="toggleOutputCollapse" data-action-tier="neutral" class="output-collapse-btn"></button>
+        <div class="output-tabs" role="tablist" data-l10n-aria-label="outputTabsLabel">
           <div class="output-tabs-indicator" aria-hidden="true"></div>
-          <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true">XML</button>
+          <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true" data-l10n="outputXmlTab"></button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false" data-l10n="simulation"></button>
         </div>
         <div class="output-header-controls">
@@ -290,17 +290,17 @@
                 <span data-l10n="seed"></span>
                 <input id="simulation-seed" type="text" placeholder="random" />
               </label>
-              <button type="button" class="simulation-run-btn" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation">Run Simulation</button>
+              <button type="button" class="simulation-run-btn" data-action="runSimulation" data-action-tier="primary" data-l10n="runSimulation"></button>
             </div>
           </div>
           <div class="simulation-table-wrap">
             <table class="simulation-table">
               <thead>
                 <tr>
-                  <th>Result</th>
-                  <th>Count</th>
-                  <th id="sim-prob-header" data-action="toggleSimulationSort">Simulated Probability</th>
-                  <th>Exact Probability</th>
+                  <th data-l10n="result"></th>
+                  <th data-l10n="count"></th>
+                  <th id="sim-prob-header" data-action="toggleSimulationSort"><span data-l10n="simulatedProbability"></span></th>
+                  <th data-l10n="exactProbability"></th>
                 </tr>
               </thead>
               <tbody id="simulation-results"></tbody>

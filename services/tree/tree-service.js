@@ -1,4 +1,4 @@
-import { t } from '../../ui/localization.js';
+import { formatL10n, t } from '../../ui/localization.js';
 import { createIcon } from '../../ui/icon-component.js';
 import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
 import { formatChanceForInput } from '../../ui/chance-utils.js';
@@ -11,12 +11,12 @@ import { getAllowedNodeTypes, getNodeCollections, isContainerNode, isRngNode } f
 import { normalizeRngBranchProbabilities } from '../../core/rng.js';
 
 const NODE_META = {
-  rng: { icon: 'sliders-horizontal', label: 'RNG' },
-  event: { icon: 'doc', label: 'Event' },
-  eventSet: { icon: 'archive', label: 'EventSet' },
-  spawn: { icon: 'box', label: 'Item' },
-  creature: { icon: 'hashtag', label: 'Creature' },
-  affliction: { icon: 'alert-triangle', label: 'Affliction' }
+  rng: { icon: 'sliders-horizontal', labelKey: 'addRng' },
+  event: { icon: 'doc', labelKey: 'addEvent' },
+  eventSet: { icon: 'archive', labelKey: 'addEventSet' },
+  spawn: { icon: 'box', labelKey: 'addItem' },
+  creature: { icon: 'hashtag', labelKey: 'addCreature' },
+  affliction: { icon: 'alert-triangle', labelKey: 'addAffliction' }
 };
 const NODE_SIZE = { width: 320, height: 108 };
 const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
@@ -73,6 +73,12 @@ function parseLegacyBoolean(raw, fallback = false) {
   if (['true', '1', 'yes', 'on', 'links', 'nodes', 'both'].includes(normalized)) return true;
   if (['false', '0', 'no', 'off', 'hidden', 'none'].includes(normalized)) return false;
   return Boolean(parseJSONSafe(raw, fallback));
+}
+
+
+function getNodeLabel(nodeType) {
+  const key = NODE_META[nodeType]?.labelKey;
+  return (key ? t(key) : nodeType).replace(/^\+\s*/, '');
 }
 
 function chanceClass(value, enabled) {
@@ -187,7 +193,7 @@ export class TreeService {
     if (!minimap) {
       minimap = document.createElement('div');
       minimap.className = 'tree-minimap';
-      minimap.innerHTML = '<div class="tree-minimap-header">Minimap</div><svg></svg><button type="button" class="tree-minimap-resize" aria-label="Resize minimap"></button>';
+      minimap.innerHTML = `<div class="tree-minimap-header">${t('minimapTitle')}</div><svg></svg><button type="button" class="tree-minimap-resize" aria-label="${t('minimapTitle')}"></button>`;
       container.appendChild(minimap);
     }
     this.minimapEl = minimap;
@@ -242,6 +248,7 @@ export class TreeService {
     this.treeSettings.showMinimap = parseLegacyBoolean(this.treeSettings.showMinimap, true);
     this.treeSettings.minimapFocusMode = parseLegacyBoolean(this.treeSettings.minimapFocusMode, false);
     this.treeSettings.showIntermediateNodes = parseLegacyBoolean(this.treeSettings.showIntermediateNodes, true);
+    this.treeSettings.settingsCollapsed = parseLegacyBoolean(this.treeSettings.settingsCollapsed, false);
     this.treeSettings.smoothPaths = parseLegacyBoolean(this.treeSettings.smoothPaths, true);
     this.treeSettings.debugBounds = parseLegacyBoolean(this.treeSettings.debugBounds, false);
 
@@ -480,7 +487,7 @@ export class TreeService {
 
     const rootChildren = this.applyAutoChance(model, 1, 0).map(entry => this.toTreeNode(entry.node, null, entry.probability, 1));
     const root = window.d3.hierarchy({
-      name: 'Root Event',
+      name: t('rootEvent'),
       type: 'root',
       id: 'root',
       children: rootChildren
@@ -751,7 +758,7 @@ export class TreeService {
     const failure = d.data.branchType === 'failure';
 
     group.append('rect').attr('class', `tree-branch-card ${success ? 'branch-success' : failure ? 'branch-failure' : 'branch-neutral'}`).attr('x', -width / 2).attr('y', -height / 2).attr('rx', 18).attr('ry', 18).attr('width', width).attr('height', height);
-    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(d.data.name || d.data.branchType || 'Branch');
+    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(d.data.name || d.data.branchType || t('branch'));
   }
 
   renderEditableNode(group, d) {
@@ -793,14 +800,14 @@ export class TreeService {
     const title = document.createElement('button');
     title.className = 'icon-btn node-title';
     title.type = 'button';
-    title.title = `${NODE_META[node.type]?.label || node.type} #${node.id}`;
+    title.title = `${getNodeLabel(node.type)} #${node.id}`;
     const defaultIcon = createIcon(NODE_META[node.type]?.icon || 'tag');
     title.append(defaultIcon);
     if (node.type === 'affliction') {
       const fxIcon = this.createAfflictionNodeIcon(node);
       if (fxIcon) title.replaceChild(fxIcon, defaultIcon);
     }
-    title.append(` ${NODE_META[node.type]?.label || node.type}`);
+    title.append(` ${getNodeLabel(node.type)}`);
     title.addEventListener('click', () => this.selectNode(node.id));
 
     const rightBtns = document.createElement('div');
@@ -836,7 +843,7 @@ export class TreeService {
     actions.className = 'tree-inline-actions';
     const addableTypes = getAllowedNodeTypes(getAppSetting('editorMode') || 'basic');
     if ((node.type === 'rng' || isContainerNode(node)) && !collapsed) {
-      const branchDefs = node.type === 'rng' ? (node.branches || []).map((branch, index) => ({ id: branch.id, label: branch.label || `Branch ${index + 1}` })) : [{ id: null, label: 'Children' }];
+      const branchDefs = node.type === 'rng' ? (node.branches || []).map((branch, index) => ({ id: branch.id, label: branch.label || `Branch ${index + 1}` })) : [{ id: null, label: t('children') }];
       branchDefs.forEach((branch, index) => {
         const row = document.createElement('div');
         row.className = `tree-inline-actions-row ${branch.id || 'children'}`;
@@ -845,7 +852,7 @@ export class TreeService {
           const btn = document.createElement('button');
           btn.className = `icon-btn add-btn add-${branch.id || 'children'}`;
           btn.type = 'button';
-          btn.title = `Add to ${branch.label} ${NODE_META[type]?.label || type}`;
+          btn.title = `Add to ${branch.label} ${getNodeLabel(type)}`;
           btn.append(createIcon(NODE_META[type]?.icon || 'plus-square'));
           btn.addEventListener('click', event => {
             event.stopPropagation();
@@ -940,12 +947,34 @@ export class TreeService {
       return row;
     };
 
-    if (node.type === 'rng') return [makeInput({ key: 'chance', label: 'chance', type: 'text', inputMode: 'decimal', value: formatChanceForInput(toNumberOr(node.params.chance, 0.5)) })];
-    if (node.type === 'event') return [makeInput({ key: 'identifier', label: 'identifier', type: 'text', value: node.params.identifier || '' })];
-    if (node.type === 'eventSet') return [makeInput({ key: 'identifier', label: 'identifier', type: 'text', value: node.params.identifier || '' }), makeInput({ key: 'eventcount', label: 'eventcount', type: 'number', step: '1', value: toNumberOr(node.params.eventcount, 1) }), makeInput({ key: 'commonness', label: 'commonness', type: 'number', step: '1', value: toNumberOr(node.params.commonness, 1) })];
-    if (node.type === 'spawn') return [makeIdInput({ key: 'item', label: 'id', type: 'spawn' }), makeInput({ key: 'amount', label: 'amount', type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }), makeInput({ key: 'quality', label: 'quality', type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })];
-    if (node.type === 'creature') return [makeIdInput({ key: 'creature', label: 'id', type: 'creature' }), makeInput({ key: 'count', label: 'count', type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })];
-    if (node.type === 'affliction') return [makeIdInput({ key: 'affliction', label: 'id', type: 'affliction' }), makeInput({ key: 'strength', label: 'strength', type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })];
+    if (node.type === 'rng') return [makeInput({ key: 'chance', label: t('chance'), type: 'text', inputMode: 'decimal', value: formatChanceForInput(toNumberOr(node.params.chance, 0.5)) })];
+    if (node.type === 'event') return [makeInput({ key: 'identifier', label: t('identifier'), type: 'text', value: node.params.identifier || '' })];
+    if (node.type === 'eventSet') {
+      return [
+        makeInput({ key: 'identifier', label: t('identifier'), type: 'text', value: node.params.identifier || '' }),
+        makeInput({ key: 'eventcount', label: t('eventCount'), type: 'number', step: '1', value: toNumberOr(node.params.eventcount, 1) }),
+        makeInput({ key: 'commonness', label: t('commonness'), type: 'number', step: '1', value: toNumberOr(node.params.commonness, 1) })
+      ];
+    }
+    if (node.type === 'spawn') {
+      return [
+        makeIdInput({ key: 'item', label: t('identifier'), type: 'spawn' }),
+        makeInput({ key: 'amount', label: t('amount'), type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }),
+        makeInput({ key: 'quality', label: t('quality'), type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })
+      ];
+    }
+    if (node.type === 'creature') {
+      return [
+        makeIdInput({ key: 'creature', label: t('identifier'), type: 'creature' }),
+        makeInput({ key: 'count', label: t('count'), type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })
+      ];
+    }
+    if (node.type === 'affliction') {
+      return [
+        makeIdInput({ key: 'affliction', label: t('identifier'), type: 'affliction' }),
+        makeInput({ key: 'strength', label: t('strength'), type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })
+      ];
+    }
     return [];
   }
 
@@ -1035,7 +1064,7 @@ export class TreeService {
       const branchNodes = normalizedBranches.map((branch, index) => ({
         type: 'branch',
         id: `${node.id}-${branch.id || index}` ,
-        name: branch.label || `Branch ${index + 1}`,
+        name: branch.label || `${t('branch')} ${index + 1}`,
         branchType: branch.id || `branch_${index + 1}` ,
         probability: probability * branch.probability,
         children: collapsed ? [] : this.applyAutoChance(branch.children || [], probability * branch.probability, depth).map(child => this.toTreeNode(child.node, branch.id || `branch_${index + 1}`, child.probability, depth + 1))
@@ -1047,7 +1076,7 @@ export class TreeService {
         nodeRef: node,
         branchType,
         probability,
-        name: `RNG ${node.params.mode === 'weight' ? 'weighted' : Math.round(toNumberOr(node.params.chance, 0.5) * 100) + '%'}`,
+        name: `RNG ${node.params.mode === 'weight' ? t('weight').toLowerCase() : Math.round(toNumberOr(node.params.chance, 0.5) * 100) + '%'}`,
         children: branchChildren
       };
     }
@@ -1059,15 +1088,15 @@ export class TreeService {
         nodeRef: node,
         branchType,
         probability,
-        name: node.type === 'eventSet' ? `EventSet ${node.params.identifier || ''}`.trim() : `Event ${node.params.identifier || ''}`.trim(),
+        name: node.type === 'eventSet' ? `${getNodeLabel('eventSet')} ${node.params.identifier || ''}`.trim() : `${getNodeLabel('event')} ${node.params.identifier || ''}`.trim(),
         children: (node.children || []).map(child => this.toTreeNode(child, branchType, probability, depth + 1))
       };
     }
 
     const labels = {
-      spawn: `Item ${node.params.item || 'unset'}`,
-      creature: `Creature ${node.params.creature || 'unset'}`,
-      affliction: `Affliction ${node.params.affliction || 'unset'}`
+      spawn: `${getNodeLabel('spawn')} ${node.params.item || 'unset'}`,
+      creature: `${getNodeLabel('creature')} ${node.params.creature || 'unset'}`,
+      affliction: `${getNodeLabel('affliction')} ${node.params.affliction || 'unset'}`
     };
     return { id: node.id, type: node.type, nodeRef: node, branchType, probability, name: labels[node.type] || node.type };
   }
@@ -1090,9 +1119,15 @@ export class TreeService {
     wrapper.className = 'tree-settings-section';
     const isBasic = this.treeSettings.uiLevel !== 'advanced';
     const showMinimapSettings = !!this.treeSettings.showMinimap;
+    const settingsExpanded = !this.treeSettings.settingsCollapsed;
 
+    // Keep Tree mode settings in a compact collapsible panel so the canvas stays readable.
     wrapper.innerHTML = `
-      <h5>${t('treeSettings')}</h5>
+      <div class="tree-settings-header">
+        <h5>${t('treeSettings')}</h5>
+        <button type="button" class="icon-btn tree-settings-collapse-btn" data-tree-action="toggle-settings">${settingsExpanded ? t('treeSettingsCollapse') : t('treeSettingsExpand')}</button>
+      </div>
+      <div class="tree-settings-body${settingsExpanded ? '' : ' is-collapsed'}">
       <section class="tree-settings-group tree-settings-card">
         <h6>${t('modeSection')}</h6>
         <div class="tree-segmented tree-segmented-two" data-setting="uiLevel">
@@ -1152,11 +1187,19 @@ export class TreeService {
       </section>
 
       ${!isBasic ? `<details class="tree-settings-group tree-settings-advanced tree-settings-card" ${this.treeSettings.advancedExpanded ? 'open' : ''}><summary>${t('debugSection')}</summary><label class="tree-setting-row tree-setting-switch"><span>${t('showDebugBounds')}</span><input type="checkbox" data-setting="debugBounds" ${this.treeSettings.debugBounds ? 'checked' : ''}/></label></details>` : ''}
+      </div>
     `;
 
     const autoBtn = wrapper.querySelector('[data-tree-action="auto-layout"]');
     autoBtn.append(createIcon('compass'), ` ${t('runAutoLayout')}`);
     autoBtn.addEventListener('click', () => this.autoLayout());
+
+    const toggleBtn = wrapper.querySelector('[data-tree-action="toggle-settings"]');
+    toggleBtn?.addEventListener('click', () => {
+      this.treeSettings.settingsCollapsed = !this.treeSettings.settingsCollapsed;
+      this.persistTreeSettings();
+      this.renderInspector(this.findNodeById(this.selectedNodeId));
+    });
 
     wrapper.querySelectorAll('[data-tree-action^="download-"]').forEach(btn => {
       btn.addEventListener('click', () => this.downloadSvgAsset(btn.dataset.treeAction));
@@ -1344,7 +1387,7 @@ export class TreeService {
     base.innerHTML = `
       <h4>${t('treeEditor')}</h4>
       ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}
-      <p class="tree-inspector-hint">Pan: drag · Zoom: mouse wheel · Minimap: drag header / resize corner / wheel zoom · Click minimap node to jump</p>
+      <p class="tree-inspector-hint">${t('treeInspectorHint')}</p>
     `;
     inspector.appendChild(base);
     inspector.appendChild(this.renderTreeSettings());
@@ -1366,7 +1409,7 @@ export class TreeService {
     svg.setAttribute('viewBox', `0 0 ${mapWidth} ${mapHeight}`);
     if (this.minimapHeaderEl) {
       const scaleLabel = `${Math.round((Number(this.treeSettings.minimapScale) || 1) * 100)}%`;
-      this.minimapHeaderEl.textContent = `Minimap · ${scaleLabel}`;
+      this.minimapHeaderEl.textContent = `${t('minimapTitle')} · ${scaleLabel}`;
     }
 
     const xs = activeNodes.map(d => this.getNodeCoords(d).y);

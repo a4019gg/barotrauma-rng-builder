@@ -1,6 +1,88 @@
 import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 
-const DICTS = {
+// Shared localization registry used by the editor shell and every feature module.
+const dictionaries = new Map([
+  ['en', {}],
+  ['ru', {}]
+]);
+
+let currentLang = getAppSetting('lang') || 'en';
+const listeners = new Set();
+
+function mergeDictionary(lang, entries) {
+  if (!lang || !entries || typeof entries !== 'object') return;
+  dictionaries.set(lang, {
+    ...(dictionaries.get(lang) || {}),
+    ...entries
+  });
+}
+
+export function registerLocalizationBundle(_bundleName, bundleByLang) {
+  if (!bundleByLang || typeof bundleByLang !== 'object') return;
+  Object.entries(bundleByLang).forEach(([lang, entries]) => mergeDictionary(lang, entries));
+}
+
+export function hasLocalizationKey(key, lang = currentLang) {
+  const dict = dictionaries.get(lang);
+  return Boolean(dict && key in dict);
+}
+
+export function t(key, fallback = key) {
+  const dict = dictionaries.get(currentLang) || {};
+  const english = dictionaries.get('en') || {};
+  return dict[key] ?? english[key] ?? fallback;
+}
+
+export function formatL10n(key, values = {}, fallback = key) {
+  return Object.entries(values).reduce((text, [token, value]) => {
+    return text.replaceAll(`{${token}}`, String(value));
+  }, t(key, fallback));
+}
+
+export function getLang() {
+  return currentLang;
+}
+
+export function setLang(lang) {
+  if (!dictionaries.has(lang)) return;
+  currentLang = lang;
+  setAppSetting('lang', lang);
+  listeners.forEach(listener => listener(lang));
+}
+
+export function onLangChange(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function applyLocalizedAttribute(root, selector, attribute) {
+  root.querySelectorAll(selector).forEach(el => {
+    const key = el.dataset[attribute];
+    if (!key) return;
+    const attrName = attribute === 'l10nPlaceholder'
+      ? 'placeholder'
+      : attribute === 'l10nTitle'
+        ? 'title'
+        : attribute === 'l10nAriaLabel'
+          ? 'aria-label'
+          : null;
+    if (attrName) el.setAttribute(attrName, t(key));
+  });
+}
+
+export function applyLocalization(root = document) {
+  // One DOM pass updates every localized text/placeholder/title attribute in the scope.
+  root.querySelectorAll('[data-l10n]').forEach(el => {
+    const key = el.dataset.l10n;
+    if (key) el.textContent = t(key);
+  });
+
+  applyLocalizedAttribute(root, '[data-l10n-placeholder]', 'l10nPlaceholder');
+  applyLocalizedAttribute(root, '[data-l10n-title]', 'l10nTitle');
+  applyLocalizedAttribute(root, '[data-l10n-aria-label]', 'l10nAriaLabel');
+}
+
+registerLocalizationBundle('ui', {
   en: {
     treeView: 'Tree View',
     classicView: 'Classic View',
@@ -30,15 +112,17 @@ const DICTS = {
     addItem: '+ Item',
     addCreature: '+ Creature',
     addAffliction: '+ Affliction',
-    addEvent: '+ Add Event',
-    clearEvent: 'Clear Event',
+    addEvent: '+ Event',
+    addEventSet: '+ EventSet',
+    clearEvent: 'Clear event',
     events: 'Events',
-    rootEvent: 'Root Event',
-    eventId: 'Event ID:',
+    rootEvent: 'Root event',
+    eventId: 'Event ID',
     treeEditor: 'Tree node editor',
-    selectTreeNode: 'Select a node in tree to edit',
+    selectTreeNode: 'Select a node in the tree to edit it.',
     nodeType: 'Type',
     removeNode: 'Remove node',
+    duplicateNode: 'Duplicate node',
     addSuccess: 'Add to Success',
     addFailure: 'Add to Failure',
     language: 'Language',
@@ -51,9 +135,11 @@ const DICTS = {
     langSpanish: 'Español',
     langGerman: 'Deutsch',
     langPolish: 'Polski',
+    uiScale80: '80%',
     uiScale90: '90%',
     uiScale100: '100%',
     uiScale110: '110%',
+    uiScale120: '120%',
     uiScale125: '125%',
     themeStyleCompact: 'Compact',
     themeStyleBalanced: 'Balanced',
@@ -72,7 +158,7 @@ const DICTS = {
     treeSettingsBasic: 'Basic',
     treeSettingsVisual: 'Visual',
     treeSettingsAdvanced: 'Advanced',
-    displayPercent: 'Display %',
+    displayPercent: 'Probability labels',
     displayHidden: '∅',
     displayLinks: '⇄',
     displayNodes: '⋈',
@@ -83,8 +169,8 @@ const DICTS = {
     displayBothHint: 'Show on links and near nodes',
     autoChanceMode: 'Auto chance',
     autoChanceOff: 'Disabled',
-    autoChanceRoot: 'Split root children equally',
-    autoChanceBranch: 'Split each branch equally',
+    autoChanceRoot: 'Split only root children equally',
+    autoChanceBranch: 'Split every branch equally',
     showPercentOnLinks: 'Show % on links',
     showPercentNearNodes: 'Show % near nodes',
     enableDragDrop: 'Enable drag & drop',
@@ -92,13 +178,13 @@ const DICTS = {
     showTreeGrid: 'Show tree grid',
     showMinimap: 'Show minimap',
     colorMinimapBranches: 'Path coloring in minimap',
-    minimapPathColoring: 'Path coloring in minimap',
+    minimapPathColoring: 'Minimap path coloring',
     minimapSizePreset: 'Size preset',
     minimapScale: 'Minimap scale',
     minimapMode: 'Minimap mode',
     minimapModeStandard: 'Standard',
     minimapFocusMode: 'Focus / active path',
-    minimapTypeMode: 'Type mode',
+    minimapTypeMode: 'Node style',
     minimapTypeDots: 'Dots',
     minimapTypeColor: 'Type colors',
     minimapTypeIcon: 'Type icons',
@@ -109,7 +195,7 @@ const DICTS = {
     minimapSizeAuto: 'Auto',
     minimapColorSuccessFailure: 'Success / Failure',
     minimapColorProbability: 'Probability',
-    uiLevel: 'UI Level',
+    uiLevel: 'UI level',
     uiLevelBasic: 'Basic',
     uiLevelAdvanced: 'Advanced',
     modeSection: 'Mode',
@@ -117,29 +203,30 @@ const DICTS = {
     visualSection: 'Visual',
     debugSection: 'Debug',
     runAutoLayout: 'Run auto-layout',
-    exportTree: 'Export Tree',
-    exportMinimap: 'Export Minimap',
+    export: 'Export',
+    exportTree: 'Export tree',
+    exportMinimap: 'Export minimap',
     exportAsSvg: 'Export as SVG',
     exportAsPng: 'Export as PNG',
-    hintAutoChance: 'Automatically distributes branch chances based on selected strategy.',
-    hintDisplayPercent: 'Controls where probability labels are displayed in the main tree.',
+    hintAutoChance: 'Automatically redistributes child probabilities using the selected strategy.',
+    hintDisplayPercent: 'Controls where probabilities are shown in the main tree.',
     hintPathColoring: 'Choose how minimap paths should be colorized.',
-    showBranchNodes: 'Show Success/Failure intermediate nodes',
+    showBranchNodes: 'Show intermediate branch nodes',
     showDebugBounds: 'Show debug overlays',
     gridSize: 'Grid size',
     autoLayout: 'Auto-layout',
     collapseSubtree: 'Collapse subtree',
     expandSubtree: 'Expand subtree',
-    dropZoneSuccessHint: 'Drop here to insert into Success branch',
-    dropZoneFailureHint: 'Drop here to insert into Failure branch',
+    dropZoneSuccessHint: 'Drop here to insert into the first branch',
+    dropZoneFailureHint: 'Drop here to insert into the second branch',
     confirmRemoveEvent: 'Delete this event?',
     smoothTreePaths: 'Smooth links',
-    runSimulation: 'Run Simulation',
+    runSimulation: 'Run simulation',
     simulation: 'Simulation',
-    validateTree: 'Validate Tree',
+    validateTree: 'Validate tree',
     toggleHeatmap: 'Heatmap',
-    searchNodes: 'Search Nodes',
-    quickAdd: 'Quick Add',
+    searchNodes: 'Search nodes',
+    quickAdd: 'Quick add',
     nodeMode: 'Node',
     treeMode: 'Tree',
     search: 'Search',
@@ -148,25 +235,148 @@ const DICTS = {
     confirmClearEvent: 'Clear the current event?',
     confirmRemoveNode: 'Remove this node?',
     importXmlPlaceholderDescription: 'Placeholder import dialog: upload an XML file, drag it here, or paste XML directly. Import logic will be added later.',
-    importXmlDropTitle: 'Drop XML file here or click to upload',
+    importXmlDropTitle: 'Drop an XML file here or click to upload',
     importXmlDropHint: 'Accepted for now: .xml files (placeholder only)',
     importXmlNoFile: 'No file selected',
     importXmlPasteLabel: 'Paste XML code',
     importXmlPastePlaceholder: '<Event identifier="example">\n  ...\n</Event>',
     importXmlActionPlaceholder: 'Import placeholder',
     close: 'Close',
-    localizationPlaceholder: 'Language placeholder: localization is not implemented yet.',
+    localizationPlaceholder: 'Localization placeholder: this language is not implemented yet.',
+    menuFile: 'File',
+    menuEdit: 'Edit',
+    menuPresets: 'Presets',
+    menuTools: 'Tools',
+    menuView: 'View',
+    menuHelp: 'Help',
+    menuSettings: 'Settings',
+    menuDeleteSelected: 'Delete selected node',
+    menuDuplicateSelected: 'Duplicate selected node',
+    menuBasePresets: 'Base presets',
+    menuOutpostMission: 'Outpost mission',
+    menuWreckExpedition: 'Wreck expedition',
+    loadPreset: 'Load preset',
+    savePreset: 'Save as preset',
+    managePreset: 'Manage presets',
+    probabilityAnalysis: 'Probability analysis',
+    menuTheme: 'Theme',
+    menuStyle: 'Style',
+    menuUiScale: 'UI scale',
+    openWiki: 'Wiki',
+    openGithub: 'GitHub',
+    reportIssue: 'Issues',
+    aboutApp: 'About',
+    openSettingsLanguage: 'Language settings',
+    openSettingsXmlBehavior: 'XML behavior',
+    resetSettings: 'Reset settings',
+    build: 'Build',
+    output: 'Output',
+    outputXmlTab: 'XML',
+    outputPanelExpand: '▶ {label}',
+    outputPanelCollapse: '▼ {label}',
+    editorModeBasic: 'Basic',
+    editorModeIntermediate: 'Intermediate',
+    editorModeAdvanced: 'Advanced',
+    treeOutlineLabel: 'Tree outline',
+    outputTabsLabel: 'Output tabs',
+    editorOperationMode: 'Editor operation mode',
+    editorViewMode: 'Editor view mode',
+    docsGroupsLabel: 'Documentation groups',
+    searchDocumentationPlaceholder: 'Search documentation...',
+    result: 'Result',
+    count: 'Count',
+    simulatedProbability: 'Simulated probability',
+    exactProbability: 'Exact probability',
+    aboutTitle: 'About',
+    aboutHeading: 'Barotrauma RNG Builder',
+    aboutBody1: 'Visual editor for Barotrauma random event graphs.',
+    aboutBody2: 'Includes Tree mode, XML generation, simulation, and reference tools.',
+    noTerminalSpawnNodes: 'No terminal action nodes in the current tree.',
+    addChild: 'Add child',
+    copySubtree: 'Copy subtree',
+    pasteSubtree: 'Paste subtree',
+    failedLoadDatabase: 'Failed to load database',
+    dbLoadError: 'Database loading error',
+    selectNodeDelete: 'Select a node to delete.',
+    selectNodeDuplicate: 'Select a node to duplicate.',
+    simulationCompletedEmpty: 'Simulation completed: the tree is empty.',
+    validationNoIssues: 'Validation completed: no issues found.',
+    quickAddPrompt: 'Quick add node type ({types})',
+    unknownNodeTypeForMode: 'Unknown node type for the current editor mode.',
+    featureUpcoming: 'This feature will be available in an upcoming update.',
+    basePresetPlaceholder: 'Base preset placeholder.',
+    renameEventHint: 'Double click to rename',
+    eventTabAdd: 'Add event',
+    treeSummary: 'Tree summary',
+    treeSummaryHint: 'Root stays expanded while deeper levels auto-collapse for readability.',
+    treeSummaryEmpty: 'Add nodes to see the tree outline.',
+    treeLeafNode: 'Leaf node',
+    treeExpandChildren: 'Expand children',
+    treeCollapseChildren: 'Collapse children',
+    treeTypeTooltip: 'Type: {type}',
+    treeNodeIdTooltip: 'Node identifier {id}',
+    treeOutlineChance: 'Chance',
+    treeOutlineBranches: 'Branches',
+    treeOutlineIdentifier: 'Identifier',
+    treeOutlineConditions: 'Conditions',
+    treeOutlineAction: 'Action',
+    treeUnnamedEventSet: 'unnamed event set',
+    treeUnnamedEvent: 'unnamed event',
+    treeNoConditions: 'No conditions',
+    treeUnknownItem: 'unknown item',
+    treeUnknownCreature: 'unknown creature',
+    treeUnknownAffliction: 'unknown affliction',
+    treeBranchCount: '{count} branch',
+    treeBranchCountPlural: '{count} branches',
+    treeInspectorHint: 'Pan: drag · Zoom: mouse wheel · Minimap: drag header / resize corner / wheel zoom · Click a minimap node to jump.',
+    treeSettingsCollapse: 'Collapse settings',
+    treeSettingsExpand: 'Expand settings',
+    minimapTitle: 'Minimap',
+    chance: 'Chance',
+    mode: 'Mode',
+    probability: 'Probability',
+    weight: 'Weight',
+    identifier: 'Identifier',
+    commonness: 'Commonness',
+    eventCount: 'Event count',
+    chooseRandom: 'Choose random',
+    minIntensity: 'Min intensity',
+    maxIntensity: 'Max intensity',
+    minDifficulty: 'Min difficulty',
+    maxDifficulty: 'Max difficulty',
+    allowAtStart: 'Allow at start',
+    perWreck: 'Per wreck',
+    perRuin: 'Per ruin',
+    perCave: 'Per cave',
+    ignoreCooldown: 'Ignore cooldown',
+    triggerCooldown: 'Trigger cooldown',
+    identity: 'Identity',
+    conditions: 'Conditions',
+    behavior: 'Behavior',
+    amount: 'Amount',
+    quality: 'Quality',
+    count: 'Count',
+    spawnLocation: 'Spawn location',
+    spawnLocationInside: 'inside',
+    spawnLocationOutside: 'outside',
+    spawnLocationNear: 'near',
+    label: 'Label',
+    value: 'Value',
+    removeBranch: 'Remove branch',
+    children: 'Children',
+    branch: 'Branch',
+    strength: 'Strength'
   },
   ru: {
-    treeView: 'Древо',
+    treeView: 'Вид дерева',
     classicView: 'Классический вид',
     database: 'База данных',
     documentation: 'Документация',
     settings: 'Настройки',
     theme: 'Базовая тема',
     themeMode: 'Режим темы',
-    themeModeDark: 'Тёмный',
-    themeModeLight: 'Светлый',
+    themeModeDark: 'Тёмная',
+    themeModeLight: 'Светлая',
     themeDebug: 'Normal',
     themeClassicLuna: 'Classic Luna',
     themeNeonOps: 'Neon Ops',
@@ -177,7 +387,7 @@ const DICTS = {
     grid: 'Фоновая сетка',
     projectImport: 'Импорт проекта',
     projectExport: 'Экспорт проекта',
-    projectStub: 'Заглушка: импорт/экспорт проекта будет добавлен позже',
+    projectStub: 'Заглушка: импорт и экспорт проекта появятся позже',
     generateXML: 'Сгенерировать XML',
     copyXML: 'Копировать XML',
     downloadXML: 'Скачать XML',
@@ -185,16 +395,18 @@ const DICTS = {
     addRng: '+ RNG',
     addItem: '+ Предмет',
     addCreature: '+ Существо',
-    addAffliction: '+ Эффект',
-    addEvent: '+ Добавить событие',
+    addAffliction: '+ Аффликт',
+    addEvent: '+ Event',
+    addEventSet: '+ EventSet',
     clearEvent: 'Очистить событие',
     events: 'События',
     rootEvent: 'Корневое событие',
-    eventId: 'ID события:',
-    treeEditor: 'Редактор нод дерева',
-    selectTreeNode: 'Выберите ноду в дереве для редактирования',
+    eventId: 'ID события',
+    treeEditor: 'Редактор Tree-узлов',
+    selectTreeNode: 'Выберите узел в дереве, чтобы редактировать его.',
     nodeType: 'Тип',
-    removeNode: 'Удалить ноду',
+    removeNode: 'Удалить узел',
+    duplicateNode: 'Дублировать узел',
     addSuccess: 'Добавить в Success',
     addFailure: 'Добавить в Failure',
     language: 'Язык',
@@ -207,9 +419,11 @@ const DICTS = {
     langSpanish: 'Español',
     langGerman: 'Deutsch',
     langPolish: 'Polski',
+    uiScale80: '80%',
     uiScale90: '90%',
     uiScale100: '100%',
     uiScale110: '110%',
+    uiScale120: '120%',
     uiScale125: '125%',
     themeStyleCompact: 'Компактная',
     themeStyleBalanced: 'Сбалансированная',
@@ -224,37 +438,37 @@ const DICTS = {
     chanceInputMode: 'Формат ввода шанса',
     chanceModeFraction: 'Дробь (0..1)',
     chanceModePercent: 'Проценты (0..100)',
-    treeSettings: 'Настройки Tree mod',
-    treeSettingsBasic: 'Основные',
+    treeSettings: 'Настройки Tree режима',
+    treeSettingsBasic: 'Базовые',
     treeSettingsVisual: 'Визуал',
     treeSettingsAdvanced: 'Расширенные',
-    displayPercent: 'Отображение %',
+    displayPercent: 'Подписи вероятностей',
     displayHidden: '∅',
     displayLinks: '⇄',
     displayNodes: '⋈',
     displayBoth: '⧉',
-    displayHiddenHint: 'Скрыть подписи вероятности',
-    displayLinksHint: 'Показывать на линиях',
-    displayNodesHint: 'Показывать возле нод',
-    displayBothHint: 'Показывать и на линиях, и возле нод',
-    autoChanceMode: 'Авто-расчет шанса',
-    autoChanceOff: 'Отключен',
-    autoChanceRoot: 'Равномерно только для корня',
-    autoChanceBranch: 'Равномерно для каждой ветки',
-    showPercentOnLinks: 'Показывать % на линиях',
-    showPercentNearNodes: 'Показывать % возле нод',
-    enableDragDrop: 'Включить Drag & Drop',
+    displayHiddenHint: 'Скрыть подписи вероятностей',
+    displayLinksHint: 'Показывать на связях',
+    displayNodesHint: 'Показывать возле узлов',
+    displayBothHint: 'Показывать и на связях, и возле узлов',
+    autoChanceMode: 'Авто-шанс',
+    autoChanceOff: 'Отключён',
+    autoChanceRoot: 'Делить только корневые дочерние узлы поровну',
+    autoChanceBranch: 'Делить каждую ветку поровну',
+    showPercentOnLinks: 'Показывать % на связях',
+    showPercentNearNodes: 'Показывать % возле узлов',
+    enableDragDrop: 'Включить drag & drop',
     snapToGrid: 'Привязка к сетке',
     showTreeGrid: 'Показывать сетку дерева',
-    showMinimap: 'Показывать мини-карту',
-    colorMinimapBranches: 'Подсветка путей в миникарте',
-    minimapPathColoring: 'Подсветка путей в миникарте',
-    minimapSizePreset: 'Пресет размера',
+    showMinimap: 'Показывать миникарту',
+    colorMinimapBranches: 'Подсветка путей на миникарте',
+    minimapPathColoring: 'Подсветка путей миникарты',
+    minimapSizePreset: 'Размер',
     minimapScale: 'Масштаб миникарты',
-    minimapMode: 'Режим мини-карты',
+    minimapMode: 'Режим миникарты',
     minimapModeStandard: 'Стандартный',
     minimapFocusMode: 'Фокус / активный путь',
-    minimapTypeMode: 'Режим точек',
+    minimapTypeMode: 'Стиль узлов',
     minimapTypeDots: 'Точки',
     minimapTypeColor: 'Цвета типов',
     minimapTypeIcon: 'Иконки типов',
@@ -272,80 +486,169 @@ const DICTS = {
     treeSettingsEditing: 'Редактирование',
     visualSection: 'Визуал',
     debugSection: 'Отладка',
-    runAutoLayout: 'Запустить авто-layout',
+    runAutoLayout: 'Запустить авто-раскладку',
+    export: 'Экспорт',
     exportTree: 'Экспорт дерева',
     exportMinimap: 'Экспорт миникарты',
     exportAsSvg: 'Экспорт в SVG',
     exportAsPng: 'Экспорт в PNG',
-    hintAutoChance: 'Автоматически распределяет шансы веток по выбранной стратегии.',
-    hintDisplayPercent: 'Определяет, где показывать подписи вероятностей в основном дереве.',
+    hintAutoChance: 'Автоматически перераспределяет вероятности дочерних узлов по выбранной стратегии.',
+    hintDisplayPercent: 'Определяет, где показываются вероятности в основном дереве.',
     hintPathColoring: 'Выберите, как раскрашивать пути на миникарте.',
-    showBranchNodes: 'Показывать промежуточные ноды Success/Failure',
+    showBranchNodes: 'Показывать промежуточные узлы веток',
     showDebugBounds: 'Показывать debug-оверлеи',
     gridSize: 'Размер сетки',
-    autoLayout: 'Авто-layout',
+    autoLayout: 'Авто-раскладка',
     collapseSubtree: 'Свернуть поддерево',
     expandSubtree: 'Развернуть поддерево',
-    dropZoneSuccessHint: 'Отпустите сюда, чтобы вставить в ветку Success',
-    dropZoneFailureHint: 'Отпустите сюда, чтобы вставить в ветку Failure',
+    dropZoneSuccessHint: 'Отпустите сюда, чтобы вставить в первую ветку',
+    dropZoneFailureHint: 'Отпустите сюда, чтобы вставить во вторую ветку',
     confirmRemoveEvent: 'Удалить это событие?',
-    smoothTreePaths: 'Плавные линии связей',
-    runSimulation: 'Запуск симуляции',
-    simulation: 'Simulation',
+    smoothTreePaths: 'Плавные связи',
+    runSimulation: 'Запустить симуляцию',
+    simulation: 'Симуляция',
     validateTree: 'Проверить дерево',
     toggleHeatmap: 'Тепловая карта',
-    searchNodes: 'Поиск нод',
-    quickAdd: 'Быстро добавить',
-    nodeMode: 'Ноды',
-    treeMode: 'Дерево',
+    searchNodes: 'Поиск узлов',
+    quickAdd: 'Быстрое добавление',
+    nodeMode: 'Узлы',
+    treeMode: 'Tree',
     search: 'Поиск',
     iterations: 'Итерации',
     seed: 'Seed',
     confirmClearEvent: 'Очистить текущее событие?',
-    confirmRemoveNode: 'Удалить эту ноду?',
-    importXmlPlaceholderDescription: 'Диалог импорта пока работает как плейсхолдер: загрузите XML-файл, перетащите его сюда или вставьте XML напрямую. Логика импорта появится позже.',
+    confirmRemoveNode: 'Удалить этот узел?',
+    importXmlPlaceholderDescription: 'Диалог импорта пока работает как заглушка: загрузите XML-файл, перетащите его сюда или вставьте XML напрямую. Логика импорта появится позже.',
     importXmlDropTitle: 'Перетащите XML-файл сюда или нажмите для загрузки',
-    importXmlDropHint: 'Пока принимаются только .xml файлы (плейсхолдер)',
+    importXmlDropHint: 'Пока принимаются только .xml файлы (заглушка)',
     importXmlNoFile: 'Файл не выбран',
     importXmlPasteLabel: 'Вставьте XML-код',
     importXmlPastePlaceholder: '<Event identifier="example">\n  ...\n</Event>',
-    importXmlActionPlaceholder: 'Плейсхолдер импорта',
+    importXmlActionPlaceholder: 'Заглушка импорта',
     close: 'Закрыть',
-    localizationPlaceholder: 'Плейсхолдер языка: локализация пока не реализована.',
+    localizationPlaceholder: 'Заглушка локализации: этот язык пока не реализован.',
+    menuFile: 'Файл',
+    menuEdit: 'Правка',
+    menuPresets: 'Пресеты',
+    menuTools: 'Инструменты',
+    menuView: 'Вид',
+    menuHelp: 'Справка',
+    menuSettings: 'Настройки',
+    menuDeleteSelected: 'Удалить выбранный узел',
+    menuDuplicateSelected: 'Дублировать выбранный узел',
+    menuBasePresets: 'Базовые пресеты',
+    menuOutpostMission: 'Миссия аванпоста',
+    menuWreckExpedition: 'Экспедиция к обломкам',
+    loadPreset: 'Загрузить пресет',
+    savePreset: 'Сохранить как пресет',
+    managePreset: 'Управление пресетами',
+    probabilityAnalysis: 'Анализ вероятностей',
+    menuTheme: 'Тема',
+    menuStyle: 'Стиль',
+    menuUiScale: 'Масштаб UI',
+    openWiki: 'Wiki',
+    openGithub: 'GitHub',
+    reportIssue: 'Issues',
+    aboutApp: 'О программе',
+    openSettingsLanguage: 'Настройки языка',
+    openSettingsXmlBehavior: 'Поведение XML',
+    resetSettings: 'Сбросить настройки',
+    build: 'Сборка',
+    output: 'Вывод',
+    outputXmlTab: 'XML',
+    outputPanelExpand: '▶ {label}',
+    outputPanelCollapse: '▼ {label}',
+    editorModeBasic: 'Basic',
+    editorModeIntermediate: 'Intermediate',
+    editorModeAdvanced: 'Advanced',
+    treeOutlineLabel: 'Структура дерева',
+    outputTabsLabel: 'Вкладки вывода',
+    editorOperationMode: 'Режим работы редактора',
+    editorViewMode: 'Режим отображения редактора',
+    docsGroupsLabel: 'Группы документации',
+    searchDocumentationPlaceholder: 'Поиск по документации...',
+    result: 'Результат',
+    count: 'Количество',
+    simulatedProbability: 'Смоделированная вероятность',
+    exactProbability: 'Точная вероятность',
+    aboutTitle: 'О программе',
+    aboutHeading: 'Barotrauma RNG Builder',
+    aboutBody1: 'Визуальный редактор графов случайных событий для Barotrauma.',
+    aboutBody2: 'Включает Tree режим, генерацию XML, симуляцию и справочные инструменты.',
+    noTerminalSpawnNodes: 'В текущем дереве нет конечных action-узлов.',
+    addChild: 'Добавить дочерний узел',
+    copySubtree: 'Копировать поддерево',
+    pasteSubtree: 'Вставить поддерево',
+    failedLoadDatabase: 'Не удалось загрузить базу данных',
+    dbLoadError: 'Ошибка загрузки базы данных',
+    selectNodeDelete: 'Выберите узел для удаления.',
+    selectNodeDuplicate: 'Выберите узел для дублирования.',
+    simulationCompletedEmpty: 'Симуляция завершена: дерево пустое.',
+    validationNoIssues: 'Проверка завершена: проблем не найдено.',
+    quickAddPrompt: 'Быстро добавить тип узла ({types})',
+    unknownNodeTypeForMode: 'Неизвестный тип узла для текущего режима редактора.',
+    featureUpcoming: 'Эта функция появится в одном из следующих обновлений.',
+    basePresetPlaceholder: 'Заглушка базового пресета.',
+    renameEventHint: 'Двойной клик для переименования',
+    eventTabAdd: 'Добавить событие',
+    treeSummary: 'Сводка дерева',
+    treeSummaryHint: 'Корень всегда развернут, а глубокие уровни автоматически сворачиваются для читаемости.',
+    treeSummaryEmpty: 'Добавьте узлы, чтобы увидеть структуру дерева.',
+    treeLeafNode: 'Листовой узел',
+    treeExpandChildren: 'Развернуть дочерние узлы',
+    treeCollapseChildren: 'Свернуть дочерние узлы',
+    treeTypeTooltip: 'Тип: {type}',
+    treeNodeIdTooltip: 'Идентификатор узла {id}',
+    treeOutlineChance: 'Шанс',
+    treeOutlineBranches: 'Ветви',
+    treeOutlineIdentifier: 'Идентификатор',
+    treeOutlineConditions: 'Условия',
+    treeOutlineAction: 'Действие',
+    treeUnnamedEventSet: 'безымянный event set',
+    treeUnnamedEvent: 'безымянное событие',
+    treeNoConditions: 'Без условий',
+    treeUnknownItem: 'неизвестный предмет',
+    treeUnknownCreature: 'неизвестное существо',
+    treeUnknownAffliction: 'неизвестный аффликт',
+    treeBranchCount: '{count} ветвь',
+    treeBranchCountPlural: '{count} ветвей',
+    treeInspectorHint: 'Панорамирование: перетаскивание · Масштаб: колесо мыши · Миникарта: перетаскивание заголовка / изменение размера / колесо мыши · Нажмите узел миникарты для перехода.',
+    treeSettingsCollapse: 'Свернуть настройки',
+    treeSettingsExpand: 'Развернуть настройки',
+    minimapTitle: 'Миникарта',
+    chance: 'Шанс',
+    mode: 'Режим',
+    probability: 'Вероятность',
+    weight: 'Вес',
+    identifier: 'Идентификатор',
+    commonness: 'Частота',
+    eventCount: 'Количество событий',
+    chooseRandom: 'Выбирать случайно',
+    minIntensity: 'Мин. интенсивность',
+    maxIntensity: 'Макс. интенсивность',
+    minDifficulty: 'Мин. сложность',
+    maxDifficulty: 'Макс. сложность',
+    allowAtStart: 'Разрешить в начале',
+    perWreck: 'На каждый wreck',
+    perRuin: 'На каждый ruin',
+    perCave: 'На каждую cave',
+    ignoreCooldown: 'Игнорировать cooldown',
+    triggerCooldown: 'Триггер cooldown',
+    identity: 'Идентификация',
+    conditions: 'Условия',
+    behavior: 'Поведение',
+    amount: 'Количество',
+    quality: 'Качество',
+    count: 'Число',
+    spawnLocation: 'Точка спавна',
+    spawnLocationInside: 'inside',
+    spawnLocationOutside: 'outside',
+    spawnLocationNear: 'near',
+    label: 'Метка',
+    value: 'Значение',
+    removeBranch: 'Удалить ветку',
+    children: 'Дочерние элементы',
+    branch: 'Ветка',
+    strength: 'Сила'
   }
-};
-
-let currentLang = getAppSetting('lang') || 'en';
-const listeners = new Set();
-
-export function t(key) {
-  return DICTS[currentLang]?.[key] || DICTS.en[key] || key;
-}
-
-export function getLang() {
-  return currentLang;
-}
-
-export function setLang(lang) {
-  if (!DICTS[lang]) return;
-  currentLang = lang;
-  setAppSetting('lang', lang);
-  listeners.forEach(listener => listener(lang));
-}
-
-export function onLangChange(listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export function applyLocalization(root = document) {
-  root.querySelectorAll('[data-l10n]').forEach(el => {
-    const key = el.dataset.l10n;
-    if (key) el.textContent = t(key);
-  });
-
-  root.querySelectorAll('[data-l10n-placeholder]').forEach(el => {
-    const key = el.dataset.l10nPlaceholder;
-    if (key) el.placeholder = t(key);
-  });
-}
+});

@@ -9,8 +9,9 @@ const DEFAULT_SETTINGS = {
   grid: true,
   chanceColorCoding: true,
   chanceInputMode: 'fraction',
-  autoChanceMode: 'branch-split',
-  editorMode: 'basic'
+  autoChanceMode: 'off',
+  editorMode: 'basic',
+  viewMode: 'node'
 };
 
 let state = { ...DEFAULT_SETTINGS };

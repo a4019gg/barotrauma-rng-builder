@@ -1,15 +1,16 @@
 import { createIcon } from './icon-component.js';
+import { formatL10n, t } from './localization.js';
 import { setTooltip } from './tooltip.js';
 import { getNodeCollections, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
 
-const TYPE_LABELS = {
-  rng: 'RNG',
-  event: 'Event',
-  eventSet: 'EventSet',
-  spawn: 'Action',
-  creature: 'Action',
-  affliction: 'Action'
+const TYPE_LABEL_KEYS = {
+  rng: 'addRng',
+  event: 'addEvent',
+  eventSet: 'addEventSet',
+  spawn: 'addItem',
+  creature: 'addCreature',
+  affliction: 'addAffliction'
 };
 
 const TYPE_ICONS = {
@@ -24,6 +25,12 @@ const TYPE_ICONS = {
 const defaultCollapsed = new Set();
 const userExpanded = new Set();
 const userCollapsed = new Set();
+
+function getTypeLabel(nodeType) {
+  const key = TYPE_LABEL_KEYS[nodeType];
+  const label = key ? t(key) : nodeType;
+  return label.replace(/^\+\s*/, '');
+}
 
 function hasChildren(node) {
   if (isRngNode(node)) return (node.branches || []).some(branch => (branch.children || []).length > 0);
@@ -86,26 +93,27 @@ function createSummaryLine(label, value) {
 function summarizeNode(node) {
   if (node.type === 'rng') {
     const branches = normalizeRngBranchProbabilities(node);
+    const branchCountKey = branches.length === 1 ? 'treeBranchCount' : 'treeBranchCountPlural';
     return [
-      createSummaryLine('Chance', node.params.mode === 'weight' ? `${node.params.chance ?? 0} weight` : `${Math.round((Number(node.params.chance ?? 0.5) || 0) * 100)}%`),
-      createSummaryLine('Branches', `${branches.length} branch${branches.length === 1 ? '' : 'es'}`)
+      createSummaryLine(t('treeOutlineChance'), node.params.mode === 'weight' ? `${node.params.chance ?? 0} ${t('weight').toLowerCase()}` : `${Math.round((Number(node.params.chance ?? 0.5) || 0) * 100)}%`),
+      createSummaryLine(t('treeOutlineBranches'), formatL10n(branchCountKey, { count: branches.length }))
     ];
   }
   if (node.type === 'eventSet') {
-    const identifier = node.params.identifier || 'unnamed event set';
+    const identifier = node.params.identifier || t('treeUnnamedEventSet');
     const conditions = [
-      [node.params.minintensity, node.params.maxintensity].some(value => value !== '' && value != null) ? `Intensity ${node.params.minintensity ?? 'any'}–${node.params.maxintensity ?? 'any'}` : null,
-      [node.params.minleveldifficulty, node.params.maxleveldifficulty].some(value => value !== '' && value != null) ? `Difficulty ${node.params.minleveldifficulty ?? 'any'}–${node.params.maxleveldifficulty ?? 'any'}` : null
-    ].filter(Boolean).join(' · ') || 'No conditions';
+      [node.params.minintensity, node.params.maxintensity].some(value => value !== '' && value != null) ? `${t('minIntensity')} ${node.params.minintensity ?? 'any'} – ${t('maxIntensity')} ${node.params.maxintensity ?? 'any'}` : null,
+      [node.params.minleveldifficulty, node.params.maxleveldifficulty].some(value => value !== '' && value != null) ? `${t('minDifficulty')} ${node.params.minleveldifficulty ?? 'any'} – ${t('maxDifficulty')} ${node.params.maxleveldifficulty ?? 'any'}` : null
+    ].filter(Boolean).join(' · ') || t('treeNoConditions');
     return [
-      createSummaryLine('Identifier', identifier),
-      createSummaryLine('Conditions', conditions)
+      createSummaryLine(t('treeOutlineIdentifier'), identifier),
+      createSummaryLine(t('treeOutlineConditions'), conditions)
     ];
   }
-  if (node.type === 'event') return [createSummaryLine('Identifier', node.params.identifier || 'unnamed event')];
-  if (node.type === 'spawn') return [createSummaryLine('Action', `${node.params.item || 'unknown item'} × ${node.params.amount || 1}`)];
-  if (node.type === 'creature') return [createSummaryLine('Action', `${node.params.creature || 'unknown creature'} × ${node.params.count || 1}`)];
-  if (node.type === 'affliction') return [createSummaryLine('Action', `${node.params.affliction || 'unknown affliction'} (${node.params.strength || 1})`)];
+  if (node.type === 'event') return [createSummaryLine(t('treeOutlineIdentifier'), node.params.identifier || t('treeUnnamedEvent'))];
+  if (node.type === 'spawn') return [createSummaryLine(t('treeOutlineAction'), `${node.params.item || t('treeUnknownItem')} × ${node.params.amount || 1}`)];
+  if (node.type === 'creature') return [createSummaryLine(t('treeOutlineAction'), `${node.params.creature || t('treeUnknownCreature')} × ${node.params.count || 1}`)];
+  if (node.type === 'affliction') return [createSummaryLine(t('treeOutlineAction'), `${node.params.affliction || t('treeUnknownAffliction')} (${node.params.strength || 1})`)];
   return [];
 }
 
@@ -113,16 +121,17 @@ function appendChildren(container, node, depth, rerender) {
   if (isRngNode(node)) {
     const branchList = document.createElement('div');
     branchList.className = 'tree-outline-branches';
+    const probabilities = normalizeRngBranchProbabilities(node);
 
     (node.branches || []).forEach((branch, index) => {
       const branchEl = document.createElement('div');
       branchEl.className = 'tree-outline-branch';
-      setTooltip(branchEl, `Branch ${branch.label || branch.id || index + 1}`);
+      setTooltip(branchEl, `${t('branch')} ${branch.label || branch.id || index + 1}`);
 
       const branchHeader = document.createElement('div');
       branchHeader.className = 'tree-outline-branch-header';
-      const label = branch.label || branch.id || `Branch ${index + 1}`;
-      const probability = normalizeRngBranchProbabilities(node)[index]?.probability;
+      const label = branch.label || branch.id || `${t('branch')} ${index + 1}`;
+      const probability = probabilities[index]?.probability;
       branchHeader.textContent = `${label}${typeof probability === 'number' ? ` · ${Math.round(probability * 100)}%` : ''}`;
       branchEl.appendChild(branchHeader);
 
@@ -155,7 +164,7 @@ function renderOutlineNode(node, depth, rerender) {
 
   const header = document.createElement('div');
   header.className = 'tree-outline-header';
-  setTooltip(header, `${TYPE_LABELS[node.type] || node.type} node`);
+  setTooltip(header, formatL10n('treeTypeTooltip', { type: getTypeLabel(node.type) }));
 
   const left = document.createElement('div');
   left.className = 'tree-outline-title-wrap';
@@ -168,10 +177,10 @@ function renderOutlineNode(node, depth, rerender) {
     collapse.disabled = true;
     collapse.classList.add('is-placeholder');
     collapse.textContent = '•';
-    setTooltip(collapse, 'Leaf node');
+    setTooltip(collapse, t('treeLeafNode'));
   } else {
     collapse.textContent = isCollapsed(node.id) ? '+' : '−';
-    setTooltip(collapse, isCollapsed(node.id) ? 'Expand children' : 'Collapse children');
+    setTooltip(collapse, isCollapsed(node.id) ? t('treeExpandChildren') : t('treeCollapseChildren'));
     collapse.addEventListener('click', () => {
       toggleNode(node.id);
       rerender();
@@ -180,15 +189,15 @@ function renderOutlineNode(node, depth, rerender) {
 
   const badge = document.createElement('span');
   badge.className = `tree-outline-type tree-outline-type-${node.type}`;
-  badge.append(createIcon(TYPE_ICONS[node.type] || 'tag'), document.createTextNode(TYPE_LABELS[node.type] || node.type));
-  setTooltip(badge, `Type: ${TYPE_LABELS[node.type] || node.type}`);
+  badge.append(createIcon(TYPE_ICONS[node.type] || 'tag'), document.createTextNode(getTypeLabel(node.type)));
+  setTooltip(badge, formatL10n('treeTypeTooltip', { type: getTypeLabel(node.type) }));
 
   left.append(collapse, badge);
 
   const idText = document.createElement('div');
   idText.className = 'tree-outline-node-id';
   idText.textContent = `#${node.id}`;
-  setTooltip(idText, `Node identifier ${node.id}`);
+  setTooltip(idText, formatL10n('treeNodeIdTooltip', { id: node.id }));
 
   header.append(left, idText);
   card.appendChild(header);
@@ -212,13 +221,13 @@ export function renderTreeOutline(model, container) {
 
   const header = document.createElement('div');
   header.className = 'tree-outline-toolbar';
-  header.innerHTML = '<strong>Tree Summary</strong><span>Root expanded · deeper levels collapse automatically</span>';
+  header.innerHTML = `<strong>${t('treeSummary')}</strong><span>${t('treeSummaryHint')}</span>`;
   container.appendChild(header);
 
   if (!model.length) {
     const empty = document.createElement('div');
     empty.className = 'tree-outline-empty';
-    empty.textContent = 'Add nodes to see the tree outline.';
+    empty.textContent = t('treeSummaryEmpty');
     container.appendChild(empty);
     return;
   }
