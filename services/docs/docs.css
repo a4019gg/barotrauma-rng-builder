@@ -1,0 +1,233 @@
+#documentation-view {
+  width: 100%;
+  min-height: 0;
+}
+
+.docs-module {
+  display: grid;
+  grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.docs-sidebar,
+.docs-content {
+  border: 1px solid color-mix(in srgb, var(--border-main) 75%, transparent);
+  border-radius: var(--ui-radius-lg);
+  background: color-mix(in srgb, var(--bg-panel) 90%, var(--bg-main));
+  min-height: 0;
+}
+
+.docs-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.docs-sidebar-head {
+  display: grid;
+  gap: 8px;
+}
+
+.docs-module-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.docs-module-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.docs-back-button {
+  width: 100%;
+}
+
+.docs-search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+  padding: 2px 0 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 95%, var(--bg-main)), color-mix(in srgb, var(--bg-panel) 88%, transparent));
+}
+
+.docs-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-main);
+  border-radius: var(--ui-radius-md);
+  background: color-mix(in srgb, var(--bg-main) 72%, var(--bg-panel));
+}
+
+.docs-search-summary {
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+
+.docs-groups,
+.docs-articles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.docs-articles {
+  overflow: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.docs-group-button,
+.docs-article-button {
+  width: 100%;
+  text-align: left;
+}
+
+.docs-group-button.active,
+.docs-article-button.active,
+.docs-back-button:hover {
+  border-color: color-mix(in srgb, var(--ui-accent) 65%, var(--border-main));
+  background: color-mix(in srgb, var(--ui-accent) 18%, var(--bg-panel));
+}
+
+.docs-nav-section {
+  display: grid;
+  gap: 8px;
+}
+
+.docs-nav-section-title {
+  margin: 6px 0 0;
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.docs-article-button {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.docs-content {
+  overflow: auto;
+  padding: 24px clamp(18px, 3vw, 34px);
+  scroll-behavior: smooth;
+}
+
+.docs-article-header {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.docs-article-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.docs-article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.docs-category-pill,
+.docs-group-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 35%, var(--border-main));
+  background: color-mix(in srgb, var(--ui-accent) 12%, var(--bg-panel));
+  font-size: .82rem;
+}
+
+.docs-article-body {
+  display: grid;
+  gap: 18px;
+}
+
+.docs-section {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--border-main) 72%, transparent);
+  border-radius: var(--ui-radius-md);
+  background: color-mix(in srgb, var(--bg-panel-soft) 82%, var(--bg-main));
+}
+
+.docs-section h2,
+.docs-section p,
+.docs-list,
+.docs-definition-list {
+  margin: 0;
+}
+
+.docs-section p,
+.docs-list li,
+.docs-definition-list dd {
+  line-height: 1.6;
+}
+
+.docs-list {
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.docs-definition-list {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  gap: 10px 16px;
+}
+
+.docs-definition-list dt {
+  font-weight: 700;
+}
+
+.docs-definition-list dd {
+  color: var(--text-main);
+}
+
+.docs-code-block {
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--border-main) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-main) 78%, var(--bg-panel));
+}
+
+.docs-empty {
+  margin-top: auto;
+  padding: 16px;
+  border: 1px dashed color-mix(in srgb, var(--border-main) 75%, transparent);
+  border-radius: var(--ui-radius-md);
+  color: var(--text-muted);
+}
+
+.docs-empty h3,
+.docs-empty p {
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .docs-module {
+    grid-template-columns: 1fr;
+  }
+
+  .docs-sidebar {
+    max-height: 45vh;
+  }
+
+  .docs-definition-list {
+    grid-template-columns: 1fr;
+  }
+}

@@ -11,6 +11,7 @@
   <link id="theme-style" rel="stylesheet" href="./css/themes/theme-system.css" />
   <link rel="stylesheet" href="./services/tree/tree.css" />
   <link rel="stylesheet" href="./services/db/db.css" />
+  <link rel="stylesheet" href="./services/docs/docs.css" />
 </head>
 <body>
   <div id="app-shell">
@@ -102,7 +103,7 @@
         <div class="menu-item" role="none">
           <button type="button" class="menu-button" role="menuitem">Help</button>
           <div class="menu-dropdown" role="menu">
-            <button type="button" role="menuitem" data-action="openDocumentation">Documentation</button>
+            <button type="button" role="menuitem" data-action="openDocumentation" data-l10n="documentation"></button>
             <button type="button" role="menuitem" data-action="openWiki">Wiki</button>
             <button type="button" role="menuitem" data-action="openGithub">GitHub</button>
             <button type="button" role="menuitem" data-action="reportIssue">Issues</button>
@@ -141,6 +142,7 @@
 
       <div class="menu-right">
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
+        <button data-action="openDocumentation" data-action-tier="secondary" data-l10n="documentation"></button>
         <div id="editor-mode-segmented" class="segmented-control segmented-control-three" data-editor-mode="basic" data-segment-count="3" role="tablist" aria-label="Editor operation mode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true">Basic</button>
@@ -246,6 +248,7 @@
           </div>
         </div>
       </section>
+      <section id="documentation-view" hidden></section>
     </main>
 
     <section id="output-panel" class="output-panel">

@@ -7,6 +7,9 @@ import { TreeService } from '../services/tree/tree-service.js';
 import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, getLang, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
+import { initDocumentationView, refreshDocumentationView } from '../services/docs/documentation-view.js';
+import * as documentationStore from '../services/docs/documentation-store.js';
+import { setDocumentationLanguage } from '../services/docs/docs-loc.js';
 import { appendIconLabel } from './icon-component.js';
 import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
@@ -87,6 +90,31 @@ function setViewMode(mode) {
   });
 
   if (isTree) treeService.renderQueued(editorStore.getState().currentEvent.model);
+}
+
+function setActiveModule(moduleName) {
+  const nextModule = moduleName === 'documentation' ? 'documentation' : 'editor';
+  const editorArea = document.getElementById('editor-area');
+  const documentationView = document.getElementById('documentation-view');
+  const documentationButton = document.querySelector('button[data-action="openDocumentation"][data-action-tier="secondary"]');
+  if (!editorArea || !documentationView) return;
+
+  document.body.dataset.activeModule = nextModule;
+  editorArea.hidden = nextModule !== 'editor';
+  documentationView.hidden = nextModule !== 'documentation';
+
+  if (documentationButton) {
+    documentationButton.classList.toggle('is-selected', nextModule === 'documentation');
+    documentationButton.setAttribute('aria-pressed', nextModule === 'documentation' ? 'true' : 'false');
+  }
+
+  if (nextModule === 'documentation') {
+    initDocumentationView(documentationView);
+    refreshDocumentationView();
+    return;
+  }
+
+  renderModel();
 }
 
 function createSeededRng(seedValue) {
@@ -242,6 +270,7 @@ const treeService = new TreeService({
 function initButtonIcons() {
   const iconMap = [
     ['button[data-action="openDB"]', 'folder', 'database'],
+    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'book-open', 'documentation'],
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
     ['button[data-action="projectExport"]', 'export', 'projectExport'],
@@ -267,6 +296,7 @@ function initButtonIcons() {
 
   const tooltipMap = [
     ['button[data-action="openDB"]', 'Open the Barotrauma database browser.'],
+    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'Open the built-in documentation module.'],
     ['#editor-mode-segmented', 'Switch between Basic, Intermediate, and Advanced editing modes.'],
     ['button[data-mode="basic"]', 'Basic mode shows the simplest controls.'],
     ['button[data-mode="intermediate"]', 'Intermediate mode unlocks more structure options.'],
@@ -506,6 +536,7 @@ function handleClick(event) {
   if (action === 'clearAll') return void requestClearCurrentEvent();
 
   if (action === 'setViewMode') setViewMode(actionEl.dataset.viewMode);
+  if (action === 'openEditorModule') setActiveModule('editor');
   if (action === 'openDB') openDatabasePanel().catch(() => showError('DB load error'));
 
   if (action === 'generateXML') {
@@ -553,7 +584,7 @@ function handleClick(event) {
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
   if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
-  if (action === 'openDocumentation') handleMenuStub('Documentation placeholder');
+  if (action === 'openDocumentation') setActiveModule('documentation');
   if (action === 'openWiki') window.open('https://barotraumagame.com/wiki', '_blank', 'noopener');
   if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
   if (action === 'reportIssue') window.open('https://github.com/a4019gg/barotrauma-rng-builder/issues', '_blank', 'noopener');
@@ -760,6 +791,9 @@ export function initEditorUI() {
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
+  setDocumentationLanguage(getLang());
+  documentationStore.init();
+  initDocumentationView(document.getElementById('documentation-view'));
   applyLocalization();
   updateMenuThemeStatus();
 
@@ -768,9 +802,12 @@ export function initEditorUI() {
     updateMenuThemeStatus();
   });
 
-  onLangChange(() => {
+  onLangChange(lang => {
     applyLocalization();
     updateMenuThemeStatus();
+    setDocumentationLanguage(lang);
+    documentationStore.refreshLocalizedState();
+    refreshDocumentationView();
     treeService.renderQueued(editorStore.getState().currentEvent.model);
   });
 
@@ -784,6 +821,7 @@ export function initEditorUI() {
   setOutputTab('xml');
   setOutputCollapsed(collapsed);
   setViewMode('node');
+  setActiveModule('editor');
 
   subscribeAppSettings(settings => {
     if (settings.editorMode !== editorStore.getState().editorMode) editorStore.setEditorMode(settings.editorMode || 'basic');
