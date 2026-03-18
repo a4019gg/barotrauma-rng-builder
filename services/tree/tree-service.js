@@ -7,15 +7,17 @@ import { DEFAULT_TREE_SETTINGS, loadTreeSettings, persistTreeSettings } from './
 import { applyTreeLayout } from './tree-layout.js';
 import { chanceHeatClass } from './tree-renderer.js';
 import { rafBatch } from './tree-drag.js';
+import { getAllowedNodeTypes, getNodeCollections, isContainerNode, isRngNode } from '../../core/graph-utils.js';
+import { normalizeRngBranchProbabilities } from '../../core/rng.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', label: 'RNG' },
+  event: { icon: 'doc', label: 'Event' },
+  eventSet: { icon: 'archive', label: 'EventSet' },
   spawn: { icon: 'box', label: 'Item' },
   creature: { icon: 'hashtag', label: 'Creature' },
   affliction: { icon: 'alert-triangle', label: 'Affliction' }
 };
-
-const ADDABLE_TYPES = ['rng', 'spawn', 'creature', 'affliction'];
 const NODE_SIZE = { width: 320, height: 108 };
 const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
 const BRANCH_SIZE = { width: 132, height: 36 };
@@ -429,9 +431,7 @@ export class TreeService {
     if (!root) return;
     const walk = node => {
       this.manualPositions.delete(node.id);
-      if (node.type !== 'rng') return;
-      node.children.success.forEach(walk);
-      node.children.failure.forEach(walk);
+      getNodeCollections(node).forEach(children => children.forEach(walk));
     };
     walk(root);
   }
@@ -725,16 +725,15 @@ export class TreeService {
     const data = window.d3.select(hitEl).datum();
     if (!data?.data?.nodeRef || data.data.id === draggingId) return null;
     if (this.isTreeDescendant(draggingId, data.data.id)) return null;
-    const branch = hitZone.dataset.branch === 'success' ? 'success' : 'failure';
-    return { id: data.data.id, branch };
+    return { id: data.data.id, branch: hitZone.dataset.branch || null };
   }
 
   isTreeDescendant(parentId, candidateId) {
     if (!parentId || !candidateId || parentId === candidateId) return false;
     const root = this.findNodeById(parentId);
-    if (!root || root.type !== 'rng') return false;
-    const walk = list => list.some(child => child.id === candidateId || (child.type === 'rng' && (walk(child.children.success) || walk(child.children.failure))));
-    return walk(root.children.success) || walk(root.children.failure);
+    if (!root) return false;
+    const walk = list => list.some(child => child.id === candidateId || getNodeCollections(child).some(walk));
+    return getNodeCollections(root).some(walk);
   }
 
   renderRootNode(group, d) {
@@ -749,9 +748,10 @@ export class TreeService {
     const width = BRANCH_SIZE.width;
     const height = BRANCH_SIZE.height;
     const success = d.data.branchType === 'success';
+    const failure = d.data.branchType === 'failure';
 
-    group.append('rect').attr('class', `tree-branch-card ${success ? 'branch-success' : 'branch-failure'}`).attr('x', -width / 2).attr('y', -height / 2).attr('rx', 18).attr('ry', 18).attr('width', width).attr('height', height);
-    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(success ? 'Success' : 'Failure');
+    group.append('rect').attr('class', `tree-branch-card ${success ? 'branch-success' : failure ? 'branch-failure' : 'branch-neutral'}`).attr('x', -width / 2).attr('y', -height / 2).attr('rx', 18).attr('ry', 18).attr('width', width).attr('height', height);
+    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(d.data.name || d.data.branchType || 'Branch');
   }
 
   renderEditableNode(group, d) {
@@ -834,20 +834,22 @@ export class TreeService {
 
     const actions = document.createElement('div');
     actions.className = 'tree-inline-actions';
-    if (node.type === 'rng' && !collapsed) {
-      ['success', 'failure'].forEach(branch => {
+    const addableTypes = getAllowedNodeTypes(getAppSetting('editorMode') || 'basic');
+    if ((node.type === 'rng' || isContainerNode(node)) && !collapsed) {
+      const branchDefs = node.type === 'rng' ? (node.branches || []).map((branch, index) => ({ id: branch.id, label: branch.label || `Branch ${index + 1}` })) : [{ id: null, label: 'Children' }];
+      branchDefs.forEach((branch, index) => {
         const row = document.createElement('div');
-        row.className = `tree-inline-actions-row ${branch}`;
-        row.title = branch === 'success' ? t('addSuccess') : t('addFailure');
-        ADDABLE_TYPES.forEach(type => {
+        row.className = `tree-inline-actions-row ${branch.id || 'children'}`;
+        row.title = branch.label;
+        addableTypes.forEach(type => {
           const btn = document.createElement('button');
-          btn.className = `icon-btn add-btn add-${branch}`;
+          btn.className = `icon-btn add-btn add-${branch.id || 'children'}`;
           btn.type = 'button';
-          btn.title = `${branch === 'success' ? t('addSuccess') : t('addFailure')} ${NODE_META[type].label}`;
-          btn.append(createIcon(NODE_META[type].icon));
+          btn.title = `Add to ${branch.label} ${NODE_META[type]?.label || type}`;
+          btn.append(createIcon(NODE_META[type]?.icon || 'plus-square'));
           btn.addEventListener('click', event => {
             event.stopPropagation();
-            this.onAddChild(node.id, branch, type);
+            this.onAddChild(node.id, branch.id, type);
           });
           row.appendChild(btn);
         });
@@ -873,9 +875,11 @@ export class TreeService {
         zone.append('title').text(t(titleKey));
       };
 
-      const zoneOffset = Math.max(DROP_ZONE.offsetY, Math.round(height / 2) - 6);
-      createDropZone('success', '+', -zoneOffset, 'dropZoneSuccessHint');
-      createDropZone('failure', '−', zoneOffset, 'dropZoneFailureHint');
+      if (node.type === 'rng') {
+        const zoneOffset = Math.max(DROP_ZONE.offsetY, Math.round(height / 2) - 6);
+        createDropZone(node.branches?.[0]?.id || 'success', '+', -zoneOffset, 'dropZoneSuccessHint');
+        createDropZone(node.branches?.[1]?.id || 'failure', '−', zoneOffset, 'dropZoneFailureHint');
+      }
     }
 
     wrapper.append(header, controls);
@@ -937,6 +941,8 @@ export class TreeService {
     };
 
     if (node.type === 'rng') return [makeInput({ key: 'chance', label: 'chance', type: 'text', inputMode: 'decimal', value: formatChanceForInput(toNumberOr(node.params.chance, 0.5)) })];
+    if (node.type === 'event') return [makeInput({ key: 'identifier', label: 'identifier', type: 'text', value: node.params.identifier || '' })];
+    if (node.type === 'eventSet') return [makeInput({ key: 'identifier', label: 'identifier', type: 'text', value: node.params.identifier || '' }), makeInput({ key: 'eventcount', label: 'eventcount', type: 'number', step: '1', value: toNumberOr(node.params.eventcount, 1) }), makeInput({ key: 'commonness', label: 'commonness', type: 'number', step: '1', value: toNumberOr(node.params.commonness, 1) })];
     if (node.type === 'spawn') return [makeIdInput({ key: 'item', label: 'id', type: 'spawn' }), makeInput({ key: 'amount', label: 'amount', type: 'number', step: '1', value: toNumberOr(node.params.amount, 1) }), makeInput({ key: 'quality', label: 'quality', type: 'number', step: '1', value: toNumberOr(node.params.quality, 0) })];
     if (node.type === 'creature') return [makeIdInput({ key: 'creature', label: 'id', type: 'creature' }), makeInput({ key: 'count', label: 'count', type: 'number', step: '1', value: toNumberOr(node.params.count, 1) })];
     if (node.type === 'affliction') return [makeIdInput({ key: 'affliction', label: 'id', type: 'affliction' }), makeInput({ key: 'strength', label: 'strength', type: 'number', step: '0.1', value: toNumberOr(node.params.strength, 1) })];
@@ -1024,37 +1030,37 @@ export class TreeService {
 
   toTreeNode(node, branchType = null, probability = 1, depth = 0) {
     if (node.type === 'rng') {
-      const chance = toNumberOr(node.params.chance, 0.5);
       const collapsed = this.collapsed.has(node.id);
-      const successBranch = {
+      const normalizedBranches = normalizeRngBranchProbabilities(node);
+      const branchNodes = normalizedBranches.map((branch, index) => ({
         type: 'branch',
-        id: `${node.id}-success`,
-        name: 'Success',
-        branchType: 'success',
-        probability: probability * chance,
-        children: collapsed ? [] : this.applyAutoChance(node.children.success, probability * chance, depth).map(child => this.toTreeNode(child.node, 'success', child.probability, depth + 1))
-      };
-      const failureBranch = {
-        type: 'branch',
-        id: `${node.id}-failure`,
-        name: 'Failure',
-        branchType: 'failure',
-        probability: probability * (1 - chance),
-        children: collapsed ? [] : this.applyAutoChance(node.children.failure, probability * (1 - chance), depth).map(child => this.toTreeNode(child.node, 'failure', child.probability, depth + 1))
-      };
-
-      const branchChildren = this.treeSettings.showIntermediateNodes ? [successBranch, failureBranch].filter(branch => branch.children.length) : [
-        ...successBranch.children.map(child => ({ ...child, branchType: 'success' })),
-        ...failureBranch.children.map(child => ({ ...child, branchType: 'failure' }))
-      ];
+        id: `${node.id}-${branch.id || index}` ,
+        name: branch.label || `Branch ${index + 1}`,
+        branchType: branch.id || `branch_${index + 1}` ,
+        probability: probability * branch.probability,
+        children: collapsed ? [] : this.applyAutoChance(branch.children || [], probability * branch.probability, depth).map(child => this.toTreeNode(child.node, branch.id || `branch_${index + 1}`, child.probability, depth + 1))
+      }));
+      const branchChildren = this.treeSettings.showIntermediateNodes ? branchNodes.filter(branch => branch.children.length) : branchNodes.flatMap(branch => branch.children.map(child => ({ ...child, branchType: branch.branchType })));
       return {
         id: node.id,
         type: node.type,
         nodeRef: node,
         branchType,
         probability,
-        name: `RNG ${Math.round(chance * 100)}%`,
+        name: `RNG ${node.params.mode === 'weight' ? 'weighted' : Math.round(toNumberOr(node.params.chance, 0.5) * 100) + '%'}`,
         children: branchChildren
+      };
+    }
+
+    if (isContainerNode(node)) {
+      return {
+        id: node.id,
+        type: node.type,
+        nodeRef: node,
+        branchType,
+        probability,
+        name: node.type === 'eventSet' ? `EventSet ${node.params.identifier || ''}`.trim() : `Event ${node.params.identifier || ''}`.trim(),
+        children: (node.children || []).map(child => this.toTreeNode(child, branchType, probability, depth + 1))
       };
     }
 
@@ -1071,12 +1077,8 @@ export class TreeService {
     let found = null;
     const walk = nodes => {
       nodes.forEach(node => {
-        if (node.id === id) {
-          found = node;
-          return;
-        }
-        if (node.children?.success?.length) walk(node.children.success);
-        if (node.children?.failure?.length) walk(node.children.failure);
+        if (node.id === id) { found = node; return; }
+        getNodeCollections(node).forEach(children => walk(children));
       });
     };
     walk(this.model || []);
