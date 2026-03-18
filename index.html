@@ -141,7 +141,13 @@
 
       <div class="menu-right">
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
-        <div id="view-segmented" class="segmented-control" data-view-mode="node" role="tablist" aria-label="Editor mode">
+        <div id="editor-mode-segmented" class="segmented-control segmented-control-three" data-editor-mode="basic" data-segment-count="3" role="tablist" aria-label="Editor operation mode">
+          <div class="segmented-control-indicator" aria-hidden="true"></div>
+          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true">Basic</button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab" aria-selected="false">Intermediate</button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false">Advanced</button>
+        </div>
+        <div id="view-segmented" class="segmented-control" data-view-mode="node" data-segment-count="2" role="tablist" aria-label="Editor view mode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
           <button type="button" class="segmented-option" data-action="setViewMode" data-view-mode="tree" role="tab" aria-selected="false" data-l10n="treeMode"></button>
@@ -208,15 +214,6 @@
 
     <section class="action-bar">
       <div class="action-group">
-        <span class="action-title">Mode</span>
-        <div class="segmented-control" role="tablist" aria-label="Editor operation mode">
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab">Basic</button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab">Intermediate</button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab">Advanced</button>
-        </div>
-      </div>
-
-      <div class="action-group">
         <span class="action-title">Build</span>
         <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-node-type="rng" data-l10n="addRng"></button>
         <button data-action="addNode" data-action-tier="secondary" data-type="event" data-node-type="event">+ Event</button>
@@ -243,7 +240,8 @@
         </div>
         <div id="tree-container" style="display:none;">
           <div class="tree-layout">
-            <svg id="tree-svg"></svg>
+            <section id="tree-outline" class="tree-outline" aria-label="Tree outline"></section>
+            <svg id="tree-svg" aria-hidden="true"></svg>
             <aside id="tree-inspector"></aside>
           </div>
         </div>

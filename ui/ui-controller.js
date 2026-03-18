@@ -8,6 +8,8 @@ import { showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, getLang, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { appendIconLabel } from './icon-component.js';
+import { initTooltips, setTooltip } from './tooltip.js';
+import { renderTreeOutline } from './tree-view.js';
 import { getThemeState, onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
@@ -76,6 +78,7 @@ function setViewMode(mode) {
   tree.style.display = isTree ? 'block' : 'none';
   classic.style.display = isTree ? 'none' : 'block';
   segmented.dataset.viewMode = nextMode;
+  segmented.style.setProperty('--active-index', nextMode === 'tree' ? '1' : '0');
 
   segmented.querySelectorAll('.segmented-option').forEach(button => {
     const active = button.dataset.viewMode === nextMode;
@@ -261,6 +264,29 @@ function initButtonIcons() {
     if (!button) return;
     appendIconLabel(button, { icon: iconName, l10nKey });
   });
+
+  const tooltipMap = [
+    ['button[data-action="openDB"]', 'Open the Barotrauma database browser.'],
+    ['#editor-mode-segmented', 'Switch between Basic, Intermediate, and Advanced editing modes.'],
+    ['button[data-mode="basic"]', 'Basic mode shows the simplest controls.'],
+    ['button[data-mode="intermediate"]', 'Intermediate mode unlocks more structure options.'],
+    ['button[data-mode="advanced"]', 'Advanced mode shows every available editor control.'],
+    ['#view-segmented', 'Switch between node cards and the readable tree summary.'],
+    ['button[data-view-mode="node"]', 'Open the node-card editor.'],
+    ['button[data-view-mode="tree"]', 'Open the readable tree summary.'],
+    ['button[data-action="addNode"][data-type="rng"]', 'Add random branching logic.'],
+    ['button[data-action="addNode"][data-type="event"]', 'Add event (defines what happens).'],
+    ['button[data-action="addNode"][data-type="eventSet"]', 'Add nested event set (advanced use).'],
+    ['button[data-action="addNode"][data-type="spawn"]', 'Add item action.'],
+    ['button[data-action="addNode"][data-type="creature"]', 'Add creature action.'],
+    ['button[data-action="addNode"][data-type="affliction"]', 'Add affliction action.'],
+    ['button[data-action="undo"]', 'Undo the last editor change.'],
+    ['button[data-action="redo"]', 'Redo the last undone change.']
+  ];
+
+  tooltipMap.forEach(([selector, message]) => {
+    document.querySelectorAll(selector).forEach(element => setTooltip(element, message));
+  });
 }
 
 
@@ -355,6 +381,8 @@ function renderModel() {
 
   const state = editorStore.getState();
   state.currentEvent.model.forEach(node => root.appendChild(renderNode(node, state.editorMode)));
+
+  renderTreeOutline(state.currentEvent.model, document.getElementById('tree-outline'));
 
   if (document.getElementById('tree-container').style.display === 'block') {
     treeService.renderQueued(state.currentEvent.model);
@@ -728,6 +756,7 @@ export function initEditorUI() {
   });
 
   initSettingsController();
+  initTooltips();
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
@@ -771,6 +800,12 @@ function applyEditorMode() {
   const mode = getAppSetting('editorMode') || 'basic';
   const def = getModeDefinition(mode);
   document.body.dataset.editorMode = mode;
+  const editorModeSegmented = document.getElementById('editor-mode-segmented');
+  const activeModeIndex = { basic: 0, intermediate: 1, advanced: 2 }[mode] ?? 0;
+  if (editorModeSegmented) {
+    editorModeSegmented.dataset.editorMode = mode;
+    editorModeSegmented.style.setProperty('--active-index', String(activeModeIndex));
+  }
   document.querySelectorAll('[data-editor-mode-option]').forEach(button => {
     const active = button.dataset.mode === mode;
     button.classList.toggle('active', active);
