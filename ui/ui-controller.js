@@ -596,7 +596,6 @@ function handleClick(event) {
   if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
   if (action === 'reportIssue') window.open('https://github.com/a4019gg/barotrauma-rng-builder/issues', '_blank', 'noopener');
   if (action === 'aboutApp') openAboutPanel();
-  if (action === 'menuLangPlaceholder') handleMenuStub(t('localizationPlaceholder'));
   if (action === 'basePresetPlaceholder') handleMenuStub(t('basePresetPlaceholder'));
   if (action === 'probabilityAnalysis' || action === 'loadPreset' || action === 'savePreset' || action === 'managePreset') {
     handleMenuStub(t('featureUpcoming'));
@@ -811,14 +810,16 @@ export function initEditorUI() {
 
   onLangChange(lang => {
     applyLocalization();
-    updateMenuThemeStatus();
-    setOutputCollapsed(document.getElementById('output-panel')?.classList.contains('is-collapsed'));
-    setDocumentationLanguage(lang);
-    documentationStore.refreshLocalizedState();
-    refreshDocumentationView();
-    renderEvents();
-    renderModel();
-    treeService.renderQueued(editorStore.getState().currentEvent.model);
+    requestAnimationFrame(() => {
+      updateMenuThemeStatus();
+      setOutputCollapsed(document.getElementById('output-panel')?.classList.contains('is-collapsed'));
+      setDocumentationLanguage(lang);
+      documentationStore.refreshLocalizedState();
+      refreshDocumentationView();
+      renderEvents();
+      renderModel();
+      treeService.renderQueued(editorStore.getState().currentEvent.model);
+    });
   });
 
   editorStore.subscribe(() => {
