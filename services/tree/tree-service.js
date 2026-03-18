@@ -23,6 +23,7 @@ const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
+const REMOVE_CONFIRM_TIMEOUT_MS = 7000;
 const DROP_HIGHLIGHT_TIMEOUT_MIN_MS = 3000;
 const DROP_HIGHLIGHT_TIMEOUT_MAX_MS = 7000;
 const AFFIX_ICON_SIZE = 18;
@@ -119,6 +120,7 @@ export class TreeService {
     this.dragFrame = null;
     this.dropHighlightTimer = null;
     this.pendingAutoLayoutNodeId = null;
+    this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
     this.afflictionMetaById = new Map();
     this.treeSettings = { ...DEFAULT_TREE_SETTINGS };
@@ -758,7 +760,7 @@ export class TreeService {
     const failure = d.data.branchType === 'failure';
 
     group.append('rect').attr('class', `tree-branch-card ${success ? 'branch-success' : failure ? 'branch-failure' : 'branch-neutral'}`).attr('x', -width / 2).attr('y', -height / 2).attr('rx', 18).attr('ry', 18).attr('width', width).attr('height', height);
-    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(d.data.name || d.data.branchType || t('branch'));
+    group.append('text').attr('class', 'tree-branch-label').attr('text-anchor', 'middle').attr('dy', '0.35em').text(success ? 'Success' : failure ? 'Failure' : (d.data.name || d.data.branchType || t('branch')));
   }
 
   renderEditableNode(group, d) {
@@ -826,9 +828,22 @@ export class TreeService {
     removeBtn.className = 'icon-btn remove-btn';
     removeBtn.type = 'button';
     removeBtn.title = t('removeNode');
-    removeBtn.append(createIcon('trash'));
+    const pendingDelete = this.deleteConfirmState.id === node.id && this.deleteConfirmState.until > Date.now();
+    removeBtn.append(createIcon(pendingDelete ? 'alert-triangle' : 'trash'));
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
+      if (!pendingDelete) {
+        this.deleteConfirmState = { id: node.id, until: Date.now() + REMOVE_CONFIRM_TIMEOUT_MS };
+        this.render(this.model || []);
+        setTimeout(() => {
+          if (this.deleteConfirmState.id === node.id && this.deleteConfirmState.until <= Date.now()) {
+            this.deleteConfirmState = { id: null, until: 0 };
+            this.render(this.model || []);
+          }
+        }, REMOVE_CONFIRM_TIMEOUT_MS + 50);
+        return;
+      }
+      this.deleteConfirmState = { id: null, until: 0 };
       this.onRemoveNode(node.id);
     });
 
@@ -843,7 +858,12 @@ export class TreeService {
     actions.className = 'tree-inline-actions';
     const addableTypes = getAllowedNodeTypes(getAppSetting('editorMode') || 'basic');
     if ((node.type === 'rng' || isContainerNode(node)) && !collapsed) {
-      const branchDefs = node.type === 'rng' ? (node.branches || []).map((branch, index) => ({ id: branch.id, label: branch.label || `Branch ${index + 1}` })) : [{ id: null, label: t('children') }];
+      const branchDefs = node.type === 'rng'
+        ? (node.branches || []).map((branch, index) => {
+          const fallbackLabel = branch.id === 'success' ? 'Success' : branch.id === 'failure' ? 'Failure' : `Branch ${index + 1}`;
+          return { id: branch.id, label: branch.label || fallbackLabel };
+        })
+        : [{ id: null, label: t('children') }];
       branchDefs.forEach((branch, index) => {
         const row = document.createElement('div');
         row.className = `tree-inline-actions-row ${branch.id || 'children'}`;
@@ -884,8 +904,13 @@ export class TreeService {
 
       if (node.type === 'rng') {
         const zoneOffset = Math.max(DROP_ZONE.offsetY, Math.round(height / 2) - 6);
-        createDropZone(node.branches?.[0]?.id || 'success', '+', -zoneOffset, 'dropZoneSuccessHint');
-        createDropZone(node.branches?.[1]?.id || 'failure', '−', zoneOffset, 'dropZoneFailureHint');
+        const binarySuccessFailure = (node.branches?.length || 0) === 2
+          && node.branches?.[0]?.id === 'success'
+          && node.branches?.[1]?.id === 'failure';
+        if (binarySuccessFailure) {
+          createDropZone('success', '+', -zoneOffset, 'dropZoneSuccessHint');
+          createDropZone('failure', '−', zoneOffset, 'dropZoneFailureHint');
+        }
       }
     }
 

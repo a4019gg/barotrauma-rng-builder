@@ -57,10 +57,12 @@ export function initSettingsController() {
   document.getElementById('auto-chance-global').value = getAppSetting('autoChanceMode') || 'off';
 
   onLangChange(() => {
-    applyLocalization();
-    document.getElementById('lang-select').value = getLang();
+    const langSelect = document.getElementById('lang-select');
+    const nextLang = getLang();
+    if (langSelect?.querySelector(`option[value="${nextLang}"]`)) langSelect.value = nextLang;
     const settingsLabel = document.querySelector('#settings-toggle [data-l10n]');
     if (settingsLabel) settingsLabel.textContent = t('settings');
+    if (settingsRoot.classList.contains('open')) applyLocalization(settingsRoot);
   });
 
   applyTheme();
