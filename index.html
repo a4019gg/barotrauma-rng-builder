@@ -12,8 +12,14 @@
   <link rel="stylesheet" href="./services/tree/tree.css" />
   <link rel="stylesheet" href="./services/db/db.css" />
   <link rel="stylesheet" href="./services/docs/docs.css" />
+  <style>
+    body.app-loading #app-shell {
+      opacity: 0;
+      visibility: hidden;
+    }
+  </style>
 </head>
-<body>
+<body class="app-loading">
   <div id="app-shell">
     <header class="top-bar menu-bar">
       <div class="menu-left" role="menubar" aria-label="Main menu">
@@ -346,23 +352,26 @@
   </div>
 
   <script type="module">
-    import { initEditorUI } from './ui/ui-controller.js';
-
     function renderStartupError(error) {
       console.error('Failed to initialize app', error);
       const fallback = document.createElement('div');
       fallback.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;padding:2rem;background:#111;color:#f4f4f4;font:500 16px/1.5 system-ui,sans-serif;z-index:9999;text-align:center;';
       fallback.innerHTML = '<div><h2 style="margin:0 0 12px;">Application failed to start</h2><p style="margin:0 0 6px;opacity:.9;">Please reload the page or clear local storage for this site.</p><p style="margin:0;opacity:.75;font-size:14px;">Ошибка запуска приложения. Попробуйте перезагрузить страницу или очистить localStorage для сайта.</p></div>';
+      document.body.classList.remove('app-loading');
       document.body.appendChild(fallback);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    async function boot() {
       try {
+        const { initEditorUI } = await import('./ui/ui-controller.js');
         initEditorUI();
+        document.body.classList.remove('app-loading');
       } catch (error) {
         renderStartupError(error);
       }
-    });
+    }
+
+    window.addEventListener('DOMContentLoaded', boot);
   </script>
 </body>
 </html>
