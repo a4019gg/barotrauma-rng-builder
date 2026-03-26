@@ -141,6 +141,30 @@
                 <button type="button" role="menuitem" data-action="generateXML" data-l10n="generateXML"></button>
               </div>
             </div>
+            <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="grid"></span>
+              <input id="toggle-grid" type="checkbox" />
+            </label>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="chanceColorCoding"></span>
+              <input id="toggle-chance-colors" type="checkbox" />
+            </label>
+            <label class="menu-control-row" role="none">
+              <span data-l10n="chanceInputMode"></span>
+              <select id="chance-input-mode">
+                <option value="fraction" data-l10n="chanceModeFraction">0..1</option>
+                <option value="percent" data-l10n="chanceModePercent">%</option>
+              </select>
+            </label>
+            <label class="menu-control-row" role="none">
+              <span data-l10n="autoChanceMode"></span>
+              <select id="auto-chance-global">
+                <option value="off" data-l10n="autoChanceOff">Off</option>
+                <option value="root-split" data-l10n="autoChanceRoot">Root</option>
+                <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
+              </select>
+            </label>
             <button type="button" role="menuitem" data-action="resetSettings" data-l10n="resetSettings"></button>
           </div>
         </div>
@@ -162,69 +186,6 @@
         </div>
       </div>
     </header>
-
-    <section id="settings-panel" class="settings-panel floating-panel">
-      <div class="settings-grid">
-        <label><span data-l10n="theme"></span>
-          <select id="base-theme-select">
-            <option value="debug" data-l10n="themeDebug">Normal</option>
-            <option value="classic-luna" data-l10n="themeClassicLuna">Classic Luna</option>
-            <option value="neon-ops" data-l10n="themeNeonOps">Neon Ops</option>
-            <option value="retro-terminal" data-l10n="themeRetroTerminal">Retro Terminal</option>
-            <option value="soft-bloom" data-l10n="themeSoftBloom">Soft Bloom</option>
-          </select>
-        </label>
-        <label><span data-l10n="themeMode"></span>
-          <select id="theme-mode-select">
-            <option value="dark" data-l10n="themeModeDark">Dark</option>
-            <option value="light" data-l10n="themeModeLight">Light</option>
-          </select>
-        </label>
-        <label><span data-l10n="language"></span>
-          <select id="lang-select">
-            <option value="en" data-l10n="langEnglish">English</option>
-            <option value="zh-Hans" data-l10n="langSimplifiedChinese">简体中文</option>
-            <option value="zh-Hant" data-l10n="langTraditionalChinese">繁體中文</option>
-            <option value="ru" data-l10n="langRussian">Русский</option>
-            <option value="fr" data-l10n="langFrench">Français</option>
-            <option value="es" data-l10n="langSpanish">Español</option>
-            <option value="de" data-l10n="langGerman">Deutsch</option>
-            <option value="pl" data-l10n="langPolish">Polski</option>
-          </select>
-        </label>
-        <label><span data-l10n="uiScale"></span>
-          <select id="ui-scale-select">
-            <option value="90" data-l10n="uiScale90">90%</option>
-            <option value="100" data-l10n="uiScale100">100%</option>
-            <option value="110" data-l10n="uiScale110">110%</option>
-            <option value="125" data-l10n="uiScale125">125%</option>
-          </select>
-        </label>
-        <label><span data-l10n="themeStyle"></span>
-          <select id="theme-style-select">
-            <option value="compact" data-l10n="themeStyleCompact">Compact</option>
-            <option value="balanced" data-l10n="themeStyleBalanced">Balanced</option>
-            <option value="soft" data-l10n="themeStyleSoft">Soft</option>
-          </select>
-        </label>
-        <label class="checkbox-row"><input id="toggle-grid" type="checkbox" /><span data-l10n="grid"></span></label>
-        <label class="checkbox-row"><input id="toggle-chance-colors" type="checkbox" /><span data-l10n="chanceColorCoding"></span></label>
-        <label><span data-l10n="chanceInputMode"></span>
-          <select id="chance-input-mode">
-            <option value="fraction" data-l10n="chanceModeFraction">0..1</option>
-            <option value="percent" data-l10n="chanceModePercent">%</option>
-          </select>
-        </label>
-        <label><span data-l10n="autoChanceMode"></span>
-          <select id="auto-chance-global">
-            <option value="off" data-l10n="autoChanceOff">Off</option>
-            <option value="root-split" data-l10n="autoChanceRoot">Root</option>
-            <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
-          </select>
-        </label>
-        <button id="clear-cache-btn" type="button" data-l10n="clearCache"></button>
-      </div>
-    </section>
 
     <section class="action-bar">
       <div class="action-group">
