@@ -11,7 +11,7 @@
 
 .tree-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) 300px;
   gap: 12px;
   min-height: 0;
   height: 100%;
@@ -29,8 +29,8 @@
 
 #tree-svg.show-grid {
   background-image:
-    linear-gradient(transparent calc(var(--tree-grid-size, 24px) - 1px), rgba(120, 142, 178, 0.25) calc(var(--tree-grid-size, 24px) - 1px)),
-    linear-gradient(90deg, transparent calc(var(--tree-grid-size, 24px) - 1px), rgba(120, 142, 178, 0.25) calc(var(--tree-grid-size, 24px) - 1px));
+    linear-gradient(transparent calc(var(--tree-grid-size, 24px) - 1px), color-mix(in srgb, var(--ui-grid) 86%, transparent) calc(var(--tree-grid-size, 24px) - 1px)),
+    linear-gradient(90deg, transparent calc(var(--tree-grid-size, 24px) - 1px), color-mix(in srgb, var(--ui-grid) 86%, transparent) calc(var(--tree-grid-size, 24px) - 1px));
   background-size: var(--tree-grid-size, 24px) var(--tree-grid-size, 24px);
 }
 

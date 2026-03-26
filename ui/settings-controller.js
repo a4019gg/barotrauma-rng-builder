@@ -1,90 +1,52 @@
-import { applyLocalization, getLang, onLangChange, setLang, t } from './localization.js';
+import { applyLocalization, onLangChange } from './localization.js';
 import {
   applyTheme,
   getThemeState,
   onThemeChange,
-  setBaseTheme,
   setChanceColorCoding,
   setChanceInputMode,
   setGrid,
-  setThemeMode,
-  setThemeStyle,
-  setUiScale
 } from './theme-manager.js';
-import { clearAppSettingsCache, getAppSetting, setAppSetting } from '../state/app-settings.js';
+import { getAppSetting, setAppSetting } from '../state/app-settings.js';
 
 export function initSettingsController() {
-  const settingsRoot = document.getElementById('settings-panel');
-  const toggleBtn = document.getElementById('settings-toggle');
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      settingsRoot.classList.toggle('open');
-      applyLocalization(settingsRoot);
-    });
-  }
-
-  document.addEventListener('click', event => {
-    if (!settingsRoot.classList.contains('open')) return;
-    if (event.target.closest('#settings-panel') || (toggleBtn && event.target.closest('#settings-toggle'))) return;
-    settingsRoot.classList.remove('open');
-  });
-
-  document.getElementById('base-theme-select').onchange = event => setBaseTheme(event.target.value);
-  document.getElementById('theme-mode-select').onchange = event => setThemeMode(event.target.value);
-  document.getElementById('theme-style-select').onchange = event => setThemeStyle(event.target.value);
-  document.getElementById('lang-select').onchange = event => setLang(event.target.value);
-  document.getElementById('ui-scale-select').onchange = event => setUiScale(event.target.value);
-  document.getElementById('toggle-grid').onchange = event => setGrid(event.target.checked);
-  document.getElementById('toggle-chance-colors').onchange = event => setChanceColorCoding(event.target.checked);
-  document.getElementById('chance-input-mode').onchange = event => setChanceInputMode(event.target.value);
-  document.getElementById('auto-chance-global').onchange = event => setAppSetting('autoChanceMode', event.target.value);
-  document.getElementById('clear-cache-btn').onclick = () => {
-    clearAppSettingsCache();
-    localStorage.removeItem('tree.settings.v2');
-    location.reload();
-  };
+  const gridToggle = document.getElementById('toggle-grid');
+  const chanceColorsToggle = document.getElementById('toggle-chance-colors');
+  const chanceInputModeSelect = document.getElementById('chance-input-mode');
+  const autoChanceGlobalSelect = document.getElementById('auto-chance-global');
 
   const state = getThemeState();
-  document.getElementById('base-theme-select').value = state.baseTheme;
-  document.getElementById('theme-mode-select').value = state.themeMode;
-  document.getElementById('theme-style-select').value = state.themeStyle;
-  document.getElementById('lang-select').value = getLang();
-  document.getElementById('ui-scale-select').value = state.uiScale;
-  document.getElementById('toggle-grid').checked = state.grid;
-  document.getElementById('toggle-chance-colors').checked = state.chanceColorCoding;
-  document.getElementById('chance-input-mode').value = state.chanceInputMode;
-  document.getElementById('auto-chance-global').value = getAppSetting('autoChanceMode') || 'off';
+  if (gridToggle) {
+    gridToggle.checked = state.grid;
+    gridToggle.onchange = event => setGrid(event.target.checked);
+  }
+  if (chanceColorsToggle) {
+    chanceColorsToggle.checked = state.chanceColorCoding;
+    chanceColorsToggle.onchange = event => setChanceColorCoding(event.target.checked);
+  }
+  if (chanceInputModeSelect) {
+    chanceInputModeSelect.value = state.chanceInputMode;
+    chanceInputModeSelect.onchange = event => setChanceInputMode(event.target.value);
+  }
+  if (autoChanceGlobalSelect) {
+    autoChanceGlobalSelect.value = getAppSetting('autoChanceMode') || 'off';
+    autoChanceGlobalSelect.onchange = event => setAppSetting('autoChanceMode', event.target.value);
+  }
 
-  onLangChange(() => {
-    const langSelect = document.getElementById('lang-select');
-    const nextLang = getLang();
-    if (langSelect?.querySelector(`option[value="${nextLang}"]`)) langSelect.value = nextLang;
-    const settingsLabel = document.querySelector('#settings-toggle [data-l10n]');
-    if (settingsLabel) settingsLabel.textContent = t('settings');
-    if (settingsRoot.classList.contains('open')) applyLocalization(settingsRoot);
-  });
+  onLangChange(() => applyLocalization());
 
   applyTheme();
   onThemeChange(currentState => {
-    document.getElementById('base-theme-select').value = currentState.baseTheme;
-    document.getElementById('theme-mode-select').value = currentState.themeMode;
-    document.getElementById('theme-style-select').value = currentState.themeStyle;
-    document.getElementById('ui-scale-select').value = currentState.uiScale;
-    document.getElementById('toggle-chance-colors').checked = currentState.chanceColorCoding;
-    document.getElementById('chance-input-mode').value = currentState.chanceInputMode;
+    if (gridToggle) gridToggle.checked = currentState.grid;
+    if (chanceColorsToggle) chanceColorsToggle.checked = currentState.chanceColorCoding;
+    if (chanceInputModeSelect) chanceInputModeSelect.value = currentState.chanceInputMode;
   });
 }
 
 export function openSettingsPanel() {
-  const settingsRoot = document.getElementById('settings-panel');
-  if (!settingsRoot) return;
-  settingsRoot.classList.add('open');
-  applyLocalization(settingsRoot);
+  applyLocalization();
 }
 
 export function closeSettingsPanel() {
-  const settingsRoot = document.getElementById('settings-panel');
-  if (!settingsRoot) return;
-  settingsRoot.classList.remove('open');
+  // Legacy floating panel removed.
 }

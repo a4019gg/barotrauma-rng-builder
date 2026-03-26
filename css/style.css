@@ -282,6 +282,32 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   line-height: 1;
 }
 
+.menu-control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.menu-control-row select {
+  min-width: 110px;
+  border: 1px solid var(--border-main);
+  background: color-mix(in srgb, var(--bg-main) 90%, var(--bg-panel) 10%);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+
+.menu-control-switch {
+  grid-template-columns: minmax(0, 1fr) 18px;
+}
+
+.menu-control-switch input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+}
+
 
 .menu-dropdown.submenu {
   top: -4px;
@@ -1396,14 +1422,6 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
 .app-tooltip.is-visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-.tree-layout {
-  grid-template-columns: minmax(0, 1fr) 300px;
-}
-
-#tree-svg {
-  display: none;
 }
 
 .tree-outline {
