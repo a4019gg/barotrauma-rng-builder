@@ -222,7 +222,8 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   position: absolute;
   left: 0;
   top: 100%;
-  min-width: 210px;
+  min-width: 236px;
+  max-width: min(320px, calc(100vw - 24px));
   display: flex;
   flex-direction: column;
   padding: 6px;
@@ -262,6 +263,9 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   text-align: left;
   padding: 7px 8px;
   border-radius: 6px;
+  min-height: 34px;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .menu-dropdown button:hover {
@@ -299,14 +303,14 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 .menu-control-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: 10px;
   padding: 6px 8px;
   font-size: 13px;
 }
 
 .menu-control-row select {
-  min-width: 110px;
+  min-width: 134px;
   border: 1px solid var(--border-main);
   background: color-mix(in srgb, var(--bg-main) 90%, var(--bg-panel) 10%);
   border-radius: 6px;
@@ -349,7 +353,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   --active-index: 0;
   position: relative;
   display: inline-grid;
-  grid-template-columns: repeat(var(--segment-count), minmax(72px, 1fr));
+  grid-template-columns: repeat(var(--segment-count), minmax(86px, 1fr));
   padding: 2px;
   border: 1px solid var(--border-main);
   border-radius: 999px;
@@ -380,13 +384,32 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   z-index: 1;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 5px 14px;
+  padding: 7px 14px;
   background: transparent;
+  min-height: 34px;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .segmented-option.active {
   border-color: transparent;
   font-weight: 600;
+}
+
+.action-group-mode #editor-mode-segmented {
+  min-width: clamp(210px, 23vw, 280px);
+}
+
+#view-segmented {
+  min-width: clamp(244px, 28vw, 336px);
+}
+
+#view-segmented .segmented-option {
+  padding-inline: 18px;
+  font-size: 0.95rem;
 }
 
 
@@ -668,7 +691,7 @@ body[data-active-module='documentation'] #output-panel {
   box-shadow: var(--ui-shadow-node);
 }
 
-.node-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.node-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
 .node-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--ui-node-gap); margin-bottom: 8px; }
 .node-body label { display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); }
 
@@ -692,6 +715,7 @@ body[data-active-module='documentation'] #output-panel {
 .node-branch { border-top: 1px dashed color-mix(in srgb, var(--ui-accent) 45%, transparent); margin-top: 8px; padding-top: 8px; }
 .node-branch-title { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
 .node-branch-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.node-branch-actions button { flex: 1 1 132px; min-width: 0; }
 .node-children { display: flex; flex-direction: column; gap: 8px; padding-left: 10px; }
 
 .output-panel {
@@ -958,7 +982,8 @@ body[data-active-module='documentation'] #output-panel {
   .top-bar { flex-direction: column; align-items: stretch; }
   .menu-left { width: 100%; }
   .menu-right { justify-content: flex-end; margin-left: 0; }
-  .segmented-control { width: 100%; max-width: 220px; }
+  .segmented-control { width: 100%; max-width: 280px; }
+  #view-segmented { max-width: 100%; }
   .action-group,
   .history-group { width: 100%; margin-left: 0; }
   .action-group + .action-group::before { display: none; }
@@ -1291,6 +1316,10 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
   gap: 14px;
 }
 
+.import-project-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .import-xml-dropzone,
 .import-xml-textbox {
   display: flex;
@@ -1299,7 +1328,7 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
 }
 
 .import-xml-dropzone {
-  min-height: 260px;
+  min-height: 240px;
   justify-content: center;
   align-items: center;
   padding: 20px;

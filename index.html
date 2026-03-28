@@ -174,12 +174,6 @@
       <div class="menu-right">
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
         <button data-action="openDocumentation" data-action-tier="secondary" data-l10n="documentation"></button>
-        <div id="editor-mode-segmented" class="segmented-control segmented-control-three" data-editor-mode="basic" data-segment-count="3" role="tablist" data-l10n-aria-label="editorOperationMode">
-          <div class="segmented-control-indicator" aria-hidden="true"></div>
-          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true" data-l10n="editorModeBasic"></button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="intermediate" role="tab" aria-selected="false" data-l10n="editorModeIntermediate"></button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false" data-l10n="editorModeAdvanced"></button>
-        </div>
         <div id="view-segmented" class="segmented-control" data-view-mode="node" data-segment-count="2" role="tablist" data-l10n-aria-label="editorViewMode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>
@@ -189,6 +183,14 @@
     </header>
 
     <section class="action-bar">
+      <div class="action-group action-group-mode">
+        <span class="action-title" data-l10n="editorOperationMode"></span>
+        <div id="editor-mode-segmented" class="segmented-control" data-editor-mode="basic" data-segment-count="2" role="tablist" data-l10n-aria-label="editorOperationMode">
+          <div class="segmented-control-indicator" aria-hidden="true"></div>
+          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true" data-l10n="editorModeBasic"></button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false" data-l10n="editorModeAdvanced"></button>
+        </div>
+      </div>
       <div class="action-group">
         <span class="action-title" data-l10n="build"></span>
         <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-node-type="rng" data-l10n="addRng"></button>
@@ -215,6 +217,10 @@
           </div>
         </div>
         <div id="tree-container" style="display:none;">
+          <div class="tree-panel-toggles">
+            <button type="button" class="icon-btn tree-panel-toggle" data-action="toggleTreeSummaryPanel" data-l10n="hideTreeSummaryPanel"></button>
+            <button type="button" class="icon-btn tree-panel-toggle" data-action="toggleTreeSettingsPanel" data-l10n="hideTreeSettingsPanel"></button>
+          </div>
           <div class="tree-layout">
             <section id="tree-outline" class="tree-outline" data-l10n-aria-label="treeOutlineLabel"></section>
             <svg id="tree-svg" aria-hidden="true"></svg>
@@ -281,6 +287,30 @@
             </table>
           </div>
         </section>
+      </div>
+    </section>
+  </div>
+
+  <div id="import-project-modal" class="about-modal import-xml-modal" hidden>
+    <div class="about-modal-backdrop" data-role="close-import-project"></div>
+    <section class="about-modal-panel import-xml-panel" role="dialog" aria-modal="true" aria-labelledby="import-project-title">
+      <div class="import-xml-header">
+        <div>
+          <h3 id="import-project-title" data-l10n="projectImport"></h3>
+          <p data-l10n="projectImportPlaceholderDescription"></p>
+        </div>
+        <button type="button" data-role="close-import-project" data-l10n="close">Close</button>
+      </div>
+      <div class="import-xml-layout import-project-layout">
+        <label class="import-xml-dropzone" for="import-project-file">
+          <input id="import-project-file" type="file" accept=".json,application/json" hidden />
+          <strong data-l10n="importXmlDropTitle"></strong>
+          <span data-l10n="projectImportDropHint"></span>
+          <span class="import-xml-file-name" id="import-project-file-name" data-l10n="importXmlNoFile"></span>
+        </label>
+      </div>
+      <div class="import-xml-actions">
+        <button type="button" data-role="import-project-placeholder" data-action-tier="primary" data-l10n="projectImportActionPlaceholder"></button>
       </div>
     </section>
   </div>

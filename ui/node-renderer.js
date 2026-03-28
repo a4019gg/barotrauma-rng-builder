@@ -320,7 +320,7 @@ function createBranch(model, branch, renderer, editorMode) {
   branch.children.forEach(child => children.appendChild(renderer(child, editorMode)));
 
   section.append(title);
-  if (editorMode !== 'basic') section.append(createAddButtons(model.id, branch.id));
+  section.append(createAddButtons(model.id, branch.id));
   section.append(children);
   return section;
 }
@@ -337,7 +337,7 @@ function createContainerChildren(model, renderer, editorMode) {
   setTooltip(children, TOOLTIPS.general.children);
   (model.children || []).forEach(child => children.appendChild(renderer(child, editorMode)));
   section.append(title);
-  if (editorMode !== 'basic') section.append(createAddButtons(model.id));
+  section.append(createAddButtons(model.id));
   section.append(children);
   return section;
 }
