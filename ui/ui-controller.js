@@ -98,6 +98,26 @@ function setViewMode(mode) {
   if (isTree) treeService.renderQueued(editorStore.getState().currentEvent.model);
 }
 
+function setTreePanelButtonsState() {
+  const treeContainer = document.getElementById('tree-container');
+  if (!treeContainer) return;
+  const summaryHidden = treeContainer.classList.contains('hide-tree-summary');
+  const settingsHidden = treeContainer.classList.contains('hide-tree-settings');
+  const summaryButton = treeContainer.querySelector('button[data-action="toggleTreeSummaryPanel"]');
+  const settingsButton = treeContainer.querySelector('button[data-action="toggleTreeSettingsPanel"]');
+  if (summaryButton) summaryButton.dataset.l10n = summaryHidden ? 'showTreeSummaryPanel' : 'hideTreeSummaryPanel';
+  if (settingsButton) settingsButton.dataset.l10n = settingsHidden ? 'showTreeSettingsPanel' : 'hideTreeSettingsPanel';
+  applyLocalization(treeContainer);
+}
+
+function initTreePanelToggles() {
+  const treeContainer = document.getElementById('tree-container');
+  if (!treeContainer) return;
+  treeContainer.classList.toggle('hide-tree-summary', localStorage.getItem('treePanel.summaryHidden') === '1');
+  treeContainer.classList.toggle('hide-tree-settings', localStorage.getItem('treePanel.settingsHidden') === '1');
+  setTreePanelButtonsState();
+}
+
 function setActiveModule(moduleName) {
   const nextModule = moduleName === 'documentation' ? 'documentation' : 'editor';
   const editorArea = document.getElementById('editor-area');
@@ -303,9 +323,8 @@ function initButtonIcons() {
   const tooltipMap = [
     ['button[data-action="openDB"]', 'Open the Barotrauma database browser.'],
     ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'Open the built-in documentation module.'],
-    ['#editor-mode-segmented', 'Switch between Basic, Intermediate, and Advanced editing modes.'],
+    ['#editor-mode-segmented', 'Switch between Basic and Advanced editing modes.'],
     ['button[data-mode="basic"]', 'Basic mode shows the simplest controls.'],
-    ['button[data-mode="intermediate"]', 'Intermediate mode unlocks more structure options.'],
     ['button[data-mode="advanced"]', 'Advanced mode shows every available editor control.'],
     ['#view-segmented', 'Switch between node cards and the readable tree summary.'],
     ['button[data-view-mode="node"]', 'Open the node-card editor.'],
@@ -436,6 +455,21 @@ function updateXML() {
 
 function handleProjectStub() {
   showNeutral(t('projectStub'));
+}
+
+function openProjectImportModal() {
+  const modal = document.getElementById('import-project-modal');
+  const fileInput = document.getElementById('import-project-file');
+  const fileName = document.getElementById('import-project-file-name');
+  if (!modal || !fileInput || !fileName) return;
+  modal.hidden = false;
+  applyLocalization(modal);
+  fileName.textContent = fileInput.files?.[0]?.name || t('importXmlNoFile');
+}
+
+function closeProjectImportModal() {
+  const modal = document.getElementById('import-project-modal');
+  if (modal) modal.hidden = true;
 }
 
 
@@ -572,7 +606,22 @@ function handleClick(event) {
 
   if (action === 'openImportXmlModal') openImportXmlModal();
 
-  if (action === 'projectImport' || action === 'projectExport') handleProjectStub();
+  if (action === 'projectImport') openProjectImportModal();
+  if (action === 'projectExport') handleProjectStub();
+  if (action === 'toggleTreeSummaryPanel') {
+    const treeContainer = document.getElementById('tree-container');
+    if (!treeContainer) return;
+    const hidden = treeContainer.classList.toggle('hide-tree-summary');
+    localStorage.setItem('treePanel.summaryHidden', hidden ? '1' : '0');
+    setTreePanelButtonsState();
+  }
+  if (action === 'toggleTreeSettingsPanel') {
+    const treeContainer = document.getElementById('tree-container');
+    if (!treeContainer) return;
+    const hidden = treeContainer.classList.toggle('hide-tree-settings');
+    localStorage.setItem('treePanel.settingsHidden', hidden ? '1' : '0');
+    setTreePanelButtonsState();
+  }
 
   if (action === 'undo') editorStore.undo();
   if (action === 'redo') editorStore.redo();
@@ -762,13 +811,22 @@ export function initEditorUI() {
   document.addEventListener('click', event => {
     const closeTrigger = event.target.closest('[data-role="close-import-xml"]');
     if (closeTrigger) closeImportXmlModal();
+    const closeProjectTrigger = event.target.closest('[data-role="close-import-project"]');
+    if (closeProjectTrigger) closeProjectImportModal();
     const placeholderTrigger = event.target.closest('[data-role="import-xml-placeholder"]');
     if (placeholderTrigger) showNeutral(t('importXmlPlaceholderDescription'));
+    const projectPlaceholderTrigger = event.target.closest('[data-role="import-project-placeholder"]');
+    if (projectPlaceholderTrigger) showNeutral(t('projectImportPlaceholderDescription'));
   });
   document.addEventListener('change', event => {
-    if (event.target.id !== 'import-xml-file') return;
-    const fileName = document.getElementById('import-xml-file-name');
-    if (fileName) fileName.textContent = event.target.files?.[0]?.name || t('importXmlNoFile');
+    if (event.target.id === 'import-xml-file') {
+      const fileName = document.getElementById('import-xml-file-name');
+      if (fileName) fileName.textContent = event.target.files?.[0]?.name || t('importXmlNoFile');
+    }
+    if (event.target.id === 'import-project-file') {
+      const fileName = document.getElementById('import-project-file-name');
+      if (fileName) fileName.textContent = event.target.files?.[0]?.name || t('importXmlNoFile');
+    }
   });
   document.addEventListener('dragover', event => {
     const dropzone = event.target.closest('.import-xml-dropzone');
@@ -787,12 +845,15 @@ export function initEditorUI() {
     if (!dropzone) return;
     event.preventDefault();
     dropzone.classList.remove('is-dragover');
-    const fileName = document.getElementById('import-xml-file-name');
+    const fileName = dropzone.closest('#import-project-modal')
+      ? document.getElementById('import-project-file-name')
+      : document.getElementById('import-xml-file-name');
     const files = event.dataTransfer?.files;
     if (files?.length && fileName) fileName.textContent = files[0].name;
   });
 
   initSettingsController();
+  initTreePanelToggles();
   initTooltips();
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
@@ -850,7 +911,7 @@ function applyEditorMode() {
   const def = getModeDefinition(mode);
   document.body.dataset.editorMode = mode;
   const editorModeSegmented = document.getElementById('editor-mode-segmented');
-  const activeModeIndex = { basic: 0, intermediate: 1, advanced: 2 }[mode] ?? 0;
+  const activeModeIndex = { basic: 0, advanced: 1 }[mode] ?? 0;
   if (editorModeSegmented) {
     editorModeSegmented.dataset.editorMode = mode;
     editorModeSegmented.style.setProperty('--active-index', String(activeModeIndex));

@@ -15,13 +15,6 @@ export const MODE_DEFINITIONS = {
     allowNestedContainers: false,
     allowEventSet: false
   },
-  intermediate: {
-    label: 'Intermediate',
-    availableNodeTypes: [NODE_TYPES.rng, NODE_TYPES.event, NODE_TYPES.spawn, NODE_TYPES.creature, NODE_TYPES.affliction],
-    maxRngBranches: Infinity,
-    allowNestedContainers: true,
-    allowEventSet: false
-  },
   advanced: {
     label: 'Advanced',
     availableNodeTypes: [NODE_TYPES.rng, NODE_TYPES.event, NODE_TYPES.eventSet, NODE_TYPES.spawn, NODE_TYPES.creature, NODE_TYPES.affliction],

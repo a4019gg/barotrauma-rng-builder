@@ -96,7 +96,7 @@ export class EditorStore {
     const currentEvent = this.events[this.currentEventIndex];
     switch (action.type) {
       case 'SET_EDITOR_MODE': {
-        const next = ['basic', 'intermediate', 'advanced'].includes(action.mode) ? action.mode : 'basic';
+        const next = ['basic', 'advanced'].includes(action.mode) ? action.mode : 'basic';
         const prev = this.editorMode;
         if (prev === next) return { changed: false };
         this.editorMode = next;

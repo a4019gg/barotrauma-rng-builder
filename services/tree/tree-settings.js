@@ -18,7 +18,6 @@ export const DEFAULT_TREE_SETTINGS = {
   minimapScale: 1,
   smoothPaths: true,
   advancedExpanded: false,
-  settingsCollapsed: false,
   showIntermediateNodes: true,
   debugBounds: false,
   showHeatmap: false

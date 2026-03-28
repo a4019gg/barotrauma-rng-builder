@@ -18,8 +18,8 @@ const NODE_META = {
   creature: { icon: 'hashtag', labelKey: 'addCreature' },
   affliction: { icon: 'alert-triangle', labelKey: 'addAffliction' }
 };
-const NODE_SIZE = { width: 320, height: 108 };
-const RNG_NODE_SIZE_EXPANDED = { width: 340, height: 160 };
+const NODE_SIZE = { width: 332, height: 118 };
+const RNG_NODE_SIZE_EXPANDED = { width: 352, height: 176 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
@@ -250,7 +250,6 @@ export class TreeService {
     this.treeSettings.showMinimap = parseLegacyBoolean(this.treeSettings.showMinimap, true);
     this.treeSettings.minimapFocusMode = parseLegacyBoolean(this.treeSettings.minimapFocusMode, false);
     this.treeSettings.showIntermediateNodes = parseLegacyBoolean(this.treeSettings.showIntermediateNodes, true);
-    this.treeSettings.settingsCollapsed = parseLegacyBoolean(this.treeSettings.settingsCollapsed, false);
     this.treeSettings.smoothPaths = parseLegacyBoolean(this.treeSettings.smoothPaths, true);
     this.treeSettings.debugBounds = parseLegacyBoolean(this.treeSettings.debugBounds, false);
 
@@ -1144,15 +1143,12 @@ export class TreeService {
     wrapper.className = 'tree-settings-section';
     const isBasic = this.treeSettings.uiLevel !== 'advanced';
     const showMinimapSettings = !!this.treeSettings.showMinimap;
-    const settingsExpanded = !this.treeSettings.settingsCollapsed;
 
-    // Keep Tree mode settings in a compact collapsible panel so the canvas stays readable.
     wrapper.innerHTML = `
       <div class="tree-settings-header">
         <h5>${t('treeSettings')}</h5>
-        <button type="button" class="icon-btn tree-settings-collapse-btn" data-tree-action="toggle-settings">${settingsExpanded ? t('treeSettingsCollapse') : t('treeSettingsExpand')}</button>
       </div>
-      <div class="tree-settings-body${settingsExpanded ? '' : ' is-collapsed'}">
+      <div class="tree-settings-body">
       <section class="tree-settings-group tree-settings-card">
         <h6>${t('modeSection')}</h6>
         <div class="tree-segmented tree-segmented-two" data-setting="uiLevel">
@@ -1218,13 +1214,6 @@ export class TreeService {
     const autoBtn = wrapper.querySelector('[data-tree-action="auto-layout"]');
     autoBtn.append(createIcon('compass'), ` ${t('runAutoLayout')}`);
     autoBtn.addEventListener('click', () => this.autoLayout());
-
-    const toggleBtn = wrapper.querySelector('[data-tree-action="toggle-settings"]');
-    toggleBtn?.addEventListener('click', () => {
-      this.treeSettings.settingsCollapsed = !this.treeSettings.settingsCollapsed;
-      this.persistTreeSettings();
-      this.renderInspector(this.findNodeById(this.selectedNodeId));
-    });
 
     wrapper.querySelectorAll('[data-tree-action^="download-"]').forEach(btn => {
       btn.addEventListener('click', () => this.downloadSvgAsset(btn.dataset.treeAction));
