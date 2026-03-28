@@ -1,0 +1,30 @@
+body[data-base-theme='classic-luna'][data-theme-mode='light'] {
+  --ui-bg: #ffffff;
+  --ui-panel: #ffffff;
+  --ui-border: #8eaad0;
+  --ui-text: #102a4f;
+  --ui-muted: #45638b;
+  --ui-accent: #2b67b6;
+  --ui-accent-strong: #1d4d96;
+  --ui-grid: rgba(43, 103, 182, 0.09);
+  --ui-shadow: 0 8px 18px rgba(34, 63, 102, 0.14);
+  --ui-radius-sm: 3px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 5px;
+}
+
+body[data-base-theme='classic-luna'][data-theme-mode='dark'] {
+  --ui-bg: #0f2240;
+  --ui-panel: #1d3863;
+  --ui-border: #5f83b7;
+  --ui-text: #e5f0ff;
+  --ui-muted: #afc4e4;
+  --ui-accent: #7cb5ff;
+  --ui-accent-strong: #b5d5ff;
+  --ui-grid: rgba(124, 181, 255, 0.16);
+  --ui-shadow: 0 10px 24px rgba(5, 9, 17, 0.48);
+  --ui-radius-sm: 3px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 5px;
+  --ui-text-contrast: #0f2444;
+}

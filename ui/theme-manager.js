@@ -8,6 +8,15 @@ const BASE_THEMES = {
   'soft-bloom': { id: 'soft-bloom', label: 'Soft Bloom' }
 };
 
+
+const BASE_THEME_STYLESHEETS = {
+  debug: './css/themes/base/debug.css',
+  'classic-luna': './css/themes/base/classic-luna.css',
+  'neon-ops': './css/themes/base/neon-ops.css',
+  'retro-terminal': './css/themes/base/retro-terminal.css',
+  'soft-bloom': './css/themes/base/soft-bloom.css'
+};
+
 const THEME_MODES = {
   dark: { id: 'dark', label: 'Dark', iconStyle: 'outline' },
   light: { id: 'light', label: 'Light', iconStyle: 'solid' }
@@ -56,8 +65,11 @@ function notifyThemeChange() {
 export function applyTheme() {
   ensureValidState();
 
-  const themeLink = document.getElementById('theme-style');
-  if (themeLink) themeLink.href = './css/themes/theme-system.css';
+  const baseThemeLink = document.getElementById('base-theme-style');
+  const stylesheet = BASE_THEME_STYLESHEETS[state.baseTheme] || BASE_THEME_STYLESHEETS[defaults.baseTheme];
+  if (baseThemeLink && baseThemeLink.getAttribute('href') !== stylesheet) {
+    baseThemeLink.href = stylesheet;
+  }
 
   document.body.dataset.baseTheme = state.baseTheme;
   document.body.dataset.themeMode = state.themeMode;
