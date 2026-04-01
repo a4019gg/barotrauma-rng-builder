@@ -770,6 +770,9 @@ function handleInput(event) {
   if (event.target.id === 'import-xml-textarea') {
     syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
   }
+  if (event.target.id === 'output') {
+    syncXmlHighlight(event.target, document.getElementById('output-highlight'));
+  }
 }
 
 
@@ -917,6 +920,13 @@ function initOutputPanelUX() {
 
   syncXmlHighlight(output, outputHighlight);
   syncXmlHighlight(importTextarea, importHighlight);
+
+  const resizeObserver = new ResizeObserver(() => {
+    syncXmlHighlight(output, outputHighlight);
+    syncXmlHighlight(importTextarea, importHighlight);
+  });
+  resizeObserver.observe(panel);
+  resizeObserver.observe(importTextarea);
 }
 
 export function initEditorUI() {
