@@ -209,6 +209,7 @@ export const enUiDictionary = {
     treeOutlineLabel: 'Tree outline',
     outputTabsLabel: 'Output tabs',
     editorOperationMode: 'Editor operation mode',
+    treeWindowMode: 'Window mode',
     editorViewMode: 'Editor view mode',
     docsGroupsLabel: 'Documentation groups',
     searchDocumentationPlaceholder: 'Search documentation...',

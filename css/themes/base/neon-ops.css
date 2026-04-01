@@ -1,29 +1,48 @@
 body[data-base-theme='neon-ops'][data-theme-mode='dark'] {
-  --ui-bg: #070c14;
-  --ui-panel: #111c2b;
-  --ui-border: #2d4260;
-  --ui-text: #dce9ff;
-  --ui-muted: #8ea2c3;
-  --ui-accent: #33d5ff;
-  --ui-accent-strong: #b6ff5c;
-  --ui-grid: rgba(51, 213, 255, 0.14);
-  --ui-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
+  --ui-bg: #040a14;
+  --ui-panel: #0f1a2c;
+  --ui-border: #2f4d75;
+  --ui-text: #e6f2ff;
+  --ui-muted: #9ab3d6;
+  --ui-accent: #3de7ff;
+  --ui-accent-strong: #93ff70;
+  --ui-grid: rgba(61, 231, 255, 0.16);
+  --ui-shadow: 0 10px 28px rgba(2, 6, 14, 0.55);
   --ui-cut-corner: 10px;
   --ui-overlay-opacity: 1;
   --ui-text-contrast: #06111e;
 }
 
 body[data-base-theme='neon-ops'][data-theme-mode='light'] {
-  --ui-bg: #ffffff;
+  --ui-bg: #f2f8ff;
   --ui-panel: #ffffff;
-  --ui-border: #9db7d1;
-  --ui-text: #12273b;
-  --ui-muted: #50657c;
-  --ui-accent: #007f8f;
-  --ui-accent-strong: #1e6fcb;
-  --ui-grid: rgba(0, 127, 143, 0.12);
-  --ui-shadow: 0 8px 22px rgba(16, 34, 56, 0.12);
+  --ui-border: #8fb2d8;
+  --ui-text: #10263d;
+  --ui-muted: #496480;
+  --ui-accent: #008fa6;
+  --ui-accent-strong: #2b73d1;
+  --ui-grid: rgba(0, 143, 166, 0.14);
+  --ui-shadow: 0 10px 24px rgba(16, 34, 56, 0.14);
   --ui-cut-corner: 10px;
   --ui-overlay-opacity: 1;
   --ui-text-contrast: #ffffff;
+}
+
+body[data-base-theme='neon-ops'] .top-bar,
+body[data-base-theme='neon-ops'] .action-bar {
+  background:
+    radial-gradient(120% 180% at 0% 0%, color-mix(in srgb, var(--ui-accent) 20%, transparent), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 96%, var(--bg-main)), color-mix(in srgb, var(--bg-panel) 90%, var(--bg-main)));
+}
+
+body[data-base-theme='neon-ops'] .action-group,
+body[data-base-theme='neon-ops'] .menu-dropdown,
+body[data-base-theme='neon-ops'] #tree-container {
+  backdrop-filter: blur(6px);
+  border-color: color-mix(in srgb, var(--ui-accent) 36%, var(--border-main));
+}
+
+body[data-base-theme='neon-ops'] .segmented-control-indicator,
+body[data-base-theme='neon-ops'] button[data-action-tier='primary'] {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ui-accent) 32%, transparent);
 }

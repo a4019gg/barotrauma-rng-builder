@@ -229,7 +229,13 @@ export function renderTreeOutline(model, container) {
   const hidden = container.closest('#tree-container')?.classList.contains('hide-tree-summary');
   toggleBtn.textContent = hidden ? '▶' : '◀';
   toggleBtn.title = hidden ? t('showTreeSummaryPanel') : t('hideTreeSummaryPanel');
-  header.appendChild(toggleBtn);
+  const windowBtn = document.createElement('button');
+  windowBtn.type = 'button';
+  windowBtn.className = 'icon-btn tree-panel-window-btn';
+  windowBtn.dataset.action = 'toggleTreeSummaryWindow';
+  windowBtn.title = t('treeWindowMode');
+  windowBtn.textContent = '⧉';
+  header.append(toggleBtn, windowBtn);
   container.appendChild(header);
 
   if (!model.length) {

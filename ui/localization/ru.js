@@ -209,6 +209,7 @@ export const ruUiDictionary = {
     treeOutlineLabel: 'Структура дерева',
     outputTabsLabel: 'Вкладки вывода',
     editorOperationMode: 'Режим работы редактора',
+    treeWindowMode: 'Оконный режим',
     editorViewMode: 'Режим отображения редактора',
     docsGroupsLabel: 'Группы документации',
     searchDocumentationPlaceholder: 'Поиск по документации...',

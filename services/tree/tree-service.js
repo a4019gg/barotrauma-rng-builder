@@ -1402,7 +1402,10 @@ export class TreeService {
     base.innerHTML = `
       <div class="tree-inspector-header">
         <h4>${t('treeEditor')}</h4>
-        <button type="button" class="icon-btn tree-panel-collapse-btn" data-action="toggleTreeSettingsPanel" title="${t('hideTreeSettingsPanel')}">▶</button>
+        <div class="tree-panel-actions">
+          <button type="button" class="icon-btn tree-panel-collapse-btn" data-action="toggleTreeSettingsPanel" title="${t('hideTreeSettingsPanel')}">▶</button>
+          <button type="button" class="icon-btn tree-panel-window-btn" data-action="toggleTreeSettingsWindow" title="${t('treeWindowMode')}">⧉</button>
+        </div>
       </div>
       ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}
       <p class="tree-inspector-hint">${t('treeInspectorHint')}</p>
