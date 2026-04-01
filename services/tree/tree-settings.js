@@ -12,7 +12,7 @@ export const DEFAULT_TREE_SETTINGS = {
   minimapMode: 'standard',
   minimapFocusMode: false,
   minimapTypeMode: 'dots',
-  minimapPosition: { x: 18, y: 18 },
+  minimapPosition: null,
   minimapSizePreset: 'medium',
   minimapCustomSize: { width: 240, height: 150 },
   minimapScale: 1,

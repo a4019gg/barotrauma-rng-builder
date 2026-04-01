@@ -114,7 +114,7 @@
               <input id="toggle-chance-colors" type="checkbox" />
             </label>
             <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="sfAccentPalette"></span> <span class="submenu-arrow">▶</span></button>
+              <button type="button" class="menu-button submenu-trigger" role="menuitem" data-l10n-title="sfAccentPaletteFull"><span data-l10n="sfAccentPalette"></span> <span class="submenu-arrow">▶</span></button>
               <div class="menu-dropdown submenu menu-sf-accent-dropdown" role="menu">
                 <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
                 <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
@@ -227,6 +227,8 @@
           </div>
         </div>
         <div id="tree-container" style="display:none;">
+          <button type="button" class="tree-panel-restore tree-panel-restore-summary icon-btn" data-action="showTreeSummaryPanel" data-l10n-title="showTreeSummaryPanel" hidden>⮞</button>
+          <button type="button" class="tree-panel-restore tree-panel-restore-settings icon-btn" data-action="showTreeSettingsPanel" data-l10n-title="showTreeSettingsPanel" hidden>⮜</button>
           <div class="tree-layout">
             <section id="tree-outline" class="tree-outline" data-l10n-aria-label="treeOutlineLabel"></section>
             <svg id="tree-svg" aria-hidden="true"></svg>
@@ -238,6 +240,7 @@
     </main>
 
     <section id="output-panel" class="output-panel">
+      <div id="output-resize-handle" class="output-resize-handle" aria-hidden="true"></div>
       <div class="output-panel-header">
         <button id="output-collapse-toggle" type="button" data-action="toggleOutputCollapse" data-action-tier="neutral" class="output-collapse-btn"></button>
         <div class="output-tabs" role="tablist" data-l10n-aria-label="outputTabsLabel">
@@ -259,7 +262,10 @@
 
       <div class="output-panel-body">
         <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
-          <textarea id="output" spellcheck="false"></textarea>
+          <div class="xml-highlight-wrap">
+            <pre id="output-highlight" class="xml-highlight-layer" aria-hidden="true"></pre>
+            <textarea id="output" spellcheck="false"></textarea>
+          </div>
           <div class="xml-pane-actions">
             <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
           </div>
@@ -340,7 +346,10 @@
         </label>
         <label class="import-xml-textbox">
           <span data-l10n="importXmlPasteLabel"></span>
-          <textarea id="import-xml-textarea" spellcheck="false" data-l10n-placeholder="importXmlPastePlaceholder"></textarea>
+          <div class="xml-highlight-wrap">
+            <pre id="import-xml-highlight" class="xml-highlight-layer" aria-hidden="true"></pre>
+            <textarea id="import-xml-textarea" spellcheck="false" data-l10n-placeholder="importXmlPastePlaceholder"></textarea>
+          </div>
         </label>
       </div>
       <div class="import-xml-actions">

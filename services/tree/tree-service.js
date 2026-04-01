@@ -237,7 +237,7 @@ export class TreeService {
     if (!['small', 'medium', 'large', 'auto'].includes(this.treeSettings.minimapSizePreset)) this.treeSettings.minimapSizePreset = 'medium';
 
     if (!this.treeSettings.minimapPosition || !Number.isFinite(Number(this.treeSettings.minimapPosition.x)) || !Number.isFinite(Number(this.treeSettings.minimapPosition.y))) {
-      this.treeSettings.minimapPosition = { x: 18, y: 18 };
+      this.treeSettings.minimapPosition = { x: 99999, y: 99999 };
     }
 
     if (!this.treeSettings.minimapCustomSize || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.width)) || !Number.isFinite(Number(this.treeSettings.minimapCustomSize.height))) {
@@ -1119,9 +1119,9 @@ export class TreeService {
     }
 
     const labels = {
-      spawn: `${getNodeLabel('spawn')} ${node.params.item || 'unset'}`,
-      creature: `${getNodeLabel('creature')} ${node.params.creature || 'unset'}`,
-      affliction: `${getNodeLabel('affliction')} ${node.params.affliction || 'unset'}`
+      spawn: `${getNodeLabel('spawn')} ${node.params.item || t('unsetValue')}`,
+      creature: `${getNodeLabel('creature')} ${node.params.creature || t('unsetValue')}`,
+      affliction: `${getNodeLabel('affliction')} ${node.params.affliction || t('unsetValue')}`
     };
     return { id: node.id, type: node.type, nodeRef: node, branchType, probability, name: labels[node.type] || node.type };
   }
@@ -1285,7 +1285,11 @@ export class TreeService {
       clone.querySelectorAll('foreignObject').forEach(el => el.remove());
       const sourceZoomLayer = source.querySelector('.tree-zoom-layer');
       if (sourceZoomLayer) {
+        const previousTransform = sourceZoomLayer.getAttribute('transform');
+        sourceZoomLayer.setAttribute('transform', '');
         const bbox = sourceZoomLayer.getBBox?.() || { x: 0, y: 0, width: this.width, height: this.height };
+        if (previousTransform == null) sourceZoomLayer.removeAttribute('transform');
+        else sourceZoomLayer.setAttribute('transform', previousTransform);
         const pad = 36;
         const x = Math.round(bbox.x - pad);
         const y = Math.round(bbox.y - pad);
@@ -1404,7 +1408,7 @@ export class TreeService {
         <h4>${t('treeEditor')}</h4>
         <div class="tree-panel-actions">
           <button type="button" class="icon-btn tree-panel-collapse-btn" data-action="toggleTreeSettingsPanel" title="${t('hideTreeSettingsPanel')}">▶</button>
-          <button type="button" class="icon-btn tree-panel-window-btn" data-action="toggleTreeSettingsWindow" title="${t('treeWindowMode')}">⧉</button>
+          
         </div>
       </div>
       ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}

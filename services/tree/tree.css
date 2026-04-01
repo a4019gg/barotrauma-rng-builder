@@ -202,6 +202,18 @@
   justify-content: space-between;
   gap: 8px;
 }
+.tree-outline-toolbar .tree-panel-collapse-btn { margin-right: auto; }
+.tree-inspector-header .tree-panel-collapse-btn { margin-left: auto; }
+
+.tree-panel-restore {
+  position: absolute;
+  z-index: 42;
+  top: 18px;
+  min-width: 30px;
+  min-height: 30px;
+}
+.tree-panel-restore-summary { left: 10px; }
+.tree-panel-restore-settings { right: 10px; }
 
 .tree-panel-collapse-btn {
   min-height: 28px;

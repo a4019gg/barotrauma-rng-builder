@@ -30,9 +30,9 @@ const STYLE_VARIANTS = {
 
 const SF_ACCENT_PRESETS = {
   'emerald-crimson': { success: '#38c172', failure: '#e25555' },
-  'mint-rose': { success: '#53d79e', failure: '#f06f8e' },
-  'neon-cherry': { success: '#2ce184', failure: '#ff4d6d' },
-  'forest-ruby': { success: '#2f9e5f', failure: '#c63d4f' }
+  'mint-rose': { success: '#3fc7b4', failure: '#f8b24f' },
+  'neon-cherry': { success: '#4e86ff', failure: '#ff66d0' },
+  'forest-ruby': { success: '#9f7aea', failure: '#ffd166' }
 };
 
 const defaults = {
