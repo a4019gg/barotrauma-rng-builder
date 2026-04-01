@@ -11,6 +11,7 @@ const DURATIONS = {
 };
 
 let container = null;
+let confirmContainer = null;
 
 function ensureContainer() {
   if (container) return container;
@@ -83,4 +84,39 @@ export function showWarning(text) {
 
 export function showError(text) {
   pushToast("error", text);
+}
+
+function ensureConfirmContainer() {
+  if (confirmContainer) return confirmContainer;
+  confirmContainer = document.createElement('div');
+  confirmContainer.id = 'confirm-modal-root';
+  document.body.appendChild(confirmContainer);
+  return confirmContainer;
+}
+
+export function showConfirmPopup(text, { confirmText = 'Confirm', cancelText = 'Cancel' } = {}) {
+  return new Promise(resolve => {
+    const root = ensureConfirmContainer();
+    const wrap = document.createElement('div');
+    wrap.className = 'confirm-modal';
+    wrap.innerHTML = `
+      <div class="confirm-modal-backdrop"></div>
+      <section class="confirm-modal-panel" role="dialog" aria-modal="true">
+        <p class="confirm-modal-text"></p>
+        <div class="confirm-modal-actions">
+          <button type="button" class="confirm-modal-cancel">${cancelText}</button>
+          <button type="button" class="confirm-modal-confirm" data-action-tier="primary">${confirmText}</button>
+        </div>
+      </section>
+    `;
+    wrap.querySelector('.confirm-modal-text').textContent = text;
+    const close = result => {
+      wrap.remove();
+      resolve(result);
+    };
+    wrap.querySelector('.confirm-modal-backdrop').addEventListener('click', () => close(false));
+    wrap.querySelector('.confirm-modal-cancel').addEventListener('click', () => close(false));
+    wrap.querySelector('.confirm-modal-confirm').addEventListener('click', () => close(true));
+    root.appendChild(wrap);
+  });
 }
