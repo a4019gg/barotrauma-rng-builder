@@ -221,7 +221,15 @@ export function renderTreeOutline(model, container) {
 
   const header = document.createElement('div');
   header.className = 'tree-outline-toolbar';
-  header.innerHTML = `<strong>${t('treeSummary')}</strong><span>${t('treeSummaryHint')}</span>`;
+  header.innerHTML = `<div><strong>${t('treeSummary')}</strong><span>${t('treeSummaryHint')}</span></div>`;
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'icon-btn tree-panel-collapse-btn';
+  toggleBtn.dataset.action = 'toggleTreeSummaryPanel';
+  const hidden = container.closest('#tree-container')?.classList.contains('hide-tree-summary');
+  toggleBtn.textContent = hidden ? '▶' : '◀';
+  toggleBtn.title = hidden ? t('showTreeSummaryPanel') : t('hideTreeSummaryPanel');
+  header.appendChild(toggleBtn);
   container.appendChild(header);
 
   if (!model.length) {

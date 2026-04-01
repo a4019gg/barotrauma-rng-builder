@@ -19,7 +19,7 @@ const NODE_META = {
   affliction: { icon: 'alert-triangle', labelKey: 'addAffliction' }
 };
 const NODE_SIZE = { width: 332, height: 118 };
-const RNG_NODE_SIZE_EXPANDED = { width: 352, height: 176 };
+const RNG_NODE_SIZE_EXPANDED = { width: 352, height: 236 };
 const BRANCH_SIZE = { width: 132, height: 36 };
 const ROOT_SIZE = { width: 230, height: 52 };
 const DROP_ZONE = { width: 112, height: 24, offsetY: 72 };
@@ -523,7 +523,7 @@ export class TreeService {
       labels.raise();
     }
 
-    const activeDropTarget = this.dropTarget || this.dropHighlightTarget;
+    const activeDropTarget = this.dropTarget;
 
     const heatmapEnabled = !!this.treeSettings.showHeatmap;
     const nodes = this.g.selectAll('.tree-node')
@@ -660,6 +660,7 @@ export class TreeService {
 
   getEditableNodeSize(node, collapsed) {
     if (node?.type === 'rng' && !collapsed) return RNG_NODE_SIZE_EXPANDED;
+    if (!collapsed && isContainerNode(node)) return { width: NODE_SIZE.width, height: 164 };
     return NODE_SIZE;
   }
 
@@ -1399,7 +1400,10 @@ export class TreeService {
 
     const base = document.createElement('div');
     base.innerHTML = `
-      <h4>${t('treeEditor')}</h4>
+      <div class="tree-inspector-header">
+        <h4>${t('treeEditor')}</h4>
+        <button type="button" class="icon-btn tree-panel-collapse-btn" data-action="toggleTreeSettingsPanel" title="${t('hideTreeSettingsPanel')}">▶</button>
+      </div>
       ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}
       <p class="tree-inspector-hint">${t('treeInspectorHint')}</p>
     `;
@@ -1470,9 +1474,11 @@ export class TreeService {
       const tNode = this.getNodeCoords(link.target);
       const faded = selectedSet.size && !selectedSet.has(link.source.data.id) && !selectedSet.has(link.target.data.id);
       let stroke = '#6f86ad';
+      const successColor = getComputedStyle(document.body).getPropertyValue('--sf-success').trim() || '#4dcf96';
+      const failureColor = getComputedStyle(document.body).getPropertyValue('--sf-failure').trim() || '#ee7f98';
       if (this.treeSettings.minimapColorMode === 'success-failure') {
-        if (link.target.data.branchType === 'success') stroke = '#4dcf96';
-        if (link.target.data.branchType === 'failure') stroke = '#ee7f98';
+        if (link.target.data.branchType === 'success') stroke = successColor;
+        if (link.target.data.branchType === 'failure') stroke = failureColor;
       } else if (this.treeSettings.minimapColorMode === 'probability') {
         stroke = probColor(link.target.data.probability);
       }

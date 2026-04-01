@@ -28,6 +28,13 @@ const STYLE_VARIANTS = {
   soft: { id: 'soft', label: 'Soft' }
 };
 
+const SF_ACCENT_PRESETS = {
+  'emerald-crimson': { success: '#38c172', failure: '#e25555' },
+  'mint-rose': { success: '#53d79e', failure: '#f06f8e' },
+  'neon-cherry': { success: '#2ce184', failure: '#ff4d6d' },
+  'forest-ruby': { success: '#2f9e5f', failure: '#c63d4f' }
+};
+
 const defaults = {
   baseTheme: 'debug',
   themeMode: 'dark',
@@ -35,7 +42,8 @@ const defaults = {
   uiScale: '100',
   grid: true,
   chanceColorCoding: true,
-  chanceInputMode: 'fraction'
+  chanceInputMode: 'fraction',
+  sfAccentPreset: 'emerald-crimson'
 };
 
 const listeners = new Set();
@@ -47,7 +55,8 @@ const state = {
   uiScale: getAppSetting('uiScale') || defaults.uiScale,
   grid: getAppSetting('grid') ?? defaults.grid,
   chanceColorCoding: getAppSetting('chanceColorCoding') ?? defaults.chanceColorCoding,
-  chanceInputMode: getAppSetting('chanceInputMode') || defaults.chanceInputMode
+  chanceInputMode: getAppSetting('chanceInputMode') || defaults.chanceInputMode,
+  sfAccentPreset: getAppSetting('sfAccentPreset') || defaults.sfAccentPreset
 };
 
 function ensureValidState() {
@@ -55,6 +64,7 @@ function ensureValidState() {
   if (!THEME_MODES[state.themeMode]) state.themeMode = defaults.themeMode;
   if (!STYLE_VARIANTS[state.themeStyle]) state.themeStyle = defaults.themeStyle;
   if (!['fraction', 'percent'].includes(state.chanceInputMode)) state.chanceInputMode = defaults.chanceInputMode;
+  if (!SF_ACCENT_PRESETS[state.sfAccentPreset]) state.sfAccentPreset = defaults.sfAccentPreset;
 }
 
 function notifyThemeChange() {
@@ -77,6 +87,9 @@ export function applyTheme() {
   document.body.dataset.iconStyle = THEME_MODES[state.themeMode].iconStyle;
   document.body.dataset.uiScale = state.uiScale;
   document.body.dataset.bgGrid = state.grid ? 'visible' : 'off';
+  const accents = SF_ACCENT_PRESETS[state.sfAccentPreset] || SF_ACCENT_PRESETS[defaults.sfAccentPreset];
+  document.body.style.setProperty('--sf-success', accents.success);
+  document.body.style.setProperty('--sf-failure', accents.failure);
 
   setAppSetting('baseTheme', state.baseTheme);
   setAppSetting('themeMode', state.themeMode);
@@ -85,6 +98,7 @@ export function applyTheme() {
   setAppSetting('grid', Boolean(state.grid));
   setAppSetting('chanceColorCoding', Boolean(state.chanceColorCoding));
   setAppSetting('chanceInputMode', state.chanceInputMode);
+  setAppSetting('sfAccentPreset', state.sfAccentPreset);
 
   notifyThemeChange();
 }
@@ -149,5 +163,11 @@ export function setChanceColorCoding(enabled) {
 
 export function setChanceInputMode(mode) {
   state.chanceInputMode = mode;
+  applyTheme();
+}
+
+export function setSfAccentPreset(preset) {
+  if (!SF_ACCENT_PRESETS[preset]) return;
+  state.sfAccentPreset = preset;
   applyTheme();
 }

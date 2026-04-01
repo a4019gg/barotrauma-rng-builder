@@ -6,21 +6,7 @@
   height: 100%;
   padding: 8px;
   position: relative;
-  overflow: hidden;
-}
-
-.tree-panel-toggles {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  display: inline-flex;
-  gap: 6px;
-  z-index: 15;
-}
-
-.tree-panel-toggle {
-  min-height: 30px;
-  padding: 4px 10px;
+  overflow: visible;
 }
 
 .tree-layout {
@@ -76,8 +62,8 @@
 #tree-svg.is-dragging-tree .tree-node,
 #tree-svg.is-dragging-tree .tree-link-percent,
 #tree-svg.is-dragging-tree .tree-node-percent { transition: none; }
-.tree-link.link-success { stroke: color-mix(in srgb, var(--ui-accent) 60%, var(--ui-accent-strong)); }
-.tree-link.link-failure { stroke: color-mix(in srgb, var(--ui-accent) 30%, var(--ui-border)); }
+.tree-link.link-success { stroke: color-mix(in srgb, var(--sf-success) 82%, var(--ui-accent)); }
+.tree-link.link-failure { stroke: color-mix(in srgb, var(--sf-failure) 84%, var(--ui-accent-strong)); }
 .tree-link-percent, .tree-node-percent { fill: var(--ui-text); font-size: 11px; font-weight: 700; }
 .chance-low { fill: color-mix(in srgb, var(--ui-accent-strong) 60%, var(--ui-border)); }
 .chance-mid { fill: color-mix(in srgb, var(--ui-accent) 45%, var(--ui-text)); }
@@ -89,19 +75,19 @@
 .tree-card-root { fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent) 25%); stroke: var(--ui-accent); }
 .tree-root-title { fill: var(--ui-text); font-weight: 700; font-size: 14px; }
 .tree-branch-card { stroke-width: 1.6; }
-.tree-branch-card.branch-success { fill: color-mix(in srgb, var(--ui-panel) 75%, var(--ui-accent)); stroke: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-text)); }
-.tree-branch-card.branch-failure { fill: color-mix(in srgb, var(--ui-panel) 85%, var(--ui-border)); stroke: color-mix(in srgb, var(--ui-border) 65%, var(--ui-text)); }
+.tree-branch-card.branch-success { fill: color-mix(in srgb, var(--ui-panel) 68%, var(--sf-success)); stroke: color-mix(in srgb, var(--sf-success) 70%, var(--ui-text)); }
+.tree-branch-card.branch-failure { fill: color-mix(in srgb, var(--ui-panel) 72%, var(--sf-failure)); stroke: color-mix(in srgb, var(--sf-failure) 72%, var(--ui-text)); }
 .tree-branch-label { fill: var(--ui-text); font-size: 12px; font-weight: 700; }
 
 
 .tree-node.drop-target-success .tree-card {
-  stroke: color-mix(in srgb, var(--ui-accent) 75%, var(--ui-text));
-  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--ui-accent) 35%, transparent));
+  stroke: color-mix(in srgb, var(--sf-success) 75%, var(--ui-text));
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--sf-success) 35%, transparent));
 }
 
 .tree-node.drop-target-failure .tree-card {
-  stroke: color-mix(in srgb, var(--ui-border) 45%, var(--ui-text));
-  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--ui-border) 45%, transparent));
+  stroke: color-mix(in srgb, var(--sf-failure) 72%, var(--ui-text));
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--sf-failure) 35%, transparent));
 }
 
 .tree-drop-zone {
@@ -121,8 +107,8 @@
   font-weight: 700;
 }
 
-.tree-drop-success rect { stroke: color-mix(in srgb, var(--ui-accent) 70%, var(--ui-text)); }
-.tree-drop-failure rect { stroke: color-mix(in srgb, var(--ui-border) 55%, var(--ui-text)); }
+.tree-drop-success rect { stroke: color-mix(in srgb, var(--sf-success) 75%, var(--ui-text)); }
+.tree-drop-failure rect { stroke: color-mix(in srgb, var(--sf-failure) 75%, var(--ui-text)); }
 
 #tree-svg.is-dragging-tree .tree-drop-zone {
   opacity: 0.88;
@@ -134,17 +120,12 @@
   pointer-events: none;
 }
 
-.tree-node.drop-target-success .tree-drop-success,
-.tree-node.drop-target-failure .tree-drop-failure {
-  opacity: 1;
-}
-
 .tree-node.drop-target-success .tree-drop-success rect {
-  fill: color-mix(in srgb, var(--ui-accent) 35%, var(--ui-panel));
+  fill: color-mix(in srgb, var(--sf-success) 28%, var(--ui-panel));
 }
 
 .tree-node.drop-target-failure .tree-drop-failure rect {
-  fill: color-mix(in srgb, var(--ui-border) 78%, var(--ui-panel));
+  fill: color-mix(in srgb, var(--sf-failure) 28%, var(--ui-panel));
 }
 
 .tree-node-fo { color: var(--text-main); font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 6px; }
@@ -173,7 +154,7 @@
   align-items: center;
   min-width: 0;
   max-width: calc(100% - 70px);
-  overflow: hidden;
+  overflow: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -185,12 +166,26 @@
 .tree-field input,
 .tree-field select { width: 100%; min-width: 0; border: 1px solid var(--border-main); background: color-mix(in srgb, var(--bg-main) 85%, var(--bg-panel)); color: var(--text-main); border-radius: 5px; padding: 3px 5px; font-size: 11px; }
 .tree-inline-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
-.tree-inline-actions-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-.tree-inline-actions-row.success { border-bottom: 1px solid color-mix(in srgb, var(--ui-accent) 35%, transparent); padding-bottom: 4px; }
+.tree-inline-actions-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; align-items: stretch; }
+.tree-inline-actions-row.success { border-bottom: 1px solid color-mix(in srgb, var(--sf-success) 35%, transparent); padding-bottom: 4px; }
 .tree-inline-actions-row.failure { padding-top: 1px; }
-.add-btn { padding: 3px 0; min-width: 0; }
-.add-success { border-color: color-mix(in srgb, var(--ui-accent) 62%, var(--ui-text)); }
-.add-failure { border-color: color-mix(in srgb, var(--ui-border) 62%, var(--ui-text)); }
+.add-btn { padding: 3px 0; min-width: 0; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+.add-success { border-color: color-mix(in srgb, var(--sf-success) 62%, var(--ui-text)); }
+.add-failure { border-color: color-mix(in srgb, var(--sf-failure) 62%, var(--ui-text)); }
+
+.tree-outline-toolbar,
+.tree-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tree-panel-collapse-btn {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 3px 8px;
+}
 
 #tree-inspector {
   border-left: 1px solid var(--border-main);

@@ -4,7 +4,7 @@ import { renderNode } from './node-renderer.js';
 import { buildEventXML } from '../io/xml-export.js';
 import { openDatabasePanel } from '../services/db/db-panel.js';
 import { TreeService } from '../services/tree/tree-service.js';
-import { showError, showSuccess, showNeutral } from './popup.js';
+import { showConfirmPopup, showError, showSuccess, showNeutral } from './popup.js';
 import { applyLocalization, formatL10n, getLang, onLangChange, setLang, t } from './localization.js';
 import { initSettingsController, openSettingsPanel } from './settings-controller.js';
 import { initDocumentationView, refreshDocumentationView } from '../services/docs/documentation-view.js';
@@ -13,7 +13,7 @@ import { setDocumentationLanguage } from '../services/docs/docs-loc.js';
 import { appendIconLabel } from './icon-component.js';
 import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
-import { getThemeState, onThemeChange, setBaseTheme, setThemeMode, setUiScale } from './theme-manager.js';
+import { getThemeState, onThemeChange, setBaseTheme, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
@@ -29,22 +29,22 @@ let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
 
 function confirmAction(messageKey) {
-  return window.confirm(t(messageKey));
+  return showConfirmPopup(t(messageKey), { confirmText: t('confirm'), cancelText: t('cancel') });
 }
 
 function getOutputToggleLabel(collapsed) {
   return formatL10n(collapsed ? 'outputPanelExpand' : 'outputPanelCollapse', { label: t('output') });
 }
 
-function requestNodeRemoval(id) {
+async function requestNodeRemoval(id) {
   if (!Number.isFinite(Number(id))) return false;
-  if (!confirmAction('confirmRemoveNode')) return false;
+  if (!await confirmAction('confirmRemoveNode')) return false;
   dispatch({ type: 'REMOVE_NODE', id: Number(id) });
   return true;
 }
 
-function requestClearCurrentEvent() {
-  if (!confirmAction('confirmClearEvent')) return false;
+async function requestClearCurrentEvent() {
+  if (!await confirmAction('confirmClearEvent')) return false;
   dispatch({ type: 'CLEAR_EVENT' });
   return true;
 }
@@ -105,9 +105,14 @@ function setTreePanelButtonsState() {
   const settingsHidden = treeContainer.classList.contains('hide-tree-settings');
   const summaryButton = treeContainer.querySelector('button[data-action="toggleTreeSummaryPanel"]');
   const settingsButton = treeContainer.querySelector('button[data-action="toggleTreeSettingsPanel"]');
-  if (summaryButton) summaryButton.dataset.l10n = summaryHidden ? 'showTreeSummaryPanel' : 'hideTreeSummaryPanel';
-  if (settingsButton) settingsButton.dataset.l10n = settingsHidden ? 'showTreeSettingsPanel' : 'hideTreeSettingsPanel';
-  applyLocalization(treeContainer);
+  if (summaryButton) {
+    summaryButton.textContent = summaryHidden ? '▶' : '◀';
+    summaryButton.title = t(summaryHidden ? 'showTreeSummaryPanel' : 'hideTreeSummaryPanel');
+  }
+  if (settingsButton) {
+    settingsButton.textContent = settingsHidden ? '◀' : '▶';
+    settingsButton.title = t(settingsHidden ? 'showTreeSettingsPanel' : 'hideTreeSettingsPanel');
+  }
 }
 
 function initTreePanelToggles() {
@@ -273,7 +278,10 @@ function openNodeContextMenu(event) {
     menu.appendChild(btn);
   };
   add(t('addChild'), () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), nodeType: 'rng' }));
-  add(t('duplicateNode'), () => dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) }));
+  add(t('duplicateNode'), () => {
+    const result = dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) });
+    if (document.body.dataset.viewMode === 'tree' && result?.nodeId != null) treeService.autoLayoutSubtree(result.nodeId);
+  });
   add(t('copySubtree'), () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
   add(t('pasteSubtree'), () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId) }));
   add(t('removeNode'), () => requestNodeRemoval(Number(nodeId)));
@@ -443,6 +451,7 @@ function renderModel() {
   if (document.getElementById('tree-container').style.display === 'block') {
     treeService.renderQueued(state.currentEvent.model);
   }
+  setTreePanelButtonsState();
 }
 
 function updateXML() {
@@ -499,6 +508,11 @@ function updateMenuThemeStatus() {
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-current', selected ? 'true' : 'false');
   });
+  document.querySelectorAll('button[data-action="setSfAccentPreset"]').forEach(button => {
+    const selected = button.dataset.value === theme.sfAccentPreset;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', selected ? 'true' : 'false');
+  });
 }
 
 function openImportXmlModal() {
@@ -529,13 +543,13 @@ function openAboutPanel() {
   document.body.appendChild(modal);
 }
 
-function handleMenuDeleteSelected() {
+async function handleMenuDeleteSelected() {
   const selectedId = treeService.getSelectedNodeId();
   if (selectedId == null) {
     showNeutral(t('selectNodeDelete'));
     return;
   }
-  requestNodeRemoval(selectedId);
+  await requestNodeRemoval(selectedId);
 }
 
 function handleMenuDuplicateSelected() {
@@ -544,10 +558,11 @@ function handleMenuDuplicateSelected() {
     showNeutral(t('selectNodeDuplicate'));
     return;
   }
-  dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId });
+  const result = dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId });
+  if (document.body.dataset.viewMode === 'tree' && result?.nodeId != null) treeService.autoLayoutSubtree(result.nodeId);
 }
 
-function handleClick(event) {
+async function handleClick(event) {
   const actionEl = event.target.closest('[data-action]');
   if (!actionEl) return;
 
@@ -573,8 +588,14 @@ function handleClick(event) {
   if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch || null, nodeType: actionEl.dataset.type });
   if (action === 'addRngBranch') dispatch({ type: 'ADD_RNG_BRANCH', id });
   if (action === 'removeRngBranch') dispatch({ type: 'REMOVE_RNG_BRANCH', id, branchId: actionEl.dataset.branchId });
-  if (action === 'removeNode') return void requestNodeRemoval(id);
-  if (action === 'clearAll') return void requestClearCurrentEvent();
+  if (action === 'removeNode') {
+    await requestNodeRemoval(id);
+    return;
+  }
+  if (action === 'clearAll') {
+    await requestClearCurrentEvent();
+    return;
+  }
 
   if (action === 'setViewMode') setViewMode(actionEl.dataset.viewMode);
   if (action === 'openEditorModule') setActiveModule('editor');
@@ -635,11 +656,12 @@ function handleClick(event) {
   }
   if (action === 'runSimulation') runSimulation();
   if (action === 'validateTree') runValidation();
-  if (action === 'menuDeleteSelected') handleMenuDeleteSelected();
+  if (action === 'menuDeleteSelected') await handleMenuDeleteSelected();
   if (action === 'menuDuplicateSelected') handleMenuDuplicateSelected();
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
   if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
+  if (action === 'setSfAccentPreset') setSfAccentPreset(actionEl.dataset.value);
   if (action === 'openDocumentation') setActiveModule('documentation');
   if (action === 'openWiki') window.open('https://barotraumagame.com/wiki', '_blank', 'noopener');
   if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
@@ -770,7 +792,11 @@ function handleKeyboardShortcuts(event) {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); editorStore.undo(); }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); editorStore.redo(); }
   if (event.key === 'Delete' && selectedId != null) { event.preventDefault(); requestNodeRemoval(selectedId); }
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedId != null) { event.preventDefault(); dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId }); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd' && selectedId != null) {
+    event.preventDefault();
+    const result = dispatch({ type: 'DUPLICATE_SUBTREE', id: selectedId });
+    if (document.body.dataset.viewMode === 'tree' && result?.nodeId != null) treeService.autoLayoutSubtree(result.nodeId);
+  }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); runQuickAdd(); }
 }
 

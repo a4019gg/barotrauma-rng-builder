@@ -104,6 +104,24 @@
                 <button type="button" role="menuitem" data-action="menuSetUiScale" data-value="120" data-l10n="uiScale120"></button>
               </div>
             </div>
+            <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="grid"></span>
+              <input id="toggle-grid" type="checkbox" />
+            </label>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="chanceColorCoding"></span>
+              <input id="toggle-chance-colors" type="checkbox" />
+            </label>
+            <div class="menu-subitem menu-subitem-inline" role="none">
+              <span class="menu-control-inline-label" data-l10n="sfAccentPalette"></span>
+              <div class="menu-color-dots" role="group" aria-label="S/F accents">
+                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"></button>
+                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"></button>
+                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="neon-cherry" data-l10n-title="sfAccentNeonCherry" aria-checked="false"></button>
+                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="forest-ruby" data-l10n-title="sfAccentForestRuby" aria-checked="false"></button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -143,14 +161,6 @@
               </div>
             </div>
             <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
-            <label class="menu-control-row menu-control-switch" role="none">
-              <span data-l10n="grid"></span>
-              <input id="toggle-grid" type="checkbox" />
-            </label>
-            <label class="menu-control-row menu-control-switch" role="none">
-              <span data-l10n="chanceColorCoding"></span>
-              <input id="toggle-chance-colors" type="checkbox" />
-            </label>
             <label class="menu-control-row" role="none">
               <span data-l10n="chanceInputMode"></span>
               <select id="chance-input-mode">
@@ -217,10 +227,6 @@
           </div>
         </div>
         <div id="tree-container" style="display:none;">
-          <div class="tree-panel-toggles">
-            <button type="button" class="icon-btn tree-panel-toggle" data-action="toggleTreeSummaryPanel" data-l10n="hideTreeSummaryPanel"></button>
-            <button type="button" class="icon-btn tree-panel-toggle" data-action="toggleTreeSettingsPanel" data-l10n="hideTreeSettingsPanel"></button>
-          </div>
           <div class="tree-layout">
             <section id="tree-outline" class="tree-outline" data-l10n-aria-label="treeOutlineLabel"></section>
             <svg id="tree-svg" aria-hidden="true"></svg>
