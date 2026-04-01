@@ -270,6 +270,15 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   line-height: 1.2;
 }
 
+.menu-group-title {
+  padding: 4px 8px;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
 .menu-dropdown button:hover {
   background: color-mix(in srgb, var(--ui-accent) 22%, var(--bg-panel));
   border-color: color-mix(in srgb, var(--ui-accent) 44%, var(--border-main));
@@ -784,6 +793,8 @@ body[data-active-module='documentation'] #output-panel {
 
 .node-body input,
 .node-body select,
+.node-control input,
+.node-control select,
 #event-id,
 #output,
 #simulation-iterations,
@@ -1528,6 +1539,8 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
   background: color-mix(in srgb, var(--bg-main) 78%, var(--bg-panel));
   color: var(--text-main);
   white-space: pre;
+  font: 500 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  tab-size: 2;
   pointer-events: none;
 }
 
@@ -1540,6 +1553,10 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
   border: 1px solid var(--border-main);
   border-radius: var(--ui-radius-md);
   padding: 8px;
+  white-space: pre;
+  overflow: auto;
+  font: 500 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  tab-size: 2;
 }
 
 .import-xml-actions {

@@ -49,6 +49,8 @@ function syncXmlHighlight(textarea, layer) {
   layer.innerHTML = highlightXml(textarea.value);
   layer.scrollTop = textarea.scrollTop;
   layer.scrollLeft = textarea.scrollLeft;
+  layer.style.width = `${textarea.clientWidth}px`;
+  layer.style.height = `${textarea.clientHeight}px`;
 }
 
 function confirmAction(messageKey) {
@@ -770,6 +772,9 @@ function handleInput(event) {
   if (event.target.id === 'import-xml-textarea') {
     syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
   }
+  if (event.target.id === 'output') {
+    syncXmlHighlight(event.target, document.getElementById('output-highlight'));
+  }
 }
 
 
@@ -917,6 +922,13 @@ function initOutputPanelUX() {
 
   syncXmlHighlight(output, outputHighlight);
   syncXmlHighlight(importTextarea, importHighlight);
+
+  const resizeObserver = new ResizeObserver(() => {
+    syncXmlHighlight(output, outputHighlight);
+    syncXmlHighlight(importTextarea, importHighlight);
+  });
+  resizeObserver.observe(panel);
+  resizeObserver.observe(importTextarea);
 }
 
 export function initEditorUI() {
