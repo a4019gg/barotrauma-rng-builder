@@ -49,6 +49,8 @@ function syncXmlHighlight(textarea, layer) {
   layer.innerHTML = highlightXml(textarea.value);
   layer.scrollTop = textarea.scrollTop;
   layer.scrollLeft = textarea.scrollLeft;
+  layer.style.width = `${textarea.clientWidth}px`;
+  layer.style.height = `${textarea.clientHeight}px`;
 }
 
 function confirmAction(messageKey) {
