@@ -113,13 +113,13 @@
               <span data-l10n="chanceColorCoding"></span>
               <input id="toggle-chance-colors" type="checkbox" />
             </label>
-            <div class="menu-subitem menu-subitem-inline" role="none">
-              <span class="menu-control-inline-label" data-l10n="sfAccentPalette"></span>
-              <div class="menu-color-dots" role="group" aria-label="S/F accents">
-                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"></button>
-                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"></button>
-                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="neon-cherry" data-l10n-title="sfAccentNeonCherry" aria-checked="false"></button>
-                <button type="button" role="menuitemradio" class="menu-color-dot sf-preset-btn" data-action="setSfAccentPreset" data-value="forest-ruby" data-l10n-title="sfAccentForestRuby" aria-checked="false"></button>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="sfAccentPalette"></span> <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu menu-sf-accent-dropdown" role="menu">
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="neon-cherry" data-l10n-title="sfAccentNeonCherry" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="forest-ruby" data-l10n-title="sfAccentForestRuby" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
               </div>
             </div>
           </div>
@@ -161,21 +161,21 @@
               </div>
             </div>
             <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
-            <label class="menu-control-row" role="none">
-              <span data-l10n="chanceInputMode"></span>
-              <select id="chance-input-mode">
-                <option value="fraction" data-l10n="chanceModeFraction">0..1</option>
-                <option value="percent" data-l10n="chanceModePercent">%</option>
-              </select>
-            </label>
-            <label class="menu-control-row" role="none">
-              <span data-l10n="autoChanceMode"></span>
-              <select id="auto-chance-global">
-                <option value="off" data-l10n="autoChanceOff">Off</option>
-                <option value="root-split" data-l10n="autoChanceRoot">Root</option>
-                <option value="branch-split" data-l10n="autoChanceBranch">Branch</option>
-              </select>
-            </label>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="chanceInputMode"></span> <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetChanceInputMode" data-value="fraction" data-l10n="chanceModeFraction"></button>
+                <button type="button" role="menuitem" data-action="menuSetChanceInputMode" data-value="percent" data-l10n="chanceModePercent"></button>
+              </div>
+            </div>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="autoChanceMode"></span> <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu" role="menu">
+                <button type="button" role="menuitem" data-action="menuSetAutoChanceMode" data-value="off" data-l10n="autoChanceOff"></button>
+                <button type="button" role="menuitem" data-action="menuSetAutoChanceMode" data-value="root-split" data-l10n="autoChanceRoot"></button>
+                <button type="button" role="menuitem" data-action="menuSetAutoChanceMode" data-value="branch-split" data-l10n="autoChanceBranch"></button>
+              </div>
+            </div>
             <button type="button" role="menuitem" data-action="resetSettings" data-l10n="resetSettings"></button>
           </div>
         </div>
@@ -193,14 +193,6 @@
     </header>
 
     <section class="action-bar">
-      <div class="action-group action-group-mode">
-        <span class="action-title" data-l10n="editorOperationMode"></span>
-        <div id="editor-mode-segmented" class="segmented-control" data-editor-mode="basic" data-segment-count="2" role="tablist" data-l10n-aria-label="editorOperationMode">
-          <div class="segmented-control-indicator" aria-hidden="true"></div>
-          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true" data-l10n="editorModeBasic"></button>
-          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false" data-l10n="editorModeAdvanced"></button>
-        </div>
-      </div>
       <div class="action-group">
         <span class="action-title" data-l10n="build"></span>
         <button data-action="addNode" data-action-tier="secondary" data-type="rng" data-node-type="rng" data-l10n="addRng"></button>
@@ -214,6 +206,14 @@
       <div class="action-group history-group">
         <button data-action="undo" data-action-tier="neutral" data-l10n="undo"></button>
         <button data-action="redo" data-action-tier="neutral" data-l10n="redo"></button>
+      </div>
+      <div class="action-group action-group-mode">
+        <span class="action-title" data-l10n="editorOperationMode"></span>
+        <div id="editor-mode-segmented" class="segmented-control" data-editor-mode="basic" data-segment-count="2" role="tablist" data-l10n-aria-label="editorOperationMode">
+          <div class="segmented-control-indicator" aria-hidden="true"></div>
+          <button type="button" class="segmented-option active" data-action="setEditorMode" data-editor-mode-option="true" data-mode="basic" role="tab" aria-selected="true" data-l10n="editorModeBasic"></button>
+          <button type="button" class="segmented-option" data-action="setEditorMode" data-editor-mode-option="true" data-mode="advanced" role="tab" aria-selected="false" data-l10n="editorModeAdvanced"></button>
+        </div>
       </div>
     </section>
 

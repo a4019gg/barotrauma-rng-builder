@@ -508,6 +508,16 @@ function updateMenuThemeStatus() {
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-current', selected ? 'true' : 'false');
   });
+  document.querySelectorAll('button[data-action="menuSetChanceInputMode"]').forEach(button => {
+    const selected = button.dataset.value === theme.chanceInputMode;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
+  document.querySelectorAll('button[data-action="menuSetAutoChanceMode"]').forEach(button => {
+    const selected = button.dataset.value === (getAppSetting('autoChanceMode') || 'off');
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-current', selected ? 'true' : 'false');
+  });
   document.querySelectorAll('button[data-action="setSfAccentPreset"]').forEach(button => {
     const selected = button.dataset.value === theme.sfAccentPreset;
     button.classList.toggle('is-selected', selected);
@@ -661,7 +671,13 @@ async function handleClick(event) {
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
   if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
+  if (action === 'menuSetChanceInputMode') setChanceInputMode(actionEl.dataset.value);
+  if (action === 'menuSetAutoChanceMode') setAppSetting('autoChanceMode', actionEl.dataset.value);
   if (action === 'setSfAccentPreset') setSfAccentPreset(actionEl.dataset.value);
+  if (action === 'toggleTreeSummaryWindow' || action === 'toggleTreeSettingsWindow') {
+    const treeContainer = document.getElementById('tree-container');
+    if (treeContainer) treeContainer.classList.toggle(action === 'toggleTreeSummaryWindow' ? 'windowed-tree-summary' : 'windowed-tree-settings');
+  }
   if (action === 'openDocumentation') setActiveModule('documentation');
   if (action === 'openWiki') window.open('https://barotraumagame.com/wiki', '_blank', 'noopener');
   if (action === 'openGithub') window.open('https://github.com/a4019gg/barotrauma-rng-builder', '_blank', 'noopener');
@@ -924,6 +940,7 @@ export function initEditorUI() {
   subscribeAppSettings(settings => {
     if (settings.editorMode !== editorStore.getState().editorMode) editorStore.setEditorMode(settings.editorMode || 'basic');
     applyEditorMode();
+    updateMenuThemeStatus();
   });
 
   renderEvents();
