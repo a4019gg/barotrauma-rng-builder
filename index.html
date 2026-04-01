@@ -27,11 +27,13 @@
         <div class="menu-item" role="none">
           <button type="button" class="menu-button" role="menuitem" data-l10n="menuFile"></button>
           <div class="menu-dropdown" role="menu">
-            <button type="button" role="menuitem" data-action="projectImport" data-l10n="projectImport"></button>
-            <button type="button" role="menuitem" data-action="projectExport" data-l10n="projectExport"></button>
-            <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
-            <button type="button" role="menuitem" data-action="downloadXML" data-l10n="downloadXML"></button>
-            <button type="button" role="menuitem" data-action="generateXML" data-l10n="generateXML"></button>
+            <div class="menu-group-title" data-l10n="menuProjectGroup"></div>
+            <button type="button" role="menuitem" data-action="projectImport">📥 <span data-l10n="projectImport"></span></button>
+            <button type="button" role="menuitem" data-action="projectExport">📤 <span data-l10n="projectExport"></span></button>
+            <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
+            <div class="menu-group-title" data-l10n="menuXmlGroup"></div>
+            <button type="button" role="menuitem" data-action="openImportXmlModal">📥 <span data-l10n="importXML"></span></button>
+            <button type="button" role="menuitem" data-action="downloadXML">📤 <span data-l10n="downloadXML"></span></button>
           </div>
         </div>
 
@@ -93,6 +95,15 @@
                 <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="soft-bloom" data-l10n="themeSoftBloom"></button>
               </div>
             </div>
+            <div class="menu-subitem" role="none">
+              <button type="button" class="menu-button submenu-trigger" role="menuitem" data-l10n-title="sfAccentPaletteFull"><span data-l10n="sfAccentPalette"></span> <span class="submenu-arrow">▶</span></button>
+              <div class="menu-dropdown submenu menu-sf-accent-dropdown" role="menu">
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="neon-cherry" data-l10n-title="sfAccentNeonCherry" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="forest-ruby" data-l10n-title="sfAccentForestRuby" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
+              </div>
+            </div>
 
             <div class="menu-subitem" role="none">
               <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuUiScale"></span> <span class="submenu-arrow">▶</span></button>
@@ -109,19 +120,6 @@
               <span data-l10n="grid"></span>
               <input id="toggle-grid" type="checkbox" />
             </label>
-            <label class="menu-control-row menu-control-switch" role="none">
-              <span data-l10n="chanceColorCoding"></span>
-              <input id="toggle-chance-colors" type="checkbox" />
-            </label>
-            <div class="menu-subitem" role="none">
-              <button type="button" class="menu-button submenu-trigger" role="menuitem" data-l10n-title="sfAccentPaletteFull"><span data-l10n="sfAccentPalette"></span> <span class="submenu-arrow">▶</span></button>
-              <div class="menu-dropdown submenu menu-sf-accent-dropdown" role="menu">
-                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="emerald-crimson" data-l10n-title="sfAccentDefault" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
-                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="mint-rose" data-l10n-title="sfAccentMintRose" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
-                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="neon-cherry" data-l10n-title="sfAccentNeonCherry" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
-                <button type="button" role="menuitemradio" class="sf-preset-btn sf-preset-option" data-action="setSfAccentPreset" data-value="forest-ruby" data-l10n-title="sfAccentForestRuby" aria-checked="false"><span class="sf-preset-pair"><span class="sf-preset-dot sf-success"></span><span class="sf-preset-dot sf-failure"></span></span></button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -264,7 +262,7 @@
         <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
           <div class="xml-highlight-wrap">
             <pre id="output-highlight" class="xml-highlight-layer" aria-hidden="true"></pre>
-            <textarea id="output" spellcheck="false"></textarea>
+            <textarea id="output" spellcheck="false" wrap="off"></textarea>
           </div>
           <div class="xml-pane-actions">
             <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
@@ -348,7 +346,7 @@
           <span data-l10n="importXmlPasteLabel"></span>
           <div class="xml-highlight-wrap">
             <pre id="import-xml-highlight" class="xml-highlight-layer" aria-hidden="true"></pre>
-            <textarea id="import-xml-textarea" spellcheck="false" data-l10n-placeholder="importXmlPastePlaceholder"></textarea>
+            <textarea id="import-xml-textarea" spellcheck="false" wrap="off" data-l10n-placeholder="importXmlPastePlaceholder"></textarea>
           </div>
         </label>
       </div>
