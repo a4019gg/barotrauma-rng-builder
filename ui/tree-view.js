@@ -102,8 +102,8 @@ function summarizeNode(node) {
   if (node.type === 'eventSet') {
     const identifier = node.params.identifier || t('treeUnnamedEventSet');
     const conditions = [
-      [node.params.minintensity, node.params.maxintensity].some(value => value !== '' && value != null) ? `${t('minIntensity')} ${node.params.minintensity ?? 'any'} – ${t('maxIntensity')} ${node.params.maxintensity ?? 'any'}` : null,
-      [node.params.minleveldifficulty, node.params.maxleveldifficulty].some(value => value !== '' && value != null) ? `${t('minDifficulty')} ${node.params.minleveldifficulty ?? 'any'} – ${t('maxDifficulty')} ${node.params.maxleveldifficulty ?? 'any'}` : null
+      [node.params.minintensity, node.params.maxintensity].some(value => value !== '' && value != null) ? `${t('minIntensity')} ${node.params.minintensity ?? t('anyValue')} – ${t('maxIntensity')} ${node.params.maxintensity ?? t('anyValue')}` : null,
+      [node.params.minleveldifficulty, node.params.maxleveldifficulty].some(value => value !== '' && value != null) ? `${t('minDifficulty')} ${node.params.minleveldifficulty ?? t('anyValue')} – ${t('maxDifficulty')} ${node.params.maxleveldifficulty ?? t('anyValue')}` : null
     ].filter(Boolean).join(' · ') || t('treeNoConditions');
     return [
       createSummaryLine(t('treeOutlineIdentifier'), identifier),
@@ -221,7 +221,7 @@ export function renderTreeOutline(model, container) {
 
   const header = document.createElement('div');
   header.className = 'tree-outline-toolbar';
-  header.innerHTML = `<div><strong>${t('treeSummary')}</strong><span>${t('treeSummaryHint')}</span></div>`;
+  header.innerHTML = `<div><strong>${t('treeSummary')}</strong><span><br>${t('treeSummaryHint')}</span></div>`;
   const toggleBtn = document.createElement('button');
   toggleBtn.type = 'button';
   toggleBtn.className = 'icon-btn tree-panel-collapse-btn';
@@ -229,13 +229,7 @@ export function renderTreeOutline(model, container) {
   const hidden = container.closest('#tree-container')?.classList.contains('hide-tree-summary');
   toggleBtn.textContent = hidden ? '▶' : '◀';
   toggleBtn.title = hidden ? t('showTreeSummaryPanel') : t('hideTreeSummaryPanel');
-  const windowBtn = document.createElement('button');
-  windowBtn.type = 'button';
-  windowBtn.className = 'icon-btn tree-panel-window-btn';
-  windowBtn.dataset.action = 'toggleTreeSummaryWindow';
-  windowBtn.title = t('treeWindowMode');
-  windowBtn.textContent = '⧉';
-  header.append(toggleBtn, windowBtn);
+  header.append(toggleBtn);
   container.appendChild(header);
 
   if (!model.length) {

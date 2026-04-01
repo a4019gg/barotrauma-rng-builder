@@ -27,6 +27,29 @@ let simulationSortDirection = 'desc';
 
 let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
+const OUTPUT_HEIGHT_STORAGE_KEY = 'outputPanelHeight';
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+function highlightXml(xmlText) {
+  const source = escapeHtml(xmlText || '');
+  return source
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="xml-comment">$1</span>')
+    .replace(/(&lt;\/?)([A-Za-z0-9:_-]+)/g, '$1<span class="xml-tag">$2</span>')
+    .replace(/([A-Za-z_:][A-Za-z0-9_.:-]*)(=)(&quot;[^&]*?&quot;)/g, '<span class="xml-attr">$1</span>$2<span class="xml-string">$3</span>');
+}
+
+function syncXmlHighlight(textarea, layer) {
+  if (!textarea || !layer) return;
+  layer.innerHTML = highlightXml(textarea.value);
+  layer.scrollTop = textarea.scrollTop;
+  layer.scrollLeft = textarea.scrollLeft;
+}
 
 function confirmAction(messageKey) {
   return showConfirmPopup(t(messageKey), { confirmText: t('confirm'), cancelText: t('cancel') });
@@ -105,6 +128,8 @@ function setTreePanelButtonsState() {
   const settingsHidden = treeContainer.classList.contains('hide-tree-settings');
   const summaryButton = treeContainer.querySelector('button[data-action="toggleTreeSummaryPanel"]');
   const settingsButton = treeContainer.querySelector('button[data-action="toggleTreeSettingsPanel"]');
+  const summaryRestoreButton = treeContainer.querySelector('button[data-action="showTreeSummaryPanel"]');
+  const settingsRestoreButton = treeContainer.querySelector('button[data-action="showTreeSettingsPanel"]');
   if (summaryButton) {
     summaryButton.textContent = summaryHidden ? '▶' : '◀';
     summaryButton.title = t(summaryHidden ? 'showTreeSummaryPanel' : 'hideTreeSummaryPanel');
@@ -113,6 +138,8 @@ function setTreePanelButtonsState() {
     settingsButton.textContent = settingsHidden ? '◀' : '▶';
     settingsButton.title = t(settingsHidden ? 'showTreeSettingsPanel' : 'hideTreeSettingsPanel');
   }
+  if (summaryRestoreButton) summaryRestoreButton.hidden = !summaryHidden;
+  if (settingsRestoreButton) settingsRestoreButton.hidden = !settingsHidden;
 }
 
 function initTreePanelToggles() {
@@ -456,10 +483,12 @@ function renderModel() {
 
 function updateXML() {
   const { currentEvent } = editorStore.getState();
-  document.getElementById('output').value = buildEventXML({
+  const output = document.getElementById('output');
+  output.value = buildEventXML({
     eventId: currentEvent.id,
     model: currentEvent.model
   });
+  syncXmlHighlight(output, document.getElementById('output-highlight'));
 }
 
 function handleProjectStub() {
@@ -534,6 +563,7 @@ function openImportXmlModal() {
   modal.hidden = false;
   applyLocalization(modal);
   fileName.textContent = fileInput.files?.[0]?.name || t('importXmlNoFile');
+  syncXmlHighlight(textarea, document.getElementById('import-xml-highlight'));
   textarea.focus();
 }
 
@@ -674,9 +704,19 @@ async function handleClick(event) {
   if (action === 'menuSetChanceInputMode') setChanceInputMode(actionEl.dataset.value);
   if (action === 'menuSetAutoChanceMode') setAppSetting('autoChanceMode', actionEl.dataset.value);
   if (action === 'setSfAccentPreset') setSfAccentPreset(actionEl.dataset.value);
-  if (action === 'toggleTreeSummaryWindow' || action === 'toggleTreeSettingsWindow') {
+  if (action === 'showTreeSummaryPanel') {
     const treeContainer = document.getElementById('tree-container');
-    if (treeContainer) treeContainer.classList.toggle(action === 'toggleTreeSummaryWindow' ? 'windowed-tree-summary' : 'windowed-tree-settings');
+    if (!treeContainer) return;
+    treeContainer.classList.remove('hide-tree-summary');
+    localStorage.setItem('treePanel.summaryHidden', '0');
+    setTreePanelButtonsState();
+  }
+  if (action === 'showTreeSettingsPanel') {
+    const treeContainer = document.getElementById('tree-container');
+    if (!treeContainer) return;
+    treeContainer.classList.remove('hide-tree-settings');
+    localStorage.setItem('treePanel.settingsHidden', '0');
+    setTreePanelButtonsState();
   }
   if (action === 'openDocumentation') setActiveModule('documentation');
   if (action === 'openWiki') window.open('https://barotraumagame.com/wiki', '_blank', 'noopener');
@@ -726,6 +766,9 @@ function handleInput(event) {
   }
   if (event.target.id === 'simulation-search') {
     runSearch(event.target.value);
+  }
+  if (event.target.id === 'import-xml-textarea') {
+    syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
   }
 }
 
@@ -842,6 +885,40 @@ function initMenuBarBehavior() {
   });
 }
 
+function initOutputPanelUX() {
+  const panel = document.getElementById('output-panel');
+  const handle = document.getElementById('output-resize-handle');
+  const output = document.getElementById('output');
+  const outputHighlight = document.getElementById('output-highlight');
+  const importTextarea = document.getElementById('import-xml-textarea');
+  const importHighlight = document.getElementById('import-xml-highlight');
+  if (!panel || !handle || !output || !outputHighlight || !importTextarea || !importHighlight) return;
+
+  const savedHeight = Number(localStorage.getItem(OUTPUT_HEIGHT_STORAGE_KEY) || 0);
+  if (savedHeight > 140) panel.style.height = `${Math.min(520, savedHeight)}px`;
+
+  const startResize = event => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = panel.getBoundingClientRect().height;
+    const onMove = moveEvent => {
+      const nextHeight = Math.max(140, Math.min(560, startHeight + (startY - moveEvent.clientY)));
+      panel.style.height = `${Math.round(nextHeight)}px`;
+      localStorage.setItem(OUTPUT_HEIGHT_STORAGE_KEY, String(Math.round(nextHeight)));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+  handle.addEventListener('pointerdown', startResize);
+
+  syncXmlHighlight(output, outputHighlight);
+  syncXmlHighlight(importTextarea, importHighlight);
+}
+
 export function initEditorUI() {
   document.addEventListener('click', handleClick);
   document.addEventListener('change', handleChange);
@@ -893,6 +970,10 @@ export function initEditorUI() {
     const files = event.dataTransfer?.files;
     if (files?.length && fileName) fileName.textContent = files[0].name;
   });
+  document.addEventListener('scroll', event => {
+    if (event.target?.id === 'output') syncXmlHighlight(event.target, document.getElementById('output-highlight'));
+    if (event.target?.id === 'import-xml-textarea') syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
+  }, true);
 
   initSettingsController();
   initTreePanelToggles();
@@ -900,6 +981,7 @@ export function initEditorUI() {
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
+  initOutputPanelUX();
   setDocumentationLanguage(getLang());
   documentationStore.init();
   initDocumentationView(document.getElementById('documentation-view'));
