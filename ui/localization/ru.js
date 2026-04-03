@@ -301,5 +301,19 @@ export const ruUiDictionary = {
     removeBranch: 'Удалить ветку',
     children: 'Дочерние элементы',
     branch: 'Ветка',
-    strength: 'Сила'
+    strength: 'Сила',
+
+    outputExplainTab: 'Explain',
+    xmlFormatPretty: 'Pretty',
+    xmlFormatMinify: 'Minify',
+    explainFull: 'Полный',
+    explainCompact: 'Компактный',
+    explainDebug: 'Debug',
+    syntaxHighlightGroup: 'Подсветка XML',
+    syntaxHighlight: 'Подсветка синтаксиса',
+    xmlWarnings: 'Предупреждения',
+    xmlTooltips: 'Подсказки',
+    xmlInlineHints: 'Inline подсказки',
+    xmlDiff: 'Diff с прошлой версией',
+    copyFailed: 'Не удалось скопировать',
 };

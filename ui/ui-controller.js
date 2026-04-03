@@ -13,6 +13,8 @@ import { setDocumentationLanguage } from '../services/docs/docs-loc.js';
 import { appendIconLabel } from './icon-component.js';
 import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
+import { XmlViewerService } from '../services/xml/xml-viewer-service.js';
+import { explainEventModel } from '../services/xml/xml-explain-service.js';
 import { getThemeState, onThemeChange, setBaseTheme, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
@@ -29,28 +31,22 @@ let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
 const OUTPUT_HEIGHT_STORAGE_KEY = 'outputPanelHeight';
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
+let xmlViewer = null;
+let xmlFormatMode = 'pretty';
 
-function highlightXml(xmlText) {
-  const source = escapeHtml(xmlText || '');
-  return source
-    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="xml-comment">$1</span>')
-    .replace(/(&lt;\/?)([A-Za-z0-9:_-]+)/g, '$1<span class="xml-tag">$2</span>')
-    .replace(/([A-Za-z_:][A-Za-z0-9_.:-]*)(=)(&quot;[^&]*?&quot;)/g, '<span class="xml-attr">$1</span>$2<span class="xml-string">$3</span>');
-}
 
 function syncXmlHighlight(textarea, layer) {
   if (!textarea || !layer) return;
-  layer.innerHTML = highlightXml(textarea.value);
+  const escaped = String(textarea.value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+  layer.innerHTML = escaped
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="xml-comment">$1</span>')
+    .replace(/(&lt;\/?)([A-Za-z0-9:_-]+)/g, '$1<span class="xml-tag">$2</span>')
+    .replace(/([A-Za-z_:][A-Za-z0-9_.:-]*)(=)(&quot;[^&]*?&quot;)/g, '<span class="xml-attr">$1</span>$2<span class="xml-string">$3</span>');
   layer.scrollTop = textarea.scrollTop;
   layer.scrollLeft = textarea.scrollLeft;
-  layer.style.width = `${textarea.clientWidth}px`;
-  layer.style.height = `${textarea.clientHeight}px`;
 }
 
 function confirmAction(messageKey) {
@@ -74,7 +70,7 @@ async function requestClearCurrentEvent() {
   return true;
 }
 function setOutputTab(tab) {
-  const nextTab = tab === 'simulation' ? 'simulation' : 'xml';
+  const nextTab = ['xml', 'explain', 'simulation'].includes(tab) ? tab : 'xml';
   const tabs = document.querySelector('.output-tabs');
   if (tabs) tabs.dataset.activeTab = nextTab;
   document.querySelectorAll('.output-tab').forEach(btn => {
@@ -485,12 +481,15 @@ function renderModel() {
 
 function updateXML() {
   const { currentEvent } = editorStore.getState();
-  const output = document.getElementById('output');
-  output.value = buildEventXML({
+  const xml = buildEventXML({
     eventId: currentEvent.id,
     model: currentEvent.model
   });
-  syncXmlHighlight(output, document.getElementById('output-highlight'));
+  xmlViewer?.setMode(xmlFormatMode);
+  xmlViewer?.setXml(xml);
+  const explainMode = document.getElementById('explain-mode')?.value || 'full';
+  const explainOut = document.getElementById('explain-output');
+  if (explainOut) explainOut.textContent = explainEventModel({ eventId: currentEvent.id, model: currentEvent.model, mode: explainMode });
 }
 
 function handleProjectStub() {
@@ -649,15 +648,12 @@ async function handleClick(event) {
   }
 
   if (action === 'copyXML') {
-    const out = document.getElementById('output');
-    out.select();
-    document.execCommand('copy');
-    showSuccess(t('xmlCopied'));
+    const xml = xmlViewer?.copyPlain() || document.getElementById('output')?.value || '';
+    navigator.clipboard.writeText(xml).then(() => showSuccess(t('xmlCopied'))).catch(() => showError(t('copyFailed')));
   }
 
   if (action === 'downloadXML') {
-    const out = document.getElementById('output');
-    const blob = new Blob([out.value], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([xmlViewer?.copyPlain() || ''], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -697,6 +693,13 @@ async function handleClick(event) {
     setOutputCollapsed(!panel?.classList.contains('is-collapsed'));
   }
   if (action === 'runSimulation') runSimulation();
+  if (action === 'xmlSearchNext') xmlViewer?.goToSearch(1);
+  if (action === 'xmlSearchPrev') xmlViewer?.goToSearch(-1);
+  if (action === 'toggleXmlFormat') {
+    xmlFormatMode = xmlFormatMode === 'pretty' ? 'minify' : 'pretty';
+    actionEl.textContent = t(xmlFormatMode === 'pretty' ? 'xmlFormatPretty' : 'xmlFormatMinify');
+    updateXML();
+  }
   if (action === 'validateTree') runValidation();
   if (action === 'menuDeleteSelected') await handleMenuDeleteSelected();
   if (action === 'menuDuplicateSelected') handleMenuDuplicateSelected();
@@ -771,9 +774,6 @@ function handleInput(event) {
   }
   if (event.target.id === 'import-xml-textarea') {
     syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
-  }
-  if (event.target.id === 'output') {
-    syncXmlHighlight(event.target, document.getElementById('output-highlight'));
   }
 }
 
@@ -897,6 +897,9 @@ function initOutputPanelUX() {
   const outputHighlight = document.getElementById('output-highlight');
   const importTextarea = document.getElementById('import-xml-textarea');
   const importHighlight = document.getElementById('import-xml-highlight');
+  const tooltip = document.getElementById('xml-hover-tooltip');
+  const searchInput = document.getElementById('xml-search');
+  const searchCount = document.getElementById('xml-search-count');
   if (!panel || !handle || !output || !outputHighlight || !importTextarea || !importHighlight) return;
 
   const savedHeight = Number(localStorage.getItem(OUTPUT_HEIGHT_STORAGE_KEY) || 0);
@@ -920,11 +923,20 @@ function initOutputPanelUX() {
   };
   handle.addEventListener('pointerdown', startResize);
 
-  syncXmlHighlight(output, outputHighlight);
+  xmlViewer = new XmlViewerService({
+    textarea: output,
+    layer: outputHighlight,
+    tooltip,
+    searchInput,
+    searchCount,
+    onElementClick: detail => {
+      if (detail?.identifier) showNeutral(`XML click: ${detail.tag} → ${detail.identifier}`);
+    }
+  });
   syncXmlHighlight(importTextarea, importHighlight);
 
   const resizeObserver = new ResizeObserver(() => {
-    syncXmlHighlight(output, outputHighlight);
+    xmlViewer?.syncScroll();
     syncXmlHighlight(importTextarea, importHighlight);
   });
   resizeObserver.observe(panel);
@@ -959,6 +971,14 @@ export function initEditorUI() {
       if (fileName) fileName.textContent = event.target.files?.[0]?.name || t('importXmlNoFile');
     }
   });
+  document.addEventListener('change', event => {
+    if (event.target.id === 'explain-mode') updateXML();
+    if (event.target.id === 'xml-feature-syntax') xmlViewer?.setFeatures({ syntax: event.target.checked });
+    if (event.target.id === 'xml-feature-warnings') xmlViewer?.setFeatures({ warnings: event.target.checked });
+    if (event.target.id === 'xml-feature-tooltips') xmlViewer?.setFeatures({ tooltips: event.target.checked });
+    if (event.target.id === 'xml-feature-inline-hints') xmlViewer?.setFeatures({ inlineHints: event.target.checked });
+    if (event.target.id === 'xml-feature-diff') xmlViewer?.setFeatures({ diff: event.target.checked });
+  });
   document.addEventListener('dragover', event => {
     const dropzone = event.target.closest('.import-xml-dropzone');
     if (!dropzone) return;
@@ -983,7 +1003,7 @@ export function initEditorUI() {
     if (files?.length && fileName) fileName.textContent = files[0].name;
   });
   document.addEventListener('scroll', event => {
-    if (event.target?.id === 'output') syncXmlHighlight(event.target, document.getElementById('output-highlight'));
+    if (event.target?.id === 'output') xmlViewer?.syncScroll();
     if (event.target?.id === 'import-xml-textarea') syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
   }, true);
 

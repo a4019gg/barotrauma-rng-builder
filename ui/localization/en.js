@@ -301,5 +301,19 @@ export const enUiDictionary = {
     removeBranch: 'Remove branch',
     children: 'Children',
     branch: 'Branch',
-    strength: 'Strength'
+    strength: 'Strength',
+
+    outputExplainTab: 'Explain',
+    xmlFormatPretty: 'Pretty',
+    xmlFormatMinify: 'Minify',
+    explainFull: 'Full',
+    explainCompact: 'Compact',
+    explainDebug: 'Debug',
+    syntaxHighlightGroup: 'XML Highlight',
+    syntaxHighlight: 'Syntax highlight',
+    xmlWarnings: 'Warnings',
+    xmlTooltips: 'Tooltips',
+    xmlInlineHints: 'Inline hints',
+    xmlDiff: 'Diff with previous',
+    copyFailed: 'Copy failed',
 };
