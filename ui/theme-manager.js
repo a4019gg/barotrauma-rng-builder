@@ -32,7 +32,12 @@ const SF_ACCENT_PRESETS = {
   'emerald-crimson': { success: '#38c172', failure: '#e25555' },
   'mint-rose': { success: '#3fc7b4', failure: '#f8b24f' },
   'neon-cherry': { success: '#4e86ff', failure: '#ff66d0' },
-  'forest-ruby': { success: '#9f7aea', failure: '#ffd166' }
+  'forest-ruby': { success: '#9f7aea', failure: '#ffd166' },
+  'lime-magenta': { success: '#6adf6d', failure: '#e667d6' },
+  'aqua-ember': { success: '#38d9c7', failure: '#ff8c42' },
+  'teal-violet': { success: '#30b7c7', failure: '#b783ff' },
+  'sage-coral': { success: '#79c68a', failure: '#ff7f6a' },
+  'sky-sun': { success: '#5cb7ff', failure: '#ffd54f' }
 };
 
 const defaults = {

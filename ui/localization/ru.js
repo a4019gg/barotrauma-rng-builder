@@ -313,7 +313,7 @@ export const ruUiDictionary = {
     syntaxHighlight: 'Подсветка синтаксиса',
     xmlWarnings: 'Предупреждения',
     xmlTooltips: 'Подсказки',
+    xmlHighlightSettingsTooltip: 'Переключение функций подсветки XML в Output XML.',
     xmlInlineHints: 'Inline подсказки',
-    xmlDiff: 'Diff с прошлой версией',
     copyFailed: 'Не удалось скопировать',
 };

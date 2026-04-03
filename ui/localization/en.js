@@ -313,7 +313,7 @@ export const enUiDictionary = {
     syntaxHighlight: 'Syntax highlight',
     xmlWarnings: 'Warnings',
     xmlTooltips: 'Tooltips',
+    xmlHighlightSettingsTooltip: 'Toggle XML highlighting features in Output XML.',
     xmlInlineHints: 'Inline hints',
-    xmlDiff: 'Diff with previous',
     copyFailed: 'Copy failed',
 };

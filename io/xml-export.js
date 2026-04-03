@@ -52,7 +52,8 @@ function generateNodeXML(rawNode, indentLevel = 2) {
   }
 
   if (node.type === 'event') {
-    const identifier = node.params.identifier ? ` identifier="${esc(node.params.identifier)}"` : '';
+    const identifierValue = String(node.params.identifier || '').trim() || 'error';
+    const identifier = ` identifier="${esc(identifierValue)}"`;
     return `${indent}<Event${identifier}>\n${writeNodeList(node.children || [], indentLevel + 1)}${indent}</Event>\n`;
   }
 
@@ -62,22 +63,25 @@ function generateNodeXML(rawNode, indentLevel = 2) {
   }
 
   if (node.type === 'spawn') {
-    return `${indent}<SpawnItem identifier="${esc(node.params.item || 'revolver')}" amount="${Number(node.params.amount) || 1}" quality="${Number(node.params.quality) || 0}" />\n`;
+    const identifier = String(node.params.item || '').trim() || 'error';
+    return `${indent}<SpawnItem identifier="${esc(identifier)}" amount="${Number(node.params.amount) || 1}" quality="${Number(node.params.quality) || 0}" />\n`;
   }
 
   if (node.type === 'creature') {
-    return `${indent}<SpawnCreature identifier="${esc(node.params.creature || 'crawler')}" count="${Number(node.params.count) || 1}" spawnlocation="${esc(node.params.spawnLocation || 'inside')}" />\n`;
+    const identifier = String(node.params.creature || '').trim() || 'error';
+    return `${indent}<SpawnCreature identifier="${esc(identifier)}" count="${Number(node.params.count) || 1}" spawnlocation="${esc(node.params.spawnLocation || 'inside')}" />\n`;
   }
 
   if (node.type === 'affliction') {
-    return `${indent}<ApplyAffliction identifier="${esc(node.params.affliction || 'bleeding')}" strength="${Number(node.params.strength) || 10}" />\n`;
+    const identifier = String(node.params.affliction || '').trim() || 'error';
+    return `${indent}<ApplyAffliction identifier="${esc(identifier)}" strength="${Number(node.params.strength) || 10}" />\n`;
   }
 
   return `${indent}<!-- unsupported node ${esc(node.type)} -->\n`;
 }
 
 export function buildEventXML({ eventId, model }) {
-  let xml = `<Event identifier="${esc(eventId || 'new_event')}">\n`;
+  let xml = `<Event identifier="${esc(String(eventId || '').trim() || 'error')}">\n`;
   model.forEach(node => {
     xml += generateNodeXML(node, 1);
   });
