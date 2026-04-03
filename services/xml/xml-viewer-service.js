@@ -6,8 +6,7 @@ const DEFAULT_FEATURES = {
   tooltips: true,
   inlineHints: true,
   blockHover: true,
-  clickable: true,
-  diff: true
+  clickable: true
 };
 
 export class XmlViewerService {
@@ -22,13 +21,13 @@ export class XmlViewerService {
     this.searchIndex = 0;
     this.searchMatches = [];
     this.features = { ...DEFAULT_FEATURES };
-    this.previousText = '';
     this.rawText = '';
     this.bind();
   }
 
   bind() {
     this.textarea?.addEventListener('scroll', () => this.syncScroll());
+    this.layer?.addEventListener('scroll', () => this.syncScroll(true));
     this.layer?.addEventListener('pointermove', event => this.handlePointerMove(event));
     this.layer?.addEventListener('pointerleave', () => this.clearHover());
     this.layer?.addEventListener('click', event => this.handleClick(event));
@@ -46,7 +45,6 @@ export class XmlViewerService {
   }
 
   setXml(xmlText) {
-    this.previousText = this.rawText;
     this.rawText = String(xmlText || '');
     this.textarea.value = formatXml(this.mode, this.rawText);
     this.render();
@@ -71,9 +69,7 @@ export class XmlViewerService {
     this.searchMatches = searchMatches;
     if (this.searchIndex >= searchMatches.length) this.searchIndex = 0;
 
-    let output = html;
-    if (this.features.diff) output = this.applyDiff(output);
-    this.layer.innerHTML = output;
+    this.layer.innerHTML = html;
     this.layer.dataset.mode = this.mode;
     this.layer.dataset.syntax = this.features.syntax ? 'on' : 'off';
     this.layer.dataset.warnings = this.features.warnings ? 'on' : 'off';
@@ -82,18 +78,13 @@ export class XmlViewerService {
     this.updateSearchCounter();
   }
 
-  applyDiff(html) {
-    if (!this.previousText || this.previousText === this.rawText) return html;
-    const prevLines = new Set(this.previousText.split('\n'));
-    return html.replace(/<div class="xml-line" data-line="(\d+)"[^>]*>(.*?)<\/div>/g, (full, lineIndex, body) => {
-      const textContent = body.replace(/<[^>]+>/g, '').replaceAll('&quot;', '"').replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;', '&');
-      if (!prevLines.has(textContent.trim())) return `<div class="xml-line xml-line-added" data-line="${lineIndex}">${body}</div>`;
-      return full;
-    });
-  }
-
-  syncScroll() {
+  syncScroll(fromLayer = false) {
     if (!this.layer || !this.textarea) return;
+    if (fromLayer) {
+      this.textarea.scrollTop = this.layer.scrollTop;
+      this.textarea.scrollLeft = this.layer.scrollLeft;
+      return;
+    }
     this.layer.scrollTop = this.textarea.scrollTop;
     this.layer.scrollLeft = this.textarea.scrollLeft;
   }

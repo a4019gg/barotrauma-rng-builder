@@ -42,7 +42,16 @@ function numberHint(name, value) {
   if (!Number.isFinite(parsed)) return '';
   if (name === 'chance') return `(${parsed.toFixed(1).replace(/\.0$/, '')}%)`;
   if (parsed >= 0 && parsed <= 1 && /chance|probability/i.test(name)) return `(${(parsed * 100).toFixed(1).replace(/\.0$/, '')}%)`;
-  return parsed > 0 && parsed <= 1 ? `(${(parsed * 100).toFixed(1).replace(/\.0$/, '')}%)` : '';
+  return '';
+}
+
+function chanceColorHint(name, value) {
+  if (name !== 'chance') return '';
+  const parsed = Number(String(value).replace(',', '.'));
+  if (!Number.isFinite(parsed)) return '';
+  const clamped = Math.max(0, Math.min(100, parsed));
+  const hue = (clamped / 100) * 60;
+  return `hsl(${hue}deg 90% 58%)`;
 }
 
 export function formatXml(mode, xmlText = '') {
@@ -110,11 +119,13 @@ export function buildHighlightedXml(xmlText = '', options = {}) {
       const warning = makeWarning(attr.name, attr.value);
       const warnClass = warning ? ' xml-warning' : '';
       const percentHint = numberHint(attr.name, attr.value);
+      const chanceColor = chanceColorHint(attr.name, attr.value);
+      const isErrorValue = attr.name === 'identifier' && String(attr.value || '').trim().toLowerCase() === 'error';
       const info = attr.name === 'identifier'
         ? `identifier: ${attr.value || 'empty'}`
         : `${attr.name}: ${attr.value || 'empty'}`;
-      attrsHtml += ` <span class="xml-attr${warnClass}" data-tooltip="${encodeAttr(info)}">${escapeHtml(attr.name)}</span>=<span class="xml-string${warnClass}" data-tooltip="${encodeAttr(info)}">&quot;${escapeHtml(attr.value)}&quot;</span>`;
-      if (percentHint) attrsHtml += `<span class="xml-inline-hint">${escapeHtml(percentHint)}</span>`;
+      attrsHtml += ` <span class="xml-attr${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">${escapeHtml(attr.name)}</span>=<span class="xml-string${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">&quot;${escapeHtml(attr.value)}&quot;</span>`;
+      if (percentHint) attrsHtml += `<span class="xml-inline-hint xml-inline-hint-chance"${chanceColor ? ` style="--chance-color:${chanceColor};"` : ''}>${escapeHtml(percentHint)}</span>`;
     });
 
     const startTag = `&lt;${isClosing ? '/' : ''}<span class="xml-tag-name" data-entity="${encodeAttr(entityLabel)}">${escapeHtml(tagName)}</span>${attrsHtml}${isSelfClosing ? ' /' : ''}&gt;`;

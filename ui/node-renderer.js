@@ -221,7 +221,7 @@ function createNodeControls(model, editorMode) {
     body.append(
       createSection(t('identity'), identityFields),
       createSection(t('conditions'), conditionFields),
-      createSection(t('behavior'), behaviorFields, { collapsible: editorMode === 'advanced', open: editorMode !== 'advanced' })
+      createSection(t('behavior'), behaviorFields, { collapsible: editorMode === 'advanced', open: true })
     );
   }
 

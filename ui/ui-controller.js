@@ -15,7 +15,7 @@ import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
 import { XmlViewerService } from '../services/xml/xml-viewer-service.js';
 import { explainEventModel } from '../services/xml/xml-explain-service.js';
-import { getThemeState, onThemeChange, setBaseTheme, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
+import { getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
@@ -40,11 +40,12 @@ function syncXmlHighlight(textarea, layer) {
   const escaped = String(textarea.value || '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
   layer.innerHTML = escaped
     .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="xml-comment">$1</span>')
     .replace(/(&lt;\/?)([A-Za-z0-9:_-]+)/g, '$1<span class="xml-tag">$2</span>')
-    .replace(/([A-Za-z_:][A-Za-z0-9_.:-]*)(=)(&quot;[^&]*?&quot;)/g, '<span class="xml-attr">$1</span>$2<span class="xml-string">$3</span>');
+    .replace(/([A-Za-z_:][A-Za-z0-9_.:-]*)(=)(&quot;[\s\S]*?&quot;)/g, '<span class="xml-attr">$1</span>$2<span class="xml-string">$3</span>');
   layer.scrollTop = textarea.scrollTop;
   layer.scrollLeft = textarea.scrollLeft;
 }
@@ -462,6 +463,7 @@ function renderEvents() {
   list.appendChild(addTab);
 
   document.getElementById('event-id').value = state.currentEvent.id;
+  document.getElementById('event-id').classList.toggle('input-error', !String(state.currentEvent.id || '').trim());
 }
 
 function renderModel() {
@@ -481,8 +483,9 @@ function renderModel() {
 
 function updateXML() {
   const { currentEvent } = editorStore.getState();
+  const normalizedEventId = String(currentEvent.id || '').trim() || 'error';
   const xml = buildEventXML({
-    eventId: currentEvent.id,
+    eventId: normalizedEventId,
     model: currentEvent.model
   });
   xmlViewer?.setMode(xmlFormatMode);
@@ -769,9 +772,6 @@ function handleInput(event) {
   if (event.target.id === 'event-id') {
     dispatch({ type: 'UPDATE_EVENT_ID', index: editorStore.getState().currentEventIndex, eventId: event.target.value }, { skipHistory: true });
   }
-  if (event.target.id === 'simulation-search') {
-    runSearch(event.target.value);
-  }
   if (event.target.id === 'import-xml-textarea') {
     syncXmlHighlight(event.target, document.getElementById('import-xml-highlight'));
   }
@@ -977,7 +977,6 @@ export function initEditorUI() {
     if (event.target.id === 'xml-feature-warnings') xmlViewer?.setFeatures({ warnings: event.target.checked });
     if (event.target.id === 'xml-feature-tooltips') xmlViewer?.setFeatures({ tooltips: event.target.checked });
     if (event.target.id === 'xml-feature-inline-hints') xmlViewer?.setFeatures({ inlineHints: event.target.checked });
-    if (event.target.id === 'xml-feature-diff') xmlViewer?.setFeatures({ diff: event.target.checked });
   });
   document.addEventListener('dragover', event => {
     const dropzone = event.target.closest('.import-xml-dropzone');
@@ -1010,6 +1009,9 @@ export function initEditorUI() {
   initSettingsController();
   initTreePanelToggles();
   initTooltips();
+  document.querySelectorAll('#xml-feature-syntax, #xml-feature-warnings, #xml-feature-tooltips, #xml-feature-inline-hints').forEach(el => {
+    setTooltip(el, t('xmlHighlightSettingsTooltip'));
+  });
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
