@@ -116,6 +116,13 @@
               </div>
             </div>
             <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
+            <div class="menu-group-title" data-l10n="syntaxHighlightGroup"></div>
+            <label class="menu-control-row menu-control-switch" role="none"><span data-l10n="syntaxHighlight"></span><input id="xml-feature-syntax" type="checkbox" checked /></label>
+            <label class="menu-control-row menu-control-switch" role="none"><span data-l10n="xmlWarnings"></span><input id="xml-feature-warnings" type="checkbox" checked /></label>
+            <label class="menu-control-row menu-control-switch" role="none"><span data-l10n="xmlTooltips"></span><input id="xml-feature-tooltips" type="checkbox" checked /></label>
+            <label class="menu-control-row menu-control-switch" role="none"><span data-l10n="xmlInlineHints"></span><input id="xml-feature-inline-hints" type="checkbox" checked /></label>
+            <label class="menu-control-row menu-control-switch" role="none"><span data-l10n="xmlDiff"></span><input id="xml-feature-diff" type="checkbox" checked /></label>
+            <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
             <label class="menu-control-row menu-control-switch" role="none">
               <span data-l10n="grid"></span>
               <input id="toggle-grid" type="checkbox" />
@@ -244,6 +251,7 @@
         <div class="output-tabs" role="tablist" data-l10n-aria-label="outputTabsLabel">
           <div class="output-tabs-indicator" aria-hidden="true"></div>
           <button type="button" class="output-tab active" data-action="openOutputTab" data-tab="xml" role="tab" aria-selected="true" data-l10n="outputXmlTab"></button>
+          <button type="button" class="output-tab" data-action="openOutputTab" data-tab="explain" role="tab" aria-selected="false" data-l10n="outputExplainTab"></button>
           <button type="button" class="output-tab" data-action="openOutputTab" data-tab="simulation" role="tab" aria-selected="false" data-l10n="simulation"></button>
         </div>
         <div class="output-header-controls">
@@ -261,12 +269,30 @@
       <div class="output-panel-body">
         <section id="xml-output-pane" class="output-pane active" data-output-pane="xml">
           <div class="xml-highlight-wrap">
-            <pre id="output-highlight" class="xml-highlight-layer" aria-hidden="true"></pre>
-            <textarea id="output" spellcheck="false" wrap="off"></textarea>
+            <pre id="output-highlight" class="xml-highlight-layer"></pre>
+            <textarea id="output" spellcheck="false" wrap="off" readonly></textarea>
+            <div id="xml-hover-tooltip" class="xml-hover-tooltip" hidden></div>
           </div>
           <div class="xml-pane-actions">
+            <input id="xml-search" type="text" data-l10n-placeholder="search" placeholder="Search XML" />
+            <span id="xml-search-count" class="xml-search-count">0/0</span>
+            <button data-action="xmlSearchPrev">↑</button>
+            <button data-action="xmlSearchNext">↓</button>
+            <button data-action="toggleXmlFormat" data-l10n="xmlFormatPretty"></button>
+            <button data-action="copyXML" data-l10n="copyXML"></button>
             <button data-action="generateXML" data-action-tier="primary" data-l10n="generateXML"></button>
           </div>
+        </section>
+
+        <section id="explain-output-pane" class="output-pane" data-output-pane="explain">
+          <div class="xml-pane-actions">
+            <select id="explain-mode">
+              <option value="full" data-l10n="explainFull"></option>
+              <option value="compact" data-l10n="explainCompact"></option>
+              <option value="debug" data-l10n="explainDebug"></option>
+            </select>
+          </div>
+          <pre id="explain-output" class="explain-output"></pre>
         </section>
 
         <section id="simulation-output-pane" class="output-pane" data-output-pane="simulation">
