@@ -1297,26 +1297,27 @@ export class TreeService {
 
     if (isTree) {
       clone.querySelectorAll('foreignObject').forEach(el => el.remove());
-      const sourceZoomLayer = source.querySelector('.tree-zoom-layer');
-      if (sourceZoomLayer) {
-        const previousTransform = sourceZoomLayer.getAttribute('transform');
-        sourceZoomLayer.setAttribute('transform', '');
-        const bbox = sourceZoomLayer.getBBox?.() || { x: 0, y: 0, width: this.width, height: this.height };
-        if (previousTransform == null) sourceZoomLayer.removeAttribute('transform');
-        else sourceZoomLayer.setAttribute('transform', previousTransform);
-        const pad = 36;
+      const cloneZoomLayer = clone.querySelector('.tree-zoom-layer');
+      if (cloneZoomLayer) {
+        const previousTransform = cloneZoomLayer.getAttribute('transform');
+        cloneZoomLayer.setAttribute('transform', '');
+        const bbox = cloneZoomLayer.getBBox?.() || { x: 0, y: 0, width: this.width, height: this.height };
+        if (previousTransform == null) cloneZoomLayer.removeAttribute('transform');
+        else cloneZoomLayer.setAttribute('transform', previousTransform);
+        const pad = 48;
         const x = Math.round(bbox.x - pad);
         const y = Math.round(bbox.y - pad);
-        const w = Math.round(Math.max(320, bbox.width + pad * 2));
-        const h = Math.round(Math.max(220, bbox.height + pad * 2));
+        const w = Math.round(Math.max(600, bbox.width + pad * 2));
+        const h = Math.round(Math.max(420, bbox.height + pad * 2));
         clone.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
         clone.setAttribute('width', w);
         clone.setAttribute('height', h);
       }
     } else {
-      const sourceGroup = source.querySelector('g');
-      const bbox = sourceGroup?.getBBox?.() || { x: 0, y: 0, width: source.clientWidth || 300, height: source.clientHeight || 200 };
-      const pad = 8;
+      clone.querySelectorAll('.mm-viewport').forEach(el => el.remove());
+      const exportGroup = clone.querySelector('[data-export-layer]') || clone.querySelector('g') || clone;
+      const bbox = exportGroup?.getBBox?.() || { x: 0, y: 0, width: source.clientWidth || 300, height: source.clientHeight || 200 };
+      const pad = 14;
       const x = Math.floor(bbox.x - pad);
       const y = Math.floor(bbox.y - pad);
       const w = Math.max(100, Math.ceil(bbox.width + pad * 2));
@@ -1537,20 +1538,9 @@ export class TreeService {
       return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="${radius}" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
     }).join('');
 
-    const zoomTransform = this.svg?.node() ? window.d3.zoomTransform(this.svg.node()) : window.d3.zoomIdentity;
-    const gTranslateX = 90;
-    const gTranslateY = 80;
-    const viewportWorld = {
-      minX: (0 - zoomTransform.x) / zoomTransform.k - gTranslateX,
-      maxX: ((this.svg?.node()?.clientWidth || 0) - zoomTransform.x) / zoomTransform.k - gTranslateX,
-      minY: (0 - zoomTransform.y) / zoomTransform.k - gTranslateY,
-      maxY: ((this.svg?.node()?.clientHeight || 0) - zoomTransform.y) / zoomTransform.k - gTranslateY
-    };
-    const viewportRect = `<rect class="mm-viewport" x="${scaleX(viewportWorld.minX)}" y="${scaleY(viewportWorld.minY)}" width="${Math.max(6, scaleX(viewportWorld.maxX) - scaleX(viewportWorld.minX))}" height="${Math.max(6, scaleY(viewportWorld.maxY) - scaleY(viewportWorld.minY))}" />`;
-
     const cx = mapWidth / 2;
     const cy = mapHeight / 2;
-    const content = `<rect class="mm-bg" x="0" y="0" width="${mapWidth}" height="${mapHeight}"/>${linksSvg}${nodesSvg}${viewportRect}`;
+    const content = `<rect class="mm-bg" x="0" y="0" width="${mapWidth}" height="${mapHeight}"/><g data-export-layer="true">${linksSvg}${nodesSvg}</g>`;
     svg.innerHTML = `<g transform="translate(${cx} ${cy}) scale(${effectiveScale}) translate(${-cx} ${-cy})">${content}</g>`;
 
     svg.onclick = event => {

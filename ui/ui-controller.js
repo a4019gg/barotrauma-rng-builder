@@ -30,6 +30,10 @@ let simulationSortDirection = 'desc';
 let contextMenuEl = null;
 const OUTPUT_COLLAPSE_STORAGE_KEY = 'outputPanelCollapsed';
 const OUTPUT_HEIGHT_STORAGE_KEY = 'outputPanelHeight';
+const OUTPUT_PANEL_COLLAPSED_HEIGHT = 42;
+const OUTPUT_PANEL_MIN_HEIGHT = 140;
+const OUTPUT_PANEL_MAX_HEIGHT = 560;
+let pendingEventTabSelectTimer = null;
 
 let xmlViewer = null;
 let xmlFormatMode = 'pretty';
@@ -89,6 +93,22 @@ function setOutputCollapsed(collapsed) {
   const body = panel?.querySelector('.output-panel-body');
   const toggle = document.getElementById('output-collapse-toggle');
   if (!panel || !body || !toggle) return;
+  if (collapsed) {
+    const currentHeight = panel.getBoundingClientRect().height;
+    if (currentHeight > OUTPUT_PANEL_COLLAPSED_HEIGHT + 8) {
+      localStorage.setItem(OUTPUT_HEIGHT_STORAGE_KEY, String(Math.round(currentHeight)));
+    }
+    panel.style.height = `${OUTPUT_PANEL_COLLAPSED_HEIGHT}px`;
+    panel.style.minHeight = `${OUTPUT_PANEL_COLLAPSED_HEIGHT}px`;
+  } else {
+    panel.style.minHeight = '';
+    const savedHeight = Number(localStorage.getItem(OUTPUT_HEIGHT_STORAGE_KEY) || 0);
+    if (savedHeight > OUTPUT_PANEL_MIN_HEIGHT) {
+      panel.style.height = `${Math.min(OUTPUT_PANEL_MAX_HEIGHT, Math.round(savedHeight))}px`;
+    } else {
+      panel.style.height = '';
+    }
+  }
   panel.classList.toggle('is-collapsed', collapsed);
   body.hidden = collapsed;
   toggle.textContent = getOutputToggleLabel(collapsed);
@@ -358,22 +378,22 @@ function initButtonIcons() {
   });
 
   const tooltipMap = [
-    ['button[data-action="openDB"]', 'Open the Barotrauma database browser.'],
-    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'Open the built-in documentation module.'],
-    ['#editor-mode-segmented', 'Switch between Basic and Advanced editing modes.'],
-    ['button[data-mode="basic"]', 'Basic mode shows the simplest controls.'],
-    ['button[data-mode="advanced"]', 'Advanced mode shows every available editor control.'],
-    ['#view-segmented', 'Switch between node cards and the readable tree summary.'],
-    ['button[data-view-mode="node"]', 'Open the node-card editor.'],
-    ['button[data-view-mode="tree"]', 'Open the readable tree summary.'],
-    ['button[data-action="addNode"][data-type="rng"]', 'Add random branching logic.'],
-    ['button[data-action="addNode"][data-type="event"]', 'Add event (defines what happens).'],
-    ['button[data-action="addNode"][data-type="eventSet"]', 'Add nested event set (advanced use).'],
-    ['button[data-action="addNode"][data-type="spawn"]', 'Add item action.'],
-    ['button[data-action="addNode"][data-type="creature"]', 'Add creature action.'],
-    ['button[data-action="addNode"][data-type="affliction"]', 'Add affliction action.'],
-    ['button[data-action="undo"]', 'Undo the last editor change.'],
-    ['button[data-action="redo"]', 'Redo the last undone change.']
+    ['button[data-action="openDB"]', t('tooltipOpenDatabase')],
+    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', t('tooltipOpenDocumentation')],
+    ['#editor-mode-segmented', t('tooltipSwitchEditorMode')],
+    ['button[data-mode="basic"]', t('tooltipEditorModeBasic')],
+    ['button[data-mode="advanced"]', t('tooltipEditorModeAdvanced')],
+    ['#view-segmented', t('tooltipSwitchViewMode')],
+    ['button[data-view-mode="node"]', t('tooltipViewModeNode')],
+    ['button[data-view-mode="tree"]', t('tooltipViewModeTree')],
+    ['button[data-action="addNode"][data-type="rng"]', t('tooltipAddRng')],
+    ['button[data-action="addNode"][data-type="event"]', t('tooltipAddEvent')],
+    ['button[data-action="addNode"][data-type="eventSet"]', t('tooltipAddEventSet')],
+    ['button[data-action="addNode"][data-type="spawn"]', t('tooltipAddItem')],
+    ['button[data-action="addNode"][data-type="creature"]', t('tooltipAddCreature')],
+    ['button[data-action="addNode"][data-type="affliction"]', t('tooltipAddAffliction')],
+    ['button[data-action="undo"]', t('tooltipUndo')],
+    ['button[data-action="redo"]', t('tooltipRedo')]
   ];
 
   tooltipMap.forEach(([selector, message]) => {
@@ -629,7 +649,19 @@ async function handleClick(event) {
     dispatch({ type: 'REMOVE_EVENT', index });
     return;
   }
-  if (action === 'selectEvent') dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
+  if (action === 'selectEvent') {
+    const clickedTitle = event.target.closest('.event-tab-title');
+    if (clickedTitle) {
+      if (pendingEventTabSelectTimer) clearTimeout(pendingEventTabSelectTimer);
+      if (event.detail >= 2) return;
+      pendingEventTabSelectTimer = setTimeout(() => {
+        dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
+        pendingEventTabSelectTimer = null;
+      }, 220);
+      return;
+    }
+    dispatch({ type: 'SET_CURRENT_EVENT', index: Number(actionEl.dataset.index) });
+  }
   if (action === 'addNode') dispatch({ type: 'ADD_ROOT_NODE', nodeType: actionEl.dataset.type });
   if (action === 'setEditorMode') { setAppSetting('editorMode', actionEl.dataset.mode); editorStore.setEditorMode(actionEl.dataset.mode); applyEditorMode(); }
   if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch || null, nodeType: actionEl.dataset.type });
@@ -766,6 +798,10 @@ function handleChange(event) {
 function handleDblClick(event) {
   const title = event.target.closest('.event-tab-title');
   if (!title) return;
+  if (pendingEventTabSelectTimer) {
+    clearTimeout(pendingEventTabSelectTimer);
+    pendingEventTabSelectTimer = null;
+  }
   event.preventDefault();
   event.stopPropagation();
   startEventRename(title);
@@ -906,14 +942,15 @@ function initOutputPanelUX() {
   if (!panel || !handle || !output || !outputHighlight || !importTextarea || !importHighlight) return;
 
   const savedHeight = Number(localStorage.getItem(OUTPUT_HEIGHT_STORAGE_KEY) || 0);
-  if (savedHeight > 140) panel.style.height = `${Math.min(520, savedHeight)}px`;
+  if (savedHeight > OUTPUT_PANEL_MIN_HEIGHT) panel.style.height = `${Math.min(OUTPUT_PANEL_MAX_HEIGHT, savedHeight)}px`;
 
   const startResize = event => {
     event.preventDefault();
+    if (panel.classList.contains('is-collapsed')) return;
     const startY = event.clientY;
     const startHeight = panel.getBoundingClientRect().height;
     const onMove = moveEvent => {
-      const nextHeight = Math.max(140, Math.min(560, startHeight + (startY - moveEvent.clientY)));
+      const nextHeight = Math.max(OUTPUT_PANEL_MIN_HEIGHT, Math.min(OUTPUT_PANEL_MAX_HEIGHT, startHeight + (startY - moveEvent.clientY)));
       panel.style.height = `${Math.round(nextHeight)}px`;
       localStorage.setItem(OUTPUT_HEIGHT_STORAGE_KEY, String(Math.round(nextHeight)));
     };
@@ -1013,10 +1050,10 @@ export function initEditorUI() {
   initTreePanelToggles();
   initTooltips();
   const xmlFeatureTooltipById = {
-    'xml-feature-syntax': 'Colorize XML tags, attributes, and values for faster scanning.',
-    'xml-feature-warnings': 'Mark suspicious attribute values such as empty ids or edge chance values.',
-    'xml-feature-tooltips': 'Show short contextual hints when hovering highlighted XML elements.',
-    'xml-feature-inline-hints': 'Display compact inline numeric helpers (for example chance as percent).'
+    'xml-feature-syntax': t('xmlFeatureSyntaxTooltip'),
+    'xml-feature-warnings': t('xmlFeatureWarningsTooltip'),
+    'xml-feature-tooltips': t('xmlFeatureTooltipsTooltip'),
+    'xml-feature-inline-hints': t('xmlFeatureInlineHintsTooltip')
   };
   Object.entries(xmlFeatureTooltipById).forEach(([id, message]) => {
     const input = document.getElementById(id);
