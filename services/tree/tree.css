@@ -11,7 +11,7 @@
 
 .tree-layout {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) 300px;
+  grid-template-columns: auto minmax(0, 1fr) 300px;
   gap: 12px;
   min-height: 0;
   height: 100%;
@@ -22,7 +22,7 @@
 }
 
 #tree-container.hide-tree-settings .tree-layout {
-  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
 #tree-container.hide-tree-summary.hide-tree-settings .tree-layout {
@@ -64,6 +64,14 @@
   border-radius: 12px;
   background: color-mix(in srgb, var(--bg-panel-soft) 78%, var(--bg-main) 22%);
   cursor: grab;
+}
+
+#tree-outline {
+  min-width: 220px;
+  max-width: 560px;
+  width: var(--tree-summary-width, 320px);
+  resize: horizontal;
+  overflow: auto;
 }
 
 #tree-svg.show-grid {
