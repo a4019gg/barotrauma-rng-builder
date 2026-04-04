@@ -204,6 +204,19 @@ export class TreeService {
     if (!this.minimapInteractionsBound) this.bindMinimapInteractions();
   }
 
+  getMinimapBounds() {
+    const container = this.minimapContainerEl;
+    const svgEl = this.svg?.node();
+    if (!container || !svgEl) return { x: 8, y: 8, width: 0, height: 0 };
+    const containerRect = container.getBoundingClientRect();
+    const svgRect = svgEl.getBoundingClientRect();
+    const x = Math.max(8, Math.round(svgRect.left - containerRect.left + 8));
+    const y = Math.max(8, Math.round(svgRect.top - containerRect.top + 8));
+    const width = Math.max(0, Math.round(svgRect.width - 16));
+    const height = Math.max(0, Math.round(svgRect.height - 16));
+    return { x, y, width, height };
+  }
+
   setTreeSetting(key, value) {
     const prevValue = this.treeSettings[key];
     this.treeSettings[key] = value;
@@ -264,12 +277,12 @@ export class TreeService {
     this.minimapInteractionsBound = true;
 
     const clampPosition = (x, y, width, height) => {
-      const container = this.minimapContainerEl;
-      const maxX = Math.max(0, (container?.clientWidth || 0) - width - 8);
-      const maxY = Math.max(0, (container?.clientHeight || 0) - height - 8);
+      const bounds = this.getMinimapBounds();
+      const maxX = Math.max(bounds.x, bounds.x + bounds.width - width);
+      const maxY = Math.max(bounds.y, bounds.y + bounds.height - height);
       return {
-        x: Math.max(8, Math.min(maxX, x)),
-        y: Math.max(8, Math.min(maxY, y))
+        x: Math.max(bounds.x, Math.min(maxX, x)),
+        y: Math.max(bounds.y, Math.min(maxY, y))
       };
     };
 
@@ -355,12 +368,13 @@ export class TreeService {
     this.minimapEl.style.width = `${mapWidth}px`;
     this.minimapEl.style.height = `${mapHeight}px`;
 
-    const pos = this.treeSettings.minimapPosition || { x: 18, y: 18 };
-    const maxX = Math.max(0, this.minimapContainerEl.clientWidth - mapWidth - 8);
-    const maxY = Math.max(0, this.minimapContainerEl.clientHeight - mapHeight - 8);
+    const bounds = this.getMinimapBounds();
+    const pos = this.treeSettings.minimapPosition || { x: 99999, y: 99999 };
+    const maxX = Math.max(bounds.x, bounds.x + bounds.width - mapWidth);
+    const maxY = Math.max(bounds.y, bounds.y + bounds.height - mapHeight);
     const clamped = {
-      x: Math.max(8, Math.min(maxX, Number(pos.x) || 8)),
-      y: Math.max(8, Math.min(maxY, Number(pos.y) || 8))
+      x: Math.max(bounds.x, Math.min(maxX, Number(pos.x) || bounds.x)),
+      y: Math.max(bounds.y, Math.min(maxY, Number(pos.y) || bounds.y))
     };
     this.minimapEl.style.left = `${clamped.x}px`;
     this.minimapEl.style.top = `${clamped.y}px`;
@@ -1300,13 +1314,17 @@ export class TreeService {
         clone.setAttribute('height', h);
       }
     } else {
-      const vb = clone.getAttribute('viewBox') || `0 0 ${source.clientWidth || 300} ${source.clientHeight || 200}`;
-      const [, , w, h] = vb.split(' ').map(Number);
+      const sourceGroup = source.querySelector('g');
+      const bbox = sourceGroup?.getBBox?.() || { x: 0, y: 0, width: source.clientWidth || 300, height: source.clientHeight || 200 };
+      const pad = 8;
+      const x = Math.floor(bbox.x - pad);
+      const y = Math.floor(bbox.y - pad);
+      const w = Math.max(100, Math.ceil(bbox.width + pad * 2));
+      const h = Math.max(80, Math.ceil(bbox.height + pad * 2));
+      clone.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
       const exportScale = 2;
-      if (Number.isFinite(w) && Number.isFinite(h)) {
-        clone.setAttribute('width', Math.round(w * exportScale));
-        clone.setAttribute('height', Math.round(h * exportScale));
-      }
+      clone.setAttribute('width', Math.round(w * exportScale));
+      clone.setAttribute('height', Math.round(h * exportScale));
     }
 
     const vb = clone.getAttribute('viewBox') || '0 0 300 200';

@@ -3,7 +3,7 @@
 // Uses inline canvas-based icon rendering (legacy-equivalent)
 
 import * as DB from "./database.js";
-import { getLanguage, setLanguage, t } from "./db-loc.js";
+import { t } from "./db-loc.js";
 import { showError, showSuccess } from "../../ui/popup.js";
 
 /* =========================================================
@@ -67,19 +67,6 @@ export function closeDatabasePanel() {
   }
 }
 
-export function setDatabaseLanguage(lang) {
-  setLanguage(lang);
-  if (!modalEl) return;
-
-  updateLocalizedLabels();
-  updateSortButton();
-  setScaleLevel(SCALE_LEVELS[scaleIndex]);
-  updateCompactState();
-  updateCount();
-  renderFilters();
-  updateCardLocalization();
-}
-
 /* =========================================================
    UI INIT
    ========================================================= */
@@ -100,10 +87,6 @@ function buildModal() {
         </div>
 
         <div style="display:flex; gap:8px; align-items:center">
-          <select class="db-language">
-            <option value="en">EN</option>
-            <option value="ru">RU</option>
-          </select>
           <button class="db-close">✕</button>
         </div>
       </div>
@@ -227,9 +210,6 @@ function bindModalEvents(modal) {
     savePrefs();
   };
 
-  const langSelect = modal.querySelector(".db-language");
-  langSelect.value = getLanguage();
-  langSelect.onchange = () => setDatabaseLanguage(langSelect.value);
 }
 
 function showLoadingState(isLoading) {

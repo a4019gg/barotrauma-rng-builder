@@ -1626,6 +1626,11 @@ body[data-base-theme='retro-terminal'] #editor-area::before {
 }
 .xml-pane-actions { gap: 8px; align-items: center; }
 .xml-pane-actions input, .xml-pane-actions select { min-width: 120px; }
+.xml-pane-actions select,
+.xml-pane-actions select option {
+  background: color-mix(in srgb, var(--bg-main) 85%, var(--bg-panel));
+  color: var(--text-main);
+}
 .xml-highlight-layer[data-syntax='off'] .xml-tag-name,
 .xml-highlight-layer[data-syntax='off'] .xml-tag,
 .xml-highlight-layer[data-syntax='off'] .xml-attr,

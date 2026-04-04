@@ -37,6 +37,15 @@ function makeWarning(name, value) {
   return '';
 }
 
+function attributeTooltip(name, value) {
+  const normalized = String(name || '').toLowerCase();
+  if (normalized === 'chance') return `Branch trigger probability (${value}%)`;
+  if (normalized === 'identifier') return `Identifier used for references: ${value || 'empty'}`;
+  if (normalized === 'amount' || normalized === 'count') return `How many entities are spawned: ${value || 'empty'}`;
+  if (normalized === 'strength') return `Applied affliction strength: ${value || 'empty'}`;
+  return `${name}: ${value || 'empty'}`;
+}
+
 function numberHint(name, value) {
   const parsed = Number(String(value).replace(',', '.'));
   if (!Number.isFinite(parsed)) return '';
@@ -50,8 +59,12 @@ function chanceColorHint(name, value) {
   const parsed = Number(String(value).replace(',', '.'));
   if (!Number.isFinite(parsed)) return '';
   const clamped = Math.max(0, Math.min(100, parsed));
-  const hue = (clamped / 100) * 60;
-  return `hsl(${hue}deg 90% 58%)`;
+  if (clamped <= 50) {
+    const failurePercent = Math.round(100 - ((clamped / 50) * 100));
+    return `color-mix(in srgb, var(--sf-failure) ${failurePercent}%, var(--sf-success))`;
+  }
+  const successPercent = Math.round(100 - (((clamped - 50) / 50) * 100));
+  return `color-mix(in srgb, var(--sf-success) ${successPercent}%, var(--sf-failure))`;
 }
 
 export function formatXml(mode, xmlText = '') {
@@ -121,9 +134,7 @@ export function buildHighlightedXml(xmlText = '', options = {}) {
       const percentHint = numberHint(attr.name, attr.value);
       const chanceColor = chanceColorHint(attr.name, attr.value);
       const isErrorValue = attr.name === 'identifier' && String(attr.value || '').trim().toLowerCase() === 'error';
-      const info = attr.name === 'identifier'
-        ? `identifier: ${attr.value || 'empty'}`
-        : `${attr.name}: ${attr.value || 'empty'}`;
+      const info = attributeTooltip(attr.name, attr.value);
       attrsHtml += ` <span class="xml-attr${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">${escapeHtml(attr.name)}</span>=<span class="xml-string${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">&quot;${escapeHtml(attr.value)}&quot;</span>`;
       if (percentHint) attrsHtml += `<span class="xml-inline-hint xml-inline-hint-chance"${chanceColor ? ` style="--chance-color:${chanceColor};"` : ''}>${escapeHtml(percentHint)}</span>`;
     });

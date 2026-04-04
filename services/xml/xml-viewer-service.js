@@ -36,6 +36,7 @@ export class XmlViewerService {
 
   setFeatures(next = {}) {
     this.features = { ...this.features, ...next };
+    if (!this.features.tooltips) this.hideTooltip();
     this.render();
   }
 

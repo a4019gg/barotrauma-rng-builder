@@ -144,6 +144,9 @@ function setTreePanelButtonsState() {
 function initTreePanelToggles() {
   const treeContainer = document.getElementById('tree-container');
   if (!treeContainer) return;
+  if (localStorage.getItem('treePanel.summaryHidden') == null) {
+    localStorage.setItem('treePanel.summaryHidden', '1');
+  }
   treeContainer.classList.toggle('hide-tree-summary', localStorage.getItem('treePanel.summaryHidden') === '1');
   treeContainer.classList.toggle('hide-tree-settings', localStorage.getItem('treePanel.settingsHidden') === '1');
   setTreePanelButtonsState();
@@ -1009,8 +1012,16 @@ export function initEditorUI() {
   initSettingsController();
   initTreePanelToggles();
   initTooltips();
-  document.querySelectorAll('#xml-feature-syntax, #xml-feature-warnings, #xml-feature-tooltips, #xml-feature-inline-hints').forEach(el => {
-    setTooltip(el, t('xmlHighlightSettingsTooltip'));
+  const xmlFeatureTooltipById = {
+    'xml-feature-syntax': 'Colorize XML tags, attributes, and values for faster scanning.',
+    'xml-feature-warnings': 'Mark suspicious attribute values such as empty ids or edge chance values.',
+    'xml-feature-tooltips': 'Show short contextual hints when hovering highlighted XML elements.',
+    'xml-feature-inline-hints': 'Display compact inline numeric helpers (for example chance as percent).'
+  };
+  Object.entries(xmlFeatureTooltipById).forEach(([id, message]) => {
+    const input = document.getElementById(id);
+    const labelText = input?.closest('label')?.querySelector('span');
+    if (labelText) setTooltip(labelText, message);
   });
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();

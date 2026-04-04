@@ -65,7 +65,11 @@ function scheduleShow(target) {
 
 function getTooltipTarget(eventTarget) {
   if (!(eventTarget instanceof Element)) return null;
-  return eventTarget.closest('[data-tooltip]');
+  const target = eventTarget.closest('[data-tooltip]');
+  if (!target) return null;
+  // XML output has its own tooltip system; suppress global tooltips there to avoid duplicates.
+  if (target.closest('.xml-highlight-layer')) return null;
+  return target;
 }
 
 export function setTooltip(target, message) {
