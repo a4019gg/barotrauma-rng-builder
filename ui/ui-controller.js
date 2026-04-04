@@ -492,8 +492,9 @@ function renderEvents() {
   collapseToggle.type = 'button';
   collapseToggle.className = 'event-tabs-toggle icon-btn';
   collapseToggle.dataset.action = 'toggleEventTabs';
-  collapseToggle.textContent = eventTabsCollapsed ? '⮞' : '⮜';
-  collapseToggle.title = t(eventTabsCollapsed ? 'expandEventTabs' : 'collapseEventTabs');
+  const toggleLabelKey = eventTabsCollapsed ? 'expandEventTabs' : 'collapseEventTabs';
+  collapseToggle.textContent = `${eventTabsCollapsed ? '⮞' : '⮜'} ${t(toggleLabelKey)}`;
+  collapseToggle.title = t(toggleLabelKey);
   list.appendChild(collapseToggle);
 
   state.events.forEach((event, index) => {
