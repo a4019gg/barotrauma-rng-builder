@@ -1,5 +1,6 @@
 import { formatL10n, t } from '../../ui/localization.js';
 import { createIcon } from '../../ui/icon-component.js';
+import { setTooltip } from '../../ui/tooltip.js';
 import { getThemeState, onThemeChange } from '../../ui/theme-manager.js';
 import { formatChanceForInput } from '../../ui/chance-utils.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../../state/app-settings.js';
@@ -1268,8 +1269,39 @@ export class TreeService {
     });
 
     this.applySettingsDependencies(wrapper);
+    this.applySettingsTooltips(wrapper);
 
     return wrapper;
+  }
+
+  applySettingsTooltips(wrapper) {
+    const tips = [
+      ['[data-setting="uiLevel"]', t('treeSettingsTooltipUiLevel')],
+      ['[data-setting="displayPercent"]', t('treeSettingsTooltipDisplayPercent')],
+      ['[data-setting="autoChanceMode"]', t('treeSettingsTooltipAutoChanceMode')],
+      ['[data-setting="minimapTypeMode"]', t('treeSettingsTooltipMinimapTypeMode')],
+      ['[data-setting="minimapSizePreset"]', t('treeSettingsTooltipMinimapSizePreset')],
+      ['[data-setting="dragEnabled"]', t('treeSettingsTooltipDragEnabled')],
+      ['[data-setting="snapToGrid"]', t('treeSettingsTooltipSnapToGrid')],
+      ['[data-setting="showGrid"]', t('treeSettingsTooltipShowGrid')],
+      ['[data-setting="gridSize"]', t('treeSettingsTooltipGridSize')],
+      ['[data-tree-action="auto-layout"]', t('treeSettingsTooltipAutoLayout')],
+      ['[data-setting="showMinimap"]', t('treeSettingsTooltipShowMinimap')],
+      ['[data-setting="smoothPaths"]', t('treeSettingsTooltipSmoothPaths')],
+      ['[data-setting="minimapDisplayPercent"]', t('treeSettingsTooltipMinimapDisplayPercent')],
+      ['[data-setting="minimapColorMode"]', t('treeSettingsTooltipMinimapColorMode')],
+      ['[data-setting="minimapFocusMode"]', t('treeSettingsTooltipMinimapFocusMode')],
+      ['[data-setting="showIntermediateNodes"]', t('treeSettingsTooltipShowIntermediateNodes')],
+      ['[data-tree-action="download-tree-svg"]', t('treeSettingsTooltipExportTreeSvg')],
+      ['[data-tree-action="download-tree-png"]', t('treeSettingsTooltipExportTreePng')],
+      ['[data-tree-action="download-minimap-svg"]', t('treeSettingsTooltipExportMinimapSvg')],
+      ['[data-tree-action="download-minimap-png"]', t('treeSettingsTooltipExportMinimapPng')],
+      ['[data-setting="debugBounds"]', t('treeSettingsTooltipDebugBounds')]
+    ];
+    tips.forEach(([selector, message]) => {
+      const el = wrapper.querySelector(selector);
+      if (el) setTooltip(el, message);
+    });
   }
 
   applySettingsDependencies(wrapper) {
@@ -1296,7 +1328,6 @@ export class TreeService {
     clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
     if (isTree) {
-      clone.querySelectorAll('foreignObject').forEach(el => el.remove());
       const cloneZoomLayer = clone.querySelector('.tree-zoom-layer');
       if (cloneZoomLayer) {
         const previousTransform = cloneZoomLayer.getAttribute('transform');
@@ -1315,17 +1346,15 @@ export class TreeService {
       }
     } else {
       clone.querySelectorAll('.mm-viewport').forEach(el => el.remove());
-      const exportGroup = clone.querySelector('[data-export-layer]') || clone.querySelector('g') || clone;
-      const bbox = exportGroup?.getBBox?.() || { x: 0, y: 0, width: source.clientWidth || 300, height: source.clientHeight || 200 };
-      const pad = 14;
-      const x = Math.floor(bbox.x - pad);
-      const y = Math.floor(bbox.y - pad);
-      const w = Math.max(100, Math.ceil(bbox.width + pad * 2));
-      const h = Math.max(80, Math.ceil(bbox.height + pad * 2));
+      const sourceViewBox = source.getAttribute('viewBox') || `0 0 ${Math.max(100, source.clientWidth || 300)} ${Math.max(80, source.clientHeight || 200)}`;
+      const [rawX, rawY, viewW, viewH] = sourceViewBox.split(/\s+/).map(Number);
+      const x = Number.isFinite(rawX) ? rawX : 0;
+      const y = Number.isFinite(rawY) ? rawY : 0;
+      const w = Math.max(100, Number.isFinite(viewW) ? viewW : (source.clientWidth || 300));
+      const h = Math.max(80, Number.isFinite(viewH) ? viewH : (source.clientHeight || 200));
       clone.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
-      const exportScale = 2;
-      clone.setAttribute('width', Math.round(w * exportScale));
-      clone.setAttribute('height', Math.round(h * exportScale));
+      clone.setAttribute('width', Math.round(w));
+      clone.setAttribute('height', Math.round(h));
     }
 
     const vb = clone.getAttribute('viewBox') || '0 0 300 200';

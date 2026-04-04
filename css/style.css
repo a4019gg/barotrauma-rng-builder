@@ -772,6 +772,8 @@ body[data-active-module='documentation'] #output-panel {
   flex: 0 0 auto;
   align-items: center;
 }
+.event-tabs-toggle { width: 32px; justify-content: center; padding-inline: 0; flex: 0 0 auto; }
+.events-tabs.is-collapsed .event-tab:not(.active):not(.event-tab-add) { display: none; }
 
 .event-tab { display: inline-flex; align-items: center; gap: 7px; max-width: 220px; min-height: 32px; padding: 5px 10px; }
 .event-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
