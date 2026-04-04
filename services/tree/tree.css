@@ -350,13 +350,6 @@
   stroke: color-mix(in srgb, var(--ui-border) 35%, transparent);
 }
 
-.tree-minimap .mm-viewport {
-  fill: color-mix(in srgb, var(--ui-accent) 15%, transparent);
-  stroke: color-mix(in srgb, var(--ui-accent) 55%, var(--ui-text));
-  stroke-width: 1;
-  rx: 4;
-}
-
 @media (max-width: 1280px) {
   .tree-segmented-four,
   .tree-settings-grid-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
