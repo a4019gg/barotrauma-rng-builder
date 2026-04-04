@@ -34,6 +34,8 @@ const OUTPUT_PANEL_COLLAPSED_HEIGHT = 42;
 const OUTPUT_PANEL_MIN_HEIGHT = 140;
 const OUTPUT_PANEL_MAX_HEIGHT = 560;
 let pendingEventTabSelectTimer = null;
+let activeEventRename = null;
+let eventTabsCollapsed = localStorage.getItem('eventTabsCollapsed') === '1';
 
 let xmlViewer = null;
 let xmlFormatMode = 'pretty';
@@ -401,6 +403,33 @@ function initButtonIcons() {
   });
 }
 
+function applyXmlFeatureTooltips() {
+  const xmlFeatureTooltipById = {
+    'xml-feature-syntax': t('xmlFeatureSyntaxTooltip'),
+    'xml-feature-warnings': t('xmlFeatureWarningsTooltip'),
+    'xml-feature-tooltips': t('xmlFeatureTooltipsTooltip'),
+    'xml-feature-inline-hints': t('xmlFeatureInlineHintsTooltip')
+  };
+  Object.entries(xmlFeatureTooltipById).forEach(([id, message]) => {
+    const input = document.getElementById(id);
+    const labelText = input?.closest('label')?.querySelector('span');
+    if (labelText) setTooltip(labelText, message);
+  });
+}
+
+function finishEventRename({ commit = true } = {}) {
+  if (!activeEventRename) return;
+  const { input, index } = activeEventRename;
+  activeEventRename = null;
+  if (!input?.isConnected) return;
+  if (commit) {
+    const nextValue = input.value.trim() || `event_${index + 1}`;
+    editorStore.updateEventId(index, nextValue);
+    return;
+  }
+  renderEvents();
+}
+
 
 function clearPendingEventDelete() {
   pendingDeleteEventIndex = null;
@@ -420,6 +449,7 @@ function schedulePendingEventDeleteReset() {
 }
 
 function startEventRename(titleEl) {
+  finishEventRename({ commit: true });
   const parentTab = titleEl.closest('.event-tab');
   if (!parentTab) return;
   const index = Number(parentTab.dataset.index);
@@ -433,36 +463,38 @@ function startEventRename(titleEl) {
   input.value = currentTitle;
   input.setAttribute('aria-label', t('eventId'));
 
-  const commit = () => {
-    const nextValue = input.value.trim() || `event_${index + 1}`;
-    editorStore.updateEventId(index, nextValue);
-  };
-
-  const cancel = () => renderEvents();
-
   input.addEventListener('keydown', event => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      commit();
+      finishEventRename({ commit: true });
     }
     if (event.key === 'Escape') {
       event.preventDefault();
-      cancel();
+      finishEventRename({ commit: false });
     }
   });
 
-  input.addEventListener('blur', commit, { once: true });
-
   titleEl.replaceWith(input);
+  activeEventRename = { input, index };
   input.focus();
   input.select();
 }
 
 function renderEvents() {
+  if (activeEventRename && !activeEventRename.input?.isConnected) activeEventRename = null;
   const state = editorStore.getState();
   if (pendingDeleteEventIndex != null && pendingDeleteEventIndex >= state.events.length) clearPendingEventDelete();
   const list = document.getElementById('events-tabs');
   list.innerHTML = '';
+  list.classList.toggle('is-collapsed', eventTabsCollapsed);
+
+  const collapseToggle = document.createElement('button');
+  collapseToggle.type = 'button';
+  collapseToggle.className = 'event-tabs-toggle icon-btn';
+  collapseToggle.dataset.action = 'toggleEventTabs';
+  collapseToggle.textContent = eventTabsCollapsed ? '⮞' : '⮜';
+  collapseToggle.title = t(eventTabsCollapsed ? 'expandEventTabs' : 'collapseEventTabs');
+  list.appendChild(collapseToggle);
 
   state.events.forEach((event, index) => {
     const tab = document.createElement('button');
@@ -483,6 +515,7 @@ function renderEvents() {
   addTab.textContent = '+';
   addTab.title = t('eventTabAdd');
   addTab.disabled = state.events.length >= 7;
+  addTab.hidden = eventTabsCollapsed;
   list.appendChild(addTab);
 
   document.getElementById('event-id').value = state.currentEvent.id;
@@ -647,6 +680,12 @@ async function handleClick(event) {
     }
     clearPendingEventDelete();
     dispatch({ type: 'REMOVE_EVENT', index });
+    return;
+  }
+  if (action === 'toggleEventTabs') {
+    eventTabsCollapsed = !eventTabsCollapsed;
+    localStorage.setItem('eventTabsCollapsed', eventTabsCollapsed ? '1' : '0');
+    renderEvents();
     return;
   }
   if (action === 'selectEvent') {
@@ -1049,17 +1088,7 @@ export function initEditorUI() {
   initSettingsController();
   initTreePanelToggles();
   initTooltips();
-  const xmlFeatureTooltipById = {
-    'xml-feature-syntax': t('xmlFeatureSyntaxTooltip'),
-    'xml-feature-warnings': t('xmlFeatureWarningsTooltip'),
-    'xml-feature-tooltips': t('xmlFeatureTooltipsTooltip'),
-    'xml-feature-inline-hints': t('xmlFeatureInlineHintsTooltip')
-  };
-  Object.entries(xmlFeatureTooltipById).forEach(([id, message]) => {
-    const input = document.getElementById(id);
-    const labelText = input?.closest('label')?.querySelector('span');
-    if (labelText) setTooltip(labelText, message);
-  });
+  applyXmlFeatureTooltips();
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
   initButtonIcons();
@@ -1078,6 +1107,8 @@ export function initEditorUI() {
   onLangChange(lang => {
     applyLocalization();
     requestAnimationFrame(() => {
+      initButtonIcons();
+      applyXmlFeatureTooltips();
       updateMenuThemeStatus();
       setOutputCollapsed(document.getElementById('output-panel')?.classList.contains('is-collapsed'));
       setDocumentationLanguage(lang);
@@ -1088,6 +1119,12 @@ export function initEditorUI() {
       treeService.renderQueued(editorStore.getState().currentEvent.model);
     });
   });
+
+  document.addEventListener('pointerdown', event => {
+    if (!activeEventRename) return;
+    if (event.target === activeEventRename.input) return;
+    finishEventRename({ commit: true });
+  }, true);
 
   editorStore.subscribe(() => {
     renderEvents();
