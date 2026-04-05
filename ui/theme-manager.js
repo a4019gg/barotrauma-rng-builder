@@ -40,6 +40,14 @@ const SF_ACCENT_PRESETS = {
   'sky-sun': { success: '#5cb7ff', failure: '#ffd54f' }
 };
 
+const RETRO_ACCENT_PRESETS = {
+  'terminal-green': { accent: '#00ff00', strong: '#8dff8d' },
+  'amber-phosphor': { accent: '#ffbf3f', strong: '#ffe28c' },
+  'ice-cyan': { accent: '#5de8ff', strong: '#b3f5ff' },
+  'plasma-magenta': { accent: '#ff71e7', strong: '#ffb5f3' },
+  'paper-ink': { accent: '#000000', strong: '#303030' }
+};
+
 const defaults = {
   baseTheme: 'debug',
   themeMode: 'dark',
@@ -48,7 +56,8 @@ const defaults = {
   grid: true,
   chanceColorCoding: true,
   chanceInputMode: 'fraction',
-  sfAccentPreset: 'emerald-crimson'
+  sfAccentPreset: 'emerald-crimson',
+  retroAccentPreset: 'terminal-green'
 };
 
 const listeners = new Set();
@@ -61,7 +70,8 @@ const state = {
   grid: getAppSetting('grid') ?? defaults.grid,
   chanceColorCoding: getAppSetting('chanceColorCoding') ?? defaults.chanceColorCoding,
   chanceInputMode: getAppSetting('chanceInputMode') || defaults.chanceInputMode,
-  sfAccentPreset: getAppSetting('sfAccentPreset') || defaults.sfAccentPreset
+  sfAccentPreset: getAppSetting('sfAccentPreset') || defaults.sfAccentPreset,
+  retroAccentPreset: getAppSetting('retroAccentPreset') || defaults.retroAccentPreset
 };
 
 function ensureValidState() {
@@ -70,6 +80,7 @@ function ensureValidState() {
   if (!STYLE_VARIANTS[state.themeStyle]) state.themeStyle = defaults.themeStyle;
   if (!['fraction', 'percent'].includes(state.chanceInputMode)) state.chanceInputMode = defaults.chanceInputMode;
   if (!SF_ACCENT_PRESETS[state.sfAccentPreset]) state.sfAccentPreset = defaults.sfAccentPreset;
+  if (!RETRO_ACCENT_PRESETS[state.retroAccentPreset]) state.retroAccentPreset = defaults.retroAccentPreset;
 }
 
 function notifyThemeChange() {
@@ -95,6 +106,9 @@ export function applyTheme() {
   const accents = SF_ACCENT_PRESETS[state.sfAccentPreset] || SF_ACCENT_PRESETS[defaults.sfAccentPreset];
   document.body.style.setProperty('--sf-success', accents.success);
   document.body.style.setProperty('--sf-failure', accents.failure);
+  const retroAccents = RETRO_ACCENT_PRESETS[state.retroAccentPreset] || RETRO_ACCENT_PRESETS[defaults.retroAccentPreset];
+  document.body.style.setProperty('--retro-accent-main', retroAccents.accent);
+  document.body.style.setProperty('--retro-accent-strong', retroAccents.strong);
 
   setAppSetting('baseTheme', state.baseTheme);
   setAppSetting('themeMode', state.themeMode);
@@ -104,6 +118,7 @@ export function applyTheme() {
   setAppSetting('chanceColorCoding', Boolean(state.chanceColorCoding));
   setAppSetting('chanceInputMode', state.chanceInputMode);
   setAppSetting('sfAccentPreset', state.sfAccentPreset);
+  setAppSetting('retroAccentPreset', state.retroAccentPreset);
 
   notifyThemeChange();
 }
@@ -174,5 +189,11 @@ export function setChanceInputMode(mode) {
 export function setSfAccentPreset(preset) {
   if (!SF_ACCENT_PRESETS[preset]) return;
   state.sfAccentPreset = preset;
+  applyTheme();
+}
+
+export function setRetroAccentPreset(preset) {
+  if (!RETRO_ACCENT_PRESETS[preset]) return;
+  state.retroAccentPreset = preset;
   applyTheme();
 }

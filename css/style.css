@@ -352,6 +352,69 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   gap: 4px;
 }
 
+.style-theme-dropdown {
+  min-width: 248px;
+}
+
+.style-theme-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.style-theme-item > .menu-style-apply,
+.style-theme-item > .menu-style-arrow {
+  min-height: 34px;
+}
+
+.style-theme-item > .menu-style-apply {
+  justify-content: flex-start;
+}
+
+.style-theme-item > .menu-style-arrow {
+  width: 30px;
+  justify-content: center;
+  color: var(--text-muted);
+  padding-inline: 10px;
+}
+
+.style-theme-item > .menu-style-arrow:hover {
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--ui-accent) 26%, var(--bg-panel));
+}
+
+.style-theme-item:not(.has-accent-submenu) > .menu-style-arrow {
+  opacity: .45;
+}
+
+.style-theme-item:not(.has-accent-submenu) > .menu-style-arrow:hover {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: transparent;
+}
+
+.style-theme-item.has-accent-submenu > .menu-dropdown.submenu {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.style-theme-item.has-accent-submenu.is-open > .menu-dropdown.submenu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.menu-retro-accent-dropdown {
+  min-width: 190px;
+}
+
+.menu-retro-accent-dropdown .retro-accent-option {
+  justify-content: flex-start;
+}
+
 .menu-subitem-inline {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1098,6 +1161,10 @@ body[data-active-module='documentation'] #output-panel {
   position: fixed;
   inset: 0;
   z-index: 2100;
+  pointer-events: none;
+}
+
+#confirm-modal-root:not(:empty) {
   pointer-events: auto;
 }
 
