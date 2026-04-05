@@ -836,7 +836,13 @@ body[data-active-module='documentation'] #output-panel {
   align-items: center;
 }
 .event-tabs-toggle { justify-content: center; flex: 0 0 auto; white-space: nowrap; }
-.events-tabs.is-collapsed .event-tab:not(.active):not(.event-tab-add) { display: none; }
+.events-tabs.is-collapsed {
+  margin-bottom: 0;
+  overflow: hidden;
+}
+.events-tabs.is-collapsed .event-tab {
+  display: none;
+}
 
 .event-tab { display: inline-flex; align-items: center; gap: 7px; max-width: 220px; min-height: 32px; padding: 5px 10px; }
 .event-tab-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1387,6 +1393,12 @@ body[data-base-theme='classic-luna'][data-theme-mode='dark'] .node,
 body[data-base-theme='classic-luna'][data-theme-mode='dark'] .node-root {
   border-color: color-mix(in srgb, var(--border-main) 88%, #132748 12%);
   box-shadow: inset 1px 1px 0 color-mix(in srgb, #87aede 22%, transparent), inset -1px -1px 0 color-mix(in srgb, #0a1528 72%, var(--border-main));
+}
+
+body[data-base-theme='classic-luna'] .segmented-control,
+body[data-base-theme='classic-luna'] .segmented-control-indicator,
+body[data-base-theme='classic-luna'] .segmented-option {
+  border-radius: 2px;
 }
 
 body[data-theme-mode='light'] {
