@@ -11,6 +11,7 @@ const DATA_FILES = {
 
 const _cache = {
   loaded: { items: false, creatures: false, afflictions: false },
+  loading: { items: null, creatures: null, afflictions: null },
   data: { items: [], creatures: [], afflictions: [] }
 };
 
@@ -29,13 +30,26 @@ export async function loadAfflictions() { return loadType('afflictions'); }
 async function loadType(type) {
   ensureType(type);
   if (_cache.loaded[type]) return;
-  const path = DATA_FILES[type];
-  const response = await fetch(path);
-  if (!response.ok) throw new Error(`Failed to load ${path}`);
-  const json = await response.json();
-  if (!Array.isArray(json)) throw new Error(`Invalid format in ${path} (expected array)`);
-  _cache.data[type] = json.filter(isValidEntry).map(cloneEntry);
-  _cache.loaded[type] = true;
+  if (_cache.loading[type]) {
+    await _cache.loading[type];
+    return;
+  }
+
+  _cache.loading[type] = (async () => {
+    const path = DATA_FILES[type];
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`Failed to load ${path}`);
+    const json = await response.json();
+    if (!Array.isArray(json)) throw new Error(`Invalid format in ${path} (expected array)`);
+    _cache.data[type] = json.filter(isValidEntry).map(cloneEntry);
+    _cache.loaded[type] = true;
+  })();
+
+  try {
+    await _cache.loading[type];
+  } finally {
+    _cache.loading[type] = null;
+  }
 }
 
 /* =========================
