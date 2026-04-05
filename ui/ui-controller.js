@@ -15,7 +15,7 @@ import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
 import { XmlViewerService } from '../services/xml/xml-viewer-service.js';
 import { explainEventModel } from '../services/xml/xml-explain-service.js';
-import { getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
+import { getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setRetroAccentPreset, setSfAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
@@ -39,6 +39,21 @@ let eventTabsCollapsed = localStorage.getItem('eventTabsCollapsed') === '1';
 
 let xmlViewer = null;
 let xmlFormatMode = 'pretty';
+
+function closeThemeAccentSubmenus() {
+  document.querySelectorAll('.style-theme-item.is-open').forEach(item => item.classList.remove('is-open'));
+}
+
+function toggleThemeAccentSubmenu(themeId) {
+  const target = document.querySelector(`.style-theme-item.has-accent-submenu[data-theme-id="${themeId}"]`);
+  if (!target) {
+    closeThemeAccentSubmenus();
+    return;
+  }
+  const shouldOpen = !target.classList.contains('is-open');
+  closeThemeAccentSubmenus();
+  if (shouldOpen) target.classList.add('is-open');
+}
 
 
 function syncXmlHighlight(textarea, layer) {
@@ -178,16 +193,15 @@ function setActiveModule(moduleName) {
   const nextModule = moduleName === 'documentation' ? 'documentation' : 'editor';
   const editorArea = document.getElementById('editor-area');
   const documentationView = document.getElementById('documentation-view');
-  const documentationButton = document.querySelector('button[data-action="openDocumentation"][data-action-tier="secondary"]');
+  const backToEditorButton = document.querySelector('button[data-action="openEditorModule"][data-action-tier="secondary"]');
   if (!editorArea || !documentationView) return;
 
   document.body.dataset.activeModule = nextModule;
   editorArea.hidden = nextModule !== 'editor';
   documentationView.hidden = nextModule !== 'documentation';
 
-  if (documentationButton) {
-    documentationButton.classList.toggle('is-selected', nextModule === 'documentation');
-    documentationButton.setAttribute('aria-pressed', nextModule === 'documentation' ? 'true' : 'false');
+  if (backToEditorButton) {
+    backToEditorButton.hidden = nextModule !== 'documentation';
   }
 
   if (nextModule === 'documentation') {
@@ -355,7 +369,7 @@ const treeService = new TreeService({
 function initButtonIcons() {
   const iconMap = [
     ['button[data-action="openDB"]', 'folder', 'database'],
-    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'book-open', 'documentation'],
+    ['button[data-action="openEditorModule"][data-action-tier="secondary"]', 'book-open', 'backToEditor'],
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
     ['button[data-action="projectExport"]', 'export', 'projectExport'],
@@ -381,7 +395,7 @@ function initButtonIcons() {
 
   const tooltipMap = [
     ['button[data-action="openDB"]', t('tooltipOpenDatabase')],
-    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', t('tooltipOpenDocumentation')],
+    ['button[data-action="openEditorModule"][data-action-tier="secondary"]', t('tooltipBackToEditor')],
     ['#editor-mode-segmented', t('tooltipSwitchEditorMode')],
     ['button[data-mode="basic"]', t('tooltipEditorModeBasic')],
     ['button[data-mode="advanced"]', t('tooltipEditorModeAdvanced')],
@@ -588,6 +602,9 @@ function updateMenuThemeStatus() {
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-current', selected ? 'true' : 'false');
   });
+  document.querySelectorAll('.style-theme-item').forEach(item => {
+    item.classList.toggle('is-selected', item.dataset.themeId === theme.baseTheme);
+  });
   document.querySelectorAll('button[data-action="menuSetUiScale"]').forEach(button => {
     const selected = button.dataset.value === theme.uiScale;
     button.classList.toggle('is-selected', selected);
@@ -610,6 +627,11 @@ function updateMenuThemeStatus() {
   });
   document.querySelectorAll('button[data-action="setSfAccentPreset"]').forEach(button => {
     const selected = button.dataset.value === theme.sfAccentPreset;
+    button.classList.toggle('is-selected', selected);
+    button.setAttribute('aria-checked', selected ? 'true' : 'false');
+  });
+  document.querySelectorAll('button[data-action="setRetroAccentPreset"]').forEach(button => {
+    const selected = button.dataset.value === theme.retroAccentPreset;
     button.classList.toggle('is-selected', selected);
     button.setAttribute('aria-checked', selected ? 'true' : 'false');
   });
@@ -782,11 +804,21 @@ async function handleClick(event) {
   if (action === 'menuDeleteSelected') await handleMenuDeleteSelected();
   if (action === 'menuDuplicateSelected') handleMenuDuplicateSelected();
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
-  if (action === 'menuSetBaseTheme') setBaseTheme(actionEl.dataset.value);
+  if (action === 'menuSetBaseTheme') {
+    setBaseTheme(actionEl.dataset.value);
+    closeThemeAccentSubmenus();
+  }
+  if (action === 'toggleThemeAccentSubmenu') {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleThemeAccentSubmenu(actionEl.dataset.themeId);
+    return;
+  }
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
   if (action === 'menuSetChanceInputMode') setChanceInputMode(actionEl.dataset.value);
   if (action === 'menuSetAutoChanceMode') setAppSetting('autoChanceMode', actionEl.dataset.value);
   if (action === 'setSfAccentPreset') setSfAccentPreset(actionEl.dataset.value);
+  if (action === 'setRetroAccentPreset') setRetroAccentPreset(actionEl.dataset.value);
   if (action === 'showTreeSummaryPanel') {
     const treeContainer = document.getElementById('tree-container');
     if (!treeContainer) return;
@@ -963,6 +995,7 @@ function initMenuBarBehavior() {
   });
 
   document.addEventListener('click', event => {
+    if (!event.target.closest('.style-theme-item.has-accent-submenu')) closeThemeAccentSubmenus();
     if (event.target.closest('.menu-item')) return;
     const active = document.activeElement;
     if (active instanceof HTMLElement && menuBar.contains(active)) active.blur();

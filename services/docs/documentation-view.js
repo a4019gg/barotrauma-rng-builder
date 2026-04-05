@@ -155,7 +155,6 @@ function render() {
   const searchInput = rootEl.querySelector(".docs-search-input");
   const titleEl = rootEl.querySelector(".docs-module-title");
   const subtitleEl = rootEl.querySelector(".docs-module-subtitle");
-  const backButton = rootEl.querySelector('[data-action="openEditorModule"]');
   const groupsNav = rootEl.querySelector('.docs-groups');
   if (searchInput) {
     searchInput.placeholder = tDoc("docs.ui.searchPlaceholder");
@@ -163,7 +162,6 @@ function render() {
   }
   if (titleEl) titleEl.textContent = tDoc("docs.ui.title");
   if (subtitleEl) subtitleEl.textContent = tDoc("docs.ui.subtitle");
-  if (backButton) backButton.textContent = tDoc("docs.ui.backToEditor");
   if (groupsNav) groupsNav.setAttribute('aria-label', t('docsGroupsLabel'));
   const emptyTitle = rootEl.querySelector(".docs-empty h3");
   const emptyText = rootEl.querySelector(".docs-empty p");
@@ -203,7 +201,6 @@ export function initDocumentationView(container) {
       <div class="docs-sidebar-head">
         <h2 class="docs-module-title"></h2>
         <p class="docs-module-subtitle"></p>
-        <button type="button" class="docs-back-button" data-action="openEditorModule"></button>
       </div>
       <div class="docs-search-wrap">
         <input type="search" class="docs-search-input" />
