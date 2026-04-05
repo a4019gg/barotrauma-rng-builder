@@ -87,12 +87,35 @@
 
             <div class="menu-subitem" role="none">
               <button type="button" class="menu-button submenu-trigger" role="menuitem"><span data-l10n="menuStyle"></span> <span class="submenu-arrow">▶</span></button>
-              <div class="menu-dropdown submenu" role="menu">
-                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="debug" data-l10n="themeDebug"></button>
-                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="classic-luna" data-l10n="themeClassicLuna"></button>
-                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="neon-ops" data-l10n="themeNeonOps"></button>
-                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="retro-terminal" data-l10n="themeRetroTerminal"></button>
-                <button type="button" role="menuitem" data-action="menuSetBaseTheme" data-value="soft-bloom" data-l10n="themeSoftBloom"></button>
+              <div class="menu-dropdown submenu style-theme-dropdown" role="menu">
+                <div class="menu-subitem style-theme-item" role="none" data-theme-id="debug">
+                  <button type="button" class="menu-style-apply" role="menuitem" data-action="menuSetBaseTheme" data-value="debug" data-l10n="themeDebug"></button>
+                  <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="debug" aria-label="Toggle accent submenu">▶</button>
+                </div>
+                <div class="menu-subitem style-theme-item" role="none" data-theme-id="classic-luna">
+                  <button type="button" class="menu-style-apply" role="menuitem" data-action="menuSetBaseTheme" data-value="classic-luna" data-l10n="themeClassicLuna"></button>
+                  <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="classic-luna" aria-label="Toggle accent submenu">▶</button>
+                </div>
+                <div class="menu-subitem style-theme-item" role="none" data-theme-id="neon-ops">
+                  <button type="button" class="menu-style-apply" role="menuitem" data-action="menuSetBaseTheme" data-value="neon-ops" data-l10n="themeNeonOps"></button>
+                  <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="neon-ops" aria-label="Toggle accent submenu">▶</button>
+                </div>
+                <div class="menu-subitem style-theme-item has-accent-submenu" role="none" data-theme-id="retro-terminal">
+                  <button type="button" class="menu-style-apply" role="menuitem" data-action="menuSetBaseTheme" data-value="retro-terminal" data-l10n="themeRetroTerminal"></button>
+                  <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="retro-terminal" aria-label="Toggle accent submenu">▶</button>
+                  <div class="menu-dropdown submenu menu-retro-accent-dropdown" role="menu">
+                    <div class="menu-group-title" data-l10n="accentColor"></div>
+                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="terminal-green" data-l10n="retroAccentGreen" aria-checked="false"></button>
+                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="amber-phosphor" data-l10n="retroAccentAmber" aria-checked="false"></button>
+                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="ice-cyan" data-l10n="retroAccentCyan" aria-checked="false"></button>
+                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="plasma-magenta" data-l10n="retroAccentMagenta" aria-checked="false"></button>
+                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="paper-ink" data-l10n="retroAccentPaperInk" aria-checked="false"></button>
+                  </div>
+                </div>
+                <div class="menu-subitem style-theme-item" role="none" data-theme-id="soft-bloom">
+                  <button type="button" class="menu-style-apply" role="menuitem" data-action="menuSetBaseTheme" data-value="soft-bloom" data-l10n="themeSoftBloom"></button>
+                  <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="soft-bloom" aria-label="Toggle accent submenu">▶</button>
+                </div>
               </div>
             </div>
             <div class="menu-subitem" role="none">
@@ -192,7 +215,7 @@
 
       <div class="menu-right">
         <button data-action="openDB" data-action-tier="secondary" data-l10n="database"></button>
-        <button data-action="openDocumentation" data-action-tier="secondary" data-l10n="documentation"></button>
+        <button data-action="openEditorModule" data-action-tier="secondary" data-l10n="backToEditor"></button>
         <div id="view-segmented" class="segmented-control" data-view-mode="node" data-segment-count="2" role="tablist" data-l10n-aria-label="editorViewMode">
           <div class="segmented-control-indicator" aria-hidden="true"></div>
           <button type="button" class="segmented-option active" data-action="setViewMode" data-view-mode="node" role="tab" aria-selected="true" data-l10n="nodeMode"></button>

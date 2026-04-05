@@ -4,8 +4,8 @@ body[data-base-theme='retro-terminal'][data-theme-mode='dark'] {
   --ui-border: #00ff00;
   --ui-text: #00ff00;
   --ui-muted: #00bf00;
-  --ui-accent: #00ff00;
-  --ui-accent-strong: #8dff8d;
+  --ui-accent: var(--retro-accent-main, #00ff00);
+  --ui-accent-strong: var(--retro-accent-strong, #8dff8d);
   --ui-grid: rgba(0, 255, 0, 0.16);
   --ui-shadow: none;
   --ui-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -20,8 +20,8 @@ body[data-base-theme='retro-terminal'][data-theme-mode='light'] {
   --ui-border: #2b2b2b;
   --ui-text: #101010;
   --ui-muted: #454545;
-  --ui-accent: #000000;
-  --ui-accent-strong: #303030;
+  --ui-accent: var(--retro-accent-main, #000000);
+  --ui-accent-strong: var(--retro-accent-strong, #303030);
   --ui-grid: rgba(0, 0, 0, 0.1);
   --ui-shadow: none;
   --ui-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
