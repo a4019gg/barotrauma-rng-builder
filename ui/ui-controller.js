@@ -193,6 +193,7 @@ function setActiveModule(moduleName) {
   const nextModule = moduleName === 'documentation' ? 'documentation' : 'editor';
   const editorArea = document.getElementById('editor-area');
   const documentationView = document.getElementById('documentation-view');
+  const openDocumentationButton = document.querySelector('button[data-action="openDocumentation"][data-action-tier="secondary"]');
   const backToEditorButton = document.querySelector('button[data-action="openEditorModule"][data-action-tier="secondary"]');
   if (!editorArea || !documentationView) return;
 
@@ -200,6 +201,9 @@ function setActiveModule(moduleName) {
   editorArea.hidden = nextModule !== 'editor';
   documentationView.hidden = nextModule !== 'documentation';
 
+  if (openDocumentationButton) {
+    openDocumentationButton.hidden = nextModule === 'documentation';
+  }
   if (backToEditorButton) {
     backToEditorButton.hidden = nextModule !== 'documentation';
   }
@@ -369,6 +373,7 @@ const treeService = new TreeService({
 function initButtonIcons() {
   const iconMap = [
     ['button[data-action="openDB"]', 'folder', 'database'],
+    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'book-open', 'documentation'],
     ['button[data-action="openEditorModule"][data-action-tier="secondary"]', 'book-open', 'backToEditor'],
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
@@ -395,6 +400,7 @@ function initButtonIcons() {
 
   const tooltipMap = [
     ['button[data-action="openDB"]', t('tooltipOpenDatabase')],
+    ['button[data-action="openDocumentation"][data-action-tier="secondary"]', t('tooltipOpenDocumentation')],
     ['button[data-action="openEditorModule"][data-action-tier="secondary"]', t('tooltipBackToEditor')],
     ['#editor-mode-segmented', t('tooltipSwitchEditorMode')],
     ['button[data-mode="basic"]', t('tooltipEditorModeBasic')],
