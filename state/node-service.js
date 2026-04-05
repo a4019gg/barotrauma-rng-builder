@@ -9,6 +9,11 @@ import {
   syncLegacyRngChildren
 } from '../core/graph-utils.js';
 
+
+const FLOAT_PARAM_KEYS = new Set(['chance', 'strength', 'minintensity', 'maxintensity', 'minleveldifficulty', 'maxleveldifficulty', 'commonness', 'triggereventcooldown']);
+const INT_PARAM_KEYS = new Set(['amount', 'count', 'quality', 'eventcount']);
+const BOOLEAN_PARAM_KEYS = new Set(['chooserandom', 'allowatstart', 'perwreck', 'perruin', 'percave', 'ignorecooldown']);
+
 export function createNode(type, nextId) {
   return createGraphNode(type, nextId);
 }
@@ -55,18 +60,18 @@ export function cloneWithFreshIds(node, nextId) {
 
 export function normalizeParamValue(key, rawValue) {
   let value = rawValue;
-  if (['chance', 'strength', 'minintensity', 'maxintensity', 'minleveldifficulty', 'maxleveldifficulty', 'commonness', 'triggereventcooldown'].includes(key)) {
+  if (FLOAT_PARAM_KEYS.has(key)) {
     if (key === 'chance') value = parseChanceInput(rawValue);
     else {
       value = Number(String(rawValue).replace(',', '.'));
       if (!Number.isFinite(value)) value = 0;
     }
   }
-  if (['amount', 'count', 'quality', 'eventcount'].includes(key)) {
+  if (INT_PARAM_KEYS.has(key)) {
     value = Number(String(rawValue).replace(',', '.'));
     if (!Number.isFinite(value)) value = 1;
   }
-  if (['chooserandom', 'allowatstart', 'perwreck', 'perruin', 'percave', 'ignorecooldown'].includes(key)) {
+  if (BOOLEAN_PARAM_KEYS.has(key)) {
     value = rawValue === true || rawValue === 'true';
   }
   return value;

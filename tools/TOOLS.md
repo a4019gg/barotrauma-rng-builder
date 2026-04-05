@@ -25,6 +25,8 @@ All scripts in this folder are:
 
 ## 🧪 parse_afflictions.py
 
+> ℹ️ Script filename was normalized to `parse_afflictions.py` (old typo variant removed) for consistency.
+
 ### Purpose
 
 Parses **Barotrauma Afflictions.xml** and converts it into a **normalized JSON format** used by the project database.
