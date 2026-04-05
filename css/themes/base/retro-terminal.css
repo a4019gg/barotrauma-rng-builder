@@ -1,12 +1,12 @@
 body[data-base-theme='retro-terminal'][data-theme-mode='dark'] {
   --ui-bg: #000000;
   --ui-panel: #000000;
-  --ui-border: #00ff00;
-  --ui-text: #00ff00;
-  --ui-muted: #00bf00;
+  --ui-border: var(--retro-accent-main, #00ff00);
+  --ui-text: var(--retro-accent-main, #00ff00);
+  --ui-muted: color-mix(in srgb, var(--retro-accent-main, #00ff00) 78%, #000000);
   --ui-accent: var(--retro-accent-main, #00ff00);
   --ui-accent-strong: var(--retro-accent-strong, #8dff8d);
-  --ui-grid: rgba(0, 255, 0, 0.16);
+  --ui-grid: color-mix(in srgb, var(--retro-accent-main, #00ff00) 16%, transparent);
   --ui-shadow: none;
   --ui-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --ui-radius-sm: 0px;

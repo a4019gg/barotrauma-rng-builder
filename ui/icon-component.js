@@ -37,12 +37,14 @@ export function createIcon(name, options = {}) {
 }
 
 export function appendIconLabel(target, { icon, label, l10nKey }) {
+  const fallbackLabel = target.textContent?.trim();
   target.textContent = '';
   target.classList.add('button-with-icon');
   target.append(createIcon(icon));
 
   const textEl = document.createElement('span');
   if (label != null) textEl.textContent = label;
+  else if (fallbackLabel) textEl.textContent = fallbackLabel;
   if (l10nKey) textEl.dataset.l10n = l10nKey;
   target.append(textEl);
 }

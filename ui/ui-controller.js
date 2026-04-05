@@ -200,12 +200,13 @@ function setActiveModule(moduleName) {
   document.body.dataset.activeModule = nextModule;
   editorArea.hidden = nextModule !== 'editor';
   documentationView.hidden = nextModule !== 'documentation';
+  const documentationOpen = !documentationView.hidden;
 
   if (openDocumentationButton) {
-    openDocumentationButton.hidden = nextModule === 'documentation';
+    openDocumentationButton.hidden = documentationOpen;
   }
   if (backToEditorButton) {
-    backToEditorButton.hidden = nextModule !== 'documentation';
+    backToEditorButton.hidden = !documentationOpen;
   }
 
   if (nextModule === 'documentation') {
@@ -395,7 +396,7 @@ function initButtonIcons() {
   iconMap.forEach(([selector, iconName, l10nKey]) => {
     const button = document.querySelector(selector);
     if (!button) return;
-    appendIconLabel(button, { icon: iconName, l10nKey });
+    appendIconLabel(button, { icon: iconName, label: t(l10nKey), l10nKey });
   });
 
   const tooltipMap = [
