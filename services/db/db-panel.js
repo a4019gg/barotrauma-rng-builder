@@ -23,6 +23,7 @@ let controlsCollapsed = false;
 let fallbackIcon = null;
 let hasOpenedDatabasePanel = false;
 let virtualState = null;
+const dbIconImageCache = new Map();
 
 const DEFAULT_ICON_SIZE = 36;
 const SCALE_LEVELS = [0.9, 1, 1.1];
@@ -42,6 +43,7 @@ export async function openDatabasePanel() {
       showLoadingState(true);
       await DB.loadAfflictions();
       prepareFallbackIcon();
+      queueDbAssetWarmup();
       showLoadingState(false);
     }
 
@@ -227,6 +229,30 @@ function prepareFallbackIcon() {
     texture: concealed.icon.texture,
     sourcerect: concealed.icon.sourcerect
   };
+}
+
+function queueDbAssetWarmup() {
+  Promise.resolve().then(async () => {
+    await Promise.allSettled([DB.loadItems(), DB.loadCreatures()]);
+    warmDbIconCache();
+  });
+}
+
+function warmDbIconCache() {
+  const types = ['afflictions', 'items', 'creatures'];
+  const textures = new Set();
+
+  types.forEach(type => {
+    try {
+      DB.getAll(type).forEach(entry => {
+        if (entry?.icon?.texture) textures.add(entry.icon.texture);
+      });
+    } catch {
+      // DB type may not be loaded yet; skip silently.
+    }
+  });
+
+  textures.forEach(texture => getCachedDbIconImage(texture));
 }
 
 /* =========================================================
@@ -743,10 +769,7 @@ function createDbIconCanvas({ texture, sourcerect, size, tint }) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
 
-  const img = new Image();
-  img.src = texture;
-
-  img.onload = () => {
+  const drawIcon = img => {
     ctx.clearRect(0, 0, size, size);
     ctx.drawImage(img, x, y, w, h, 0, 0, size, size);
 
@@ -761,7 +784,26 @@ function createDbIconCanvas({ texture, sourcerect, size, tint }) {
     }
   };
 
+  const cachedImage = getCachedDbIconImage(texture);
+  if (cachedImage.complete && cachedImage.naturalWidth > 0) {
+    drawIcon(cachedImage);
+    return canvas;
+  }
+
+  cachedImage.addEventListener('load', () => drawIcon(cachedImage), { once: true });
+
   return canvas;
+}
+
+function getCachedDbIconImage(texture) {
+  if (dbIconImageCache.has(texture)) {
+    return dbIconImageCache.get(texture);
+  }
+
+  const image = new Image();
+  image.src = texture;
+  dbIconImageCache.set(texture, image);
+  return image;
 }
 
 function normalizeSourceRect(src) {
