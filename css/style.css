@@ -408,11 +408,42 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 
 .menu-retro-accent-dropdown {
-  min-width: 190px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 220px;
 }
 
-.menu-retro-accent-dropdown .retro-accent-option {
-  justify-content: flex-start;
+.menu-retro-accent-dropdown .menu-group-title {
+  grid-column: 1 / -1;
+}
+
+.menu-retro-accent-dropdown .retro-preset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-preset-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ui-text) 45%, transparent);
+  background: var(--retro-preset-color, #00ff00);
+}
+
+.retro-preset-option[data-value='terminal-green'] { --retro-preset-color: #00ff00; }
+.retro-preset-option[data-value='amber-phosphor'] { --retro-preset-color: #ffbf3f; }
+.retro-preset-option[data-value='ice-cyan'] { --retro-preset-color: #5de8ff; }
+.retro-preset-option[data-value='plasma-magenta'] { --retro-preset-color: #ff71e7; }
+.retro-preset-option[data-value='violet-glow'] { --retro-preset-color: #be7bff; }
+.retro-preset-option[data-value='neon-blue'] { --retro-preset-color: #4e86ff; }
+.retro-preset-option[data-value='ember-red'] { --retro-preset-color: #ff6b57; }
+.retro-preset-option[data-value='phosphor-lime'] { --retro-preset-color: #9cff57; }
+.retro-preset-option[data-value='mono-contrast'] { --retro-preset-color: #000000; }
+
+body[data-theme-mode='dark'] .retro-preset-option[data-value='mono-contrast'] {
+  --retro-preset-color: #ffffff;
 }
 
 .menu-subitem-inline {
@@ -501,6 +532,12 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 .sf-preset-option[data-value='sky-sun'] .sf-success { background: #5cb7ff; }
 .sf-preset-option[data-value='sky-sun'] .sf-failure { background: #ffd54f; }
 .menu-sf-accent-dropdown .sf-preset-btn.is-selected::after { display: none; }
+
+.menu-retro-accent-dropdown .retro-preset-btn.is-selected::after { display: none; }
+.menu-retro-accent-dropdown .retro-preset-btn.is-selected .retro-preset-dot {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-accent) 50%, transparent);
+  border-color: color-mix(in srgb, var(--ui-text) 78%, transparent);
+}
 
 
 .spacer { flex: 1; }

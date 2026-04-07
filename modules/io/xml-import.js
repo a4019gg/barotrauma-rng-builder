@@ -1,4 +1,4 @@
-import { createDefaultParams, ensureNodeShape } from '../core/graph-utils.js';
+import { createDefaultParams, ensureNodeShape } from '../../core/graph-utils.js';
 
 function parseBooleanAttr(element, key, fallback = false) {
   const value = element.getAttribute(key);

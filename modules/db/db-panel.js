@@ -1,6 +1,6 @@
-// services/db/db-panel.js
+// modules/db/db-panel.js
 // Database panel (DB)
-// Uses inline canvas-based icon rendering (legacy-equivalent)
+// Uses inline canvas-based icon rendering
 
 import * as DB from "./database.js";
 import { t } from "./db-loc.js";

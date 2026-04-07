@@ -1,4 +1,4 @@
-import { ensureNodeShape } from '../core/graph-utils.js';
+import { ensureNodeShape } from '../../core/graph-utils.js';
 
 const PROJECT_FILE_VERSION = 1;
 

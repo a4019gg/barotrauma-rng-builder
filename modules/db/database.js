@@ -1,4 +1,4 @@
-// services/database.js
+// modules/database.js
 // Read-only static database service
 // Loads JSON from /data and provides search & sort utilities
 // NO UI, NO DOM, NO schema normalization

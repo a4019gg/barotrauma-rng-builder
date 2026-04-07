@@ -45,7 +45,14 @@ const RETRO_ACCENT_PRESETS = {
   'amber-phosphor': { accent: '#ffbf3f', strong: '#ffe28c' },
   'ice-cyan': { accent: '#5de8ff', strong: '#b3f5ff' },
   'plasma-magenta': { accent: '#ff71e7', strong: '#ffb5f3' },
-  'paper-ink': { accent: '#c4c8cc', strong: '#eef2f5' }
+  'violet-glow': { accent: '#be7bff', strong: '#d8b1ff' },
+  'neon-blue': { accent: '#4e86ff', strong: '#9ab9ff' },
+  'ember-red': { accent: '#ff6b57', strong: '#ffab9f' },
+  'phosphor-lime': { accent: '#9cff57', strong: '#caf9a5' },
+  'mono-contrast': {
+    dark: { accent: '#ffffff', strong: '#ffffff' },
+    light: { accent: '#101010', strong: '#2f2f2f' }
+  }
 };
 
 const defaults = {
@@ -74,6 +81,13 @@ const state = {
   sfAccentPreset: getAppSetting('sfAccentPreset') || defaults.sfAccentPreset,
   retroAccentPreset: getAppSetting('retroAccentPreset') || defaults.retroAccentPreset
 };
+
+
+function resolveRetroAccentPreset() {
+  const preset = RETRO_ACCENT_PRESETS[state.retroAccentPreset] || RETRO_ACCENT_PRESETS[defaults.retroAccentPreset];
+  if (preset?.[state.themeMode]) return preset[state.themeMode];
+  return preset;
+}
 
 function ensureValidState() {
   if (!BASE_THEMES[state.baseTheme]) state.baseTheme = defaults.baseTheme;
@@ -121,10 +135,9 @@ export function applyTheme() {
   const accents = SF_ACCENT_PRESETS[state.sfAccentPreset] || SF_ACCENT_PRESETS[defaults.sfAccentPreset];
   document.body.style.setProperty('--sf-success', accents.success);
   document.body.style.setProperty('--sf-failure', accents.failure);
-  const retroAccents = RETRO_ACCENT_PRESETS[state.retroAccentPreset] || RETRO_ACCENT_PRESETS[defaults.retroAccentPreset];
-  const isPaperInkInDark = state.baseTheme === 'retro-terminal' && state.themeMode === 'dark' && state.retroAccentPreset === 'paper-ink';
-  document.body.style.setProperty('--retro-accent-main', isPaperInkInDark ? '#ffffff' : retroAccents.accent);
-  document.body.style.setProperty('--retro-accent-strong', isPaperInkInDark ? '#ffffff' : retroAccents.strong);
+  const retroAccents = resolveRetroAccentPreset();
+  document.body.style.setProperty('--retro-accent-main', retroAccents.accent);
+  document.body.style.setProperty('--retro-accent-strong', retroAccents.strong);
 
   setAppSetting('baseTheme', state.baseTheme);
   setAppSetting('themeMode', state.themeMode);
