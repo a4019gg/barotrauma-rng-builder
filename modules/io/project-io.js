@@ -81,5 +81,5 @@ export function buildProjectFilename(projectName = 'project') {
     .trim()
     .replace(/[\\/:*?"<>|%]+/g, '_')
     .replace(/\s+/g, '_') || 'project';
-  return `${safeName}(event).baro-rng.json`;
+  return `${safeName}.baro-rng.json`;
 }

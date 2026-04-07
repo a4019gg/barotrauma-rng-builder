@@ -28,12 +28,12 @@
           <button type="button" class="menu-button" role="menuitem" data-l10n="menuFile"></button>
           <div class="menu-dropdown" role="menu">
             <div class="menu-group-title" data-l10n="menuProjectGroup"></div>
-            <button type="button" role="menuitem" data-action="projectImport">📥 <span data-l10n="projectImport"></span></button>
-            <button type="button" role="menuitem" data-action="projectExport">📤 <span data-l10n="projectExport"></span></button>
+            <button type="button" role="menuitem" data-action="projectImport" data-l10n="projectImport"></button>
+            <button type="button" role="menuitem" data-action="projectExport" data-l10n="projectExport"></button>
             <div class="menu-divider" role="separator" aria-orientation="horizontal"></div>
             <div class="menu-group-title" data-l10n="menuXmlGroup"></div>
-            <button type="button" role="menuitem" data-action="openImportXmlModal">📥 <span data-l10n="importXML"></span></button>
-            <button type="button" role="menuitem" data-action="downloadXML">📤 <span data-l10n="downloadXML"></span></button>
+            <button type="button" role="menuitem" data-action="openImportXmlModal" data-l10n="importXML"></button>
+            <button type="button" role="menuitem" data-action="downloadXML" data-l10n="downloadXML"></button>
           </div>
         </div>
 
@@ -158,6 +158,10 @@
               <span data-l10n="grid"></span>
               <input id="toggle-grid" type="checkbox" />
             </label>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="showButtonIcons"></span>
+              <input id="toggle-button-icons" type="checkbox" />
+            </label>
           </div>
         </div>
 
@@ -212,6 +216,7 @@
                 <button type="button" role="menuitem" data-action="menuSetAutoChanceMode" data-value="branch-split" data-l10n="autoChanceBranch"></button>
               </div>
             </div>
+            <button type="button" role="menuitemcheckbox" data-action="toggleSoftStart" data-l10n="softStart" aria-checked="false"></button>
             <button type="button" role="menuitem" data-action="resetSettings" data-l10n="resetSettings"></button>
           </div>
         </div>
@@ -423,7 +428,7 @@
     async function boot() {
       try {
         const { initEditorUI } = await import('./ui/ui-controller.js');
-        initEditorUI();
+        await initEditorUI();
         document.body.classList.remove('app-loading');
       } catch (error) {
         renderStartupError(error);

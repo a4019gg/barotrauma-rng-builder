@@ -20,6 +20,7 @@ import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
 import { buildProjectFilename, parseProjectJson, serializeProject } from '../modules/io/project-io.js';
+import { preloadInitialResources } from './resource-preload.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -373,10 +374,10 @@ const treeService = new TreeService({
 });
 
 function initButtonIcons() {
+  const iconsEnabled = getAppSetting('buttonIcons') !== false;
   const iconMap = [
     ['button[data-action="openDB"]', 'folder', 'database'],
     ['button[data-action="openDocumentation"][data-action-tier="secondary"]', 'book-open', 'documentation'],
-    ['button[data-action="openEditorModule"][data-action-tier="secondary"]', 'book-open', 'backToEditor'],
     ['#settings-toggle', 'gear', 'settings'],
     ['button[data-action="projectImport"]', 'import', 'projectImport'],
     ['button[data-action="projectExport"]', 'export', 'projectExport'],
@@ -391,13 +392,20 @@ function initButtonIcons() {
     ['button[data-action="downloadXML"]', 'download-cloud', 'downloadXML'],
     ['button[data-action="openImportXmlModal"]', 'upload-cloud', 'importXML'],
     ['button[data-action="openOutputTab"][data-tab="simulation"]', 'chart-pie', 'simulation'],
-    ['button[data-action="runSimulation"]', 'chart-pie', 'runSimulation']
+    ['.menu-dropdown button[data-action="runSimulation"][data-l10n="simulation"]', 'chart-pie', 'simulation'],
+    ['#simulation-output-pane .simulation-run-btn[data-action="runSimulation"]', 'chart-pie', 'runSimulation']
   ];
 
   iconMap.forEach(([selector, iconName, l10nKey]) => {
-    const button = document.querySelector(selector);
-    if (!button) return;
-    appendIconLabel(button, { icon: iconName, label: t(l10nKey), l10nKey });
+    document.querySelectorAll(selector).forEach(button => {
+      button.textContent = '';
+      button.classList.remove('button-with-icon');
+      const textEl = document.createElement('span');
+      textEl.dataset.l10n = l10nKey;
+      textEl.textContent = t(l10nKey);
+      button.append(textEl);
+      if (iconsEnabled) appendIconLabel(button, { icon: iconName, label: t(l10nKey), l10nKey });
+    });
   });
 
   const tooltipMap = [
@@ -423,6 +431,14 @@ function initButtonIcons() {
   tooltipMap.forEach(([selector, message]) => {
     document.querySelectorAll(selector).forEach(element => setTooltip(element, message));
   });
+}
+
+function updateSoftStartMenuItem() {
+  const button = document.querySelector('button[data-action="toggleSoftStart"]');
+  if (!button) return;
+  const enabled = getAppSetting('softStart') === true;
+  button.setAttribute('aria-checked', enabled ? 'true' : 'false');
+  button.classList.toggle('is-selected', enabled);
 }
 
 function applyXmlFeatureTooltips() {
@@ -884,6 +900,11 @@ async function handleClick(event) {
   }
   if (action === 'openSettingsLanguage' || action === 'openSettingsXmlBehavior') openSettingsPanel();
   if (action === 'menuSetLanguage') setLang(actionEl.dataset.value);
+  if (action === 'toggleSoftStart') {
+    const enabled = getAppSetting('softStart') !== true;
+    setAppSetting('softStart', enabled);
+    updateSoftStartMenuItem();
+  }
   if (action === 'resetSettings') {
     localStorage.clear();
     location.reload();
@@ -1096,7 +1117,11 @@ function initOutputPanelUX() {
   resizeObserver.observe(importTextarea);
 }
 
-export function initEditorUI() {
+export async function initEditorUI() {
+  if (getAppSetting('softStart') !== true) {
+    await preloadInitialResources();
+  }
+
   document.addEventListener('click', handleClick);
   document.addEventListener('change', handleChange);
   document.addEventListener('input', handleInput);
@@ -1179,12 +1204,13 @@ export function initEditorUI() {
   applyXmlFeatureTooltips();
   editorStore.setEditorMode(getAppSetting('editorMode') || 'basic');
   initMenuBarBehavior();
-  initButtonIcons();
   initOutputPanelUX();
   setDocumentationLanguage(getLang());
   documentationStore.init();
   initDocumentationView(document.getElementById('documentation-view'));
   applyLocalization();
+  initButtonIcons();
+  updateSoftStartMenuItem();
   updateMenuThemeStatus();
 
   onThemeChange(() => {
@@ -1228,6 +1254,8 @@ export function initEditorUI() {
 
   subscribeAppSettings(settings => {
     if (settings.editorMode !== editorStore.getState().editorMode) editorStore.setEditorMode(settings.editorMode || 'basic');
+    initButtonIcons();
+    updateSoftStartMenuItem();
     applyEditorMode();
     updateMenuThemeStatus();
   });

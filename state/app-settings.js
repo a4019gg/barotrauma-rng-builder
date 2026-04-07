@@ -11,7 +11,9 @@ const DEFAULT_SETTINGS = {
   chanceInputMode: 'fraction',
   autoChanceMode: 'off',
   editorMode: 'basic',
-  viewMode: 'node'
+  viewMode: 'node',
+  buttonIcons: true,
+  softStart: false
 };
 
 let state = { ...DEFAULT_SETTINGS };
