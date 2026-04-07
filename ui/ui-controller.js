@@ -434,11 +434,9 @@ function initButtonIcons() {
 }
 
 function updateSoftStartMenuItem() {
-  const button = document.querySelector('button[data-action="toggleSoftStart"]');
-  if (!button) return;
-  const enabled = getAppSetting('softStart') === true;
-  button.setAttribute('aria-checked', enabled ? 'true' : 'false');
-  button.classList.toggle('is-selected', enabled);
+  const toggle = document.getElementById('toggle-soft-start');
+  if (!toggle) return;
+  toggle.checked = getAppSetting('softStart') === true;
 }
 
 function applyXmlFeatureTooltips() {
@@ -446,7 +444,11 @@ function applyXmlFeatureTooltips() {
     'xml-feature-syntax': t('xmlFeatureSyntaxTooltip'),
     'xml-feature-warnings': t('xmlFeatureWarningsTooltip'),
     'xml-feature-tooltips': t('xmlFeatureTooltipsTooltip'),
-    'xml-feature-inline-hints': t('xmlFeatureInlineHintsTooltip')
+    'xml-feature-inline-hints': t('xmlFeatureInlineHintsTooltip'),
+    'toggle-grid': t('gridTooltip'),
+    'toggle-button-icons': t('showButtonIconsTooltip'),
+    'toggle-editable-labels': t('editableLabelsTooltip'),
+    'toggle-soft-start': t('softStartTooltip')
   };
   Object.entries(xmlFeatureTooltipById).forEach(([id, message]) => {
     const input = document.getElementById(id);
@@ -900,11 +902,6 @@ async function handleClick(event) {
   }
   if (action === 'openSettingsLanguage' || action === 'openSettingsXmlBehavior') openSettingsPanel();
   if (action === 'menuSetLanguage') setLang(actionEl.dataset.value);
-  if (action === 'toggleSoftStart') {
-    const enabled = getAppSetting('softStart') !== true;
-    setAppSetting('softStart', enabled);
-    updateSoftStartMenuItem();
-  }
   if (action === 'resetSettings') {
     localStorage.clear();
     location.reload();
@@ -1258,6 +1255,7 @@ export async function initEditorUI() {
     updateSoftStartMenuItem();
     applyEditorMode();
     updateMenuThemeStatus();
+    renderModel();
   });
 
   renderEvents();

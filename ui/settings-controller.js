@@ -13,6 +13,8 @@ export function initSettingsController() {
   const gridToggle = document.getElementById('toggle-grid');
   const chanceColorsToggle = document.getElementById('toggle-chance-colors');
   const buttonIconsToggle = document.getElementById('toggle-button-icons');
+  const editableLabelsToggle = document.getElementById('toggle-editable-labels');
+  const softStartToggle = document.getElementById('toggle-soft-start');
 
   const state = getThemeState();
   if (gridToggle) {
@@ -27,6 +29,14 @@ export function initSettingsController() {
     buttonIconsToggle.checked = getAppSetting('buttonIcons') !== false;
     buttonIconsToggle.onchange = event => setAppSetting('buttonIcons', event.target.checked);
   }
+  if (editableLabelsToggle) {
+    editableLabelsToggle.checked = getAppSetting('editableLabels') !== false;
+    editableLabelsToggle.onchange = event => setAppSetting('editableLabels', event.target.checked);
+  }
+  if (softStartToggle) {
+    softStartToggle.checked = getAppSetting('softStart') === true;
+    softStartToggle.onchange = event => setAppSetting('softStart', event.target.checked);
+  }
   setChanceInputMode(state.chanceInputMode);
   setAppSetting('autoChanceMode', getAppSetting('autoChanceMode') || 'off');
 
@@ -37,6 +47,8 @@ export function initSettingsController() {
     if (gridToggle) gridToggle.checked = currentState.grid;
     if (chanceColorsToggle) chanceColorsToggle.checked = currentState.chanceColorCoding;
     if (buttonIconsToggle) buttonIconsToggle.checked = getAppSetting('buttonIcons') !== false;
+    if (editableLabelsToggle) editableLabelsToggle.checked = getAppSetting('editableLabels') !== false;
+    if (softStartToggle) softStartToggle.checked = getAppSetting('softStart') === true;
   });
 }
 

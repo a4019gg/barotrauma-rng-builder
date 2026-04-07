@@ -159,6 +159,10 @@
               <input id="toggle-grid" type="checkbox" />
             </label>
             <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="editableLabelsAdvanced"></span>
+              <input id="toggle-editable-labels" type="checkbox" />
+            </label>
+            <label class="menu-control-row menu-control-switch" role="none">
               <span data-l10n="showButtonIcons"></span>
               <input id="toggle-button-icons" type="checkbox" />
             </label>
@@ -216,7 +220,10 @@
                 <button type="button" role="menuitem" data-action="menuSetAutoChanceMode" data-value="branch-split" data-l10n="autoChanceBranch"></button>
               </div>
             </div>
-            <button type="button" role="menuitemcheckbox" data-action="toggleSoftStart" data-l10n="softStart" aria-checked="false"></button>
+            <label class="menu-control-row menu-control-switch" role="none">
+              <span data-l10n="softStart"></span>
+              <input id="toggle-soft-start" type="checkbox" />
+            </label>
             <button type="button" role="menuitem" data-action="resetSettings" data-l10n="resetSettings"></button>
           </div>
         </div>
