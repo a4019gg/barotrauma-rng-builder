@@ -45,7 +45,7 @@ const RETRO_ACCENT_PRESETS = {
   'amber-phosphor': { accent: '#ffbf3f', strong: '#ffe28c' },
   'ice-cyan': { accent: '#5de8ff', strong: '#b3f5ff' },
   'plasma-magenta': { accent: '#ff71e7', strong: '#ffb5f3' },
-  'paper-ink': { accent: '#000000', strong: '#303030' }
+  'paper-ink': { accent: '#c4c8cc', strong: '#eef2f5' }
 };
 
 const defaults = {
@@ -61,6 +61,7 @@ const defaults = {
 };
 
 const listeners = new Set();
+let themeAssetsPreloaded = false;
 
 const state = {
   baseTheme: getAppSetting('baseTheme') || defaults.baseTheme,
@@ -88,8 +89,22 @@ function notifyThemeChange() {
   listeners.forEach(listener => listener(snapshot));
 }
 
+function preloadThemeStylesheets() {
+  if (themeAssetsPreloaded || typeof document === 'undefined') return;
+  themeAssetsPreloaded = true;
+
+  Object.values(BASE_THEME_STYLESHEETS).forEach(href => {
+    const preloadLink = document.createElement('link');
+    preloadLink.rel = 'preload';
+    preloadLink.as = 'style';
+    preloadLink.href = href;
+    document.head.appendChild(preloadLink);
+  });
+}
+
 export function applyTheme() {
   ensureValidState();
+  preloadThemeStylesheets();
 
   const baseThemeLink = document.getElementById('base-theme-style');
   const stylesheet = BASE_THEME_STYLESHEETS[state.baseTheme] || BASE_THEME_STYLESHEETS[defaults.baseTheme];

@@ -784,6 +784,14 @@ body[data-active-module='documentation'] #output-panel {
   display: none;
 }
 
+button[data-action='openEditorModule'][data-action-tier='secondary'] {
+  display: none;
+}
+
+body[data-active-module='documentation'] button[data-action='openEditorModule'][data-action-tier='secondary'] {
+  display: inline-flex;
+}
+
 .action-bar {
   position: sticky;
   top: var(--topbar-h);
