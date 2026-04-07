@@ -1,5 +1,5 @@
-import { ensureNodeShape, isContainerNode, isRngNode } from '../core/graph-utils.js';
-import { normalizeRngBranchProbabilities } from '../core/rng.js';
+import { ensureNodeShape, isContainerNode, isRngNode } from '../../core/graph-utils.js';
+import { normalizeRngBranchProbabilities } from '../../core/rng.js';
 
 function esc(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');

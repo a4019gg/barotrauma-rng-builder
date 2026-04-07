@@ -1,9 +1,9 @@
-// services/db/db-icon-canvas.js
+// modules/db/db-icon-canvas.js
 // Canvas-based icon renderer for DB preview ONLY
 //
 // Responsibilities:
 // - Render atlas sourcerect to canvas
-// - Scale icon to target size (canvas-equivalent of legacy drawImage)
+// - Scale icon to target size via drawImage
 // - One-time render, no re-draws
 //
 // NON-responsibilities:
@@ -58,7 +58,6 @@ export function createDbIconCanvas(options = {}) {
     // Clear just in case
     ctx.clearRect(0, 0, size, size);
 
-    // Canvas-equivalent of legacy Barotrauma logic:
     // drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
     ctx.drawImage(
       img,

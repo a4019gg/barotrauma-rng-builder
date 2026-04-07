@@ -10,9 +10,9 @@
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/themes/theme-system.css" />
   <link id="base-theme-style" rel="stylesheet" href="./css/themes/base/debug.css" />
-  <link rel="stylesheet" href="./services/tree/tree.css" />
-  <link rel="stylesheet" href="./services/db/db.css" />
-  <link rel="stylesheet" href="./services/docs/docs.css" />
+  <link rel="stylesheet" href="./modules/tree/tree.css" />
+  <link rel="stylesheet" href="./modules/db/db.css" />
+  <link rel="stylesheet" href="./modules/docs/docs.css" />
   <style>
     body.app-loading #app-shell {
       opacity: 0;
@@ -105,11 +105,15 @@
                   <button type="button" class="menu-style-arrow" role="menuitem" data-action="toggleThemeAccentSubmenu" data-theme-id="retro-terminal" aria-label="Toggle accent submenu">▶</button>
                   <div class="menu-dropdown submenu menu-retro-accent-dropdown" role="menu">
                     <div class="menu-group-title" data-l10n="accentColor"></div>
-                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="terminal-green" data-l10n="retroAccentGreen" aria-checked="false"></button>
-                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="amber-phosphor" data-l10n="retroAccentAmber" aria-checked="false"></button>
-                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="ice-cyan" data-l10n="retroAccentCyan" aria-checked="false"></button>
-                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="plasma-magenta" data-l10n="retroAccentMagenta" aria-checked="false"></button>
-                    <button type="button" role="menuitemradio" class="retro-accent-option" data-action="setRetroAccentPreset" data-value="paper-ink" data-l10n="retroAccentPaperInk" aria-checked="false"></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="terminal-green" data-l10n-title="retroAccentGreen" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="amber-phosphor" data-l10n-title="retroAccentAmber" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="ice-cyan" data-l10n-title="retroAccentCyan" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="plasma-magenta" data-l10n-title="retroAccentMagenta" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="violet-glow" data-l10n-title="retroAccentViolet" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="neon-blue" data-l10n-title="retroAccentBlue" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="ember-red" data-l10n-title="retroAccentRed" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="phosphor-lime" data-l10n-title="retroAccentLime" aria-checked="false"><span class="retro-preset-dot"></span></button>
+                    <button type="button" role="menuitemradio" class="retro-preset-btn retro-preset-option retro-accent-option" data-action="setRetroAccentPreset" data-value="mono-contrast" data-l10n-title="retroAccentMono" aria-checked="false"><span class="retro-preset-dot"></span></button>
                   </div>
                 </div>
                 <div class="menu-subitem style-theme-item" role="none" data-theme-id="soft-bloom">
