@@ -303,6 +303,19 @@ export class EditorStore {
   setModel(model) { this.dispatch({ type: 'SET_MODEL', model }); }
   findNodeById(id, nodes = this.currentModel()) { return findNodeById(id, nodes); }
   collectNodes() { return collectNodes(this.currentModel()); }
+
+  loadProject(projectState) {
+    if (!projectState || !Array.isArray(projectState.events) || !projectState.events.length) return false;
+    this.events = structuredClone(projectState.events);
+    this.currentEventIndex = Number.isInteger(projectState.currentEventIndex)
+      ? Math.max(0, Math.min(projectState.currentEventIndex, this.events.length - 1))
+      : 0;
+    this.editorMode = projectState.editorMode === 'advanced' ? 'advanced' : 'basic';
+    this.idCounter = Number.isFinite(projectState.idCounter) ? Math.max(1, Math.floor(projectState.idCounter)) : 1;
+    this.history.clear();
+    this.notify();
+    return true;
+  }
 }
 
 export const editorStore = new EditorStore();

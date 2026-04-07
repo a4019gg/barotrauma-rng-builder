@@ -785,11 +785,11 @@ body[data-active-module='documentation'] #output-panel {
 }
 
 button[data-action='openEditorModule'][data-action-tier='secondary'] {
-  display: none;
+  display: none !important;
 }
 
-body[data-active-module='documentation'] button[data-action='openEditorModule'][data-action-tier='secondary'] {
-  display: inline-flex;
+body[data-active-module='documentation'] button[data-action='openEditorModule'][data-action-tier='secondary']:not([hidden]) {
+  display: inline-flex !important;
 }
 
 .action-bar {

@@ -226,7 +226,6 @@ export const documentationArticles = [
       whereToUseListKeys: keys("docs.modes", "whereToUseExample", 3),
       howItWorksDefinitions: [
         def("docs.modes.basic.term", "docs.modes.basic.description"),
-        def("docs.modes.intermediate.term", "docs.modes.intermediate.description"),
         def("docs.modes.advanced.term", "docs.modes.advanced.description")
       ],
       exampleListKeys: keys("docs.modes", "exampleLine", 3),

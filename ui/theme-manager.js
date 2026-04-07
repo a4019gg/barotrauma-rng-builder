@@ -122,8 +122,9 @@ export function applyTheme() {
   document.body.style.setProperty('--sf-success', accents.success);
   document.body.style.setProperty('--sf-failure', accents.failure);
   const retroAccents = RETRO_ACCENT_PRESETS[state.retroAccentPreset] || RETRO_ACCENT_PRESETS[defaults.retroAccentPreset];
-  document.body.style.setProperty('--retro-accent-main', retroAccents.accent);
-  document.body.style.setProperty('--retro-accent-strong', retroAccents.strong);
+  const isPaperInkInDark = state.baseTheme === 'retro-terminal' && state.themeMode === 'dark' && state.retroAccentPreset === 'paper-ink';
+  document.body.style.setProperty('--retro-accent-main', isPaperInkInDark ? '#ffffff' : retroAccents.accent);
+  document.body.style.setProperty('--retro-accent-strong', isPaperInkInDark ? '#ffffff' : retroAccents.strong);
 
   setAppSetting('baseTheme', state.baseTheme);
   setAppSetting('themeMode', state.themeMode);
