@@ -19,6 +19,7 @@ import { getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setRetr
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
+import { buildProjectFilename, parseProjectJson, serializeProject } from '../io/project-io.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -573,8 +574,40 @@ function updateXML() {
   if (explainOut) explainOut.textContent = explainEventModel({ eventId: currentEvent.id, model: currentEvent.model, mode: explainMode });
 }
 
-function handleProjectStub() {
-  showNeutral(t('projectStub'));
+async function importProjectFromFile(file) {
+  if (!file) {
+    showError(t('projectImportNoFile'));
+    return;
+  }
+  try {
+    const raw = await file.text();
+    const projectState = parseProjectJson(raw);
+    const loaded = editorStore.loadProject(projectState);
+    if (!loaded) throw new Error('Project payload rejected');
+    closeProjectImportModal();
+    showSuccess(t('projectImported'));
+  } catch (error) {
+    console.error(error);
+    showError(t('projectImportFailed'));
+  }
+}
+
+function handleProjectExport() {
+  try {
+    const state = editorStore.getState();
+    const json = serializeProject(state);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildProjectFilename(state.currentEvent?.id || 'project');
+    link.click();
+    URL.revokeObjectURL(url);
+    showSuccess(t('projectExported'));
+  } catch (error) {
+    console.error(error);
+    showError(t('projectExportFailed'));
+  }
 }
 
 function openProjectImportModal() {
@@ -773,7 +806,7 @@ async function handleClick(event) {
   if (action === 'openImportXmlModal') openImportXmlModal();
 
   if (action === 'projectImport') openProjectImportModal();
-  if (action === 'projectExport') handleProjectStub();
+  if (action === 'projectExport') handleProjectExport();
   if (action === 'toggleTreeSummaryPanel') {
     const treeContainer = document.getElementById('tree-container');
     if (!treeContainer) return;
@@ -1078,8 +1111,11 @@ export function initEditorUI() {
     if (closeProjectTrigger) closeProjectImportModal();
     const placeholderTrigger = event.target.closest('[data-role="import-xml-placeholder"]');
     if (placeholderTrigger) showNeutral(t('importXmlPlaceholderDescription'));
-    const projectPlaceholderTrigger = event.target.closest('[data-role="import-project-placeholder"]');
-    if (projectPlaceholderTrigger) showNeutral(t('projectImportPlaceholderDescription'));
+    const projectImportTrigger = event.target.closest('[data-role="import-project-placeholder"]');
+    if (projectImportTrigger) {
+      const file = document.getElementById('import-project-file')?.files?.[0] || null;
+      importProjectFromFile(file);
+    }
   });
   document.addEventListener('change', event => {
     if (event.target.id === 'import-xml-file') {
@@ -1115,11 +1151,22 @@ export function initEditorUI() {
     if (!dropzone) return;
     event.preventDefault();
     dropzone.classList.remove('is-dragover');
-    const fileName = dropzone.closest('#import-project-modal')
+    const isProjectDrop = Boolean(dropzone.closest('#import-project-modal'));
+    const fileName = isProjectDrop
       ? document.getElementById('import-project-file-name')
       : document.getElementById('import-xml-file-name');
+    const input = isProjectDrop
+      ? document.getElementById('import-project-file')
+      : document.getElementById('import-xml-file');
     const files = event.dataTransfer?.files;
-    if (files?.length && fileName) fileName.textContent = files[0].name;
+    if (files?.length) {
+      if (input) {
+        const transfer = new DataTransfer();
+        transfer.items.add(files[0]);
+        input.files = transfer.files;
+      }
+      if (fileName) fileName.textContent = files[0].name;
+    }
   });
   document.addEventListener('scroll', event => {
     if (event.target?.id === 'output') xmlViewer?.syncScroll();
