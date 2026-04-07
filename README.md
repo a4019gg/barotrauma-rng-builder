@@ -26,8 +26,8 @@ These modes only change **what the UI exposes**. They do **not** create separate
 The graph is now designed around a shared node schema:
 
 * `rng`
-  * stores a `branches[]` array rather than hardcoding success/failure in the core model
-  * still preserves legacy binary compatibility for existing saved data
+  * stores only `branches[]` as nested children source
+  * stores explicit `mode: "weight" | "probability"` on the node
 * `event`
   * generic execution-order container for actions and nested RNG
 * `eventSet`
@@ -36,9 +36,12 @@ The graph is now designed around a shared node schema:
   * `spawn`, `creature`, `affliction`
   * structured so additional action/check/trigger node types can be added later without changing the core traversal model
 
-### Compatibility goals
+### Project JSON format
 
-* Existing binary RNG graphs remain loadable.
-* Legacy `success` / `failure` data is normalized into the unified branch model.
-* XML export still emits the same simple `<RandomEvent>` structure for basic binary trees.
-* Multi-branch RNG exports by compiling branch arrays into chained `<RandomEvent>` blocks so the XML path remains compatible with Barotrauma's current structure.
+The persisted `.baro-rng.json` now uses a minimal runtime-oriented schema:
+
+* root event nodes are stored in `events[].rootNodes` (instead of `model`)
+* UI-only state is grouped in `ui` (`ui.currentEventIndex`)
+* all node ids are exported as unique strings (`rng_1`, `spawn_2`, ...)
+* RNG nodes no longer duplicate nested children at node root (`children.success/failure` removed)
+* RNG branches no longer use `kind` and keep only `id`, `value`, `children`

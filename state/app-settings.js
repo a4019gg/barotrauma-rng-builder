@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS = {
   editorMode: 'basic',
   viewMode: 'node',
   buttonIcons: true,
+  editableLabels: true,
   softStart: false
 };
 

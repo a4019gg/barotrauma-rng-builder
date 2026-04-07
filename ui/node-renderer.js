@@ -285,11 +285,7 @@ function createBranch(model, branch, renderer, editorMode) {
   if (editorMode !== 'basic') {
     const branchMeta = document.createElement('div');
     branchMeta.className = 'node-branch-meta';
-
-    const labelInput = createParamInput(model.id, `branch:${branch.id}:label`, branch.label || '', 'text', null, TOOLTIPS.general.branchLabel);
-    labelInput.dataset.action = 'updateBranch';
-    labelInput.dataset.branchId = branch.id;
-    labelInput.dataset.key = 'label';
+    const editableLabelsEnabled = editorMode === 'advanced' && getAppSetting('editableLabels') !== false;
 
     const valueInput = createParamInput(model.id, `branch:${branch.id}:value`, formatChanceForInput(branch.value ?? 0), 'text', null, TOOLTIPS.general.branchValue);
     valueInput.inputMode = 'decimal';
@@ -297,7 +293,13 @@ function createBranch(model, branch, renderer, editorMode) {
     valueInput.dataset.branchId = branch.id;
     valueInput.dataset.key = 'value';
 
-    branchMeta.append(createLabeledControl(t('label'), labelInput, TOOLTIPS.general.branchLabel));
+    if (editableLabelsEnabled) {
+      const labelInput = createParamInput(model.id, `branch:${branch.id}:label`, branch.label || '', 'text', null, TOOLTIPS.general.branchLabel);
+      labelInput.dataset.action = 'updateBranch';
+      labelInput.dataset.branchId = branch.id;
+      labelInput.dataset.key = 'label';
+      branchMeta.append(createLabeledControl(t('label'), labelInput, TOOLTIPS.general.branchLabel));
+    }
     branchMeta.append(createLabeledControl(model.params.mode === 'weight' ? t('weight') : t('value'), valueInput, TOOLTIPS.general.branchValue));
 
     if ((model.branches?.length || 0) > 2) {
