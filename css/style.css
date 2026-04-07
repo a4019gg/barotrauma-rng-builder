@@ -265,13 +265,17 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   text-align: left;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 7px 8px;
   border-radius: 6px;
   min-height: 34px;
   white-space: normal;
   line-height: 1.2;
+}
+
+.menu-dropdown button > .submenu-arrow {
+  margin-left: auto;
 }
 
 .menu-group-title {

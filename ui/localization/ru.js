@@ -221,6 +221,8 @@ export const ruUiDictionary = {
     aboutApp: 'О программе',
     openSettingsLanguage: 'Настройки языка',
     openSettingsXmlBehavior: 'Поведение XML',
+    showButtonIcons: 'Показывать иконки кнопок',
+    softStart: 'Мягкий запуск (без предзагрузки)',
     resetSettings: 'Сбросить настройки',
     confirm: 'Подтвердить',
     cancel: 'Отмена',

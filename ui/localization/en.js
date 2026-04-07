@@ -221,6 +221,8 @@ export const enUiDictionary = {
     aboutApp: 'About',
     openSettingsLanguage: 'Language settings',
     openSettingsXmlBehavior: 'XML behavior',
+    showButtonIcons: 'Show button icons',
+    softStart: 'Soft start (disable preload)',
     resetSettings: 'Reset settings',
     confirm: 'Confirm',
     cancel: 'Cancel',
