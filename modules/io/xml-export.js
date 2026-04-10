@@ -42,7 +42,7 @@ function generateNodeXML(rawNode, indentLevel = 2) {
   if (isRngNode(node)) {
     const branches = normalizeRngBranchProbabilities(node).filter(branch => (branch.children || []).length || branch.probability > 0);
     if (branches.length === 2 && branches[0].id === 'success' && branches[1].id === 'failure' && node.params.mode !== 'weight') {
-      let xml = `${indent}<RandomEvent chance="${((node.params.chance ?? branches[0].probability) * 100).toFixed(3)}">\n`;
+      let xml = `${indent}<RandomEvent chance="${(branches[0].probability * 100).toFixed(3)}">\n`;
       if (branches[0].children.length) xml += `${indent}  <Success>\n${writeNodeList(branches[0].children, indentLevel + 2)}${indent}  </Success>\n`;
       if (branches[1].children.length) xml += `${indent}  <Failure>\n${writeNodeList(branches[1].children, indentLevel + 2)}${indent}  </Failure>\n`;
       xml += `${indent}</RandomEvent>\n`;

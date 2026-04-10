@@ -59,6 +59,17 @@ function toNumberOr(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function normalizeNodeId(value) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  return /^-?\d+$/.test(text) ? Number(text) : text;
+}
+
+function sameNodeId(left, right) {
+  return String(left) === String(right);
+}
+
 function parseJSONSafe(raw, fallback) {
   if (raw == null) return fallback;
   try {
@@ -443,8 +454,9 @@ export class TreeService {
   }
 
   selectNode(nodeId) {
-    if (this.selectedNodeId === nodeId) return;
-    this.selectedNodeId = nodeId;
+    const normalizedId = normalizeNodeId(nodeId);
+    if (sameNodeId(this.selectedNodeId, normalizedId)) return;
+    this.selectedNodeId = normalizedId;
     this.render(this.model || []);
   }
 
@@ -460,7 +472,7 @@ export class TreeService {
   }
 
   centerOnNode(nodeId) {
-    const nodeEl = this.g?.selectAll('.tree-node').filter(d => d.data.id === nodeId).node();
+    const nodeEl = this.g?.selectAll('.tree-node').filter(d => sameNodeId(d.data.id, nodeId)).node();
     if (!nodeEl || !this.svg || !this.zoom) return;
     const d = window.d3.select(nodeEl).datum();
     const p = this.getNodeCoords(d);
@@ -546,11 +558,11 @@ export class TreeService {
       .join('g')
       .attr('class', d => {
         const classes = ['tree-node', `node-${d.data.type || 'label'}`];
-        if (d.data.nodeRef && this.selectedNodeId === d.data.id) classes.push('selected');
+        if (d.data.nodeRef && sameNodeId(this.selectedNodeId, d.data.id)) classes.push('selected');
         if (this.searchHighlightIds.has(d.data.id)) classes.push('search-hit');
         const heatClass = chanceHeatClass(d.data.probability, heatmapEnabled);
         if (heatClass) classes.push(heatClass);
-        if (activeDropTarget?.id === d.data.id) {
+        if (sameNodeId(activeDropTarget?.id, d.data.id)) {
           classes.push('drop-target');
           classes.push(activeDropTarget.branch === 'success' ? 'drop-target-success' : 'drop-target-failure');
         }
@@ -645,9 +657,9 @@ export class TreeService {
         this.dropTarget = hit;
         this.g.selectAll('.tree-node')
           .classed('drag-hidden-drop-zones', nd => this.draggingTreeIds?.has(nd.data.id))
-          .classed('drop-target', nd => this.dropTarget?.id === nd.data.id)
-          .classed('drop-target-success', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'success')
-          .classed('drop-target-failure', nd => this.dropTarget?.id === nd.data.id && this.dropTarget?.branch === 'failure');
+          .classed('drop-target', nd => sameNodeId(this.dropTarget?.id, nd.data.id))
+          .classed('drop-target-success', nd => sameNodeId(this.dropTarget?.id, nd.data.id) && this.dropTarget?.branch === 'success')
+          .classed('drop-target-failure', nd => sameNodeId(this.dropTarget?.id, nd.data.id) && this.dropTarget?.branch === 'failure');
       })
       .on('end', (event, d) => {
         if (!this.treeSettings.dragEnabled || !d.data.nodeRef || this.draggingId !== d.data.id) return;
@@ -747,16 +759,16 @@ export class TreeService {
     if (!hitEl) return null;
 
     const data = window.d3.select(hitEl).datum();
-    if (!data?.data?.nodeRef || data.data.id === draggingId) return null;
+    if (!data?.data?.nodeRef || sameNodeId(data.data.id, draggingId)) return null;
     if (this.isTreeDescendant(draggingId, data.data.id)) return null;
     return { id: data.data.id, branch: hitZone.dataset.branch || null };
   }
 
   isTreeDescendant(parentId, candidateId) {
-    if (!parentId || !candidateId || parentId === candidateId) return false;
+    if (!parentId || !candidateId || sameNodeId(parentId, candidateId)) return false;
     const root = this.findNodeById(parentId);
     if (!root) return false;
-    const walk = list => list.some(child => child.id === candidateId || getNodeCollections(child).some(walk));
+    const walk = list => list.some(child => sameNodeId(child.id, candidateId) || getNodeCollections(child).some(walk));
     return getNodeCollections(root).some(walk);
   }
 
@@ -809,7 +821,7 @@ export class TreeService {
     const fo = group.append('foreignObject').attr('x', -width / 2 + 8).attr('y', -height / 2 + 8).attr('width', width - 16).attr('height', height - 16);
     const wrapper = document.createElement('div');
     wrapper.className = 'tree-node-fo';
-    if (this.selectedNodeId === node.id) wrapper.classList.add('selected');
+    if (sameNodeId(this.selectedNodeId, node.id)) wrapper.classList.add('selected');
 
     const header = document.createElement('div');
     header.className = 'tree-node-head';
@@ -843,7 +855,7 @@ export class TreeService {
     removeBtn.className = 'icon-btn remove-btn';
     removeBtn.type = 'button';
     removeBtn.title = t('removeNode');
-    const pendingDelete = this.deleteConfirmState.id === node.id && this.deleteConfirmState.until > Date.now();
+    const pendingDelete = sameNodeId(this.deleteConfirmState.id, node.id) && this.deleteConfirmState.until > Date.now();
     removeBtn.append(createIcon(pendingDelete ? 'alert-triangle' : 'trash'));
     removeBtn.addEventListener('click', event => {
       event.stopPropagation();
@@ -851,7 +863,7 @@ export class TreeService {
         this.deleteConfirmState = { id: node.id, until: Date.now() + REMOVE_CONFIRM_TIMEOUT_MS };
         this.render(this.model || []);
         setTimeout(() => {
-          if (this.deleteConfirmState.id === node.id && this.deleteConfirmState.until <= Date.now()) {
+          if (sameNodeId(this.deleteConfirmState.id, node.id) && this.deleteConfirmState.until <= Date.now()) {
             this.deleteConfirmState = { id: null, until: 0 };
             this.render(this.model || []);
           }
@@ -944,7 +956,7 @@ export class TreeService {
   }
 
   buildInlineEditors(node) {
-    const isSelected = this.selectedNodeId === node.id;
+    const isSelected = sameNodeId(this.selectedNodeId, node.id);
     const makeInput = ({ key, label, type = 'text', step = '1', value, inputMode = null }) => {
       const row = document.createElement('label');
       row.className = 'tree-field';
@@ -1146,7 +1158,7 @@ export class TreeService {
     let found = null;
     const walk = nodes => {
       nodes.forEach(node => {
-        if (node.id === id) { found = node; return; }
+        if (sameNodeId(node.id, id)) { found = node; return; }
         getNodeCollections(node).forEach(children => walk(children));
       });
     };
@@ -1542,7 +1554,7 @@ export class TreeService {
 
     const selectedSet = new Set();
     if (this.treeSettings.minimapFocusMode && this.selectedNodeId != null) {
-      let current = activeNodes.find(n => n.data.id === this.selectedNodeId);
+      let current = activeNodes.find(n => sameNodeId(n.data.id, this.selectedNodeId));
       while (current) {
         selectedSet.add(current.data.id);
         current = current.parent;
@@ -1591,7 +1603,7 @@ export class TreeService {
       const color = this.treeSettings.minimapTypeMode === 'dots' ? '#9dc1ff' : typeColor(d.data.type);
       const iconOnly = this.treeSettings.minimapTypeMode === 'type-icon' || this.treeSettings.minimapTypeMode === 'type-icon-color';
       const fill = this.treeSettings.minimapTypeMode === 'type-icon' ? '#cfe1ff' : color;
-      const radius = d.data.id === this.selectedNodeId ? 4.4 : 3.1;
+      const radius = sameNodeId(d.data.id, this.selectedNodeId) ? 4.4 : 3.1;
       const label = (this.treeSettings.minimapDisplayPercent === 'nodes' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(d.data.probability)
         ? `<text class="mm-percent" x="${scaleX(p.y) + 4}" y="${scaleY(p.x) - 4}">${Math.round(d.data.probability * 100)}%</text>`
         : '';
@@ -1627,7 +1639,7 @@ export class TreeService {
     svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
       nodeHit.addEventListener('click', () => {
         const nodeId = nodeHit.getAttribute('data-node-id');
-        this.selectedNodeId = Number.isFinite(Number(nodeId)) ? Number(nodeId) : nodeId;
+        this.selectedNodeId = normalizeNodeId(nodeId);
         this.centerOnNode(this.selectedNodeId);
         this.render(this.model || []);
       });

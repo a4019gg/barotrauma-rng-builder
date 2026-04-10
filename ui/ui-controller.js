@@ -81,10 +81,18 @@ function getOutputToggleLabel(collapsed) {
   return formatL10n(collapsed ? 'outputPanelExpand' : 'outputPanelCollapse', { label: t('output') });
 }
 
+function normalizeNodeId(rawId) {
+  if (rawId == null) return null;
+  const asText = String(rawId).trim();
+  if (!asText) return null;
+  return /^-?\d+$/.test(asText) ? Number(asText) : asText;
+}
+
 async function requestNodeRemoval(id) {
-  if (!Number.isFinite(Number(id))) return false;
+  const normalizedId = normalizeNodeId(id);
+  if (normalizedId == null) return false;
   if (!await confirmAction('confirmRemoveNode')) return false;
-  dispatch({ type: 'REMOVE_NODE', id: Number(id) });
+  dispatch({ type: 'REMOVE_NODE', id: normalizedId });
   return true;
 }
 
@@ -334,8 +342,8 @@ function openNodeContextMenu(event) {
   const nodeEl = event.target.closest('.tree-node');
   if (!nodeEl || !window.d3) return;
   const datum = window.d3.select(nodeEl).datum();
-  const nodeId = datum?.data?.id;
-  if (!Number.isFinite(Number(nodeId))) return;
+  const nodeId = normalizeNodeId(datum?.data?.id);
+  if (nodeId == null) return;
   event.preventDefault();
   closeContextMenu();
   const menu = document.createElement('div');
@@ -349,14 +357,14 @@ function openNodeContextMenu(event) {
     btn.onclick = () => { fn(); closeContextMenu(); };
     menu.appendChild(btn);
   };
-  add(t('addChild'), () => dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(nodeId), nodeType: 'rng' }));
+  add(t('addChild'), () => dispatch({ type: 'ADD_CHILD_NODE', parentId: nodeId, nodeType: 'rng' }));
   add(t('duplicateNode'), () => {
-    const result = dispatch({ type: 'DUPLICATE_SUBTREE', id: Number(nodeId) });
+    const result = dispatch({ type: 'DUPLICATE_SUBTREE', id: nodeId });
     if (document.body.dataset.viewMode === 'tree' && result?.nodeId != null) treeService.autoLayoutSubtree(result.nodeId);
   });
-  add(t('copySubtree'), () => dispatch({ type: 'COPY_SUBTREE', id: Number(nodeId) }));
-  add(t('pasteSubtree'), () => dispatch({ type: 'PASTE_SUBTREE', parentId: Number(nodeId) }));
-  add(t('removeNode'), () => requestNodeRemoval(Number(nodeId)));
+  add(t('copySubtree'), () => dispatch({ type: 'COPY_SUBTREE', id: nodeId }));
+  add(t('pasteSubtree'), () => dispatch({ type: 'PASTE_SUBTREE', parentId: nodeId }));
+  add(t('removeNode'), () => requestNodeRemoval(nodeId));
   document.body.appendChild(menu);
   contextMenuEl = menu;
 }
@@ -748,7 +756,7 @@ async function handleClick(event) {
   if (!actionEl) return;
 
   const action = actionEl.dataset.action;
-  const id = Number(actionEl.dataset.id);
+  const id = normalizeNodeId(actionEl.dataset.id);
 
   if (action === 'addEvent') dispatch({ type: 'ADD_EVENT' });
   if (action === 'removeEvent') {
@@ -784,7 +792,7 @@ async function handleClick(event) {
   }
   if (action === 'addNode') dispatch({ type: 'ADD_ROOT_NODE', nodeType: actionEl.dataset.type });
   if (action === 'setEditorMode') { setAppSetting('editorMode', actionEl.dataset.mode); editorStore.setEditorMode(actionEl.dataset.mode); applyEditorMode(); }
-  if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: Number(actionEl.dataset.parentId), branch: actionEl.dataset.branch || null, nodeType: actionEl.dataset.type });
+  if (action === 'addChildNode') dispatch({ type: 'ADD_CHILD_NODE', parentId: normalizeNodeId(actionEl.dataset.parentId), branch: actionEl.dataset.branch || null, nodeType: actionEl.dataset.type });
   if (action === 'addRngBranch') dispatch({ type: 'ADD_RNG_BRANCH', id });
   if (action === 'removeRngBranch') dispatch({ type: 'REMOVE_RNG_BRANCH', id, branchId: actionEl.dataset.branchId });
   if (action === 'removeNode') {
@@ -917,10 +925,10 @@ function handleChange(event) {
   const el = event.target;
   if (el.dataset.action === 'updateParam') {
     const value = el.dataset.valueType === 'boolean' ? el.checked : el.value;
-    dispatch({ type: 'UPDATE_NODE_PARAM', id: Number(el.dataset.id), key: el.dataset.key, value });
+    dispatch({ type: 'UPDATE_NODE_PARAM', id: normalizeNodeId(el.dataset.id), key: el.dataset.key, value });
   }
   if (el.dataset.action === 'updateBranch') {
-    dispatch({ type: 'UPDATE_BRANCH', id: Number(el.dataset.id), branchId: el.dataset.branchId, key: el.dataset.key, value: el.value });
+    dispatch({ type: 'UPDATE_BRANCH', id: normalizeNodeId(el.dataset.id), branchId: el.dataset.branchId, key: el.dataset.key, value: el.value });
   }
 }
 
