@@ -14,16 +14,17 @@ import {
   findRngBranch,
   getModeDefinition,
   getNodeCollections,
-  isRngNode,
-  syncLegacyRngChildren
+  isRngNode
 } from '../core/graph-utils.js';
 
 function isDescendantOf(parentCandidateId, maybeDescendantId, nodes) {
+  const parentId = String(parentCandidateId);
+  const descendantId = String(maybeDescendantId);
   const walk = (list, foundParent = false) => {
     for (const rawNode of list) {
       const node = ensureNodeShape(rawNode);
-      const nextFoundParent = foundParent || node.id === parentCandidateId;
-      if (node.id === maybeDescendantId && nextFoundParent) return true;
+      const nextFoundParent = foundParent || String(node.id) === parentId;
+      if (String(node.id) === descendantId && nextFoundParent) return true;
       for (const children of getNodeCollections(node)) {
         if (walk(children, nextFoundParent)) return true;
       }
@@ -34,15 +35,13 @@ function isDescendantOf(parentCandidateId, maybeDescendantId, nodes) {
 }
 
 function extractNodeById(id, nodes) {
+  const targetId = String(id);
   for (let i = 0; i < nodes.length; i += 1) {
     const node = ensureNodeShape(nodes[i]);
-    if (node.id === id) return nodes.splice(i, 1)[0];
+    if (String(node.id) === targetId) return nodes.splice(i, 1)[0];
     for (const children of getNodeCollections(node)) {
       const hit = extractNodeById(id, children);
-      if (hit) {
-        syncLegacyRngChildren(node);
-        return hit;
-      }
+      if (hit) return hit;
     }
   }
   return null;
@@ -149,7 +148,6 @@ export class EditorStore {
         if (!target) return { changed: false };
         const node = createNode(action.nodeType, this.nextId);
         target.push(node);
-        syncLegacyRngChildren(parent);
         if (!skipHistory) this.history.push({ undo: () => removeNodeById(node.id, currentEvent.model), redo: () => target.push(node) });
         return { changed: true, nodeId: node.id };
       }
@@ -157,10 +155,9 @@ export class EditorStore {
         const node = findNodeById(action.id, currentEvent.model);
         if (!isRngNode(node)) return { changed: false };
         const branchCount = node.branches?.length || 0;
-        const nextBranch = { id: `branch_${branchCount + 1}`, label: `Branch ${branchCount + 1}`, kind: node.params.mode === 'weight' ? 'weight' : 'probability', value: node.params.mode === 'weight' ? 1 : 0, children: [] };
+        const nextBranch = { id: `branch_${branchCount + 1}`, label: `Branch ${branchCount + 1}`, value: node.params.mode === 'weight' ? 1 : 0, children: [] };
         node.branches.push(nextBranch);
-        syncLegacyRngChildren(node);
-        if (!skipHistory) this.history.push({ undo: () => { node.branches.pop(); syncLegacyRngChildren(node); }, redo: () => { node.branches.push(structuredClone(nextBranch)); syncLegacyRngChildren(node); } });
+        if (!skipHistory) this.history.push({ undo: () => { node.branches.pop(); }, redo: () => { node.branches.push(structuredClone(nextBranch)); } });
         return { changed: true };
       }
       case 'REMOVE_RNG_BRANCH': {
@@ -169,8 +166,7 @@ export class EditorStore {
         const index = node.branches.findIndex(branch => branch.id === action.branchId);
         if (index < 0) return { changed: false };
         const [removed] = node.branches.splice(index, 1);
-        syncLegacyRngChildren(node);
-        if (!skipHistory) this.history.push({ undo: () => { node.branches.splice(index, 0, removed); syncLegacyRngChildren(node); }, redo: () => { node.branches.splice(index, 1); syncLegacyRngChildren(node); } });
+        if (!skipHistory) this.history.push({ undo: () => { node.branches.splice(index, 0, removed); }, redo: () => { node.branches.splice(index, 1); } });
         return { changed: true };
       }
       case 'UPDATE_BRANCH': {
@@ -183,13 +179,12 @@ export class EditorStore {
           : String(action.value || '');
         if (prev === next) return { changed: false };
         branch[action.key] = next;
-        syncLegacyRngChildren(node);
-        if (!skipHistory) this.history.push({ undo: () => { branch[action.key] = prev; syncLegacyRngChildren(node); }, redo: () => { branch[action.key] = next; syncLegacyRngChildren(node); } });
+        if (!skipHistory) this.history.push({ undo: () => { branch[action.key] = prev; }, redo: () => { branch[action.key] = next; } });
         return { changed: true };
       }
       case 'MOVE_NODE': {
-        if (!Number.isFinite(action.nodeId)) return { changed: false };
-        if (action.newParentId != null && !Number.isFinite(action.newParentId)) return { changed: false };
+        if (action.nodeId == null) return { changed: false };
+        if (action.newParentId != null && action.newParentId === '') return { changed: false };
         if (action.newParentId === action.nodeId) return { changed: false };
         if (action.newParentId != null && isDescendantOf(action.nodeId, action.newParentId, currentEvent.model)) return { changed: false };
         const movingNode = extractNodeById(action.nodeId, currentEvent.model);
@@ -205,7 +200,6 @@ export class EditorStore {
           return { changed: false };
         }
         target.push(movingNode);
-        syncLegacyRngChildren(parent);
         return { changed: true };
       }
       case 'REMOVE_NODE': {
@@ -224,7 +218,6 @@ export class EditorStore {
         if (isRngNode(node) && action.key === 'chance' && node.branches?.length >= 2 && node.params.mode !== 'weight') {
           node.branches[0].value = next;
           node.branches[1].value = 1 - next;
-          syncLegacyRngChildren(node);
         }
         if (!skipHistory) this.history.push({ undo: () => { node.params[action.key] = prev; }, redo: () => { node.params[action.key] = next; } });
         return { changed: true };
@@ -258,7 +251,6 @@ export class EditorStore {
           const target = getChildList(parent, action.branch);
           if (!target) return { changed: false };
           target.push(pasted);
-          syncLegacyRngChildren(parent);
         }
         if (!skipHistory) this.history.push({ undo: () => removeNodeById(pasted.id, currentEvent.model), redo: () => currentEvent.model.push(pasted) });
         return { changed: true, nodeId: pasted.id };

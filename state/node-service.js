@@ -5,8 +5,7 @@ import {
   findRngBranch,
   getNodeCollections,
   isContainerNode,
-  isRngNode,
-  syncLegacyRngChildren
+  isRngNode
 } from '../core/graph-utils.js';
 
 
@@ -19,9 +18,10 @@ export function createNode(type, nextId) {
 }
 
 export function findNodeById(id, nodes) {
+  const targetId = String(id);
   for (const rawNode of nodes) {
     const node = ensureNodeShape(rawNode);
-    if (node.id === id) return node;
+    if (String(node.id) === targetId) return node;
     for (const children of getNodeCollections(node)) {
       const hit = findNodeById(id, children);
       if (hit) return hit;
@@ -31,15 +31,13 @@ export function findNodeById(id, nodes) {
 }
 
 export function removeNodeById(id, nodes) {
+  const targetId = String(id);
   for (let i = 0; i < nodes.length; i += 1) {
     const node = ensureNodeShape(nodes[i]);
-    if (node.id === id) return nodes.splice(i, 1)[0];
+    if (String(node.id) === targetId) return nodes.splice(i, 1)[0];
     for (const children of getNodeCollections(node)) {
       const hit = removeNodeById(id, children);
-      if (hit) {
-        syncLegacyRngChildren(node);
-        return hit;
-      }
+      if (hit) return hit;
     }
   }
   return null;
@@ -52,7 +50,6 @@ export function cloneWithFreshIds(node, nextId) {
     for (const children of getNodeCollections(n)) {
       children.forEach(remap);
     }
-    syncLegacyRngChildren(n);
   };
   remap(copy);
   return copy;
@@ -93,7 +90,6 @@ export function getChildList(parent, branchId = null) {
   if (isRngNode(node)) {
     const branch = findRngBranch(node, branchId ?? node.branches?.[0]?.id);
     if (!branch) return null;
-    syncLegacyRngChildren(node);
     return branch.children;
   }
   if (isContainerNode(node)) return node.children;

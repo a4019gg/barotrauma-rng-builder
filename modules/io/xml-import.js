@@ -15,7 +15,10 @@ function parseNode(element, nextId) {
       id: nextId(),
       type: 'rng',
       params: { mode: 'probability', chance },
-      children: { success: [], failure: [] }
+      branches: [
+        { id: 'success', label: 'Success', value: chance, children: [] },
+        { id: 'failure', label: 'Failure', value: 1 - chance, children: [] }
+      ]
     });
 
     const success = element.querySelector(':scope > Success');
