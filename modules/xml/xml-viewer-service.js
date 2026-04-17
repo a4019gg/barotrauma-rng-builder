@@ -22,6 +22,11 @@ export class XmlViewerService {
     this.searchMatches = [];
     this.features = { ...DEFAULT_FEATURES };
     this.rawText = '';
+    this.tagElementCache = new Map();
+    this.lineElementCache = new Map();
+    this.lastHoverState = { tag: null, start: null, end: null };
+    this.hoverRaf = null;
+    this.lastPointerEvent = null;
     this.bind();
   }
 
@@ -76,7 +81,21 @@ export class XmlViewerService {
     this.layer.dataset.warnings = this.features.warnings ? 'on' : 'off';
     this.layer.dataset.hints = this.features.inlineHints ? 'on' : 'off';
     this.syncScroll();
+    this.rebuildCaches();
     this.updateSearchCounter();
+  }
+
+  rebuildCaches() {
+    this.tagElementCache.clear();
+    this.lineElementCache.clear();
+    this.layer.querySelectorAll('.xml-tag[data-tag]').forEach(el => {
+      const key = el.dataset.tag || '';
+      if (!this.tagElementCache.has(key)) this.tagElementCache.set(key, []);
+      this.tagElementCache.get(key).push(el);
+    });
+    this.layer.querySelectorAll('.xml-line[data-line]').forEach(el => {
+      this.lineElementCache.set(Number(el.dataset.line), el);
+    });
   }
 
   syncScroll(fromLayer = false) {
@@ -100,21 +119,48 @@ export class XmlViewerService {
   }
 
   handlePointerMove(event) {
+    this.lastPointerEvent = event;
+    if (this.hoverRaf) return;
+    this.hoverRaf = requestAnimationFrame(() => {
+      this.hoverRaf = null;
+      this.applyHoverFromPointer();
+    });
+  }
+
+  applyHoverFromPointer() {
+    const event = this.lastPointerEvent;
+    if (!event) return;
     const tag = event.target.closest('.xml-tag');
     if (!tag || !this.features.blockHover) {
       this.clearHover();
       return;
     }
-    this.layer.querySelectorAll('.xml-tag-hover, .xml-line-hover').forEach(el => el.classList.remove('xml-tag-hover', 'xml-line-hover'));
-    const tagName = tag.dataset.tag;
-    this.layer.querySelectorAll(`.xml-tag[data-tag="${CSS.escape(tagName)}"]`).forEach(el => el.classList.add('xml-tag-hover'));
+    const tagName = tag.dataset.tag || '';
     const start = Number(tag.dataset.blockStart);
     const end = Number(tag.dataset.blockEnd);
-    if (Number.isFinite(start) && Number.isFinite(end)) {
-      for (let i = start; i <= end; i += 1) {
-        this.layer.querySelector(`.xml-line[data-line="${i}"]`)?.classList.add('xml-line-hover');
+
+    if (
+      this.lastHoverState.tag === tagName
+      && this.lastHoverState.start === start
+      && this.lastHoverState.end === end
+    ) {
+      return;
+    }
+
+    (this.tagElementCache.get(this.lastHoverState.tag) || []).forEach(el => el.classList.remove('xml-tag-hover'));
+    if (Number.isFinite(this.lastHoverState.start) && Number.isFinite(this.lastHoverState.end)) {
+      for (let i = this.lastHoverState.start; i <= this.lastHoverState.end; i += 1) {
+        this.lineElementCache.get(i)?.classList.remove('xml-line-hover');
       }
     }
+
+    (this.tagElementCache.get(tagName) || []).forEach(el => el.classList.add('xml-tag-hover'));
+    if (Number.isFinite(start) && Number.isFinite(end)) {
+      for (let i = start; i <= end; i += 1) {
+        this.lineElementCache.get(i)?.classList.add('xml-line-hover');
+      }
+    }
+    this.lastHoverState = { tag: tagName, start, end };
 
     if (this.features.tooltips) {
       const tipTarget = event.target.closest('[data-tooltip], [data-entity]');
@@ -136,7 +182,13 @@ export class XmlViewerService {
   }
 
   clearHover() {
-    this.layer.querySelectorAll('.xml-tag-hover, .xml-line-hover').forEach(el => el.classList.remove('xml-tag-hover', 'xml-line-hover'));
+    (this.tagElementCache.get(this.lastHoverState.tag) || []).forEach(el => el.classList.remove('xml-tag-hover'));
+    if (Number.isFinite(this.lastHoverState.start) && Number.isFinite(this.lastHoverState.end)) {
+      for (let i = this.lastHoverState.start; i <= this.lastHoverState.end; i += 1) {
+        this.lineElementCache.get(i)?.classList.remove('xml-line-hover');
+      }
+    }
+    this.lastHoverState = { tag: null, start: null, end: null };
     this.hideTooltip();
   }
 

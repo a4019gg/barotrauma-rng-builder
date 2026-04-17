@@ -150,6 +150,7 @@ export class TreeService {
     this.treeSettings = { ...DEFAULT_TREE_SETTINGS };
     this.queuedRender = rafBatch((model, opts) => this.render(model, opts));
     this.searchHighlightIds = new Set();
+    this.nodeRenderSignatures = new Map();
   }
 
   init() {
@@ -180,7 +181,7 @@ export class TreeService {
 
     this.ensureMiniMapContainer();
     if (!this.themeUnsubscribe) {
-      this.themeUnsubscribe = onThemeChange(() => this.render(this.model || []));
+      this.themeUnsubscribe = onThemeChange(() => this.render(this.model || [], { forceRebuild: true }));
     }
     if (!this.appSettingsUnsubscribe) {
       this.appSettingsUnsubscribe = subscribeAppSettings(settings => {
@@ -566,6 +567,29 @@ export class TreeService {
     return { x: treeNode.x, y: treeNode.y };
   }
 
+  nodeContentSignature(d) {
+    return JSON.stringify({
+      type: d.data.type,
+      id: d.data.id,
+      title: d.data.title,
+      name: d.data.name,
+      probability: d.data.probability,
+      branchType: d.data.branchType,
+      params: d.data.nodeRef?.params || null,
+      branches: d.data.nodeRef?.branches?.map(branch => ({
+        id: branch.id,
+        value: branch.value,
+        label: branch.label,
+        children: (branch.children || []).map(child => child.id)
+      })) || null,
+      childCount: Array.isArray(d.data.nodeRef?.children) ? d.data.nodeRef.children.length : null,
+      collapsed: this.collapsed.has(d.data.id),
+      selected: sameNodeId(this.selectedNodeId, d.data.id),
+      heatmap: !!this.treeSettings.showHeatmap,
+      searchHit: this.searchHighlightIds.has(d.data.id)
+    });
+  }
+
   render(model, options = {}) {
     this.model = model;
     if (!this.svg) {
@@ -579,6 +603,13 @@ export class TreeService {
     }
     this.svg.classed('show-grid', !!this.treeSettings.showGrid);
     this.svg.style('--tree-grid-size', `${Math.max(8, Number(this.treeSettings.gridSize) || 24)}px`);
+    if (options.forceRebuild) {
+      this.treeLayers.links.selectAll('*').remove();
+      this.treeLayers.labels.selectAll('*').remove();
+      this.treeLayers.nodes.selectAll('*').remove();
+      this.treeLayers.debug.selectAll('*').remove();
+      this.nodeRenderSignatures.clear();
+    }
 
     if (!model.length) {
       this.treeLayers.links.selectAll('*').remove();
@@ -669,10 +700,17 @@ export class TreeService {
 
     nodes.each((d, idx, list) => {
       const group = window.d3.select(list[idx]);
+      const signature = this.nodeContentSignature(d);
+      if (this.nodeRenderSignatures.get(String(d.data.id)) === signature) return;
       group.selectAll('*').remove();
-      if (d.data.type === 'branch') return this.renderBranchTag(group, d);
-      if (d.data.type === 'root') return this.renderRootNode(group, d);
-      this.renderEditableNode(group, d);
+      if (d.data.type === 'branch') this.renderBranchTag(group, d);
+      else if (d.data.type === 'root') this.renderRootNode(group, d);
+      else this.renderEditableNode(group, d);
+      this.nodeRenderSignatures.set(String(d.data.id), signature);
+    });
+    const visibleIds = new Set(visibleNodes.map(d => String(d.data.id)));
+    [...this.nodeRenderSignatures.keys()].forEach(id => {
+      if (!visibleIds.has(id)) this.nodeRenderSignatures.delete(id);
     });
 
 

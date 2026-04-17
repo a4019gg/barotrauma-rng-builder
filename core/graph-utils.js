@@ -117,6 +117,11 @@ export function ensureNodeShape(node) {
   return normalized;
 }
 
+export function normalizeNodeModel(nodes) {
+  if (!Array.isArray(nodes)) return [];
+  return nodes.map(node => ensureNodeShape(structuredClone(node)));
+}
+
 export function getNodeCollections(node) {
   if (!node) return [];
   if (isRngNode(node)) return (node.branches || []).map(branch => branch.children || []);

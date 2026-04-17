@@ -41,6 +41,8 @@ let eventTabsCollapsed = localStorage.getItem('eventTabsCollapsed') === '1';
 
 let xmlViewer = null;
 let xmlFormatMode = 'pretty';
+const nodeDomCache = new Map();
+let classicVirtualState = { enabled: false, start: 0, end: Infinity, rafId: null };
 
 function closeThemeAccentSubmenus() {
   document.querySelectorAll('.style-theme-item.is-open').forEach(item => item.classList.remove('is-open'));
@@ -571,12 +573,65 @@ function renderEvents() {
   document.getElementById('event-id').classList.toggle('input-error', !String(state.currentEvent.id || '').trim());
 }
 
-function renderModel() {
+function renderModel(options = {}) {
+  const forceRebuild = !!options.forceRebuild;
   const root = document.getElementById('root-children');
-  root.innerHTML = '';
-
   const state = editorStore.getState();
-  state.currentEvent.model.forEach(node => root.appendChild(renderNode(node, state.editorMode)));
+  if (!root) return;
+  const view = document.getElementById('classic-view');
+  const model = state.currentEvent.model || [];
+  if (forceRebuild) nodeDomCache.clear();
+  const liveIds = new Set(state.currentEvent.model.map(node => String(node.id)));
+  [...nodeDomCache.keys()].forEach(id => {
+    if (!liveIds.has(id)) nodeDomCache.delete(id);
+  });
+  const virtualizationEnabled = model.length > 180;
+
+  if (virtualizationEnabled && !classicVirtualState.enabled && view) {
+    const onScroll = () => {
+      if (classicVirtualState.rafId) return;
+      classicVirtualState.rafId = requestAnimationFrame(() => {
+        classicVirtualState.rafId = null;
+        renderModel();
+      });
+    };
+    view.addEventListener('scroll', onScroll, { passive: true });
+    classicVirtualState = { ...classicVirtualState, enabled: true, onScroll };
+  } else if (!virtualizationEnabled && classicVirtualState.enabled && view && classicVirtualState.onScroll) {
+    view.removeEventListener('scroll', classicVirtualState.onScroll);
+    classicVirtualState = { enabled: false, start: 0, end: Infinity, rafId: null };
+  }
+
+  const start = virtualizationEnabled && view ? Math.max(0, Math.floor(view.scrollTop / 280) - 8) : 0;
+  const end = virtualizationEnabled && view ? Math.min(model.length, start + Math.ceil((view.clientHeight || 900) / 280) + 18) : model.length;
+  classicVirtualState.start = start;
+  classicVirtualState.end = end;
+  const visible = model.slice(start, end);
+  const visibleIds = new Set(visible.map(node => String(node.id)));
+
+  [...root.children].forEach(child => {
+    if (!visibleIds.has(child.dataset.id)) child.remove();
+  });
+
+  const fragment = document.createDocumentFragment();
+  visible.forEach(node => {
+    const id = String(node.id);
+    let record = nodeDomCache.get(id);
+    const nextSignature = JSON.stringify({
+      id: node.id,
+      type: node.type,
+      params: node.params,
+      branchIds: (node.branches || []).map(branch => `${branch.id}:${branch.value}:${branch.label}:${(branch.children || []).map(child => child.id).join(',')}`),
+      childIds: (node.children || []).map(child => child.id),
+      editorMode: state.editorMode
+    });
+    if (!record || record.signature !== nextSignature) {
+      record = { el: renderNode(node, state.editorMode), signature: nextSignature };
+      nodeDomCache.set(id, record);
+    }
+    fragment.appendChild(record.el);
+  });
+  root.appendChild(fragment);
 
   renderTreeOutline(state.currentEvent.model, document.getElementById('tree-outline'));
 
@@ -1219,7 +1274,7 @@ export async function initEditorUI() {
   updateMenuThemeStatus();
 
   onThemeChange(() => {
-    renderModel();
+    renderModel({ forceRebuild: true });
     updateMenuThemeStatus();
   });
 
@@ -1234,8 +1289,8 @@ export async function initEditorUI() {
       documentationStore.refreshLocalizedState();
       refreshDocumentationView();
       renderEvents();
-      renderModel();
-      treeService.renderQueued(editorStore.getState().currentEvent.model);
+      renderModel({ forceRebuild: true });
+      treeService.renderQueued(editorStore.getState().currentEvent.model, { forceRebuild: true });
     });
   });
 

@@ -2,50 +2,21 @@ import { HistoryManager } from './history-manager.js';
 import {
   cloneWithFreshIds,
   collectNodes,
+  createNodeIndex,
   createNode,
   findNodeById,
   getChildList,
+  isDescendantInIndex,
   normalizeParamValue,
   removeNodeById
 } from './node-service.js';
 import {
   convertLegacyRngToAdvanced,
-  ensureNodeShape,
   findRngBranch,
   getModeDefinition,
-  getNodeCollections,
-  isRngNode
+  isRngNode,
+  normalizeNodeModel
 } from '../core/graph-utils.js';
-
-function isDescendantOf(parentCandidateId, maybeDescendantId, nodes) {
-  const parentId = String(parentCandidateId);
-  const descendantId = String(maybeDescendantId);
-  const walk = (list, foundParent = false) => {
-    for (const rawNode of list) {
-      const node = ensureNodeShape(rawNode);
-      const nextFoundParent = foundParent || String(node.id) === parentId;
-      if (String(node.id) === descendantId && nextFoundParent) return true;
-      for (const children of getNodeCollections(node)) {
-        if (walk(children, nextFoundParent)) return true;
-      }
-    }
-    return false;
-  };
-  return walk(nodes, false);
-}
-
-function extractNodeById(id, nodes) {
-  const targetId = String(id);
-  for (let i = 0; i < nodes.length; i += 1) {
-    const node = ensureNodeShape(nodes[i]);
-    if (String(node.id) === targetId) return nodes.splice(i, 1)[0];
-    for (const children of getNodeCollections(node)) {
-      const hit = extractNodeById(id, children);
-      if (hit) return hit;
-    }
-  }
-  return null;
-}
 
 export class EditorStore {
   constructor() {
@@ -56,6 +27,8 @@ export class EditorStore {
     this.history = new HistoryManager({ maxEntries: 100 });
     this.clipboard = null;
     this.editorMode = 'basic';
+    this.currentIndex = new Map();
+    this.rebuildIndex();
   }
 
   subscribe(listener) {
@@ -79,6 +52,16 @@ export class EditorStore {
   }
 
   nextId = () => this.idCounter++;
+
+  rebuildIndex() {
+    this.currentIndex = createNodeIndex(this.currentModel());
+    return this.currentIndex;
+  }
+
+  ensureIndex() {
+    if (!this.currentIndex) this.rebuildIndex();
+    return this.currentIndex;
+  }
 
   currentModel() {
     return this.events[this.currentEventIndex].model;
@@ -109,6 +92,7 @@ export class EditorStore {
         this.events.push(event);
         const prevIndex = this.currentEventIndex;
         this.currentEventIndex = index;
+        this.rebuildIndex();
         if (!skipHistory) this.history.push({ undo: () => { this.events.splice(index, 1); this.currentEventIndex = prevIndex; }, redo: () => { this.events.splice(index, 0, event); this.currentEventIndex = index; } });
         return { changed: true };
       }
@@ -119,12 +103,14 @@ export class EditorStore {
         const prevIndex = this.currentEventIndex;
         this.events.splice(index, 1);
         this.currentEventIndex = Math.max(0, Math.min(this.currentEventIndex, this.events.length - 1));
+        this.rebuildIndex();
         if (!skipHistory) this.history.push({ undo: () => { this.events.splice(index, 0, removed); this.currentEventIndex = prevIndex; }, redo: () => { this.events.splice(index, 1); this.currentEventIndex = Math.max(0, Math.min(prevIndex, this.events.length - 1)); } });
         return { changed: true };
       }
       case 'SET_CURRENT_EVENT':
         if (action.index < 0 || action.index >= this.events.length) return { changed: false };
         this.currentEventIndex = action.index;
+        this.rebuildIndex();
         return { changed: true };
       case 'UPDATE_EVENT_ID': {
         const index = action.index;
@@ -139,15 +125,17 @@ export class EditorStore {
       case 'ADD_ROOT_NODE': {
         const node = createNode(action.nodeType, this.nextId);
         currentEvent.model.push(node);
+        this.currentIndex.set(String(node.id), { node, parentId: null, branchId: null, containerRef: currentEvent.model });
         if (!skipHistory) this.history.push({ undo: () => removeNodeById(node.id, currentEvent.model), redo: () => currentEvent.model.push(node) });
         return { changed: true, nodeId: node.id };
       }
       case 'ADD_CHILD_NODE': {
-        const parent = findNodeById(action.parentId, currentEvent.model);
+        const parent = this.ensureIndex().get(String(action.parentId))?.node || findNodeById(action.parentId, currentEvent.model);
         const target = getChildList(parent, action.branch);
         if (!target) return { changed: false };
         const node = createNode(action.nodeType, this.nextId);
         target.push(node);
+        this.currentIndex.set(String(node.id), { node, parentId: parent.id, branchId: action.branch ?? null, containerRef: target });
         if (!skipHistory) this.history.push({ undo: () => removeNodeById(node.id, currentEvent.model), redo: () => target.push(node) });
         return { changed: true, nodeId: node.id };
       }
@@ -186,25 +174,30 @@ export class EditorStore {
         if (action.nodeId == null) return { changed: false };
         if (action.newParentId != null && action.newParentId === '') return { changed: false };
         if (action.newParentId === action.nodeId) return { changed: false };
-        if (action.newParentId != null && isDescendantOf(action.nodeId, action.newParentId, currentEvent.model)) return { changed: false };
-        const movingNode = extractNodeById(action.nodeId, currentEvent.model);
+        const index = this.ensureIndex();
+        if (action.newParentId != null && isDescendantInIndex(index, action.nodeId, action.newParentId)) return { changed: false };
+        const movingNode = removeNodeById(action.nodeId, currentEvent.model);
         if (!movingNode) return { changed: false };
         if (action.newParentId == null) {
           currentEvent.model.push(movingNode);
+          this.rebuildIndex();
           return { changed: true };
         }
-        const parent = findNodeById(action.newParentId, currentEvent.model);
+        const parent = index.get(String(action.newParentId))?.node || findNodeById(action.newParentId, currentEvent.model);
         const target = getChildList(parent, action.branch);
         if (!target) {
           currentEvent.model.push(movingNode);
+          this.rebuildIndex();
           return { changed: false };
         }
         target.push(movingNode);
+        this.rebuildIndex();
         return { changed: true };
       }
       case 'REMOVE_NODE': {
         const removed = removeNodeById(action.id, currentEvent.model);
         if (!removed) return { changed: false };
+        this.rebuildIndex();
         if (!skipHistory) this.history.push({ undo: () => currentEvent.model.push(removed), redo: () => removeNodeById(action.id, currentEvent.model) });
         return { changed: true };
       }
@@ -230,8 +223,9 @@ export class EditorStore {
       }
       case 'SET_MODEL': {
         const prev = structuredClone(currentEvent.model);
-        const next = structuredClone((action.model || []).map(ensureNodeShape));
+        const next = normalizeNodeModel(action.model || []);
         currentEvent.model = next;
+        this.rebuildIndex();
         if (!skipHistory) this.history.push({ undo: () => { currentEvent.model = structuredClone(prev); }, redo: () => { currentEvent.model = structuredClone(next); } });
         return { changed: true };
       }
@@ -277,8 +271,8 @@ export class EditorStore {
     }
   }
 
-  undo() { const ok = this.history.undo(); if (ok) this.notify(); return ok; }
-  redo() { const ok = this.history.redo(); if (ok) this.notify(); return ok; }
+  undo() { const ok = this.history.undo(); if (ok) { this.rebuildIndex(); this.notify(); } return ok; }
+  redo() { const ok = this.history.redo(); if (ok) { this.rebuildIndex(); this.notify(); } return ok; }
 
   addEvent() { return this.dispatch({ type: 'ADD_EVENT' }).changed; }
   removeEvent(index) { return this.dispatch({ type: 'REMOVE_EVENT', index }).changed; }
@@ -293,18 +287,25 @@ export class EditorStore {
   updateNodeParam(id, key, value) { this.dispatch({ type: 'UPDATE_NODE_PARAM', id, key, value }); }
   clearCurrentEvent() { this.dispatch({ type: 'CLEAR_EVENT' }); }
   setModel(model) { this.dispatch({ type: 'SET_MODEL', model }); }
-  findNodeById(id, nodes = this.currentModel()) { return findNodeById(id, nodes); }
+  findNodeById(id, nodes = this.currentModel()) {
+    if (nodes === this.currentModel()) {
+      return this.ensureIndex().get(String(id))?.node || null;
+    }
+    return findNodeById(id, nodes);
+  }
   collectNodes() { return collectNodes(this.currentModel()); }
 
   loadProject(projectState) {
     if (!projectState || !Array.isArray(projectState.events) || !projectState.events.length) return false;
     this.events = structuredClone(projectState.events);
+    this.events.forEach(event => { event.model = normalizeNodeModel(event.model || []); });
     this.currentEventIndex = Number.isInteger(projectState.currentEventIndex)
       ? Math.max(0, Math.min(projectState.currentEventIndex, this.events.length - 1))
       : 0;
     this.editorMode = projectState.editorMode === 'advanced' ? 'advanced' : 'basic';
     this.idCounter = Number.isFinite(projectState.idCounter) ? Math.max(1, Math.floor(projectState.idCounter)) : 1;
     this.history.clear();
+    this.rebuildIndex();
     this.notify();
     return true;
   }

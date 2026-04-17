@@ -1,9 +1,8 @@
 import { computeBranchProbability, normalizeRngBranchProbabilities } from './rng.js';
-import { ensureNodeShape, getNodeCollections, isRngNode } from './graph-utils.js';
+import { getNodeCollections, isRngNode } from './graph-utils.js';
 
 export function flattenWithProbabilities(model, parentProbability = 1, acc = []) {
-  model.forEach(rawNode => {
-    const node = ensureNodeShape(rawNode);
+  model.forEach(node => {
     acc.push({ node, probability: parentProbability });
 
     if (isRngNode(node)) {
