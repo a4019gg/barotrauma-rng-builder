@@ -126,6 +126,13 @@ export class TreeService {
     this.minimapContainerEl = null;
     this.minimapHeaderEl = null;
     this.minimapResizeHandleEl = null;
+    this.minimapSvgEl = null;
+    this.minimapRootLayer = null;
+    this.minimapExportLayer = null;
+    this.minimapLinksLayer = null;
+    this.minimapNodesLayer = null;
+    this.minimapLabelsLayer = null;
+    this.minimapViewport = null;
     this.minimapInteractionsBound = false;
     this.themeUnsubscribe = null;
     this.appSettingsUnsubscribe = null;
@@ -134,7 +141,12 @@ export class TreeService {
     this.pendingAutoLayoutNodeId = null;
     this.deleteConfirmState = { id: null, until: 0 };
     this.idOptions = { spawn: [], creature: [], affliction: [] };
+    this.sharedDatalists = {};
     this.afflictionMetaById = new Map();
+    this.afflictionTextureCache = new Map();
+    this.afflictionIconCache = new Map();
+    this.treeLayers = null;
+    this.dropZoneCache = [];
     this.treeSettings = { ...DEFAULT_TREE_SETTINGS };
     this.queuedRender = rafBatch((model, opts) => this.render(model, opts));
     this.searchHighlightIds = new Set();
@@ -149,6 +161,12 @@ export class TreeService {
 
     this.zoomLayer = this.svg.append('g').attr('class', 'tree-zoom-layer');
     this.g = this.zoomLayer.append('g').attr('transform', 'translate(90,80)');
+    this.treeLayers = {
+      links: this.g.append('g').attr('class', 'tree-links-layer'),
+      labels: this.g.append('g').attr('class', 'tree-labels-layer'),
+      nodes: this.g.append('g').attr('class', 'tree-nodes-layer'),
+      debug: this.g.append('g').attr('class', 'tree-debug-layer')
+    };
 
     this.zoom = window.d3.zoom()
       .scaleExtent([0.08, 4.5])
@@ -196,6 +214,7 @@ export class TreeService {
         this.idOptions[key] = [];
       }
     }));
+    this.ensureSharedDatalists();
   }
 
   ensureMiniMapContainer() {
@@ -213,7 +232,33 @@ export class TreeService {
     this.minimapEl = minimap;
     this.minimapHeaderEl = minimap.querySelector('.tree-minimap-header');
     this.minimapResizeHandleEl = minimap.querySelector('.tree-minimap-resize');
+    this.minimapSvgEl = minimap.querySelector('svg');
+    this.ensureMinimapLayers();
     if (!this.minimapInteractionsBound) this.bindMinimapInteractions();
+  }
+
+  ensureMinimapLayers() {
+    if (!this.minimapSvgEl) return;
+    const root = window.d3.select(this.minimapSvgEl);
+    let rootLayer = root.select('g.mm-root');
+    if (rootLayer.empty()) rootLayer = root.append('g').attr('class', 'mm-root');
+    let exportLayer = rootLayer.select('g.mm-export-layer');
+    if (exportLayer.empty()) exportLayer = rootLayer.append('g').attr('class', 'mm-export-layer').attr('data-export-layer', 'true');
+    let links = exportLayer.select('g.mm-links');
+    if (links.empty()) links = exportLayer.append('g').attr('class', 'mm-links');
+    let nodes = exportLayer.select('g.mm-nodes');
+    if (nodes.empty()) nodes = exportLayer.append('g').attr('class', 'mm-nodes');
+    let labels = exportLayer.select('g.mm-labels');
+    if (labels.empty()) labels = exportLayer.append('g').attr('class', 'mm-labels');
+    let viewport = rootLayer.select('rect.mm-viewport');
+    if (viewport.empty()) viewport = rootLayer.append('rect').attr('class', 'mm-viewport');
+
+    this.minimapRootLayer = rootLayer;
+    this.minimapExportLayer = exportLayer;
+    this.minimapLinksLayer = links;
+    this.minimapNodesLayer = nodes;
+    this.minimapLabelsLayer = labels;
+    this.minimapViewport = viewport;
   }
 
   getMinimapBounds() {
@@ -362,6 +407,8 @@ export class TreeService {
       this.syncMinimapOverlay();
       this.renderInspector(this.findNodeById(this.selectedNodeId));
     }, { passive: false });
+
+    this.minimapSvgEl?.addEventListener('click', event => this.handleMinimapClick(event));
   }
 
   getMinimapBaseSize() {
@@ -369,6 +416,34 @@ export class TreeService {
       return this.treeSettings.minimapCustomSize || MINIMAP_PRESET_SIZES.medium;
     }
     return MINIMAP_PRESET_SIZES[this.treeSettings.minimapSizePreset] || MINIMAP_PRESET_SIZES.medium;
+  }
+
+  ensureSharedDatalists() {
+    if (typeof document === 'undefined') return;
+    ['spawn', 'creature', 'affliction'].forEach(type => {
+      const listId = `tree-datalist-${type}`;
+      let listEl = document.getElementById(listId);
+      if (!listEl) {
+        listEl = document.createElement('datalist');
+        listEl.id = listId;
+        document.body.appendChild(listEl);
+      }
+      const options = (this.idOptions[type] || []).slice(0, 250);
+      const prev = listEl.dataset.version || '';
+      const next = options.join('|');
+      if (prev === next) {
+        this.sharedDatalists[type] = listId;
+        return;
+      }
+      listEl.innerHTML = '';
+      options.forEach(optionValue => {
+        const option = document.createElement('option');
+        option.value = optionValue;
+        listEl.appendChild(option);
+      });
+      listEl.dataset.version = next;
+      this.sharedDatalists[type] = listId;
+    });
   }
 
   syncMinimapOverlay() {
@@ -498,7 +573,6 @@ export class TreeService {
       this.init();
     }
 
-    this.g.selectAll('*').remove();
     if (this.pendingAutoLayoutNodeId != null) {
       this.clearManualPositionsForSubtree(this.pendingAutoLayoutNodeId);
       this.pendingAutoLayoutNodeId = null;
@@ -507,11 +581,22 @@ export class TreeService {
     this.svg.style('--tree-grid-size', `${Math.max(8, Number(this.treeSettings.gridSize) || 24)}px`);
 
     if (!model.length) {
-      this.g.append('text').attr('class', 'tree-empty').attr('x', 40).attr('y', 42).text(t('selectTreeNode'));
+      this.treeLayers.links.selectAll('*').remove();
+      this.treeLayers.labels.selectAll('*').remove();
+      this.treeLayers.nodes.selectAll('*').remove();
+      this.treeLayers.debug.selectAll('*').remove();
+      this.treeLayers.labels.selectAll('.tree-empty')
+        .data([1])
+        .join('text')
+        .attr('class', 'tree-empty')
+        .attr('x', 40)
+        .attr('y', 42)
+        .text(t('selectTreeNode'));
       this.renderInspector(null);
       this.renderMinimap([]);
       return;
     }
+    this.treeLayers.labels.selectAll('.tree-empty').remove();
 
     const rootChildren = this.applyAutoChance(model, 1, 0).map(entry => this.toTreeNode(entry.node, null, entry.probability, 1));
     const root = window.d3.hierarchy({
@@ -526,8 +611,8 @@ export class TreeService {
     const links = root.links();
     const visibleNodes = root.descendants();
 
-    this.g.selectAll('.tree-link')
-      .data(links)
+    this.treeLayers.links.selectAll('.tree-link')
+      .data(links, link => `${link.source.data.id}->${link.target.data.id}`)
       .join('path')
       .attr('class', d => {
         const cls = ['tree-link'];
@@ -541,21 +626,29 @@ export class TreeService {
     const percentStylingEnabled = this.treeSettings.displayPercent !== 'hidden';
 
     if (showLinkPercent) {
-      const labels = this.g.selectAll('.tree-link-percent').data(links.filter(link => typeof link.target.data.probability === 'number')).join('text')
+      const labels = this.treeLayers.labels.selectAll('.tree-link-percent')
+        .data(links.filter(link => typeof link.target.data.probability === 'number'), link => `${link.source.data.id}->${link.target.data.id}`)
+        .join('text')
         .attr('class', d => `tree-link-percent ${chanceClass(d.target.data.probability, percentStylingEnabled && getThemeState().chanceColorCoding)}`)
         .attr('x', d => this.getLinkMidPoint(d).y)
         .attr('y', d => this.getLinkMidPoint(d).x - 6)
         .attr('text-anchor', 'middle')
         .text(d => `${Math.round(d.target.data.probability * 100)}%`);
       labels.raise();
+    } else {
+      this.treeLayers.labels.selectAll('.tree-link-percent').remove();
     }
 
     const activeDropTarget = this.dropTarget;
 
     const heatmapEnabled = !!this.treeSettings.showHeatmap;
-    const nodes = this.g.selectAll('.tree-node')
-      .data(visibleNodes)
-      .join('g')
+    const nodes = this.treeLayers.nodes.selectAll('.tree-node')
+      .data(visibleNodes, d => String(d.data.id))
+      .join(
+        enter => enter.append('g'),
+        update => update,
+        exit => exit.remove()
+      )
       .attr('class', d => {
         const classes = ['tree-node', `node-${d.data.type || 'label'}`];
         if (d.data.nodeRef && sameNodeId(this.selectedNodeId, d.data.id)) classes.push('selected');
@@ -576,6 +669,7 @@ export class TreeService {
 
     nodes.each((d, idx, list) => {
       const group = window.d3.select(list[idx]);
+      group.selectAll('*').remove();
       if (d.data.type === 'branch') return this.renderBranchTag(group, d);
       if (d.data.type === 'root') return this.renderRootNode(group, d);
       this.renderEditableNode(group, d);
@@ -583,7 +677,8 @@ export class TreeService {
 
 
     if (this.treeSettings.debugBounds) {
-      const debug = this.g.append('g').attr('class', 'tree-debug-layer');
+      const debug = this.treeLayers.debug;
+      debug.selectAll('*').remove();
       debug.append('rect')
         .attr('class', 'tree-debug-dropzone')
         .attr('x', -20)
@@ -604,9 +699,12 @@ export class TreeService {
           .attr('y', p.x - 10)
           .text(`#${d.data.id} ${d.data.type} p=${Math.round((d.data.probability || 0) * 100)}%`);
       });
+    } else {
+      this.treeLayers.debug.selectAll('*').remove();
     }
 
     this.installDrag(nodes);
+    this.refreshDropZoneCache(visibleNodes);
     this.updateCanvasSize(visibleNodes);
     this.renderInspector(this.findNodeById(this.selectedNodeId));
     this.renderMinimap(visibleNodes, links);
@@ -748,20 +846,59 @@ export class TreeService {
   }
 
   findDropTarget(clientX, clientY, draggingId) {
-    const zones = [...document.querySelectorAll('.tree-drop-zone')];
-    const hitZone = zones.find(zone => {
-      const r = zone.getBoundingClientRect();
-      return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
-    });
+    if (!this.dropZoneCache.length) return null;
+    const point = this.clientToTreeCoords(clientX, clientY);
+    if (!point) return null;
+    const hitZone = this.dropZoneCache.find(zone => point.x >= zone.left && point.x <= zone.right && point.y >= zone.top && point.y <= zone.bottom);
     if (!hitZone) return null;
+    if (sameNodeId(hitZone.nodeId, draggingId)) return null;
+    if (this.isTreeDescendant(draggingId, hitZone.nodeId)) return null;
+    return { id: hitZone.nodeId, branch: hitZone.branch || null };
+  }
 
-    const hitEl = hitZone.closest('.tree-node.node-rng');
-    if (!hitEl) return null;
+  clientToTreeCoords(clientX, clientY) {
+    const svgEl = this.svg?.node();
+    if (!svgEl || !svgEl.createSVGPoint) return null;
+    const point = svgEl.createSVGPoint();
+    point.x = clientX;
+    point.y = clientY;
+    const ctm = svgEl.getScreenCTM();
+    if (!ctm) return null;
+    const svgPoint = point.matrixTransform(ctm.inverse());
+    const zoom = window.d3.zoomTransform(svgEl);
+    return {
+      x: (svgPoint.y - zoom.y - 80) / zoom.k,
+      y: (svgPoint.x - zoom.x - 90) / zoom.k
+    };
+  }
 
-    const data = window.d3.select(hitEl).datum();
-    if (!data?.data?.nodeRef || sameNodeId(data.data.id, draggingId)) return null;
-    if (this.isTreeDescendant(draggingId, data.data.id)) return null;
-    return { id: data.data.id, branch: hitZone.dataset.branch || null };
+  refreshDropZoneCache(visibleNodes = []) {
+    const zones = [];
+    visibleNodes.forEach(node => {
+      const ref = node.data?.nodeRef;
+      if (!ref || node.data.type !== 'rng') return;
+      const collapsed = this.collapsed.has(ref.id);
+      if (collapsed) return;
+      const binarySuccessFailure = (ref.branches?.length || 0) === 2
+        && ref.branches?.[0]?.id === 'success'
+        && ref.branches?.[1]?.id === 'failure';
+      if (!binarySuccessFailure) return;
+      const { height } = this.getEditableNodeSize(ref, false);
+      const pos = this.getNodeCoords(node);
+      const zoneOffset = Math.max(DROP_ZONE.offsetY, Math.round(height / 2) - 6);
+      ['success', 'failure'].forEach(branch => {
+        const centerX = pos.x + (branch === 'success' ? -zoneOffset : zoneOffset);
+        zones.push({
+          nodeId: node.data.id,
+          branch,
+          left: pos.y - DROP_ZONE.width / 2,
+          right: pos.y + DROP_ZONE.width / 2,
+          top: centerX - DROP_ZONE.height / 2,
+          bottom: centerX + DROP_ZONE.height / 2
+        });
+      });
+    });
+    this.dropZoneCache = zones;
   }
 
   isTreeDescendant(parentId, candidateId) {
@@ -983,19 +1120,12 @@ export class TreeService {
       const caption = document.createElement('span');
       caption.textContent = label;
       const input = document.createElement('input');
-      const listId = `tree-datalist-${type}-${node.id}`;
+      const listId = this.sharedDatalists[type] || `tree-datalist-${type}`;
       input.setAttribute('list', listId);
       input.value = node.params[key] ?? '';
       input.disabled = !isSelected;
       input.addEventListener('change', event => this.onUpdateParam(node.id, key, event.target.value));
-      const datalist = document.createElement('datalist');
-      datalist.id = listId;
-      (this.idOptions[type] || []).slice(0, 250).forEach(optionValue => {
-        const option = document.createElement('option');
-        option.value = optionValue;
-        datalist.appendChild(option);
-      });
-      row.append(caption, input, datalist);
+      row.append(caption, input);
       return row;
     };
 
@@ -1047,13 +1177,21 @@ export class TreeService {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return canvas;
-    const img = new Image();
-    img.src = iconData.texture;
-    img.onload = () => {
+    const tint = this.resolveAfflictionTint(iconData, intensity) || '';
+    const iconKey = `${iconData.texture}|${rect.x},${rect.y},${rect.w},${rect.h}|${tint}|${intensity.toFixed(3)}`;
+    const cachedDataUrl = this.afflictionIconCache.get(iconKey);
+    if (cachedDataUrl) {
+      const readyImage = new Image();
+      readyImage.onload = () => ctx.drawImage(readyImage, 0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
+      readyImage.src = cachedDataUrl;
+      return canvas;
+    }
+
+    this.loadAfflictionTexture(iconData.texture).then(img => {
+      if (!img) return;
       ctx.clearRect(0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
       ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
 
-      const tint = this.resolveAfflictionTint(iconData, intensity);
       if (tint) {
         ctx.globalCompositeOperation = 'source-atop';
         ctx.fillStyle = tint;
@@ -1063,9 +1201,28 @@ export class TreeService {
         ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h, 0, 0, AFFIX_ICON_SIZE, AFFIX_ICON_SIZE);
         ctx.globalAlpha = 1;
       }
-    };
+
+      try {
+        this.afflictionIconCache.set(iconKey, canvas.toDataURL('image/png'));
+      } catch {
+        // ignore cache serialization failures
+      }
+    }).catch(() => {});
 
     return canvas;
+  }
+
+  loadAfflictionTexture(texturePath) {
+    if (!texturePath) return Promise.resolve(null);
+    if (this.afflictionTextureCache.has(texturePath)) return this.afflictionTextureCache.get(texturePath);
+    const promise = new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = texturePath;
+    });
+    this.afflictionTextureCache.set(texturePath, promise);
+    return promise;
   }
 
   resolveAfflictionTint(iconData, intensity) {
@@ -1517,8 +1674,9 @@ export class TreeService {
     this.minimapEl.style.display = this.treeSettings.showMinimap ? 'block' : 'none';
     if (!this.treeSettings.showMinimap) return;
 
-    const svg = this.minimapEl.querySelector('svg');
+    const svg = this.minimapSvgEl;
     if (!svg) return;
+    this.ensureMinimapLayers();
 
     const activeNodes = nodes.filter(d => d?.data?.type !== 'branch');
     const activeLinks = this.getMinimapLinks(links);
@@ -1570,7 +1728,19 @@ export class TreeService {
       return `rgb(${r},${g},${b})`;
     };
 
-    const linksSvg = activeLinks.map(link => {
+    const cx = mapWidth / 2;
+    const cy = mapHeight / 2;
+    this.minimapRootLayer.attr('transform', `translate(${cx} ${cy}) scale(${effectiveScale}) translate(${-cx} ${-cy})`);
+
+    const bg = this.minimapRootLayer.selectAll('rect.mm-bg').data([1]);
+    bg.join('rect')
+      .attr('class', 'mm-bg')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', mapWidth)
+      .attr('height', mapHeight);
+
+    const linkData = activeLinks.map(link => {
       const sNode = this.getNodeCoords(link.source);
       const tNode = this.getNodeCoords(link.target);
       const faded = selectedSet.size && !selectedSet.has(link.source.data.id) && !selectedSet.has(link.target.data.id);
@@ -1590,61 +1760,123 @@ export class TreeService {
       const path = this.treeSettings.smoothPaths
         ? `M${sx},${sy} C${sx + (tx - sx) * 0.38},${sy} ${sx + (tx - sx) * 0.62},${ty} ${tx},${ty}`
         : `M${sx},${sy} L${sx + (tx - sx) * 0.5},${sy} L${sx + (tx - sx) * 0.5},${ty} L${tx},${ty}`;
-      const label = (this.treeSettings.minimapDisplayPercent === 'links' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(link.target.data.probability)
-        ? `<text class="mm-percent" x="${(sx + tx) / 2}" y="${(sy + ty) / 2 - 2}">${Math.round(link.target.data.probability * 100)}%</text>`
-        : '';
-      return `<path d="${path}" style="fill:none;stroke:${stroke};stroke-width:1.4;opacity:${faded ? 0.18 : 0.9}" />${label}`;
-    }).join('');
+      return {
+        id: `${link.source.data.id}->${link.target.data.id}`,
+        path,
+        opacity: faded ? 0.18 : 0.9,
+        stroke,
+        sx,
+        sy,
+        tx,
+        ty,
+        probability: link.target.data.probability
+      };
+    });
+
+    this.minimapLinksLayer.selectAll('path.mm-link')
+      .data(linkData, d => d.id)
+      .join('path')
+      .attr('class', 'mm-link')
+      .attr('d', d => d.path)
+      .style('fill', 'none')
+      .style('stroke-width', 1.4)
+      .style('stroke', d => d.stroke)
+      .style('opacity', d => d.opacity);
+
+    const showLinkLabels = this.treeSettings.minimapDisplayPercent === 'links' || this.treeSettings.minimapDisplayPercent === 'both';
+    this.minimapLabelsLayer.selectAll('text.mm-link-percent')
+      .data(showLinkLabels ? linkData.filter(d => Number.isFinite(d.probability)) : [], d => d.id)
+      .join('text')
+      .attr('class', 'mm-percent mm-link-percent')
+      .attr('x', d => (d.sx + d.tx) / 2)
+      .attr('y', d => (d.sy + d.ty) / 2 - 2)
+      .text(d => `${Math.round(d.probability * 100)}%`);
 
     const icons = { root: '◆', rng: '●', spawn: '■', creature: '▲', affliction: '✦' };
-    const nodesSvg = activeNodes.map(d => {
+    const iconOnly = this.treeSettings.minimapTypeMode === 'type-icon' || this.treeSettings.minimapTypeMode === 'type-icon-color';
+    const nodeData = activeNodes.map(d => {
       const p = this.getNodeCoords(d);
       const faded = selectedSet.size && !selectedSet.has(d.data.id);
       const color = this.treeSettings.minimapTypeMode === 'dots' ? '#9dc1ff' : typeColor(d.data.type);
-      const iconOnly = this.treeSettings.minimapTypeMode === 'type-icon' || this.treeSettings.minimapTypeMode === 'type-icon-color';
       const fill = this.treeSettings.minimapTypeMode === 'type-icon' ? '#cfe1ff' : color;
-      const radius = sameNodeId(d.data.id, this.selectedNodeId) ? 4.4 : 3.1;
-      const label = (this.treeSettings.minimapDisplayPercent === 'nodes' || this.treeSettings.minimapDisplayPercent === 'both') && Number.isFinite(d.data.probability)
-        ? `<text class="mm-percent" x="${scaleX(p.y) + 4}" y="${scaleY(p.x) - 4}">${Math.round(d.data.probability * 100)}%</text>`
-        : '';
-      if (iconOnly) {
-        return `<text data-node-id="${d.data.id}" class="mm-node-icon" x="${scaleX(p.y)}" y="${scaleY(p.x)}" style="fill:${fill};opacity:${faded ? 0.25 : 1}">${icons[d.data.type] || '•'}</text>${label}`;
-      }
-      return `<circle data-node-id="${d.data.id}" cx="${scaleX(p.y)}" cy="${scaleY(p.x)}" r="${radius}" style="fill:${fill};opacity:${faded ? 0.25 : 1}" />${label}`;
-    }).join('');
-
-    const cx = mapWidth / 2;
-    const cy = mapHeight / 2;
-    const content = `<rect class="mm-bg" x="0" y="0" width="${mapWidth}" height="${mapHeight}"/><g data-export-layer="true">${linksSvg}${nodesSvg}</g>`;
-    svg.innerHTML = `<g transform="translate(${cx} ${cy}) scale(${effectiveScale}) translate(${-cx} ${-cy})">${content}</g>`;
-
-    svg.onclick = event => {
-      const target = event.target;
-      if (target && target.getAttribute('data-node-id')) return;
-      const rect = svg.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const worldY = ((x - pad) / Math.max(1, mapWidth - pad * 2)) * Math.max(1, viewport.maxX - viewport.minX) + viewport.minX;
-      const worldX = ((y - pad) / Math.max(1, mapHeight - pad * 2)) * Math.max(1, viewport.maxY - viewport.minY) + viewport.minY;
-      const svgEl = this.svg?.node();
-      if (!svgEl || !this.zoom) return;
-      const w = svgEl.clientWidth || 900;
-      const h = svgEl.clientHeight || 600;
-      const current = window.d3.zoomTransform(svgEl);
-      const tx = w / 2 - (worldY + 90) * current.k;
-      const ty = h / 2 - (worldX + 80) * current.k;
-      this.svg.transition().duration(220).call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(current.k));
-    };
-
-    svg.querySelectorAll('[data-node-id]').forEach(nodeHit => {
-      nodeHit.addEventListener('click', () => {
-        const nodeId = nodeHit.getAttribute('data-node-id');
-        this.selectedNodeId = normalizeNodeId(nodeId);
-        this.centerOnNode(this.selectedNodeId);
-        this.render(this.model || []);
-      });
+      return {
+        id: String(d.data.id),
+        nodeId: d.data.id,
+        x: scaleX(p.y),
+        y: scaleY(p.x),
+        type: d.data.type,
+        opacity: faded ? 0.25 : 1,
+        fill,
+        radius: sameNodeId(d.data.id, this.selectedNodeId) ? 4.4 : 3.1,
+        probability: d.data.probability,
+        icon: icons[d.data.type] || '•'
+      };
     });
 
+    if (iconOnly) {
+      this.minimapNodesLayer.selectAll('circle.mm-node').remove();
+      this.minimapNodesLayer.selectAll('text.mm-node-icon')
+        .data(nodeData, d => d.id)
+        .join('text')
+        .attr('class', 'mm-node mm-node-icon')
+        .attr('data-node-id', d => d.id)
+        .attr('x', d => d.x)
+        .attr('y', d => d.y)
+        .style('opacity', d => d.opacity)
+        .style('fill', d => d.fill)
+        .text(d => d.icon);
+    } else {
+      this.minimapNodesLayer.selectAll('text.mm-node-icon').remove();
+      this.minimapNodesLayer.selectAll('circle.mm-node')
+        .data(nodeData, d => d.id)
+        .join('circle')
+        .attr('class', 'mm-node')
+        .attr('data-node-id', d => d.id)
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y)
+        .attr('r', d => d.radius)
+        .style('opacity', d => d.opacity)
+        .style('fill', d => d.fill);
+    }
+
+    const showNodeLabels = this.treeSettings.minimapDisplayPercent === 'nodes' || this.treeSettings.minimapDisplayPercent === 'both';
+    this.minimapLabelsLayer.selectAll('text.mm-node-percent')
+      .data(showNodeLabels ? nodeData.filter(d => Number.isFinite(d.probability)) : [], d => d.id)
+      .join('text')
+      .attr('class', 'mm-percent mm-node-percent')
+      .attr('x', d => d.x + 4)
+      .attr('y', d => d.y - 4)
+      .text(d => `${Math.round(d.probability * 100)}%`);
+
+    this.minimapProjection = { pad, mapWidth, mapHeight, viewport };
+  }
+
+  handleMinimapClick(event) {
+    if (!this.treeSettings.showMinimap || !this.minimapSvgEl) return;
+    const target = event.target;
+    const nodeId = target?.getAttribute?.('data-node-id');
+    if (nodeId) {
+      this.selectedNodeId = normalizeNodeId(nodeId);
+      this.centerOnNode(this.selectedNodeId);
+      this.render(this.model || []);
+      return;
+    }
+
+    if (!this.minimapProjection) return;
+    const { pad, mapWidth, mapHeight, viewport } = this.minimapProjection;
+    const rect = this.minimapSvgEl.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const worldY = ((x - pad) / Math.max(1, mapWidth - pad * 2)) * Math.max(1, viewport.maxX - viewport.minX) + viewport.minX;
+    const worldX = ((y - pad) / Math.max(1, mapHeight - pad * 2)) * Math.max(1, viewport.maxY - viewport.minY) + viewport.minY;
+    const svgEl = this.svg?.node();
+    if (!svgEl || !this.zoom) return;
+    const w = svgEl.clientWidth || 900;
+    const h = svgEl.clientHeight || 600;
+    const current = window.d3.zoomTransform(svgEl);
+    const tx = w / 2 - (worldY + 90) * current.k;
+    const ty = h / 2 - (worldX + 80) * current.k;
+    this.svg.transition().duration(220).call(this.zoom.transform, window.d3.zoomIdentity.translate(tx, ty).scale(current.k));
   }
 
   getMinimapLinks(links = []) {
