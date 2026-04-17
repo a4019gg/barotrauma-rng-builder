@@ -1,7 +1,6 @@
 import { parseChanceInput } from '../ui/chance-utils.js';
 import {
   createNode as createGraphNode,
-  ensureNodeShape,
   findRngBranch,
   getNodeCollections,
   isContainerNode,
@@ -19,8 +18,7 @@ export function createNode(type, nextId) {
 
 export function findNodeById(id, nodes) {
   const targetId = String(id);
-  for (const rawNode of nodes) {
-    const node = ensureNodeShape(rawNode);
+  for (const node of nodes) {
     if (String(node.id) === targetId) return node;
     for (const children of getNodeCollections(node)) {
       const hit = findNodeById(id, children);
@@ -33,7 +31,7 @@ export function findNodeById(id, nodes) {
 export function removeNodeById(id, nodes) {
   const targetId = String(id);
   for (let i = 0; i < nodes.length; i += 1) {
-    const node = ensureNodeShape(nodes[i]);
+    const node = nodes[i];
     if (String(node.id) === targetId) return nodes.splice(i, 1)[0];
     for (const children of getNodeCollections(node)) {
       const hit = removeNodeById(id, children);
@@ -44,7 +42,7 @@ export function removeNodeById(id, nodes) {
 }
 
 export function cloneWithFreshIds(node, nextId) {
-  const copy = ensureNodeShape(structuredClone(node));
+  const copy = structuredClone(node);
   const remap = n => {
     n.id = nextId();
     for (const children of getNodeCollections(n)) {
@@ -75,8 +73,7 @@ export function normalizeParamValue(key, rawValue) {
 }
 
 export function collectNodes(nodes, acc = []) {
-  nodes.forEach(rawNode => {
-    const node = ensureNodeShape(rawNode);
+  nodes.forEach(node => {
     acc.push(node);
     for (const children of getNodeCollections(node)) {
       collectNodes(children, acc);
@@ -86,7 +83,7 @@ export function collectNodes(nodes, acc = []) {
 }
 
 export function getChildList(parent, branchId = null) {
-  const node = ensureNodeShape(parent);
+  const node = parent;
   if (isRngNode(node)) {
     const branch = findRngBranch(node, branchId ?? node.branches?.[0]?.id);
     if (!branch) return null;
@@ -94,4 +91,40 @@ export function getChildList(parent, branchId = null) {
   }
   if (isContainerNode(node)) return node.children;
   return null;
+}
+
+export function createNodeIndex(model) {
+  const index = new Map();
+  const stack = [{ list: model, parentId: null, branchId: null }];
+  while (stack.length) {
+    const { list, parentId, branchId } = stack.pop();
+    if (!Array.isArray(list)) continue;
+    for (const node of list) {
+      const id = String(node.id);
+      index.set(id, {
+        node,
+        parentId,
+        branchId,
+        containerRef: list
+      });
+      if (isRngNode(node)) {
+        (node.branches || []).forEach(branch => {
+          stack.push({ list: branch.children, parentId: node.id, branchId: branch.id });
+        });
+      } else if (isContainerNode(node)) {
+        stack.push({ list: node.children, parentId: node.id, branchId: null });
+      }
+    }
+  }
+  return index;
+}
+
+export function isDescendantInIndex(index, ancestorId, maybeDescendantId) {
+  const ancestorKey = String(ancestorId);
+  let entry = index.get(String(maybeDescendantId));
+  while (entry && entry.parentId != null) {
+    if (String(entry.parentId) === ancestorKey) return true;
+    entry = index.get(String(entry.parentId));
+  }
+  return false;
 }
