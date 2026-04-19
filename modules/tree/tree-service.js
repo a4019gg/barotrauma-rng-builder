@@ -10,6 +10,7 @@ import { chanceHeatClass } from './tree-renderer.js';
 import { rafBatch } from './tree-drag.js';
 import { getAllowedNodeTypes, getNodeCollections, isContainerNode, isRngNode } from '../../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../../core/rng.js';
+import { appendChildren, clearElement, createElement } from '../../core/safe-dom.js';
 
 const NODE_META = {
   rng: { icon: 'sliders-horizontal', labelKey: 'addRng' },
@@ -1689,20 +1690,34 @@ export class TreeService {
   renderInspector(node) {
     const inspector = document.querySelector(this.inspectorSelector);
     if (!inspector) return;
-    inspector.innerHTML = '';
+    clearElement(inspector);
 
-    const base = document.createElement('div');
-    base.innerHTML = `
-      <div class="tree-inspector-header">
-        <h4>${t('treeEditor')}</h4>
-        <div class="tree-panel-actions">
-          <button type="button" class="icon-btn tree-panel-collapse-btn" data-action="toggleTreeSettingsPanel" title="${t('hideTreeSettingsPanel')}">▶</button>
-          
-        </div>
-      </div>
-      ${node ? `<div class="tree-editor-meta">${t('nodeType')}: <strong>${node.type}</strong> · #${node.id}</div>` : `<p>${t('selectTreeNode')}</p>`}
-      <p class="tree-inspector-hint">${t('treeInspectorHint')}</p>
-    `;
+    const base = createElement('div');
+    const header = createElement('div', { className: 'tree-inspector-header' });
+    const title = createElement('h4', { text: t('treeEditor') });
+    const actions = createElement('div', { className: 'tree-panel-actions' });
+    const collapseBtn = createElement('button', {
+      className: 'icon-btn tree-panel-collapse-btn',
+      text: '▶',
+      dataset: { action: 'toggleTreeSettingsPanel' },
+      attrs: { type: 'button', title: t('hideTreeSettingsPanel') }
+    });
+    actions.appendChild(collapseBtn);
+    appendChildren(header, title, actions);
+    base.appendChild(header);
+
+    if (node) {
+      const meta = createElement('div', { className: 'tree-editor-meta' });
+      const typeLabel = createElement('span', { text: `${t('nodeType')}: ` });
+      const typeStrong = createElement('strong', { text: node.type });
+      const idLabel = createElement('span', { text: ` · #${node.id}` });
+      appendChildren(meta, typeLabel, typeStrong, idLabel);
+      base.appendChild(meta);
+    } else {
+      base.appendChild(createElement('p', { text: t('selectTreeNode') }));
+    }
+
+    base.appendChild(createElement('p', { className: 'tree-inspector-hint', text: t('treeInspectorHint') }));
     inspector.appendChild(base);
     inspector.appendChild(this.renderTreeSettings());
   }

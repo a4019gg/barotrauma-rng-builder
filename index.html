@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Barotrauma RNG Builder</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://d3js.org; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
 
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js" integrity="sha384-YpHNtgE8v0Hzywvu61aonAGc/iGfr4yV8EgKaeInCUvgplJm6eu21Iy2xKhHzrMo" crossorigin="anonymous"></script>
 
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/themes/theme-system.css" />
@@ -422,27 +423,7 @@
     </section>
   </div>
 
-  <script type="module">
-    function renderStartupError(error) {
-      console.error('Failed to initialize app', error);
-      const fallback = document.createElement('div');
-      fallback.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;padding:2rem;background:#111;color:#f4f4f4;font:500 16px/1.5 system-ui,sans-serif;z-index:9999;text-align:center;';
-      fallback.innerHTML = '<div><h2 style="margin:0 0 12px;">Application failed to start</h2><p style="margin:0 0 6px;opacity:.9;">Please reload the page or clear local storage for this site.</p><p style="margin:0;opacity:.75;font-size:14px;">Ошибка запуска приложения. Попробуйте перезагрузить страницу или очистить localStorage для сайта.</p></div>';
-      document.body.classList.remove('app-loading');
-      document.body.appendChild(fallback);
-    }
+  <script type="module" src="./ui/bootstrap.js"></script>
 
-    async function boot() {
-      try {
-        const { initEditorUI } = await import('./ui/ui-controller.js');
-        await initEditorUI();
-        document.body.classList.remove('app-loading');
-      } catch (error) {
-        renderStartupError(error);
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', boot);
-  </script>
 </body>
 </html>
