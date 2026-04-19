@@ -1,14 +1,17 @@
-import { ensureNodeShape } from '../../core/graph-utils.js';
+import { NODE_TYPES, ensureNodeShape } from '../../core/graph-utils.js';
+import { normalizeEventId, normalizeNodeId, normalizeNodeType, normalizeStringParam, sanitizeParams } from '../../core/input-sanitizer.js';
 
 const PROJECT_FILE_VERSION = 1;
 
 function sanitizeEvent(event, index) {
   const fallbackId = `event_${index + 1}`;
-  const eventId = String(event?.id || '').trim() || fallbackId;
+  const eventId = normalizeEventId(event?.id, fallbackId);
   const rawRootNodes = Array.isArray(event?.rootNodes) ? event.rootNodes : [];
   return {
     id: eventId,
-    model: rawRootNodes.map(node => ensureNodeShape(deserializeNode(node)))
+    model: rawRootNodes
+      .map(node => ensureNodeShape(deserializeNode(node)))
+      .filter(Boolean)
   };
 }
 
@@ -23,7 +26,7 @@ export function buildProjectSnapshot(state) {
     : 0;
 
   const editorMode = state?.editorMode === 'advanced' ? 'advanced' : 'basic';
-  const projectName = String(state?.currentEvent?.id || normalizedEvents[selectedIndex]?.id || 'project').trim() || 'project';
+  const projectName = normalizeEventId(state?.currentEvent?.id || normalizedEvents[selectedIndex]?.id || 'project', 'project');
   const idContext = { counters: {}, used: new Set() };
 
   return {
@@ -97,8 +100,8 @@ function serializeNode(node, idContext) {
   if (normalized.type === 'rng') {
     base.mode = normalized?.params?.mode === 'weight' ? 'weight' : 'probability';
     base.branches = (Array.isArray(normalized.branches) ? normalized.branches : []).map((branch, index) => ({
-      id: String(branch?.id || `branch_${index + 1}`),
-      label: String(branch?.label || ''),
+      id: normalizeNodeId(branch?.id, `branch_${index + 1}`),
+      label: normalizeStringParam(branch?.label, ''),
       value: Number(String(branch?.value).replace(',', '.')) || 0,
       children: serializeNodes(branch?.children, idContext)
     }));
@@ -112,20 +115,21 @@ function serializeNode(node, idContext) {
 }
 
 function deserializeNode(node) {
-  if (!node || typeof node !== 'object') return node;
+  if (!node || typeof node !== 'object') return null;
+  const nodeType = normalizeNodeType(node.type, NODE_TYPES.spawn);
   const base = {
-    id: String(node.id || ''),
-    type: node.type
+    id: normalizeNodeId(node.id, `${nodeType}_1`),
+    type: nodeType
   };
 
-  if (node.type === 'rng') {
+  if (base.type === 'rng') {
     const mode = node.mode === 'weight' ? 'weight' : 'probability';
     const branches = Array.isArray(node.branches) ? node.branches : [];
     const normalizedBranches = branches.map((branch, index) => ({
-      id: String(branch?.id || `branch_${index + 1}`),
-      label: String(branch?.label || ''),
+      id: normalizeNodeId(branch?.id, `branch_${index + 1}`),
+      label: normalizeStringParam(branch?.label, ''),
       value: Number(String(branch?.value).replace(',', '.')) || 0,
-      children: Array.isArray(branch?.children) ? branch.children.map(deserializeNode) : []
+      children: Array.isArray(branch?.children) ? branch.children.map(deserializeNode).filter(Boolean) : []
     }));
 
     return {
@@ -137,8 +141,8 @@ function deserializeNode(node) {
 
   return {
     ...base,
-    params: node?.params && typeof node.params === 'object' ? structuredClone(node.params) : {},
-    children: Array.isArray(node?.children) ? node.children.map(deserializeNode) : undefined
+    params: sanitizeParams(node?.params && typeof node.params === 'object' ? structuredClone(node.params) : {}),
+    children: Array.isArray(node?.children) ? node.children.map(deserializeNode).filter(Boolean) : undefined
   };
 }
 

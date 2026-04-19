@@ -1,9 +1,14 @@
 import { createDefaultParams, ensureNodeShape } from '../../core/graph-utils.js';
+import { normalizeEventId, normalizeNodeId, normalizeStringParam, normalizeUnsafePayload, sanitizeParams } from '../../core/input-sanitizer.js';
 
 function parseBooleanAttr(element, key, fallback = false) {
   const value = element.getAttribute(key);
   if (value == null) return fallback;
   return ['true', '1', 'yes'].includes(String(value).toLowerCase());
+}
+
+function nextSanitizedId(nextId, fallbackPrefix = 'node') {
+  return normalizeNodeId(nextId(), `${fallbackPrefix}_1`);
 }
 
 function parseNode(element, nextId) {
@@ -12,7 +17,7 @@ function parseNode(element, nextId) {
   if (tag === 'randomevent') {
     const chance = (Number(element.getAttribute('chance')) || 50) / 100;
     const node = ensureNodeShape({
-      id: nextId(),
+      id: nextSanitizedId(nextId, 'rng'),
       type: 'rng',
       params: { mode: 'probability', chance },
       branches: [
@@ -50,7 +55,7 @@ function parseNode(element, nextId) {
       const value = element.getAttribute(key);
       params[key] = typeof params[key] === 'boolean' ? parseBooleanAttr(element, key, params[key]) : (Number.isFinite(Number(params[key])) ? Number(value) : value);
     });
-    const node = { id: nextId(), type: 'eventSet', params, children: [] };
+    const node = { id: nextSanitizedId(nextId, 'eventSet'), type: 'eventSet', params: sanitizeParams(params), children: [] };
     Array.from(element.children).forEach(child => {
       const parsed = parseNode(child, nextId);
       if (parsed) node.children.push(parsed);
@@ -59,7 +64,7 @@ function parseNode(element, nextId) {
   }
 
   if (tag === 'event') {
-    const node = { id: nextId(), type: 'event', params: { identifier: element.getAttribute('identifier') || '' }, children: [] };
+    const node = { id: nextSanitizedId(nextId, 'event'), type: 'event', params: sanitizeParams({ identifier: normalizeStringParam(element.getAttribute('identifier') || '') }), children: [] };
     Array.from(element.children).forEach(child => {
       if (['Success', 'Failure'].includes(child.tagName)) return;
       const parsed = parseNode(child, nextId);
@@ -70,10 +75,10 @@ function parseNode(element, nextId) {
 
   if (tag === 'spawnitem') {
     return {
-      id: nextId(),
+      id: nextSanitizedId(nextId, 'spawn'),
       type: 'spawn',
       params: {
-        item: element.getAttribute('identifier') || '',
+        item: normalizeUnsafePayload(element.getAttribute('identifier') || ''),
         amount: Number(element.getAttribute('amount')) || 1,
         quality: Number(element.getAttribute('quality')) || 0
       }
@@ -82,22 +87,22 @@ function parseNode(element, nextId) {
 
   if (tag === 'spawncreature') {
     return {
-      id: nextId(),
+      id: nextSanitizedId(nextId, 'creature'),
       type: 'creature',
       params: {
-        creature: element.getAttribute('identifier') || '',
+        creature: normalizeUnsafePayload(element.getAttribute('identifier') || ''),
         count: Number(element.getAttribute('count')) || 1,
-        spawnLocation: element.getAttribute('spawnlocation') || 'inside'
+        spawnLocation: normalizeStringParam(element.getAttribute('spawnlocation') || 'inside', 'inside')
       }
     };
   }
 
   if (tag === 'applyaffliction') {
     return {
-      id: nextId(),
+      id: nextSanitizedId(nextId, 'affliction'),
       type: 'affliction',
       params: {
-        affliction: element.getAttribute('identifier') || '',
+        affliction: normalizeUnsafePayload(element.getAttribute('identifier') || ''),
         strength: Number(element.getAttribute('strength')) || 10
       }
     };
@@ -123,7 +128,7 @@ export function parseEventXML(xmlText, nextId) {
   });
 
   return {
-    eventId: event.getAttribute('identifier') || 'new_event',
+    eventId: normalizeEventId(event.getAttribute('identifier') || 'new_event', 'new_event'),
     model
   };
 }

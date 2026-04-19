@@ -45,3 +45,13 @@ The persisted `.baro-rng.json` now uses a minimal runtime-oriented schema:
 * all node ids are exported as unique strings (`rng_1`, `spawn_2`, ...)
 * RNG nodes no longer duplicate nested children at node root (`children.success/failure` removed)
 * RNG branches no longer use `kind` and keep only `id`, `value`, `children`
+
+## Security hardening
+
+- Untrusted render paths must use `core/safe-dom.js` and `textContent`-based rendering.
+- Import flows (project JSON and XML) are normalized with strict ID/type/string sanitization.
+- `index.html` includes CSP and pinned CDN script with SRI for `d3`.
+- Local checks:
+  - `node tools/check-no-unsafe-innerhtml.mjs`
+  - `node tools/security-smoke-tests.mjs`
+  - `node tools/check-security-headers.mjs`

@@ -21,6 +21,7 @@ import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNod
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
 import { buildProjectFilename, parseProjectJson, serializeProject } from '../modules/io/project-io.js';
 import { preloadInitialResources } from './resource-preload.js';
+import { appendChildren, clearElement, createElement } from '../core/safe-dom.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -307,10 +308,11 @@ function formatPercent(value) {
 function renderSimulationResults(results, exactResults, iterations) {
   const body = document.getElementById('simulation-results');
   if (!body) return;
-  body.innerHTML = '';
+  clearElement(body);
   if (!results.size && !exactResults.size) {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td colspan="4">${t('noTerminalSpawnNodes')}</td>`;
+    const row = createElement('tr');
+    const cell = createElement('td', { text: t('noTerminalSpawnNodes'), attrs: { colspan: '4' } });
+    row.appendChild(cell);
     body.appendChild(row);
     return;
   }
@@ -329,8 +331,14 @@ function renderSimulationResults(results, exactResults, iterations) {
       return b.simulatedProbability - a.simulatedProbability;
     })
     .forEach(({ result, count, simulatedProbability, exactProbability }) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${result}</td><td>${count}</td><td>${formatPercent(simulatedProbability)}</td><td>${formatPercent(exactProbability)}</td>`;
+      const row = createElement('tr');
+      appendChildren(
+        row,
+        createElement('td', { text: result }),
+        createElement('td', { text: String(count) }),
+        createElement('td', { text: formatPercent(simulatedProbability) }),
+        createElement('td', { text: formatPercent(exactProbability) })
+      );
       body.appendChild(row);
     });
 }
@@ -535,26 +543,44 @@ function renderEvents() {
   const state = editorStore.getState();
   if (pendingDeleteEventIndex != null && pendingDeleteEventIndex >= state.events.length) clearPendingEventDelete();
   const list = document.getElementById('events-tabs');
-  list.innerHTML = '';
+  if (!list) return;
+  clearElement(list);
   list.classList.toggle('is-collapsed', eventTabsCollapsed);
 
-  const collapseToggle = document.createElement('button');
-  collapseToggle.type = 'button';
-  collapseToggle.className = 'event-tabs-toggle icon-btn';
-  collapseToggle.dataset.action = 'toggleEventTabs';
   const toggleLabelKey = eventTabsCollapsed ? 'expandEventTabs' : 'collapseEventTabs';
-  collapseToggle.textContent = `${eventTabsCollapsed ? '⮞' : '⮜'} ${t(toggleLabelKey)}`;
-  collapseToggle.title = t(toggleLabelKey);
+  const collapseToggle = createElement('button', {
+    className: 'event-tabs-toggle icon-btn',
+    dataset: { action: 'toggleEventTabs' },
+    attrs: { type: 'button', title: t(toggleLabelKey) },
+    text: `${eventTabsCollapsed ? '⮞' : '⮜'} ${t(toggleLabelKey)}`
+  });
   list.appendChild(collapseToggle);
 
   state.events.forEach((event, index) => {
-    const tab = document.createElement('button');
-    tab.type = 'button';
-    tab.className = 'event-tab';
-    tab.dataset.action = 'selectEvent';
-    tab.dataset.index = String(index);
+    const tab = createElement('button', {
+      className: 'event-tab',
+      dataset: { action: 'selectEvent', index: String(index) },
+      attrs: { type: 'button' }
+    });
+
+    const title = createElement('span', {
+      className: 'event-tab-title',
+      attrs: { title: t('renameEventHint') },
+      text: event.id
+    });
+    tab.appendChild(title);
+
     const pendingDelete = pendingDeleteEventIndex === index;
-    tab.innerHTML = `<span class="event-tab-title" title="${t('renameEventHint')}">${event.id}</span>${state.events.length > 1 ? `<span class="event-tab-close ${pendingDelete ? 'pending' : ''}" data-action="removeEvent" data-index="${index}" title="${pendingDelete ? t('confirmRemoveEvent') : t('removeNode')}">${pendingDelete ? '!' : '×'}</span>` : ''}`;
+    if (state.events.length > 1) {
+      const close = createElement('span', {
+        className: `event-tab-close${pendingDelete ? ' pending' : ''}`,
+        dataset: { action: 'removeEvent', index: String(index) },
+        attrs: { title: pendingDelete ? t('confirmRemoveEvent') : t('removeNode') },
+        text: pendingDelete ? '!' : '×'
+      });
+      tab.appendChild(close);
+    }
+
     if (index === state.currentEventIndex) tab.classList.add('active');
     list.appendChild(tab);
   });
