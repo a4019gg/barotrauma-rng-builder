@@ -1,6 +1,6 @@
 import { getIconStyle, onThemeChange } from './theme-manager.js';
 
-const ICON_ROOT = new URL('../assets/icons/', import.meta.url).pathname;
+const ICON_ROOT = new URL('../assets/icons/', import.meta.url).href;
 const liveIcons = new Set();
 
 function iconPath(name, style = getIconStyle()) {
@@ -25,6 +25,9 @@ function refreshLiveIcons() {
 }
 
 onThemeChange(refreshLiveIcons);
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', refreshLiveIcons, { once: true });
+}
 
 export function createIcon(name, options = {}) {
   const iconEl = document.createElement('span');

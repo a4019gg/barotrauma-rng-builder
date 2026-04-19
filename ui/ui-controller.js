@@ -551,8 +551,8 @@ function renderEvents() {
   const collapseToggle = createElement('button', {
     className: 'event-tabs-toggle icon-btn',
     dataset: { action: 'toggleEventTabs' },
-    attrs: { type: 'button', title: t(toggleLabelKey) },
-    text: `${eventTabsCollapsed ? '⮞' : '⮜'} ${t(toggleLabelKey)}`
+    attrs: { type: 'button', title: t(toggleLabelKey), 'aria-label': t(toggleLabelKey) },
+    text: eventTabsCollapsed ? '⮞' : '⮜'
   });
   list.appendChild(collapseToggle);
 

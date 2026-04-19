@@ -112,36 +112,46 @@ export function buildHighlightedXml(xmlText = '', options = {}) {
     const indent = line.match(/^\s*/)?.[0]?.length || 0;
     const pad = '&nbsp;'.repeat(indent);
     const content = line.trimStart();
-    const tagMatch = content.match(/^<(\/)?([A-Za-z0-9:_-]+)([^>]*)>/);
-    if (!tagMatch) {
+    const tagRegex = /<(\/)?([A-Za-z0-9:_-]+)([^>]*?)(\/)?>/g;
+    let rendered = `${pad}`;
+    let cursor = 0;
+    let hasTag = false;
+    let tagMatch = tagRegex.exec(content);
+    while (tagMatch) {
+      hasTag = true;
+      const [fullTag, closeSlash, tagName, attrRaw, selfCloseMarker] = tagMatch;
+      if (tagMatch.index > cursor) rendered += escapeHtml(content.slice(cursor, tagMatch.index));
+
+      const isClosing = Boolean(closeSlash);
+      const isSelfClosing = Boolean(selfCloseMarker) || /\/\s*>$/.test(fullTag);
+      const entityLabel = ENTITY_LABELS[tagName] || `${tagName} entity`;
+      const block = blocks.get(lineIndex);
+      const blockData = block ? ` data-block-start="${block.start}" data-block-end="${block.end}"` : '';
+      const attrs = parseAttributes(attrRaw);
+
+      let attrsHtml = '';
+      attrs.forEach(attr => {
+        const warning = makeWarning(attr.name, attr.value);
+        const warnClass = warning ? ' xml-warning' : '';
+        const percentHint = numberHint(attr.name, attr.value);
+        const chanceColor = chanceColorHint(attr.name, attr.value);
+        const isErrorValue = attr.name === 'identifier' && String(attr.value || '').trim().toLowerCase() === 'error';
+        const info = attributeTooltip(attr.name, attr.value);
+        attrsHtml += ` <span class="xml-attr${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">${escapeHtml(attr.name)}</span>=<span class="xml-string${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">&quot;${escapeHtml(attr.value)}&quot;</span>`;
+        if (percentHint) attrsHtml += `<span class="xml-inline-hint xml-inline-hint-chance"${chanceColor ? ` style="--chance-color:${chanceColor};"` : ''}>${escapeHtml(percentHint)}</span>`;
+      });
+
+      const startTag = `&lt;${isClosing ? '/' : ''}<span class="xml-tag-name" data-entity="${encodeAttr(entityLabel)}">${escapeHtml(tagName)}</span>${attrsHtml}${isSelfClosing ? ' /' : ''}&gt;`;
+      rendered += `<span class="xml-tag" data-tag="${escapeHtml(tagName)}" data-line="${lineIndex}"${blockData}>${startTag}</span>`;
+      cursor = tagMatch.index + fullTag.length;
+      tagMatch = tagRegex.exec(content);
+    }
+    if (cursor < content.length) rendered += escapeHtml(content.slice(cursor));
+    if (!hasTag) {
       const escapedPlain = escapeHtml(content);
       const hasMatch = queryLower && line.toLowerCase().includes(queryLower);
       return `<div class="xml-line${hasMatch ? ' xml-line-search-hit' : ''}" data-line="${lineIndex}" style="--xml-indent:${indent};">${pad}${escapedPlain}</div>`;
     }
-
-    const [, closeSlash, tagName, attrRaw] = tagMatch;
-    const isClosing = Boolean(closeSlash);
-    const isSelfClosing = /\/\s*>$/.test(content);
-    const entityLabel = ENTITY_LABELS[tagName] || `${tagName} entity`;
-    const block = blocks.get(lineIndex);
-    const blockData = block ? ` data-block-start="${block.start}" data-block-end="${block.end}"` : '';
-    const attrs = parseAttributes(attrRaw);
-
-    let attrsHtml = '';
-    attrs.forEach(attr => {
-      const warning = makeWarning(attr.name, attr.value);
-      const warnClass = warning ? ' xml-warning' : '';
-      const percentHint = numberHint(attr.name, attr.value);
-      const chanceColor = chanceColorHint(attr.name, attr.value);
-      const isErrorValue = attr.name === 'identifier' && String(attr.value || '').trim().toLowerCase() === 'error';
-      const info = attributeTooltip(attr.name, attr.value);
-      attrsHtml += ` <span class="xml-attr${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">${escapeHtml(attr.name)}</span>=<span class="xml-string${warnClass}${isErrorValue ? ' xml-error-value' : ''}" data-tooltip="${encodeAttr(info)}">&quot;${escapeHtml(attr.value)}&quot;</span>`;
-      if (percentHint) attrsHtml += `<span class="xml-inline-hint xml-inline-hint-chance"${chanceColor ? ` style="--chance-color:${chanceColor};"` : ''}>${escapeHtml(percentHint)}</span>`;
-    });
-
-    const startTag = `&lt;${isClosing ? '/' : ''}<span class="xml-tag-name" data-entity="${encodeAttr(entityLabel)}">${escapeHtml(tagName)}</span>${attrsHtml}${isSelfClosing ? ' /' : ''}&gt;`;
-
-    let rendered = `${pad}<span class="xml-tag" data-tag="${escapeHtml(tagName)}" data-line="${lineIndex}"${blockData}>${startTag}</span>`;
 
     let hasMatch = false;
     if (queryLower) {
