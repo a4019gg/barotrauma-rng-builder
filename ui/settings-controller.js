@@ -38,7 +38,7 @@ export function initSettingsController() {
     softStartToggle.onchange = event => setAppSetting('softStart', event.target.checked);
   }
   setChanceInputMode(state.chanceInputMode);
-  setAppSetting('autoChanceMode', getAppSetting('autoChanceMode') || 'off');
+  setAppSetting('autoChanceMode', getAppSetting('autoChanceMode') || 'branch-split');
 
   onLangChange(() => applyLocalization());
 

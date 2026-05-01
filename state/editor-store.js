@@ -58,6 +58,23 @@ export class EditorStore {
     return this.currentIndex;
   }
 
+  syncIdCounterFromEvents() {
+    let maxId = 0;
+    const visit = list => {
+      (list || []).forEach(node => {
+        const numericId = Number(node?.id);
+        if (Number.isFinite(numericId)) maxId = Math.max(maxId, Math.floor(numericId));
+        if (isRngNode(node)) {
+          (node.branches || []).forEach(branch => visit(branch.children));
+        } else if (Array.isArray(node?.children)) {
+          visit(node.children);
+        }
+      });
+    };
+    this.events.forEach(event => visit(event.model));
+    this.idCounter = Math.max(this.idCounter, maxId + 1, 1);
+  }
+
   ensureIndex() {
     if (!this.currentIndex) this.rebuildIndex();
     return this.currentIndex;
@@ -226,6 +243,7 @@ export class EditorStore {
         const next = normalizeNodeModel(action.model || []);
         currentEvent.model = next;
         this.rebuildIndex();
+        this.syncIdCounterFromEvents();
         if (!skipHistory) this.history.push({ undo: () => { currentEvent.model = structuredClone(prev); }, redo: () => { currentEvent.model = structuredClone(next); } });
         return { changed: true };
       }
@@ -306,6 +324,7 @@ export class EditorStore {
     this.idCounter = Number.isFinite(projectState.idCounter) ? Math.max(1, Math.floor(projectState.idCounter)) : 1;
     this.history.clear();
     this.rebuildIndex();
+    this.syncIdCounterFromEvents();
     this.notify();
     return true;
   }
