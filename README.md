@@ -50,7 +50,7 @@ The persisted `.baro-rng.json` now uses a minimal runtime-oriented schema:
 
 - Untrusted render paths must use `core/safe-dom.js` and `textContent`-based rendering.
 - Import flows (project JSON and XML) are normalized with strict ID/type/string sanitization.
-- `index.html` includes CSP and pinned CDN script with SRI for `d3`.
+- `index.html` includes CSP and a vendored local `d3` runtime (`vendor/d3.v7.min.js`) to avoid CDN/SRI outages.
 - Local checks:
   - `node tools/check-no-unsafe-innerhtml.mjs`
   - `node tools/security-smoke-tests.mjs`
