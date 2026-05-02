@@ -358,6 +358,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .style-theme-dropdown {
   min-width: 332px;
+  max-width: min(560px, calc(100vw - 24px));
 }
 
 .style-theme-item {
@@ -414,16 +415,15 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 
 body[data-theme-flavor='rainbow'] {
-  animation: rainbow-accent 8s linear infinite;
+  animation: rainbow-hue-cycle 10s linear infinite;
+  --rainbow-hue: 0deg;
+  --ui-accent: hsl(var(--rainbow-hue) 92% 58%);
+  --ui-accent-strong: hsl(calc(var(--rainbow-hue) + 20deg) 95% 74%);
 }
 
-@keyframes rainbow-accent {
-  0% { --ui-accent: #ff4d4d; --ui-accent-strong: #ff9a9a; }
-  20% { --ui-accent: #ff9f43; --ui-accent-strong: #ffd1a0; }
-  40% { --ui-accent: #ffd93d; --ui-accent-strong: #ffef9b; }
-  60% { --ui-accent: #2ed573; --ui-accent-strong: #8cf3b3; }
-  80% { --ui-accent: #1e90ff; --ui-accent-strong: #94c8ff; }
-  100% { --ui-accent: #c56cf0; --ui-accent-strong: #e2b8f8; }
+@keyframes rainbow-hue-cycle {
+  from { --rainbow-hue: 0deg; }
+  to { --rainbow-hue: 360deg; }
 }
 
 .menu-retro-accent-dropdown .menu-group-title {
