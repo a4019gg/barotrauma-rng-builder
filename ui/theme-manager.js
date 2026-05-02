@@ -103,7 +103,9 @@ function ensureValidState() {
   if (!['fraction', 'percent'].includes(state.chanceInputMode)) state.chanceInputMode = defaults.chanceInputMode;
   if (!SF_ACCENT_PRESETS[state.sfAccentPreset]) state.sfAccentPreset = defaults.sfAccentPreset;
   if (!RETRO_ACCENT_PRESETS[state.retroAccentPreset]) state.retroAccentPreset = defaults.retroAccentPreset;
-  if (!THEME_ACCENT_PRESETS[state.themeAccentPreset]) state.themeAccentPreset = defaults.themeAccentPreset;
+  if (!Object.prototype.hasOwnProperty.call(THEME_ACCENT_PRESETS, state.themeAccentPreset)) {
+    state.themeAccentPreset = defaults.themeAccentPreset;
+  }
 }
 
 function notifyThemeChange() {
