@@ -372,8 +372,14 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .menu-theme-mode-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
+}
+.theme-mode-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
 }
 
 .theme-mode-icon-btn {
@@ -389,6 +395,29 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   min-width: 220px;
+}
+.menu-style-accent-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.menu-sf-accent-dropdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+body[data-theme-flavor='rainbow'] {
+  animation: rainbow-accent 8s linear infinite;
+}
+
+@keyframes rainbow-accent {
+  0% { --ui-accent: #ff4d4d; --ui-accent-strong: #ff9a9a; }
+  20% { --ui-accent: #ff9f43; --ui-accent-strong: #ffd1a0; }
+  40% { --ui-accent: #ffd93d; --ui-accent-strong: #ffef9b; }
+  60% { --ui-accent: #2ed573; --ui-accent-strong: #8cf3b3; }
+  80% { --ui-accent: #1e90ff; --ui-accent-strong: #94c8ff; }
+  100% { --ui-accent: #c56cf0; --ui-accent-strong: #e2b8f8; }
 }
 
 .menu-retro-accent-dropdown .menu-group-title {
