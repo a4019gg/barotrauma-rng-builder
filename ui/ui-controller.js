@@ -22,6 +22,7 @@ import { normalizeRngBranchProbabilities } from '../core/rng.js';
 import { buildProjectFilename, parseProjectJson, serializeProject } from '../modules/io/project-io.js';
 import { preloadInitialResources } from './resource-preload.js';
 import { appendChildren, clearElement, createElement } from '../core/safe-dom.js';
+import { renderMenuBar } from '../modules/menu-bar/menu-bar.js';
 
 let pendingDeleteEventIndex = null;
 let pendingDeleteResetTimer = null;
@@ -1209,6 +1210,7 @@ function initOutputPanelUX() {
 }
 
 export async function initEditorUI() {
+  renderMenuBar(document.getElementById('menu-bar-root'));
   if (getAppSetting('softStart') !== true) {
     await preloadInitialResources();
   }

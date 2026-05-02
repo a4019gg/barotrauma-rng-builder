@@ -357,7 +357,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 
 .style-theme-dropdown {
-  min-width: 248px;
+  min-width: 332px;
 }
 
 .style-theme-item {
@@ -398,8 +398,14 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 }
 .menu-style-accent-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.menu-style-accent-divider {
+  width: 1px;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--border-main) 78%, transparent);
 }
 .menu-sf-accent-dropdown {
   display: grid;
