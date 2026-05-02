@@ -15,7 +15,7 @@ import { initTooltips, setTooltip } from './tooltip.js';
 import { renderTreeOutline } from './tree-view.js';
 import { XmlViewerService } from '../modules/xml/xml-viewer-service.js';
 import { explainEventModel } from '../modules/xml/xml-explain-service.js';
-import { THEME_ACCENT_PRESETS, getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setSfAccentPreset, setThemeAccentPreset, setThemeMode, setUiScale } from './theme-manager.js';
+import { getThemeState, onThemeChange, setBaseTheme, setChanceInputMode, setSfAccentPreset, setThemeAccentPreset, setThemeMode, setThemeStyle, setUiScale } from './theme-manager.js';
 import { getAppSetting, setAppSetting, subscribeAppSettings } from '../state/app-settings.js';
 import { getAllowedNodeTypes, getModeDefinition, getNodeCollections, isActionNode, isContainerNode, isRngNode } from '../core/graph-utils.js';
 import { normalizeRngBranchProbabilities } from '../core/rng.js';
@@ -45,20 +45,6 @@ let xmlFormatMode = 'pretty';
 const nodeDomCache = new Map();
 let classicVirtualState = { enabled: false, start: 0, end: Infinity, rafId: null };
 
-function closeThemeAccentSubmenus() {
-  document.querySelectorAll('.style-theme-item.is-open').forEach(item => item.classList.remove('is-open'));
-}
-
-function toggleThemeAccentSubmenu(themeId) {
-  const target = document.querySelector(`.style-theme-item.has-accent-submenu[data-theme-id="${themeId}"]`);
-  if (!target) {
-    closeThemeAccentSubmenus();
-    return;
-  }
-  const shouldOpen = !target.classList.contains('is-open');
-  closeThemeAccentSubmenus();
-  if (shouldOpen) target.classList.add('is-open');
-}
 
 
 function syncXmlHighlight(textarea, layer) {
@@ -539,38 +525,6 @@ function startEventRename(titleEl) {
 }
 
 
-function ensureStyleAccentSubmenus() {
-  const items = document.querySelectorAll('.style-theme-item');
-  items.forEach(item => {
-    item.classList.add('has-accent-submenu');
-    if (item.querySelector('.menu-retro-accent-dropdown')) return;
-    const dropdown = createElement('div', { className: 'menu-dropdown submenu menu-retro-accent-dropdown', attrs: { role: 'menu' } });
-    dropdown.appendChild(createElement('div', { className: 'menu-group-title', attrs: { 'data-l10n': 'accentColor' } }));
-    const titleKeys = {
-      'theme-base': 'accentColor',
-      'terminal-green': 'retroAccentGreen',
-      'amber-phosphor': 'retroAccentAmber',
-      'ice-cyan': 'retroAccentCyan',
-      'plasma-magenta': 'retroAccentMagenta',
-      'violet-glow': 'retroAccentViolet',
-      'neon-blue': 'retroAccentBlue',
-      'ember-red': 'retroAccentRed',
-      'phosphor-lime': 'retroAccentLime',
-      'mono-contrast': 'retroAccentMono'
-    };
-    Object.keys(THEME_ACCENT_PRESETS).forEach(key => {
-      const btn = createElement('button', {
-        className: 'retro-preset-btn retro-preset-option retro-accent-option',
-        attrs: { type: 'button', role: 'menuitemradio', 'aria-checked': 'false' },
-        dataset: { action: 'setThemeAccentPreset', value: key }
-      });
-      btn.dataset.l10nTitle = titleKeys[key] || 'accentColor';
-      btn.appendChild(createElement('span', { className: 'retro-preset-dot' }));
-      dropdown.appendChild(btn);
-    });
-    item.appendChild(dropdown);
-  });
-}
 
 function renderEvents() {
   if (activeEventRename && !activeEventRename.input?.isConnected) activeEventRename = null;
@@ -773,6 +727,22 @@ function handleMenuStub(message) {
   showNeutral(message);
 }
 
+
+function applyThemeFlavor(flavor) {
+  if (flavor === 'synthwave') {
+    setThemeMode('dark');
+    setBaseTheme('neon-ops');
+    setThemeStyle('soft');
+    setThemeAccentPreset('plasma-magenta');
+    return;
+  }
+  if (flavor === 'unicorn') {
+    setThemeMode('light');
+    setBaseTheme('soft-bloom');
+    setThemeStyle('soft');
+    setThemeAccentPreset('violet-glow');
+  }
+}
 function updateMenuThemeStatus() {
   const theme = getThemeState();
   document.querySelectorAll('button[data-action="menuSetThemeMode"]').forEach(button => {
@@ -788,8 +758,6 @@ function updateMenuThemeStatus() {
   document.querySelectorAll('.style-theme-item').forEach(item => {
     const selected = item.dataset.themeId === theme.baseTheme;
     item.classList.toggle('is-selected', selected);
-    const accentToggle = item.querySelector('.menu-style-arrow[data-action="toggleThemeAccentSubmenu"]');
-    if (accentToggle) accentToggle.hidden = !selected;
   });
   document.querySelectorAll('button[data-action="menuSetUiScale"]').forEach(button => {
     const selected = button.dataset.value === theme.uiScale;
@@ -990,15 +958,9 @@ async function handleClick(event) {
   if (action === 'menuDeleteSelected') await handleMenuDeleteSelected();
   if (action === 'menuDuplicateSelected') handleMenuDuplicateSelected();
   if (action === 'menuSetThemeMode') setThemeMode(actionEl.dataset.value);
+  if (action === 'menuSetThemeFlavor') applyThemeFlavor(actionEl.dataset.value);
   if (action === 'menuSetBaseTheme') {
     setBaseTheme(actionEl.dataset.value);
-    closeThemeAccentSubmenus();
-  }
-  if (action === 'toggleThemeAccentSubmenu') {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleThemeAccentSubmenu(actionEl.dataset.themeId);
-    return;
   }
   if (action === 'menuSetUiScale') setUiScale(actionEl.dataset.value);
   if (action === 'menuSetChanceInputMode') setChanceInputMode(actionEl.dataset.value);
@@ -1181,7 +1143,6 @@ function initMenuBarBehavior() {
   });
 
   document.addEventListener('click', event => {
-    if (!event.target.closest('.style-theme-item.has-accent-submenu')) closeThemeAccentSubmenus();
     if (event.target.closest('.menu-item')) return;
     const active = document.activeElement;
     if (active instanceof HTMLElement && menuBar.contains(active)) active.blur();
@@ -1247,7 +1208,6 @@ export async function initEditorUI() {
     await preloadInitialResources();
   }
 
-  ensureStyleAccentSubmenus();
   document.addEventListener('click', handleClick);
   document.addEventListener('change', handleChange);
   document.addEventListener('input', handleInput);
