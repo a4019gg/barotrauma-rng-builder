@@ -372,7 +372,7 @@ button.danger { border-color: color-mix(in srgb, var(--ui-accent-strong) 45%, va
 
 .menu-theme-mode-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
 .theme-mode-separator {

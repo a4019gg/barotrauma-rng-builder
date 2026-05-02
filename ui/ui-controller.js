@@ -739,14 +739,10 @@ function applyThemeFlavor(flavor) {
     return;
   }
   if (flavor === 'random') {
-    const modes = ['dark', 'light'];
-    const baseThemes = ['debug', 'classic-luna', 'neon-ops', 'retro-terminal', 'soft-bloom'];
     const styles = ['compact', 'balanced', 'soft'];
     const accents = ['theme-base', 'terminal-green', 'amber-phosphor', 'ice-cyan', 'plasma-magenta', 'violet-glow', 'neon-blue', 'ember-red', 'phosphor-lime', 'mono-contrast'];
     const sf = ['emerald-crimson', 'mint-rose', 'neon-cherry', 'forest-ruby', 'lime-magenta', 'aqua-ember', 'teal-violet', 'sage-coral', 'sky-sun'];
     const pick = list => list[Math.floor(Math.random() * list.length)];
-    setThemeMode(pick(modes));
-    setBaseTheme(pick(baseThemes));
     setThemeStyle(pick(styles));
     setThemeAccentPreset(pick(accents));
     setSfAccentPreset(pick(sf));
