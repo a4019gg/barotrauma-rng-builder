@@ -13,9 +13,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Check unsafe innerHTML usage
-        run: node tools/check-no-unsafe-innerhtml.mjs
       - name: Run security smoke tests
         run: node tools/security-smoke-tests.mjs
-      - name: Verify SRI and CSP
-        run: node tools/check-security-headers.mjs

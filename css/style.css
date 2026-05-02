@@ -884,7 +884,7 @@ body[data-active-module='documentation'] button[data-action='openEditorModule'][
   flex: 0 0 auto;
   align-items: center;
 }
-.event-tabs-toggle { justify-content: center; flex: 0 0 auto; white-space: nowrap; padding-inline: 10px; margin-left: -3px; }
+.event-tabs-toggle { justify-content: center; flex: 0 0 auto; white-space: nowrap; padding-inline: 10px; margin-left: 0; }
 .events-tabs.is-collapsed {
   margin-bottom: 4px;
   padding-bottom: 4px;
